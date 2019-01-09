@@ -1,0 +1,17 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Entia.Experiment",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "build debug",
+			"program": "${workspaceFolder}/Entia.Experiment//bin/Debug/netcoreapp2.1/Entia.Experiment.dll",
+			"args": [],
+			"cwd": "${workspaceFolder}/Entia.Experiment/",
+			"console": "externalTerminal",
+			"stopAtEntry": false,
+			"internalConsoleOptions": "openOnSessionStart"
+		}
+	]
+}

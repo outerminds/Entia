@@ -1,0 +1,35 @@
+﻿using System;
+
+namespace Entia.Core
+{
+    public interface IBox
+    {
+        object Value { get; set; }
+        Type Type { get; }
+
+        bool CopyTo(IBox box);
+    }
+
+    public sealed class Box<T> : IBox
+    {
+        public T Value;
+
+        object IBox.Value
+        {
+            get => Value;
+            set => Value = value is T casted ? casted : default;
+        }
+        Type IBox.Type => typeof(T);
+
+        public bool CopyTo(IBox box)
+        {
+            if (box is Box<T> casted)
+            {
+                casted.Value = Value;
+                return true;
+            }
+
+            return false;
+        }
+    }
+}

@@ -1,0 +1,71 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build debug",
+			"command": "dotnet",
+			"type": "process",
+			"group": "build",
+			"args": [
+				"build",
+				"${workspaceFolder}/Entia.sln",
+				"--configuration",
+				"Debug"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "build release",
+			"command": "dotnet",
+			"type": "process",
+			"group": "build",
+			"args": [
+				"build",
+				"${workspaceFolder}/Entia.sln",
+				"--configuration",
+				"Release"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "publish debug",
+			"command": "dotnet",
+			"type": "process",
+			"group": "build",
+			"args": [
+				"publish",
+				"${workspaceFolder}/Entia.sln",
+				"--configuration",
+				"Debug"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "publish release",
+			"command": "dotnet",
+			"type": "process",
+			"group": "build",
+			"args": [
+				"publish",
+				"${workspaceFolder}/Entia.sln",
+				"--configuration",
+				"Release"
+			],
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "test",
+			"command": "dotnet",
+			"type": "process",
+			"args": [
+				"run",
+				"--project",
+				"${workspaceFolder}/Entia.Test/Entia.Test.csproj"
+			],
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			}
+		}
+	]
+}
