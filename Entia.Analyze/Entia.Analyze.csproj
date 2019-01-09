@@ -8,12 +8,12 @@
     <Configurations>Release With Analyzer;Debug With Analyzer</Configurations>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug With Analyzer|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)'=='Debug With Analyzer'">
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <Optimize>false</Optimize>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release With Analyzer|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)'=='Release With Analyzer'">
     <Optimize>true</Optimize>
   </PropertyGroup>
 
