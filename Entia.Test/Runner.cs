@@ -80,13 +80,14 @@ namespace Entia.Test
 
         void Log()
         {
+            var lines = _states
+                .Select(state => $"-> {{ Iterations: {state.Iteration + 1} / {state.Count}, \tSize: {state.Size}, \tLargest: {state.Largest}, \tShrink: {state.Shrink} }}")
+                .Prepend("Running...")
+                .Select(line => line + Environment.NewLine);
+            var log = string.Join("", lines);
+
             lock (_lock)
             {
-                var lines = _states
-                    .Select(state => $"-> {{ Iterations: {state.Iteration + 1} / {state.Count}, \tSize: {state.Size}, \tLargest: {state.Largest}, \tShrink: {state.Shrink} }}")
-                    .Prepend("Running...")
-                    .Select(line => line + Environment.NewLine);
-                var log = string.Join("", lines);
                 Console.CursorVisible = false;
                 Console.SetCursorPosition(0, 0);
                 Console.Write(log);

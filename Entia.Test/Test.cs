@@ -23,9 +23,8 @@ namespace Entia.Test
         public struct SegmentA : ISegment { }
         public struct SegmentB : ISegment { }
 
-        public static void Run(int count = 1600, int size = 1600, int parallel = 16)
+        public static void Run(int count = 1600, int size = 1600)
         {
-            // TODO: run multiple instances in parallel
             Console.Clear();
 
             var generator = Generator.Frequency(
@@ -112,7 +111,7 @@ namespace Entia.Test
                     .And(world.Entities().All(entity => world.Groups().All(group => group.Fits(entity) == group.Has(entity)))
                         .Label("world.Groups().Fits()")));
 
-            sequence.ToArbitrary().ToProperty().Check("Tests", parallel, count: count, size: size, @throw: false);
+            sequence.ToArbitrary().ToProperty().Check("Tests", Environment.ProcessorCount, count: count, size: size, @throw: false);
 
             // var restart = false;
             // while (true)

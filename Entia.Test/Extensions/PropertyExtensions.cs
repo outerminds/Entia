@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using FsCheck;
 
@@ -12,11 +13,10 @@ namespace Entia.Test
         public static void Check(this Property property, string name, int parallel, int count = 100, int size = 100, bool @throw = false)
         {
             var master = new MasterRunner(parallel);
-            Parallel.For(0, parallel, index =>
-            {
-                var slave = new SlaveRunner(index, count / parallel, @throw, master);
-                property.Check(new Configuration { Name = name, MaxNbOfTest = count / parallel, EndSize = size, Runner = slave });
-            });
+            Enumerable.Range(0, parallel)
+                .AsParallel()
+                .Select(i => new SlaveRunner(i, count / parallel, @throw, master))
+                .ForAll(slave => property.Check(new Configuration { Name = name, MaxNbOfTest = count / parallel, EndSize = size, Runner = slave }));
         }
     }
 }

@@ -1,0 +1,224 @@
+Gotchas:
+- structural operations are deferred (Add/Remove/Create/Destroy)
+- trying to query a component type directly rather than using 'Read<T>' or 'Write<T>'
+- forgetting to put a 'ref' on a parameter that mutates a component or resource
+	: enforced by the Visual Studio extension
+- forgetting 'ref' when declaring a variable that unwraps a 'Write<T>'
+	: enforced by the Visual Studio extension
+- forgetting to add Nodes.Default in the controller sequence
+- nesting generics deeper than 6 (limit is 7 but 1 nesting depth is needed internally)
+
+Conventions:
+- reactions should not be used when an equivalent solution exists
+
+Frictions:
+- no default values (for components, messages, resources, systems)
+	: components and resources can now use the 'DefaultAttribute'
+- can not add a component/tag/resource by dragging the file on a gameObject
+
+Features:
+- finish implementation of Group3.cs
+	- Count doesn't take into account entity creation and destruction
+- finish implementation of Component3.cs
+	- requires to modify the IQueryable interface to add a 'Initialize' method
+- make random access work for Group3.cs
+- cleanup Components2.cs + Group2.cs
+- promote Resolvers as a supported module with the Defer injectable
+- promote Components3.cs as the official component module
+	- implement 'transient' stores to make the API more consistent
+- merge Components and Tags
+	- remove everything that has to do with tags
+	- ITag
+	- ITagReference
+	- tag generation
+	- tag template
+	- tag analysis in VSIX
+- remove Query<T> as an injectable
+	- Group<T> is now lightweight enough to be the only option
+- remove naming conventions from VSIX
+- remove Stores
+- remove old segments and all ISegment related logic
+- make BitMask immutable
+	- everywhere 'new BitMask()' is used, replace it with BitMask.Empty
+- Query combinators can be simplified alot
+	- maybe Filter can be removed?
+- MessageUtility should use 'Metadata'
+- OnAdd<T>/OnAdd and OnRemove<T>/OnRemove should use Metadata
+- OnAdd<T>/OnRemove<T> shoud have the IComponent constraint
+- use ComponentUtility instead of IndexUtility
+- adjust tests to changes
+- create github repository
+- when merging, fix .meta files
+
+- improve better removal actions in tests by querying all removable entities from the world and choosing from that query
+	- currently, a random entity is chosen from the world and if it is not removable, the action is considered invalid
+	- this makes removal actions much less often successful, thus it reduces the overall effectiveness of the sequences
+	- it also skews the chosen probabilities in favor of add actions
+- built-in Hierarchy component
+	- should use an 'IndexStore' since it needs to be fast for entity queries and will most likely be very common
+	: should not be a component, but a module since changes to one hierarchy must echo throughout the other related hierarchies
+- write property and performance tests
+	- C# QuickCheck implementation: https://github.com/fscheck/FsCheck/
+	- add a 'Resolve' action for the world in tests
+	- run tests on device
+	- find a way to run tests in parallel
+		- static caches cause race conditions
+
+Bugs:
+- error in Unity when renaming a component/tag/resource.
+	- the error prevents to go in play mode while it is there
+	- the error disapears on the next compilation
+	: the error appears in the console but is removed when compilation is done
+- if a new arbitrary type is defined outside the generator's input folders and then used in a component, the generator will try to look for that type in the assembly that Unity compiles but will fail to find it since Unity didn't get a chance to compile it; then the generator will generate a component with a potentially wrongly named type which will prevent Unity from compiling
+	- currently a user has to manually repair the broken type reference to give Unity a chance to compile, after which the generator will properly find the type
+	- a potential solution is to include all files as input to the generator
+		- the performance hit might be reduced by not having to include 'ScriptAssemblies'
+		- the generator would be triggered only when a file within the input folders is modified but would take all the project files as input
+	- otherwise, the generator can try to generate using the input folders, but if a reference cannot be resolved, it could retry using all the project files
+		- in most cases, the generator succeeds without needing all the files, so the performance hit should occur only in rare cases
+- Instantiation/Initialization can get stuck in an inifinite loop
+- If 2 components of the same name but in different namespaces are included in a query, the generator will generate ambiguous extensions
+	-ex: Group<All<Components.Boba.A, Components.Fett.A>>; item.A();
+	- would require adding namespace elements to the extensions until they are no longer ambiguous; item.BobaA(); item.FettA();
+- Generator will not generate appropriate extensions for generic systems
+- Show appropriate World content at editor time in WorldReferenceEditor
+	- use FindObjectsOfType to retrieve entities/components/tags/resources in scene?
+- 'Read<T>' doesn't prevent the modification of mutable classes in a component
+	- this might be not be realistically solvable
+
+Optimization:
+- WorldReferenceEditor is very slow. Can try to cache stuff.
+- find a way to order groups items and/or store items in such a way that they will be better accessed contiguously
+	- ordering items with the 'Entity.Index' might work
+- reuse equivalent Component.Mask instances rather having 1 per entity
+	- would reduce the memory footprint which can be significant when there are alot of entities
+	- would also allow to make Component.Mask immutable and thus less prone to bugs
+- add _bitHead and _bitTail to BitMask and use them to exit early HasAny/All/None calls rather than _head (renamed to _bucketHead) and _tail (renamed to _bucketTail)
+	- RefreshRange will be a bit more involved but might be removeable from 'Add(int index)' and sometimes from 'Remove(int index)'
+	- Since I'm basicaly never using 'Add/Remove(Bucket bucket)', the impact should be close to zero
+	- *** the _bitHead/_bitTail optimization might not be worth it; simply doing all bitwise comparisons might be faster even if they require a loop
+- make sure every 'Enumerable<T>' is implemented in such a way that it doesn't allocate 
+	- especially check stores
+- do proper Buffer<T> defragmentation (a callback for moved indices?)
+- do I really need to store entities in stores?
+- could parallelize entities between segments?
+
+Questions:
+- should system methods be implemented explicitly by convention?
+	- prevents cases where a user changes the system interfaces and doesn't understand why the methods are not called anymore since the compiler will emit an error
+- instead of having Queryables.Read<T>, Dependables.Read<T> and Queriers.Read<T>, etc. include the others inside the main one?
+	- Queryables.Read<T> would have an inner class called Dependable and one called Querier, etc.
+- merge Dependables.Read<T> and Queryable.Read<T>?
+- how to instantiate efficiently entities and entity references?
+	- in the 'Templates' module, one should be able to exchange an Entity, an EntityReference or a TemplateReference with a 'Template'
+	- the TemplateReference will have 2 options: 'Pure' and 'Pool'
+		- 'Pure' indicates that only the Entia elements should be considered in the produced template, thus stripping away all the Unity hierarchy
+		- if 'Pure' is false, the Unity hierarchy will be instantiated and all Entia references will be stripped (in debug, EntityReference will remain to display their components)
+		- 'Pool' indicates that the Unity hierarchy should be pooled to limit the instantiations; note that this requires proper initialization of Unity components
+- how to allow to display the System's state?
+	- since the system instances are hidden, there is no way to retrieve them from outside
+	- even if one had a reference to a system, all system state is forced to be private, thus still inaccessible
+	- Solution 1:
+		- create a 'Systems' module that gives access to active system instances
+		- allow a system to expose its state publicly
+			- should properties be used to differenciate from injected fields?
+			- should an attribute be used to ignore the injection of some fields (opt-out injection)?
+			- should an attribute be used to inject fields (opt-in injection)?
+		- this allows a separate MonoBehaviour to retrieve the system and its state and display it
+	- Solution 2:
+		- store the state to display in a 'Resource'
+		- since all fields are meant to be public in a resource, a separate MonoBehaviour will be able to display the state
+		- this exposes the state to all systems but is more inline with Entia
+- find a better way to enable/disable profiling than using Application.isEditor?
+- leave 'Controller' state wrappers in builds?
+	- the performance cost might not be worth any effort
+	- could be useful to be able to disable a system in a build
+- better way to initialize the World
+	- currently using a Factory in WorldReference but it seems that there might be a better pattern
+- systems as structs...
+	- since C# has a poor type inference for functions, it is more lightweigth to register systems like so: Build<ASystem>() vs Build<ASystem.Data>(ASystem.Run)
+	- allows to add a dispose mechanism and/or other system events
+	- data can be accessed directly through fields rather than 'data.Something'
+	- data in systems is less protected
+		- public fields will have to be providable
+		- private fields will be ignored
+		- this way, a non-providable public field that tries to expose the system's data to the outside world, will fail on provision
+	- will make automatic instantiation possible
+		- very practical for prototyping
+		- ordering will have to be definable manually
+- special Disabled<T> where T : IComponent tag that disables specific components?
+	- Read<T> and Write<T> queries will implicitly exclude Disabled<T>
+	- doubles the number of component indices
+	- Read<T> and Write<T> will have to add it to their static Filter
+- generate deconstructors for ISystemData?
+- how to improve the 'TryGet' flow
+	- can I somehow return a ref?
+- how to remove static interfaces?
+	- The main reason they exist is for insuring proper AOT compilation
+	- Maybe this AOT issues could be resolved via code generation?
+- Unity defer?
+				
+- parameterized templates?
+	- templates could require arguments when instantiated in order to set some required values on components
+	- another idea would be to allow to require an 'out Write<T>' to initialize to component
+		- would be able to skip the dictionary lookup
+		- much more general solution than the previous one
+		- what happens if the template did not have a 'T' type?
+			- could return an 'out Write<T>?' instead to represent nullability
+			
+- is separating 'Read' and 'Write' really useful?
+	- it makes dependencies more obvious and 'might' allow for some automatic scheduling of systems and/or prevention of race conditions
+	- in debug, the ComponentManager could check if two thread are trying to write to the same component types
+		- when iterating a group, it would have to notify the ComponentManager that a given thread is reading/writing to a set of types
+		- 'GetEnumerator' would call 'WriteLock(types)' and/or 'ReadLock(types)' and 'Dispose' would call 'WriteUnlock(types)' and/or 'ReadUnlock()'
+		- 'WriteLock' and 'ReadLock' could also return a 'Lock' struct that would have to be disposed
+		- might not be needed if dependencies are declared properly (see "use the function parameters of a system for dependency declarations?")
+	- performance-wise it makes no difference in Production
+	- all dependencies can be 'Write' by default and can be specified to be 'Read'
+
+Rejected:
+- make Read<T> and Write<T> delegates
+	- this would make the syntax more lightweight
+		- ex: ref var position = item.Item1.Value; /*becomes*/ ref var position = item.Item1();
+	- since the getter of the property 'Value' is a function, it might not make a performance difference
+		- measure it in case of compiler optimizations
+	- requires a way
+	: wouldn't work properly with '?' types since delegates are not structs; it would mean that nullability would be hidden
+	
+Answers:
+- should I keep 'ISystem' mandatory or system interfaces should derive from it?
+	: it is useless to write it everytime and since the interfaces are already specific to systems, lets just make the dependency explicit and save some boilerplate code
+- external project vs Unity project
+	: External project:
+		- C#7 features
+			- 'is var'
+			- 'out var'
+			- 'ref' returns and locals
+			- 'ref readonly' returns and locals
+			- better extension resolution 
+				- component named extensions do work
+				- we don't have to use index-based unpacking of group items (First, Second, etc.)
+			- tuple syntax (construction and deconstruction)
+		- More scattered
+			- extensions and generated components must go in 2 different projects
+				- we want the extensions to be usable within the external project
+				- we want generated components to remain in script files in Unity such that they each have a specific meta
+			- enforces that we don't use the generated components in the game code
+			- will sometimes require to have 2 Visual Studio instances opened at the same time
+			- more complexity from managing 2 Visual Studio solutions
+		- Would most likely be a temporary setup that would be dismantled when C#7 becomes available in Unity
+		- Better code stripping
+			- Unity strips code from external DLLs
+			- Unity doesn't strip code from script files
+			- The amount of generated extensions doesn't matter since the unused ones will be stripped
+			- Relies on the fact that we use stripping and that it works properly
+		- Detecting renames is complicated
+			- I have no good way to semantically map declared components to their generated components since they are in different DLLs
+			- I might have to generate mapping C# files in the external project that would get compiled with the DLL
+				- The mappings might get stripped by Unity though
+		- Can't use Unity's #if directives
+			- Enforces that we correctly separate editor code from non-editor code
+			- Requires that platform specific code is placed in the Unity project or that it uses a runtime check
+
+- support for multiple components of the same type?
+	: might not be really useful, but since it doesn't hinder a big performance cost, I've left it there

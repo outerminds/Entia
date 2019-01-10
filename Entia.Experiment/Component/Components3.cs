@@ -2,7 +2,6 @@ using Entia.Core;
 using Entia.Experiment.Modules;
 using Entia.Experiment.Resolvables;
 using Entia.Messages;
-using Entia.Messages.Segment;
 using Entia.Modules.Component;
 using System;
 using System.Collections.Generic;
@@ -79,6 +78,12 @@ namespace Entia.Modules
             int StoreIndex<T>() where T : struct, IComponent => StoreIndex(ComponentUtility.Cache<T>.Data.Index);
         }
 
+        public sealed class Transient
+        {
+            public (Entity[] items, int count) Entities;
+            public (Array[][] items, int count) Chunks;
+        }
+
         readonly Messages _messages;
         readonly Resolvers _resolvers;
 
@@ -96,7 +101,7 @@ namespace Entia.Modules
             _empty = new Segment(0, new BitMask());
             _segments = (new Segment[] { _empty }, 1);
             _maskToSegment = new Dictionary<BitMask, Segment> { { _empty.Mask, _empty } };
-            // _messages.React((in OnCreate message) => Initialize(message.Entity));
+            _messages.React((in OnCreate message) => Initialize(message.Entity));
             _messages.React((in OnPreDestroy message) => Dispose(message.Entity));
         }
 
@@ -233,7 +238,7 @@ namespace Entia.Modules
                 }
             }
 
-            _messages.Emit(new OnMove { Source = source, Target = target });
+            _messages.Emit(new Entia.Messages.Segment.OnMove { Source = source, Target = target });
         }
 
         bool Has(Entity entity, int component) => TryGetSegment(entity, out var pair) && pair.segment.Has(component);
