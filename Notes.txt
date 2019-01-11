@@ -21,6 +21,9 @@ Features:
 	- Count doesn't take into account entity creation and destruction
 - finish implementation of Component3.cs
 	- requires to modify the IQueryable interface to add a 'Initialize' method
+- Node.Resolve()
+	- Can be used with the 'Separate' combinator which will insert an instance of the provided node between each child nodes
+	- ex: Node.Sequence(...).Separate(() => Node.Resolve()) // with lambda or not
 - make random access work for Group3.cs
 - cleanup Components2.cs + Group2.cs
 - promote Resolvers as a supported module with the Defer injectable

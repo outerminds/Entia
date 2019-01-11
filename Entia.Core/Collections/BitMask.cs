@@ -40,8 +40,7 @@ namespace Entia.Core
             return result;
         }
 
-        public bool IsEmpty => _head == 0 && _tail == 0 && _buckets[0] == 0uL;
-        public int Count { get; private set; }
+        public bool IsEmpty => _tail == 0 && _buckets[0] == 0uL;
         public int Capacity => _buckets.Length * Bucket.Size;
 
         int _head;
@@ -58,8 +57,7 @@ namespace Entia.Core
 
         public BitMask(params BitMask[] masks)
         {
-            foreach (var mask in masks)
-                for (var i = 0; i < mask._buckets.Length; i++) Add(new Bucket(i, mask._buckets[i]));
+            foreach (var mask in masks) Add(mask);
         }
 
         public bool Has(int index) => Has(Bucket.OfIndex(index));
@@ -109,10 +107,16 @@ namespace Entia.Core
             var merged = current | bucket.Mask;
             if (current == merged) return false;
 
-            Count++;
             current = merged;
             RefreshRange();
             return true;
+        }
+
+        public bool Add(BitMask mask)
+        {
+            var added = false;
+            for (var i = 0; i < mask._buckets.Length; i++) added |= Add(new Bucket(i, mask._buckets[i]));
+            return added;
         }
 
         public bool Remove(int index) => Remove(Bucket.OfIndex(index));
@@ -125,18 +129,26 @@ namespace Entia.Core
             var filtered = current & ~bucket.Mask;
             if (current == filtered) return false;
 
-            Count--;
             current = filtered;
             RefreshRange();
             return true;
         }
 
-        public void Clear()
+        public bool Remove(BitMask mask)
         {
+            var removed = false;
+            for (var i = 0; i < mask._buckets.Length; i++) removed |= Remove(new Bucket(i, mask._buckets[i]));
+            return removed;
+        }
+
+        public bool Clear()
+        {
+            var cleared = !IsEmpty;
             _head = 0;
             _tail = 0;
             _hash = null;
             _buckets.Clear();
+            return cleared;
         }
 
         public bool Equals(BitMask other)

@@ -67,7 +67,7 @@ namespace Entia.Core
         public int Add(T item)
         {
             var index = _items.count;
-            _items.Set(item, index);
+            _items.Set(index, item);
             return index;
         }
 

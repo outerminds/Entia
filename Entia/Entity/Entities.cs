@@ -320,7 +320,7 @@ namespace Entia.Modules
         SegmentData GetSegment(int local)
         {
             if (TryGetSegment(local, out var segment)) return segment;
-            _segments.Set(segment = new SegmentData(), local);
+            _segments.Set(local, segment = new SegmentData());
             return segment;
         }
 

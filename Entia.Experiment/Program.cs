@@ -128,7 +128,7 @@ namespace Entia.Experiment
 
         public struct DoQuit : IMessage { }
 
-        static void Simple()
+        static void Simple1()
         {
             var world = new World();
             var node = Node.Sequence(
@@ -140,45 +140,66 @@ namespace Entia.Experiment
             var result = world.Controllers().Run(node, () => !game.Value.Quit);
         }
 
-        static void Poulah2()
+        static void Simple2()
         {
             var world = new World();
-            var components = new Components2(world.Entities(), world.Messages());
+            var node = Node.Sequence(
+                System<Systems.A>(),
+                System<Systems.B>(),
+                System<Systems.C>()
+            );
 
-            for (var i = 0; i < 100; i++)
+            if (world.Controllers().Control(node).TryValue(out var controller))
             {
-                var entity = world.Entities().Create();
-                var add1 = components.Set(entity, new Position { X = i });
-                var add2 = components.Set(entity, new Position { Y = i });
-                ref var write1 = ref components.Write<Position>(entity);
-                write1.X++;
-                var has1 = components.Has<Position>(entity);
-                var remove1 = components.Remove<Position>(entity);
-                var has2 = components.Has<Position>(entity);
-                var add3 = components.Set(entity, new Velocity { X = i });
-                ref var write2 = ref components.Write<Velocity>(entity);
-                write2.X++;
-                var has3 = components.Has<Velocity>(entity);
-                var add4 = components.Set(entity, new Position { Z = i });
-                ref var write3 = ref components.Write<Position>(entity);
-                write3.Y++;
-                var has4 = components.Has<Position>(entity);
-                var remove2 = components.Remove<Velocity>(entity);
-                var has5 = components.Has<Position>(entity);
-                var has6 = components.Has<Velocity>(entity);
-                components.Resolve();
-                var has7 = components.Has<Position>(entity);
-                var has8 = components.Has<Velocity>(entity);
-                ref var write4 = ref components.Write<Position>(entity);
-                write4.Z++;
+                ref var game = ref world.Resources().Get<Game>();
+                controller.Initialize();
+                while (!game.Quit) controller.Run();
+                controller.Dispose();
             }
         }
 
-        static void Poulah3()
+        static void Poulah()
         {
             var world = new World();
-            var resolvers = new Modules.Resolvers();
-            var components = new Components3(world.Messages(), resolvers);
+            var components = new Components3(world.Messages());
+            var random = new Random();
+            world.Set(components);
+
+            void SetRandom(Entity entity)
+            {
+                var value = random.NextDouble();
+                if (value < 0.333)
+                    components.Set(entity, new Position { X = (float)value });
+                else if (value < 0.666)
+                    components.Set(entity, new Velocity { X = (float)value });
+            }
+
+            for (int i = 0; i < 100; i++)
+            {
+                var entity = world.Entities().Create();
+                SetRandom(entity);
+                SetRandom(entity);
+            }
+
+            world.Resolve();
+
+            for (int i = 0; i < 100; i++)
+            {
+                var entity = world.Entities().Create();
+                SetRandom(entity);
+                SetRandom(entity);
+            }
+
+            world.Entities().Clear();
+
+            for (int i = 0; i < 100; i++)
+            {
+                var entity = world.Entities().Create();
+                SetRandom(entity);
+                SetRandom(entity);
+            }
+
+            world.Resolve();
 
             for (var i = 1; i <= 100; i++)
             {
@@ -186,35 +207,35 @@ namespace Entia.Experiment
 
                 var has1 = components.Has<Position>(entity);
                 var add1 = components.Set(entity, new Position { X = i });
-                var add2 = components.Set(entity, new Position { Y = i });
-                var has2 = components.Has<Position>(entity);
-                resolvers.Resolve();
-                var has3 = components.Has<Position>(entity);
-                ref var write1 = ref components.Write<Position>(entity);
-                var add3 = components.Set(entity, new Position { Z = i });
+                ref var write1 = ref components.Get<Position>(entity);
                 write1.X++;
 
+                var add2 = components.Set(entity, new Position { Y = i });
+                var has2 = components.Has<Position>(entity);
+                world.Resolve();
+                var has3 = components.Has<Position>(entity);
+                var add3 = components.Set(entity, new Position { Z = i });
                 var add4 = components.Set(entity, new Velocity { X = i });
-                resolvers.Resolve();
+                world.Resolve();
 
-                ref var write2 = ref components.Write<Position>(entity);
+                ref var write2 = ref components.Get<Position>(entity);
                 write2.Y++;
 
                 var has4 = components.Has<Position>(entity);
                 var has5 = components.Has<Velocity>(entity);
                 var remove1 = components.Remove<Position>(entity);
-                resolvers.Resolve();
+                world.Resolve();
                 var has6 = components.Has<Velocity>(entity);
-                ref var write3 = ref components.Write<Velocity>(entity);
+                ref var write3 = ref components.Get<Velocity>(entity);
                 write3.X++;
                 var clear1 = components.Clear(entity);
                 var add5 = components.Set(entity, new Position { X = i + 10 });
                 var has7 = components.Has<Position>(entity);
                 var has8 = components.Has<Velocity>(entity);
-                resolvers.Resolve();
+                world.Resolve();
 
                 var has9 = components.Has<Velocity>(entity);
-                ref var write4 = ref components.Write<Position>(entity);
+                ref var write4 = ref components.Get<Position>(entity);
                 write4.Y++;
             }
         }
@@ -288,7 +309,7 @@ namespace Entia.Experiment
         {
             // InParameters();
             // ExtremeUnsafe();
-            // Poulah3();
+            Poulah();
             Console.ReadKey();
         }
 

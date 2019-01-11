@@ -67,6 +67,8 @@ namespace Entia.Experiment.Modules
             }
         }
 
+        public void Defer<TState>(in TState state, Action<TState> @do) => Defer(new Do<TState>(state, @do));
+
         Data CreateData<T>(in T resolvable) where T : struct, IResolvablez
         {
             var resolver = Default<T>();

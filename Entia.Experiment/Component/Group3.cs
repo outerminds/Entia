@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Entia.Core;
 using Entia.Messages.Segment;
 using Entia.Modules;
+using Entia.Modules.Component;
 using Entia.Modules.Query;
 using Entia.Queryables;
 
@@ -11,13 +12,13 @@ namespace Entia.Messages.Segment
 {
     public struct OnCreate : IMessage
     {
-        public Components3.Segment Segment;
+        public Modules.Component.Segment Segment;
     }
 
     public struct OnMove : IMessage
     {
-        public (Components3.Segment segment, int index) Source;
-        public (Components3.Segment segment, int index) Target;
+        public (Modules.Component.Segment segment, int index) Source;
+        public (Modules.Component.Segment segment, int index) Target;
     }
 }
 
@@ -196,8 +197,8 @@ namespace Entia.Modules
 
         readonly Components3 _components;
         readonly Messages _messages;
-        ((Components3.Segment segment, T item)[] items, int count) _segments = (new (Components3.Segment, T)[4], 0);
-        Components3.Segment[] _indexToSegment = new Components3.Segment[4];
+        ((Segment segment, T item)[] items, int count) _segments = (new (Segment, T)[4], 0);
+        Segment[] _indexToSegment = new Segment[4];
 
         public Group3(Components3 components, Messages messages)
         {
@@ -209,14 +210,14 @@ namespace Entia.Modules
 
         public SplitEnumerable Split(int count) => new SplitEnumerable(this, count);
 
-        public bool Has(Entity entity) => _components.TryGetSegment(entity, out var pair) && Has(pair.segment);
-        public bool Has(Components3.Segment segment) => segment.Index < _indexToSegment.Length && _indexToSegment[segment.Index] == segment;
+        // public bool Has(Entity entity) => _components.TryGetSegment(entity, out var pair) && Has(pair.segment);
+        public bool Has(Segment segment) => segment.Index < _indexToSegment.Length && _indexToSegment[segment.Index] == segment;
 
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        bool TryAdd(Components3.Segment segment)
+        bool TryAdd(Segment segment)
         {
             if (!Has(segment) && Query.Fits(segment.Mask))
             {
@@ -231,7 +232,7 @@ namespace Entia.Modules
             return false;
         }
 
-        void Move(in (Components3.Segment segment, int index) source, in (Components3.Segment segment, int index) target)
+        void Move(in (Segment segment, int index) source, in (Segment segment, int index) target)
         {
             var has = (source: Has(source.segment), target: Has(target.segment));
             Count += (has.source ? -1 : 0) + (has.target ? 1 : 0);

@@ -30,7 +30,19 @@ namespace Entia.Core
 
         public static void Clear<T>(this T[] array) => Array.Clear(array, 0, array.Length);
 
-        public static bool Set<T>(ref this (T[] items, int count) pair, in T item, int index)
+        public static bool TryGet<T>(ref this (T[] items, int count) pair, int index, out T item)
+        {
+            if (index < pair.count)
+            {
+                item = pair.items[index];
+                return true;
+            }
+
+            item = default;
+            return false;
+        }
+
+        public static bool Set<T>(ref this (T[] items, int count) pair, int index, in T item)
         {
             pair.count = Math.Max(pair.count, index + 1);
             var resized = pair.Ensure();
@@ -52,7 +64,7 @@ namespace Entia.Core
         public static void Sort<T>(ref this (T[] items, int count) pair, IComparer<T> comparer) =>
             Array.Sort(pair.items, 0, pair.count, comparer);
 
-        public static ref T Push<T>(ref this (T[] items, int count) pair, in T item)
+        public static ref T Push<T>(ref this (T[] items, int count) pair, T item)
         {
             var index = pair.count++;
             pair.Ensure();

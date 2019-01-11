@@ -343,7 +343,7 @@ namespace Entia.Modules
         {
             if (TryGetSegment(local, out var segment)) return segment;
             IndexUtility<ISegment>.TryGetType(local, out var type);
-            _segments.Set(segment = new Segment(type), local);
+            _segments.Set(local, segment = new Segment(type));
             return segment;
         }
 
