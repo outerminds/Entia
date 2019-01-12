@@ -10,20 +10,21 @@ namespace Entia.Core
         {
             public const int Size = sizeof(ulong) * 8;
 
-            public readonly int Index;
+            public readonly uint Index;
             public readonly ulong Mask;
 
-            public Bucket(int index, ulong mask) { Index = index; Mask = mask; }
+            public Bucket(uint index, ulong mask) { Index = index; Mask = mask; }
+            public Bucket(int index, ulong mask) { Index = (uint)index; Mask = mask; }
 
             int IComparable<Bucket>.CompareTo(Bucket other) => Index.CompareTo(other.Index);
 
-            public static Bucket OfIndex(int index) => new Bucket(index / Size, 1uL << (index % Size));
+            public static Bucket OfIndex(int index) => new Bucket((index / Size), 1uL << (index % Size));
         }
 
         public static BitMask operator ~(BitMask mask)
         {
             var result = new BitMask(mask);
-            for (var i = 0; i < result._buckets.Length; i++) result._buckets[i] = ~result._buckets[i];
+            for (var i = 0; i < result._buckets.count; i++) result._buckets.items[i] = ~result._buckets.items[i];
             result.RefreshRange();
             return result;
         }
@@ -33,20 +34,18 @@ namespace Entia.Core
         public static BitMask operator &(BitMask a, BitMask b)
         {
             var result = new BitMask();
-            var count = Math.Min(a._buckets.Length, b._buckets.Length);
-            ArrayUtility.Ensure(ref result._buckets, count);
-            for (var i = 0; i < count; i++) result._buckets[i] = a._buckets[i] & b._buckets[i];
+            var count = Math.Min(a._buckets.count, b._buckets.count);
+            result._buckets.Ensure(count);
+            for (var i = 0; i < count; i++) result._buckets.items[i] = a._buckets.items[i] & b._buckets.items[i];
             result.RefreshRange();
             return result;
         }
 
-        public bool IsEmpty => _tail == 0 && _buckets[0] == 0uL;
-        public int Capacity => _buckets.Length * Bucket.Size;
+        public bool IsEmpty => _buckets.count == 0;
+        public int Capacity => _buckets.count * Bucket.Size;
 
-        int _head;
-        int _tail;
+        (ulong[] items, int count) _buckets = (new ulong[1], 0);
         int? _hash;
-        ulong[] _buckets = new ulong[1];
 
         public BitMask() { }
 
@@ -62,17 +61,15 @@ namespace Entia.Core
 
         public bool Has(int index) => Has(Bucket.OfIndex(index));
 
-        public bool Has(Bucket bucket) => _head <= bucket.Index && _tail >= bucket.Index && (_buckets[bucket.Index] & bucket.Mask) == bucket.Mask;
+        public bool Has(Bucket bucket) => bucket.Index < _buckets.count && (_buckets.items[bucket.Index] & bucket.Mask) == bucket.Mask;
 
         public bool HasAll(BitMask mask)
         {
-            var head = Math.Max(_head, mask._head);
-            var tail = Math.Min(_tail, mask._tail);
-
-            for (var i = head; i <= tail; i++)
+            var count = Math.Min(_buckets.count, mask._buckets.count);
+            for (var i = 0; i < count; i++)
             {
-                var bucketA = _buckets[i];
-                var bucketB = mask._buckets[i];
+                var bucketA = _buckets.items[i];
+                var bucketB = mask._buckets.items[i];
                 if ((bucketA & bucketB) != bucketB) return false;
             }
 
@@ -81,13 +78,11 @@ namespace Entia.Core
 
         public bool HasAny(BitMask mask)
         {
-            var head = Math.Max(_head, mask._head);
-            var tail = Math.Min(_tail, mask._tail);
-
-            for (var i = head; i <= tail; i++)
+            var count = Math.Min(_buckets.count, mask._buckets.count);
+            for (var i = 0; i < count; i++)
             {
-                var bucketA = _buckets[i];
-                var bucketB = mask._buckets[i];
+                var bucketA = _buckets.items[i];
+                var bucketB = mask._buckets.items[i];
                 if ((bucketA & bucketB) != 0) return true;
             }
 
@@ -100,22 +95,23 @@ namespace Entia.Core
 
         public bool Add(Bucket bucket)
         {
-            if (bucket.Index < 0 || bucket.Mask == 0uL) return false;
+            if (bucket.Mask == 0uL) return false;
 
-            ArrayUtility.Ensure(ref _buckets, bucket.Index + 1);
-            ref var current = ref _buckets[bucket.Index];
-            var merged = current | bucket.Mask;
-            if (current == merged) return false;
+            _buckets.Ensure(bucket.Index + 1u);
+            ref var current = ref _buckets.items[bucket.Index];
+            if (current.Change(current | bucket.Mask))
+            {
+                RefreshRange();
+                return true;
+            }
 
-            current = merged;
-            RefreshRange();
-            return true;
+            return false;
         }
 
         public bool Add(BitMask mask)
         {
             var added = false;
-            for (var i = 0; i < mask._buckets.Length; i++) added |= Add(new Bucket(i, mask._buckets[i]));
+            for (var i = 0; i < mask._buckets.count; i++) added |= Add(new Bucket(i, mask._buckets.items[i]));
             return added;
         }
 
@@ -123,38 +119,37 @@ namespace Entia.Core
 
         public bool Remove(Bucket bucket)
         {
-            if (bucket.Mask == 0uL || bucket.Index < _head || bucket.Index > _tail) return false;
+            if (bucket.Mask == 0uL || bucket.Index >= _buckets.count) return false;
 
-            ref var current = ref _buckets[bucket.Index];
-            var filtered = current & ~bucket.Mask;
-            if (current == filtered) return false;
+            ref var current = ref _buckets.items[bucket.Index];
+            if (current.Change(current & ~bucket.Mask))
+            {
+                RefreshRange();
+                return true;
+            }
 
-            current = filtered;
-            RefreshRange();
-            return true;
+            return false;
         }
 
         public bool Remove(BitMask mask)
         {
             var removed = false;
-            for (var i = 0; i < mask._buckets.Length; i++) removed |= Remove(new Bucket(i, mask._buckets[i]));
+            for (var i = 0; i < mask._buckets.count; i++) removed |= Remove(new Bucket(i, mask._buckets.items[i]));
             return removed;
         }
 
         public bool Clear()
         {
             var cleared = !IsEmpty;
-            _head = 0;
-            _tail = 0;
-            _hash = null;
             _buckets.Clear();
+            _hash = null;
             return cleared;
         }
 
         public bool Equals(BitMask other)
         {
-            if (_head != other._head || _tail != other._tail) return false;
-            for (var i = _head; i <= _tail; i++) if (_buckets[i] != other._buckets[i]) return false;
+            if (_buckets.count != other._buckets.count) return false;
+            for (var i = 0; i < _buckets.count; i++) if (_buckets.items[i] != other._buckets.items[i]) return false;
             return true;
         }
 
@@ -164,37 +159,26 @@ namespace Entia.Core
         {
             if (_hash is int hash) return hash;
 
-            hash = _head.GetHashCode() ^ _tail.GetHashCode();
-            for (var i = _head; i <= _tail; i++) hash ^= _buckets[i].GetHashCode();
+            hash = _buckets.count;
+            for (int i = 0; i < _buckets.count; i++) hash ^= _buckets.items[i].GetHashCode();
             _hash = hash;
             return hash;
         }
 
         void RefreshRange()
         {
-            var head = default(int?);
-            var tail = default(int?);
-
-            for (var i = 0; i < _buckets.Length; i++)
-            {
-                if (_buckets[i] != 0)
-                {
-                    head = head ?? i;
-                    tail = i;
-                }
-            }
-
-            _head = head ?? 0;
-            _tail = tail ?? 0;
+            var count = 0;
+            for (var i = 0; i < _buckets.items.Length; i++) if (_buckets.items[i] != 0) count++;
+            _buckets.count = count;
             _hash = null;
         }
 
         public IEnumerator<int> GetEnumerator()
         {
             var index = 0;
-            for (var i = _head; i <= _tail; i++)
+            for (var i = 0; i < _buckets.count; i++)
             {
-                var bucket = _buckets[i];
+                var bucket = _buckets.items[i];
                 for (var j = 0; j < Bucket.Size; j++, index++)
                     if ((bucket & (1uL << j)) != 0uL) yield return index;
             }

@@ -12,6 +12,18 @@
 			"console": "externalTerminal",
 			"stopAtEntry": false,
 			"internalConsoleOptions": "openOnSessionStart"
+		},
+		{
+			"name": "Entia.Test",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "build debug",
+			"program": "${workspaceFolder}/Entia.Test//bin/Debug/netcoreapp2.1/Entia.Test.dll",
+			"args": [],
+			"cwd": "${workspaceFolder}/Entia.Test/",
+			"console": "externalTerminal",
+			"stopAtEntry": false,
+			"internalConsoleOptions": "openOnSessionStart"
 		}
 	]
 }

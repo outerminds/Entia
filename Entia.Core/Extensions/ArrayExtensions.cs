@@ -58,7 +58,10 @@ namespace Entia.Core
             return array;
         }
 
+        public static ArrayEnumerable<T> Enumerate<T>(in this (T[] items, int count) pair) => new ArrayEnumerable<T>(pair.items, pair.count);
+
         public static bool Ensure<T>(ref this (T[] items, int count) pair) => ArrayUtility.Ensure(ref pair.items, pair.count);
+        public static bool Ensure<T>(ref this (T[] items, int count) pair, uint size) => ArrayUtility.Ensure(ref pair.items, size);
         public static bool Ensure<T>(ref this (T[] items, int count) pair, int size) => ArrayUtility.Ensure(ref pair.items, size);
 
         public static void Sort<T>(ref this (T[] items, int count) pair, IComparer<T> comparer) =>

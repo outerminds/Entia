@@ -45,6 +45,7 @@ Features:
 	- everywhere 'new BitMask()' is used, replace it with BitMask.Empty
 - Query combinators can be simplified alot
 	- maybe Filter can be removed?
+	- remove bitwise operator from BitMask
 - MessageUtility should use 'Metadata'
 - OnAdd<T>/OnAdd and OnRemove<T>/OnRemove should use Metadata
 - OnAdd<T>/OnRemove<T> shoud have the IComponent constraint

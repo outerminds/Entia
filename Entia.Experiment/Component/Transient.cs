@@ -5,25 +5,34 @@ namespace Entia.Modules.Component
 {
     public sealed class Transient
     {
+        public enum Resolutions : byte { Move, Add, Remove }
+        public struct Slot
+        {
+            public Entity Entity;
+            public BitMask Mask;
+            public Resolutions Resolution;
+        }
+
         public const int ChunkSize = 8;
 
-        public ((Entity entity, BitMask mask)[] items, int count) Entities = (new (Entity, BitMask)[16], 0);
+        public (Slot[] items, int count) Slots = (new Slot[16], 0);
         public Array[][] Chunks = new Array[2][];
 
-        public int Reserve(Entity entity, BitMask mask)
+        public int Reserve(Entity entity, Resolutions resolution, BitMask mask = null)
         {
-            var index = Entities.count++;
-            Entities.Ensure();
+            var index = Slots.count++;
+            Slots.Ensure();
 
-            ref var pair = ref Entities.items[index];
-            if (pair.mask == null) pair = (entity, new BitMask { mask });
+            ref var slot = ref Slots.items[index];
+            if (slot.Mask == null) slot = new Slot { Entity = entity, Mask = new BitMask(), Resolution = resolution };
             else
             {
-                pair.entity = entity;
-                pair.mask.Clear();
-                pair.mask.Add(mask);
+                slot.Entity = entity;
+                slot.Resolution = resolution;
+                slot.Mask.Clear();
             }
 
+            if (mask != null) slot.Mask.Add(mask);
             return index;
         }
 

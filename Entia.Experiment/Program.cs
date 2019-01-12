@@ -1,12 +1,14 @@
 ﻿using Entia.Core;
 using Entia.Injectables;
 using Entia.Modules;
+using Entia.Modules.Component;
 using Entia.Nodes;
 using Entia.Queryables;
 using Entia.Systems;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using static Entia.Nodes.Node;
@@ -160,6 +162,7 @@ namespace Entia.Experiment
 
         static void Poulah()
         {
+            // FIX: there are duplicates in segments
             var world = new World();
             var components = new Components3(world.Messages());
             var random = new Random();
@@ -190,6 +193,12 @@ namespace Entia.Experiment
                 SetRandom(entity);
             }
 
+            var metadata = ComponentUtility.Cache<Position>.Data;
+            var query = new Entia.Modules.Query.Query<Write<Position>>(
+                Entia.Modules.Query.Filter.Empty,
+                mask => mask.Has(metadata.Index),
+                default);
+            var group = new Entia.Modules.Group.Group3<Write<Position>>(query, components, world.Messages());
             world.Entities().Clear();
 
             for (int i = 0; i < 100; i++)
@@ -216,7 +225,9 @@ namespace Entia.Experiment
                 var has3 = components.Has<Position>(entity);
                 var add3 = components.Set(entity, new Position { Z = i });
                 var add4 = components.Set(entity, new Velocity { X = i });
+                var get1 = components.Get(entity).ToArray();
                 world.Resolve();
+                var get2 = components.Get(entity).ToArray();
 
                 ref var write2 = ref components.Get<Position>(entity);
                 write2.Y++;
@@ -229,11 +240,13 @@ namespace Entia.Experiment
                 ref var write3 = ref components.Get<Velocity>(entity);
                 write3.X++;
                 var clear1 = components.Clear(entity);
+                var get3 = components.Get(entity).ToArray();
                 var add5 = components.Set(entity, new Position { X = i + 10 });
                 var has7 = components.Has<Position>(entity);
                 var has8 = components.Has<Velocity>(entity);
                 world.Resolve();
 
+                var get4 = components.Get(entity).ToArray();
                 var has9 = components.Has<Velocity>(entity);
                 ref var write4 = ref components.Get<Position>(entity);
                 write4.Y++;
@@ -282,6 +295,48 @@ namespace Entia.Experiment
             dataloo.Resolve(valuePointer, statePointer);
         }
 
+        unsafe struct Palionque
+        {
+            public int Current => *Pointer;
+
+            public int Index;
+            public int* Pointer;
+        }
+
+        unsafe static void SadisticalyUnsafe()
+        {
+            Palionque Create()
+            {
+                var value = new Palionque();
+                value.Pointer = (int*)Unsafe.AsPointer(ref value.Index);
+                return value;
+            }
+
+            var a = Create();
+            var b = a;
+            a.Index++;
+            b.Index++;
+        }
+
+        static unsafe void* AsPointer<T>(ref T value)
+        {
+            var reference = __makeref(value);
+            return *(void**)&reference;
+        }
+
+        static unsafe ref T ToRef<T>(void* pointer)
+        {
+            var span = new Span<T>(pointer, 1);
+            return ref span[0];
+        }
+
+        static unsafe void DoesItAllocate()
+        {
+            Array a = new int[] { 1, 2, 3 };
+            Array b = new int[] { 4, 5, 6 };
+            while (true) Array.Copy(a, 0, b, 0, 2);
+        }
+
         static void InParameters()
         {
             void Set<T>(in T source, T value)
@@ -309,6 +364,8 @@ namespace Entia.Experiment
         {
             // InParameters();
             // ExtremeUnsafe();
+            // SadisticalyUnsafe();
+            // DoesItAllocate();
             Poulah();
             Console.ReadKey();
         }

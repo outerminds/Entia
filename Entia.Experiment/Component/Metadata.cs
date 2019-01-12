@@ -6,7 +6,7 @@ namespace Entia.Modules.Component
 {
     public readonly struct Metadata
     {
-        public bool IsValid => Type != null && Index >= 0 && Fields != null;
+        public bool IsValid => Type != null && Index >= 0 && Mask != null && Fields != null;
         public bool IsTag => Fields?.Length == 0;
 
         public readonly Type Type;
