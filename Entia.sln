@@ -16,6 +16,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Entia.Analyze.Vsix", "Entia.Analyze.Vsix\Entia.Analyze.Vsix.csproj", "{E66E5788-4EB3-42E3-8E68-3902C59D4504}"
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug With Analyzer|Any CPU = Debug With Analyzer|Any CPU
 		Debug With Analyzer|x64 = Debug With Analyzer|x64
@@ -177,5 +180,8 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {34071C46-13E0-4704-9552-CC5B4C858EE2}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

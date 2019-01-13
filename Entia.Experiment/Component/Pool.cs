@@ -5,12 +5,12 @@ namespace Entia.Core
 {
     public sealed class Pool<T>
     {
-        public int Count => _items.ReadCount();
+        public readonly object Lock = new object();
 
         readonly Func<T> _create;
         readonly Action<T> _initialize;
         readonly Action<T> _dispose;
-        readonly Concurrent<(T[] items, int count)> _items = (new T[0], 0);
+        (T[] items, int count) _items = (new T[4], 0);
 
         public Pool(Func<T> create, Action<T> initialize = null, Action<T> dispose = null)
         {
@@ -21,21 +21,18 @@ namespace Entia.Core
 
         public T Take()
         {
-            using (var read = _items.Read(true))
-            {
-                T item;
-                if (read.Value.count == 0) item = _create();
-                else using (var write = _items.Write()) item = write.Value.Pop();
-
-                _initialize(item);
-                return item;
-            }
+            T item;
+            bool success;
+            lock (Lock) { success = _items.TryPop(out item); }
+            if (!success) item = _create();
+            _initialize(item);
+            return item;
         }
 
         public void Put(T item)
         {
             _dispose(item);
-            using (var write = _items.Write()) write.Value.Push(item);
+            lock (Lock) _items.Push(item);
         }
     }
 }

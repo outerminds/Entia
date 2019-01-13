@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Entia.Core
 {
@@ -9,7 +10,11 @@ namespace Entia.Core
     {
         public struct Enumerator : IEnumerator<(Type type, TValue value)>
         {
-            public (Type type, TValue value) Current => (_types.ReadAt(_index), _map._values.items[_index]);
+            public (Type type, TValue value) Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => (_types.ReadAt(_index), _map._values.items[_index]);
+            }
             object IEnumerator.Current => Current;
 
             TypeMap<TBase, TValue> _map;
@@ -20,6 +25,8 @@ namespace Entia.Core
                 _map = map;
                 _index = -1;
             }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
                 while (++_index < _map._allocated.Length)
@@ -33,7 +40,11 @@ namespace Entia.Core
 
         public struct KeyEnumerator : IEnumerator<Type>
         {
-            public Type Current => _types.ReadAt(_index);
+            public Type Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => _types.ReadAt(_index);
+            }
             object IEnumerator.Current => Current;
 
             TypeMap<TBase, TValue> _map;
@@ -44,6 +55,8 @@ namespace Entia.Core
                 _map = map;
                 _index = -1;
             }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
                 while (++_index < _map._allocated.Length)
@@ -67,7 +80,11 @@ namespace Entia.Core
 
         public struct ValueEnumerator : IEnumerator<TValue>
         {
-            public ref TValue Current => ref _map._values.items[_index];
+            public ref TValue Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => ref _map._values.items[_index];
+            }
             TValue IEnumerator<TValue>.Current => Current;
             object IEnumerator.Current => Current;
 
@@ -79,6 +96,8 @@ namespace Entia.Core
                 _map = map;
                 _index = -1;
             }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
                 while (++_index < _map._allocated.Length)
@@ -86,6 +105,7 @@ namespace Entia.Core
 
                 return false;
             }
+
             public void Reset() => _index = -1;
             public void Dispose() => _map = null;
         }

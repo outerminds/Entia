@@ -212,8 +212,8 @@ namespace Entia.Modules
             for (var i = 0; i < _segments.count; i++) if (_segments.items[i] is SegmentData segment) cleared |= Clear(segment);
             _free.Clear();
             _frozen.Clear();
-            _data.Clear();
             _segments.Clear();
+            // NOTE: do not clear '_data' such that the generations counter is not lost; this prevents collisions if a reference to an old entity was kept
             return cleared;
         }
 

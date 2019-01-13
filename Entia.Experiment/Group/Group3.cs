@@ -10,81 +10,53 @@ using Entia.Modules.Component;
 using Entia.Modules.Query;
 using Entia.Queryables;
 
-namespace Entia.Messages.Segment
-{
-    public struct OnCreate : IMessage
-    {
-        public Modules.Component.Segment Segment;
-    }
-
-    public struct OnMove : IMessage
-    {
-        public Entity Entity;
-        public (Modules.Component.Segment segment, int index) Source;
-        public (Modules.Component.Segment segment, int index) Target;
-    }
-}
-
-// public struct Maybe2<T> : IQueryable where T : struct, IQueryable
-// {
-//     public sealed class Querier
-//     {
-//         public Query<Maybe2<T>> Query(Segment segment, World world)
-//         {
-//             var query = world.Queriers().Query<T>();
-//             if (query.Fits == null) return new Query<Maybe2<T>>(
-//                 Filter.Empty, _ => false,
-//                 (Entity entity, out Maybe2<T> item) => { item = default; return false; });
-//         }
-//     }
-// }
-
 namespace Entia.Modules.Group
 {
-    public sealed class Group3<T> : IEnumerable<T> where T : struct, IQueryable
+    public interface IGroup3 : IResolvable { }
+
+    public sealed class Group3<T> : IGroup3, IEnumerable<T> where T : struct, IQueryable
     {
         public struct Enumerator : IEnumerator<T>
         {
-            public T Current { get; private set; }
+            public T Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get;
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                private set;
+            }
             object IEnumerator.Current => Current;
 
             Group3<T> _group;
             int _segment;
             Box<int> _index;
-            (Entity[] items, int count) _entities;
+            int _count;
 
             public Enumerator(Group3<T> group, int segment = 0, int entity = 0)
             {
                 _group = group;
-                _segment = int.MaxValue;
-                _index = _group._pool.Take();
-                _index.Value = int.MaxValue;
-                _entities = (Array.Empty<Entity>(), 0);
+                _segment = int.MaxValue - 1;
+                _index = _group.Box(int.MaxValue - 1);
+                _count = 0;
                 Current = default;
                 // NOTE: use 'segment', not '_segment' and use 'entity', not '_entity' here
-                Update(segment, entity);
+                Update(segment, entity - 1);
             }
 
-            public bool MoveNext()
-            {
-                while (true)
-                {
-                    if (++_index.Value < _entities.count) return true;
-                    else if (!Update(_segment + 1, 0)) return false;
-                }
-            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext() => ++_index.Value < _count || Update(_segment + 1, 0);
 
             bool Update(int segment, int entity)
             {
-                if (segment < _group._segments.count)
+                for (int i = segment; i < _group._segments.count; i++)
                 {
-                    var pair = _group._segments.items[segment];
-                    _segment = segment;
-                    _index.Value = entity - 1;
-                    _entities = pair.segment.Entities;
-                    // TODO: send the boxed index here
-                    pair.query.TryGet(default, out var item);
-                    Current = item;
+                    var current = _group._segments.items[i];
+                    _count = current.Entities.count;
+                    if (entity >= _count) { entity -= _count; continue; }
+
+                    _segment = i;
+                    _index.Value = entity;
+                    Current = _group._indexToQuery[current.Index].Get(_index);
                     return true;
                 }
 
@@ -92,13 +64,7 @@ namespace Entia.Modules.Group
             }
 
             public void Reset() => Update(0, 0);
-
-            public void Dispose()
-            {
-                _group._pool.Put(_index);
-                _group = null;
-                _entities = default;
-            }
+            public void Dispose() => _group = null;
         }
 
         public readonly struct SplitEnumerable : IEnumerable<SegmentEnumerable>
@@ -142,7 +108,7 @@ namespace Entia.Modules.Group
 
                 while (_next.segment < _group._segments.count)
                 {
-                    var segment = _group._segments.items[_next.segment].segment;
+                    var segment = _group._segments.items[_next.segment];
                     var remaining = segment.Entities.count - _next.entity;
                     var minimum = Math.Min(current, remaining);
                     _next.entity += minimum;
@@ -201,30 +167,32 @@ namespace Entia.Modules.Group
                 _index = -1;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => ++_index < _count && _enumerator.MoveNext();
-
             public void Reset()
             {
                 _enumerator.Reset();
                 _index = -1;
             }
-
             public void Dispose() => _enumerator.Dispose();
         }
 
         public int Count { get; private set; }
-        public Query<T> Query;
+        public ArrayEnumerable<Segment> Segments => _segments.Enumerate();
 
         readonly Components3 _components;
+        readonly Queriers2 _queriers;
         readonly Messages _messages;
-        readonly Pool<Box<int>> _pool = new Pool<Box<int>>(() => new Box<int>(), box => box.Value = 0);
-        ((Segment segment, Query<T> query)[] items, int count) _segments = (new (Segment, Query<T>)[4], 0);
+        readonly Pool<Box<int>> _pool = new Pool<Box<int>>(() => new Box<int>());
+        (Box<int>[] items, int count) _boxes = (new Box<int>[2], 0);
+        (Segment[] items, int count) _segments = (new Segment[4], 0);
         Segment[] _indexToSegment = new Segment[4];
+        Query2<T>[] _indexToQuery = new Query2<T>[4];
 
-        public Group3(Query<T> query, Components3 components, Messages messages)
+        public Group3(Components3 components, Queriers2 queriers, Messages messages)
         {
-            Query = query;
             _components = components;
+            _queriers = queriers;
             _messages = messages;
             _messages.React((in OnCreate message) => TryAdd(message.Segment));
             _messages.React((in OnMove message) => Move(message.Source, message.Target));
@@ -233,21 +201,46 @@ namespace Entia.Modules.Group
 
         public SplitEnumerable Split(int count) => new SplitEnumerable(this, count);
 
-        public bool Has(Entity entity) => _components.TrySegment(entity, out var pair) && Has(pair.segment);
+        public bool Has(Entity entity) => _components.TryGetSegment(entity, out var pair) && Has(pair.segment);
         public bool Has(Segment segment) => segment.Index < _indexToSegment.Length && _indexToSegment[segment.Index] == segment;
+
+        public bool TryGet(Entity entity, out T item)
+        {
+            if (_components.TryGetSegment(entity, out var pair) && Has(pair.segment))
+            {
+                item = _indexToQuery[pair.segment.Index].Get(Box(pair.index));
+                return true;
+            }
+
+            item = default;
+            return false;
+        }
+
+        public void Resolve()
+        {
+            for (int i = 0; i < _boxes.count; i++) _pool.Put(_boxes.items[i]);
+            _boxes.Clear();
+        }
 
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
+        Box<int> Box(int value = 0)
+        {
+            Box<int> box;
+            lock (_pool.Lock) { _boxes.Push(box = _pool.Take()); }
+            box.Value = value;
+            return box;
+        }
+
         bool TryAdd(Segment segment)
         {
-            if (!Has(segment) && Query.Fits(segment.Mask))
+            if (!Has(segment) && _queriers.TryQuery<T>(segment, out var query))
             {
                 ArrayUtility.Set(ref _indexToSegment, segment, segment.Index);
-                _indexToSegment[segment.Index] = segment;
-                // TODO: build default item for segment
-                _segments.Push((segment, default));
+                ArrayUtility.Set(ref _indexToQuery, query, segment.Index);
+                _segments.Push(segment);
                 Count += segment.Entities.count;
                 return true;
             }

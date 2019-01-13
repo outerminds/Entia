@@ -45,6 +45,7 @@ namespace Entia.Modules.Component
             return false;
         }
 
+        public T[] Store<T>() where T : struct, IComponent => (T[])Stores[StoreIndex<T>()];
         public ref Array Store(int component) => ref Stores[StoreIndex(component)];
 
         public bool TryStore(in Metadata metadata, out Array store)

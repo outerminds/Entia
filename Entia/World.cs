@@ -38,7 +38,7 @@ namespace Entia
         public bool Clear() => _modules.Clear();
         public void Resolve()
         {
-            foreach (var (_, module) in _modules) (module as IResolvable)?.Resolve();
+            foreach (var module in _modules.Values) (module as IResolvable)?.Resolve();
         }
 
         public TypeMap<IModule, IModule>.ValueEnumerator GetEnumerator() => _modules.Values.GetEnumerator();

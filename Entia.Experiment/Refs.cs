@@ -7,24 +7,6 @@ using System.Runtime.CompilerServices;
 
 namespace Entia.Experiment
 {
-    public unsafe readonly struct All2<T1, T2>
-    {
-    }
-
-    public unsafe readonly struct Write2<T>
-    {
-        public ref T Value => ref _items[*_index];
-
-        readonly T[] _items;
-        readonly int* _index;
-
-        public Write2(T[] items, ref int index)
-        {
-            _items = items;
-            _index = (int*)Unsafe.AsPointer(ref index);
-        }
-    }
-
     public unsafe readonly ref struct Ref<T>
     {
         public readonly bool Valid;

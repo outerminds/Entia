@@ -4,6 +4,7 @@ using Entia.Modules;
 using Entia.Modules.Component;
 using Entia.Nodes;
 using Entia.Queryables;
+using Entia.Queryables2;
 using Entia.Systems;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using static Entia.Nodes.Node;
 
 namespace Entia.Experiment
@@ -160,24 +162,197 @@ namespace Entia.Experiment
             }
         }
 
+        static void Shuffle<T>(this T[] array)
+        {
+            var random = new Random();
+            for (int i = 0; i < array.Length; i++)
+            {
+                var index = random.Next(array.Length);
+                var item = array[i];
+                array[i] = array[index];
+                array[index] = item;
+            }
+        }
+
+        static void Benchmark(int iterations)
+        {
+            var world = new World();
+            var entities = world.Entities();
+            var oldComponents = world.Components();
+            var newComponents = world.Components3();
+            var random = new Random();
+            var list = new List<Entity>();
+
+            Entity RandomEntity() => list.Count == 0 ? Entity.Zero : list[random.Next(list.Count)];
+            void AddComponent<T>(in T component) where T : struct, IComponent
+            {
+                var entity = RandomEntity();
+                oldComponents.Set(entity, component);
+                newComponents.Set(entity, component);
+            }
+            void RemoveComponent<T>() where T : struct, IComponent
+            {
+                var entity = RandomEntity();
+                oldComponents.Remove<T>(entity);
+                newComponents.Remove<T>(entity);
+            }
+
+            for (var i = 0; i < iterations; i++)
+            {
+                var value1 = random.NextDouble();
+                if (value1 < 0.3) list.Add(entities.Create());
+                else if (value1 < 0.4)
+                {
+                    var entity = RandomEntity();
+                    if (entities.Destroy(entity)) list.Remove(entity);
+                }
+                else if (value1 < 0.8)
+                {
+                    for (var j = 0; j < 5; j++)
+                    {
+                        var value2 = random.NextDouble();
+                        if (value2 < 0.25) AddComponent(new Position { X = (float)value1, Y = (float)value2 });
+                        else if (value2 < 0.5) AddComponent(new Velocity { X = (float)value1, Y = (float)value2 });
+                        else if (value2 < 0.75) AddComponent(new Lifetime { Remaining = (float)value1 + (float)value2 });
+                        else AddComponent(new Mass { Value = (float)value1 + (float)value2 });
+                    }
+                }
+                else
+                {
+                    var value2 = random.NextDouble();
+                    if (value2 < 0.25) RemoveComponent<Position>();
+                    else if (value2 < 0.5) RemoveComponent<Velocity>();
+                    else if (value2 < 0.75) RemoveComponent<Lifetime>();
+                    else RemoveComponent<Mass>();
+                }
+                world.Resolve();
+            }
+
+            var oldGroup = world.Groups().Get(world.Queriers().Query<All<Write<Position>, Write<Velocity>>>());
+            var oldArray = oldGroup.ToArray();
+            var newGroup = new Entia.Modules.Group.Group3<All2<Write2<Position>, Write2<Velocity>>>(newComponents, world.Queriers2(), world.Messages());
+
+            void ArrayIndexer()
+            {
+                for (int i = 0; i < oldArray.Length; i++)
+                {
+                    ref readonly var item = ref oldArray[i];
+                    ref var position = ref item.Value1.Value;
+                    ref var Velocity = ref item.Value2.Value;
+                    position.X += Velocity.X;
+                }
+            }
+
+            void ArrayForeach()
+            {
+                foreach (var item in oldArray)
+                {
+                    ref var position = ref item.Value1.Value;
+                    ref var Velocity = ref item.Value2.Value;
+                    position.X += Velocity.X;
+                }
+            }
+
+            void OldForeach()
+            {
+                foreach (ref readonly var item in oldGroup)
+                {
+                    ref var position = ref item.Value1.Value;
+                    ref var Velocity = ref item.Value2.Value;
+                    position.X += Velocity.X;
+                }
+            }
+
+            void OldIndexer()
+            {
+                for (int i = 0; i < oldGroup.Count; i++)
+                {
+                    ref readonly var item = ref oldGroup[i];
+                    ref var position = ref item.Value1.Value;
+                    ref var Velocity = ref item.Value2.Value;
+                    position.X += Velocity.X;
+                }
+            }
+
+            void OldParallel()
+            {
+                System.Threading.Tasks.Parallel.For(0, oldGroup.Count, index =>
+                {
+                    ref readonly var item = ref oldGroup[index];
+                    ref var position = ref item.Value1.Value;
+                    ref var Velocity = ref item.Value2.Value;
+                    position.X += Velocity.X;
+                });
+            }
+
+            void NewForeach()
+            {
+                foreach (var item in newGroup)
+                {
+                    ref var position = ref item.Value1.Value;
+                    ref var Velocity = ref item.Value2.Value;
+                    position.X += Velocity.X;
+                }
+            }
+
+            void NewTask()
+            {
+                Task.WhenAll(newGroup.Split(newGroup.Count / Environment.ProcessorCount).Select(split => Task.Run(() =>
+                {
+                    foreach (var item in split)
+                    {
+                        ref var position = ref item.Value1.Value;
+                        ref var Velocity = ref item.Value2.Value;
+                        position.X += Velocity.X;
+                    }
+                }))).Wait();
+            }
+
+            void NewParallel()
+            {
+                System.Threading.Tasks.Parallel.ForEach(newGroup.Split(newGroup.Count / Environment.ProcessorCount), split =>
+                {
+                    foreach (var item in split)
+                    {
+                        ref var position = ref item.Value1.Value;
+                        ref var Velocity = ref item.Value2.Value;
+                        position.X += Velocity.X;
+                    }
+                });
+            }
+
+            Action[] tests =
+            {
+                () => Measure($"Array Foreach ({oldGroup.Count})", ArrayForeach, 1000),
+                () => Measure($"Array Indexer ({oldGroup.Count})", ArrayIndexer, 1000),
+                () => Measure($"Old Foreach ({oldGroup.Count})", OldForeach, 1000),
+                () => Measure($"Old Indexer ({oldGroup.Count})", OldIndexer, 1000),
+                () => Measure($"New Foreach ({newGroup.Count})", NewForeach, 1000),
+                () => Measure($"Old Parallel.For ({oldGroup.Count})", OldParallel, 1000),
+                () => Measure($"New Task.WhenAll ({newGroup.Count})", NewTask, 1000),
+                () => Measure($"New Parallel.ForEach ({newGroup.Count})", NewParallel, 1000)
+            };
+            tests.Shuffle();
+            foreach (var test in tests) { test(); world.Resolve(); }
+            Console.WriteLine();
+        }
+
         static void Poulah()
         {
-            // FIX: there are duplicates in segments
+            const int iterations = 100;
             var world = new World();
-            var components = new Components3(world.Messages());
             var random = new Random();
-            world.Set(components);
 
             void SetRandom(Entity entity)
             {
                 var value = random.NextDouble();
                 if (value < 0.333)
-                    components.Set(entity, new Position { X = (float)value });
+                    world.Components3().Set(entity, new Position { X = (float)value });
                 else if (value < 0.666)
-                    components.Set(entity, new Velocity { X = (float)value });
+                    world.Components3().Set(entity, new Velocity { X = (float)value });
             }
 
-            for (int i = 0; i < 100; i++)
+            for (var i = 0; i < iterations; i++)
             {
                 var entity = world.Entities().Create();
                 SetRandom(entity);
@@ -186,22 +361,17 @@ namespace Entia.Experiment
 
             world.Resolve();
 
-            for (int i = 0; i < 100; i++)
+            for (var i = 0; i < iterations; i++)
             {
                 var entity = world.Entities().Create();
                 SetRandom(entity);
                 SetRandom(entity);
             }
 
-            var metadata = ComponentUtility.Cache<Position>.Data;
-            var query = new Entia.Modules.Query.Query<Write<Position>>(
-                Entia.Modules.Query.Filter.Empty,
-                mask => mask.Has(metadata.Index),
-                default);
-            var group = new Entia.Modules.Group.Group3<Write<Position>>(query, components, world.Messages());
+            var group = world.Groups3().Get3<Write2<Position>>();
             world.Entities().Clear();
 
-            for (int i = 0; i < 100; i++)
+            for (var i = 0; i < iterations; i++)
             {
                 var entity = world.Entities().Create();
                 SetRandom(entity);
@@ -210,45 +380,56 @@ namespace Entia.Experiment
 
             world.Resolve();
 
-            for (var i = 1; i <= 100; i++)
+            foreach (var item in group)
+            {
+                item.Value.Y++;
+                item.Value.Z--;
+            }
+
+            var items = group.ToArray();
+            var split = group.Split(10);
+            var segments = split.Select(segment => segment.ToArray()).ToArray();
+            world.Resolve();
+
+            for (var i = 1; i <= iterations; i++)
             {
                 var entity = world.Entities().Create();
 
-                var has1 = components.Has<Position>(entity);
-                var add1 = components.Set(entity, new Position { X = i });
-                ref var write1 = ref components.Get<Position>(entity);
+                var has1 = world.Components3().Has<Position>(entity);
+                var add1 = world.Components3().Set(entity, new Position { X = i });
+                ref var write1 = ref world.Components3().Get<Position>(entity);
                 write1.X++;
 
-                var add2 = components.Set(entity, new Position { Y = i });
-                var has2 = components.Has<Position>(entity);
+                var add2 = world.Components3().Set(entity, new Position { Y = i });
+                var has2 = world.Components3().Has<Position>(entity);
                 world.Resolve();
-                var has3 = components.Has<Position>(entity);
-                var add3 = components.Set(entity, new Position { Z = i });
-                var add4 = components.Set(entity, new Velocity { X = i });
-                var get1 = components.Get(entity).ToArray();
+                var has3 = world.Components3().Has<Position>(entity);
+                var add3 = world.Components3().Set(entity, new Position { Z = i });
+                var add4 = world.Components3().Set(entity, new Velocity { X = i });
+                var get1 = world.Components3().Get(entity).ToArray();
                 world.Resolve();
-                var get2 = components.Get(entity).ToArray();
+                var get2 = world.Components3().Get(entity).ToArray();
 
-                ref var write2 = ref components.Get<Position>(entity);
+                ref var write2 = ref world.Components3().Get<Position>(entity);
                 write2.Y++;
 
-                var has4 = components.Has<Position>(entity);
-                var has5 = components.Has<Velocity>(entity);
-                var remove1 = components.Remove<Position>(entity);
+                var has4 = world.Components3().Has<Position>(entity);
+                var has5 = world.Components3().Has<Velocity>(entity);
+                var remove1 = world.Components3().Remove<Position>(entity);
                 world.Resolve();
-                var has6 = components.Has<Velocity>(entity);
-                ref var write3 = ref components.Get<Velocity>(entity);
+                var has6 = world.Components3().Has<Velocity>(entity);
+                ref var write3 = ref world.Components3().Get<Velocity>(entity);
                 write3.X++;
-                var clear1 = components.Clear(entity);
-                var get3 = components.Get(entity).ToArray();
-                var add5 = components.Set(entity, new Position { X = i + 10 });
-                var has7 = components.Has<Position>(entity);
-                var has8 = components.Has<Velocity>(entity);
+                var clear1 = world.Components3().Clear(entity);
+                var get3 = world.Components3().Get(entity).ToArray();
+                var add5 = world.Components3().Set(entity, new Position { X = i + 10 });
+                var has7 = world.Components3().Has<Position>(entity);
+                var has8 = world.Components3().Has<Velocity>(entity);
                 world.Resolve();
 
-                var get4 = components.Get(entity).ToArray();
-                var has9 = components.Has<Velocity>(entity);
-                ref var write4 = ref components.Get<Position>(entity);
+                var get4 = world.Components3().Get(entity).ToArray();
+                var has9 = world.Components3().Has<Velocity>(entity);
+                ref var write4 = ref world.Components3().Get<Position>(entity);
                 write4.Y++;
             }
         }
@@ -348,26 +529,16 @@ namespace Entia.Experiment
             Set(position.X, 123);
         }
 
-        static void Viarge()
-        {
-            var items = new string[] { "A", "B", "C", "D", "E" };
-            var index = 0;
-            var write2 = new Write2<string>(items, ref index);
-
-            for (; index < items.Length; index++)
-            {
-                var value2 = write2.Value;
-            }
-        }
-
         static void Main()
         {
-            // InParameters();
-            // ExtremeUnsafe();
-            // SadisticalyUnsafe();
-            // DoesItAllocate();
-            Poulah();
-            Console.ReadKey();
+            // Poulah();
+            for (int i = 0; i < 100; i++)
+            {
+                Benchmark(1_000);
+                Benchmark(10_000);
+                Benchmark(100_000);
+                Benchmark(1_000_000);
+            }
         }
 
         public readonly struct BobaData : ISystem
@@ -417,10 +588,10 @@ namespace Entia.Experiment
             test();
             test();
 
-            GC.Collect();
-            GC.WaitForFullGCComplete();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
+            // GC.Collect();
+            // GC.WaitForFullGCComplete();
+            // GC.WaitForPendingFinalizers();
+            // GC.Collect();
 
             long total = 0;
             var minimum = long.MaxValue;

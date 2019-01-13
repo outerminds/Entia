@@ -19,6 +19,7 @@ Frictions:
 Features:
 - finish implementation of Group3.cs
 	- Count doesn't take into account entity creation and destruction
+	- Don't forget to resolve groups to retrieve boxes
 - finish implementation of Component3.cs
 	- requires to modify the IQueryable interface to add a 'Initialize' method
 - Node.Resolve()
@@ -38,6 +39,8 @@ Features:
 	- tag analysis in VSIX
 - remove Query<T> as an injectable
 	- Group<T> is now lightweight enough to be the only option
+- replace 'SegmentData' in the Entities module with just the generations counters
+- Count in the Entities module should be a property
 - remove naming conventions from VSIX
 - remove Stores
 - remove old segments and all ISegment related logic

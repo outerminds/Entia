@@ -4,6 +4,7 @@ using Entia.Queryables;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Entia.Modules.Group
 {
@@ -34,6 +35,7 @@ namespace Entia.Modules.Group
 
             public Enumerator(SwissList<T>.Enumerator enumerator) { _enumerator = enumerator; }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => _enumerator.MoveNext();
             public void Reset() => _enumerator.Reset();
             public void Dispose() => _enumerator.Dispose();
@@ -41,10 +43,18 @@ namespace Entia.Modules.Group
 
         const int _sentinel = int.MaxValue;
 
-        public int Count => _indices.Count;
+        public int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _indices.Count;
+        }
         public Query<T> Query { get; }
         public IEnumerable<Entity> Entities => _indices.Keys;
-        public ref readonly T this[int index] => ref _items[_indirectToDirect[index]];
+        public ref readonly T this[int index]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref _items[_indirectToDirect[index]];
+        }
 
         IQuery IGroup.Query => Query;
         Type IGroup.Type => typeof(T);
