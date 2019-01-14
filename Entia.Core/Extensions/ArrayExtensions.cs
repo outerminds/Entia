@@ -103,10 +103,12 @@ namespace Entia.Core
             return false;
         }
 
-        public static void Clear<T>(ref this (T[] items, int count) pair)
+        public static bool Contains<T>(in this (T[] items, int count) pair, in T item) => Array.IndexOf(pair.items, item, 0, pair.count) >= 0;
+
+        public static bool Clear<T>(ref this (T[] items, int count) pair)
         {
             Array.Clear(pair.items, 0, pair.count);
-            pair.count = 0;
+            return pair.count.Change(0);
         }
     }
 }

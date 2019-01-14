@@ -1,8 +1,6 @@
 ﻿using Entia.Modules;
 using Entia.Modules.Query;
 using Entia.Queryables;
-using Entia.Segments;
-using Entia.Stores;
 using FsCheck;
 using System;
 using System.Linq;
@@ -12,16 +10,11 @@ namespace Entia.Test
 {
     public static class Test
     {
-        public struct TagA : ITag { }
-        public struct TagB : ITag { }
         public struct ComponentA : IComponent { }
         public struct ComponentB : IComponent { public float Value; }
-        public struct IndexedComponentA : IComponent, IStorable<Stores.Factories.Indexed<IndexedComponentA>> { }
-        public struct IndexedComponentB : IComponent, IStorable<Stores.Factories.Indexed<IndexedComponentB>> { public float Value; }
+        public struct ComponentC : IComponent { public ulong A, B, C; }
         public struct MessageA : IMessage { }
         public struct MessageB : IMessage { }
-        public struct SegmentA : ISegment { }
-        public struct SegmentB : ISegment { }
 
         public static void Run(int count = 1600, int size = 1600)
         {
@@ -32,46 +25,28 @@ namespace Entia.Test
                 (5, Gen.Fresh(() => new ResolveWorld().ToAction())),
 
                 // Entity
-                (25, Gen.Fresh(() => new CreateEntity().ToAction())),
-                (25, Gen.Fresh(() => new CreateEntity<Default>().ToAction())),
-                (25, Gen.Fresh(() => new CreateEntity<SegmentA>().ToAction())),
-                (25, Gen.Fresh(() => new CreateEntity<SegmentB>().ToAction())),
+                (50, Gen.Fresh(() => new CreateEntity().ToAction())),
                 (5, Gen.Fresh(() => new DestroyEntity().ToAction())),
-                (5, Gen.Fresh(() => new DestroyEntity<Default>().ToAction())),
-                (5, Gen.Fresh(() => new DestroyEntity<SegmentA>().ToAction())),
-                (5, Gen.Fresh(() => new DestroyEntity<SegmentB>().ToAction())),
                 (1, Gen.Fresh(() => new ClearEntities().ToAction())),
 
                 // Component
                 (10, Gen.Fresh(() => new AddComponent<ComponentA>().ToAction())),
                 (10, Gen.Fresh(() => new AddComponent<ComponentB>().ToAction())),
+                (10, Gen.Fresh(() => new AddComponent<ComponentC>().ToAction())),
                 (10, Gen.Fresh(() => new RemoveComponent<ComponentA>().ToAction())),
                 (10, Gen.Fresh(() => new RemoveComponent<ComponentB>().ToAction())),
+                (10, Gen.Fresh(() => new RemoveComponent<ComponentC>().ToAction())),
                 (3, Gen.Fresh(() => new ClearComponent<ComponentA>().ToAction())),
                 (3, Gen.Fresh(() => new ClearComponent<ComponentB>().ToAction())),
-
-                (10, Gen.Fresh(() => new AddComponent<IndexedComponentA>().ToAction())),
-                (10, Gen.Fresh(() => new AddComponent<IndexedComponentB>().ToAction())),
-                (10, Gen.Fresh(() => new RemoveComponent<IndexedComponentA>().ToAction())),
-                (10, Gen.Fresh(() => new RemoveComponent<IndexedComponentB>().ToAction())),
-                (3, Gen.Fresh(() => new ClearComponent<IndexedComponentA>().ToAction())),
-                (3, Gen.Fresh(() => new ClearComponent<IndexedComponentB>().ToAction())),
-
-                // Tag
-                (10, Gen.Fresh(() => new AddTag<TagA>().ToAction())),
-                (10, Gen.Fresh(() => new AddTag<TagB>().ToAction())),
-                (10, Gen.Fresh(() => new RemoveTag<TagA>().ToAction())),
-                (10, Gen.Fresh(() => new RemoveTag<TagB>().ToAction())),
-                (3, Gen.Fresh(() => new ClearTag<TagA>().ToAction())),
-                (3, Gen.Fresh(() => new ClearTag<TagB>().ToAction())),
+                (3, Gen.Fresh(() => new ClearComponent<ComponentC>().ToAction())),
 
                 // Group
                 (3, Gen.Fresh(() => new GetGroup<Read<ComponentA>>().ToAction())),
-                (3, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<IndexedComponentA>>>().ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<ComponentC>>>().ToAction())),
                 (3, Gen.Fresh(() => new GetGroup<Maybe<Read<ComponentA>>>().ToAction())),
-                (3, Gen.Fresh(() => new GetGroup<Read<IndexedComponentA>>(Query.From(typeof(TagA))).ToAction())),
-                (3, Gen.Fresh(() => new GetGroup<Entity>(Query.Not(Query.From(typeof(TagB), typeof(SegmentA)))).ToAction())),
-                (3, Gen.Fresh(() => new GetGroup<Any<Entity, Read<IndexedComponentB>>>().ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<Read<ComponentC>>(Query_OLD.From(typeof(ComponentC))).ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<Entity>(Query_OLD.Not(Query_OLD.From(typeof(ComponentA), typeof(ComponentB)))).ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<Any<Write<ComponentC>, Read<ComponentB>>>().ToAction())),
 
                 // Message
                 (1, Gen.Fresh(() => new EmitMessage<MessageA>().ToAction())),

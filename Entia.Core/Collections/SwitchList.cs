@@ -82,12 +82,7 @@ namespace Entia.Core
             return false;
         }
 
-        public bool Clear()
-        {
-            if (_items.count <= 0) return false;
-            _items.Clear();
-            return true;
-        }
+        public bool Clear() => _items.Clear();
 
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();

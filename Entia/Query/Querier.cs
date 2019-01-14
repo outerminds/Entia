@@ -1,32 +1,42 @@
-﻿using Entia.Core;
+using System;
+using Entia.Core;
+using Entia.Modules.Component;
 using Entia.Modules.Query;
 using Entia.Queryables;
-using System;
 
 namespace Entia.Queriers
 {
-	public interface IQuerier
-	{
-		Type Type { get; }
-		Query Query(World world);
-	}
+    public interface IQuerier
+    {
+        bool TryQuery(Segment segment, World world, out Query query);
+    }
 
-	public abstract class Querier<T> : IQuerier where T : struct, IQueryable
-	{
-		Type IQuerier.Type => typeof(T);
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    public sealed class QuerierAttribute : PreserveAttribute { }
 
-		public abstract Query<T> Query(World world);
-		Query IQuerier.Query(World world) => Query(world);
-	}
+    public abstract class Querier<T> : IQuerier where T : struct, IQueryable
+    {
+        public abstract bool TryQuery(Segment segment, World world, out Query<T> query);
 
-	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-	public sealed class QuerierAttribute : PreserveAttribute { }
+        bool IQuerier.TryQuery(Segment segment, World world, out Query query)
+        {
+            if (TryQuery(segment, world, out var casted))
+            {
+                query = casted;
+                return true;
+            }
 
-	public sealed class Default<T> : Querier<T> where T : struct, IQueryable
-	{
-		public override Query<T> Query(World world) => new Query<T>(
-			Filter.Empty,
-			_ => false,
-			(Entia.Entity _, out T value) => { value = default; return false; });
-	}
+            query = default;
+            return false;
+        }
+    }
+
+    public sealed class Default<T> : Querier<T> where T : struct, Queryables.IQueryable
+    {
+        public override bool TryQuery(Segment segment, World world, out Query<T> query)
+        {
+            query = default;
+            return false;
+        }
+    }
 }

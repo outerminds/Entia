@@ -1,39 +1,33 @@
-﻿using Entia.Core;
-using Entia.Modules;
-using System;
+﻿// using Entia.Core;
+// using Entia.Modules;
+// using System;
 
-namespace Entia.Initializers
-{
-	public sealed class Entity : Initializer<Entia.Entity>
-	{
-		public readonly Type[] Tags;
-		public readonly int[] Components;
-		public readonly World World;
+// namespace Entia.Initializers
+// {
+//     public sealed class Entity : Initializer<Entia.Entity>
+//     {
+//         public readonly int[] Components;
+//         public readonly World World;
 
-		public Entity(Type[] tags, int[] components, World world)
-		{
-			Tags = tags;
-			Components = components;
-			World = world;
-		}
+//         public Entity(int[] components, World world)
+//         {
+//             Components = components;
+//             World = world;
+//         }
 
-		public override Result<Unit> Initialize(Entia.Entity instance, object[] instances)
-		{
-			var tags = World.Tags();
-			var components = World.Components();
+//         public override Result<Unit> Initialize(Entia.Entity instance, object[] instances)
+//         {
+//             var components = World.Components();
+//             components.Clear(instance);
 
-			tags.Clear(instance);
-			components.Clear(instance);
+//             foreach (var component in Components)
+//             {
+//                 var result = Result.Cast<IComponent>(instances[component]);
+//                 if (result.TryValue(out var value)) components.Set(instance, value);
+//                 else return result;
+//             }
 
-			foreach (var tag in Tags) tags.Set(instance, tag);
-			foreach (var component in Components)
-			{
-				var result = Result.Cast<IComponent>(instances[component]);
-				if (result.TryValue(out var value)) components.Set(instance, value);
-				else return result;
-			}
-
-			return Result.Success();
-		}
-	}
-}
+//             return Result.Success();
+//         }
+//     }
+// }

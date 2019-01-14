@@ -2,7 +2,6 @@
 using Entia.Messages;
 using Entia.Modules;
 using Entia.Modules.Message;
-using Entia.Segments;
 using FsCheck;
 using System;
 using System.Collections.Generic;
@@ -35,37 +34,6 @@ namespace Entia.Test
             .And(value.Entities().Contains(_entity).Label("Entities.Contains()"))
             .And((value.Entities().Count() == model.Entities.Count).Label("Entities.Count"))
             .And((_onCreate.Length == 1 && _onCreate[0].Entity == _entity).Label("OnCreate"));
-        public override string ToString() => $"{GetType().Format()}({_entity})";
-    }
-
-    public class CreateEntity<T> : Action<World, Model> where T : struct, ISegment
-    {
-        Entity _entity;
-        OnCreate<T>[] _onCreate;
-
-        public override bool Pre(World value, Model model) => true;
-        public override void Do(World value, Model model)
-        {
-            var onCreate = value.Messages().Receiver<OnCreate<T>>();
-            {
-                _entity = value.Entities().Create<T>();
-                model.Entities.Add(_entity);
-                model.Components.Add(_entity, new Dictionary<Type, IComponent>());
-                model.Tags.Add(_entity, new HashSet<Type>());
-            }
-            _onCreate = onCreate.Pop().ToArray();
-            value.Messages().Remove(onCreate);
-        }
-        public override Property Check(World value, Model model) =>
-            value.Entities().Except(model.Entities).None().Label("Entities.Except().None()")
-            .And(value.Entities().Distinct().SequenceEqual(value.Entities()).Label("Entities.Distinct()"))
-            .And(value.Entities().Has(_entity).Label("Entities.Has()"))
-            .And(value.Entities().Has<T>(_entity).Label("Entities.Has<T>()"))
-            .And(value.Entities().Contains(_entity).Label("Entities.Contains()"))
-            .And(value.Entities().Get<T>().Contains(_entity).Label("Entities.Get<T>().Contains()"))
-            .And((value.Entities().Count() == model.Entities.Count).Label("Entities.Count"))
-            .And((_onCreate.Length == 1 && _onCreate[0].Entity == _entity).Label("OnCreate"))
-            .And((_onCreate.Length == 1 && _onCreate[0].Entity == _entity).Label("OnCreate<T>"));
         public override string ToString() => $"{GetType().Format()}({_entity})";
     }
 
@@ -107,44 +75,6 @@ namespace Entia.Test
         public override string ToString() => $"{GetType().Format()}({_entity})";
     }
 
-    public class DestroyEntity<T> : Action<World, Model> where T : struct, ISegment
-    {
-        Entity _entity;
-        OnPreDestroy<T>[] _onPreDestroy;
-        OnPostDestroy<T>[] _onPostDestroy;
-
-        public override bool Pre(World value, Model model)
-        {
-            if (value.Entities().Count<T>() <= 0) return false;
-            _entity = value.Entities().Get<T>().ElementAt(model.Random.Next(value.Entities().Count<T>()));
-            return true;
-        }
-        public override void Do(World value, Model model)
-        {
-            var onPreDestroy = value.Messages().Receiver<OnPreDestroy<T>>();
-            var onPostDestroy = value.Messages().Receiver<OnPostDestroy<T>>();
-            {
-                value.Entities().Destroy<T>(_entity);
-                model.Entities.Remove(_entity);
-                model.Components.Remove(_entity);
-                model.Tags.Remove(_entity);
-            }
-            _onPreDestroy = onPreDestroy.Pop().ToArray();
-            _onPostDestroy = onPostDestroy.Pop().ToArray();
-            value.Messages().Remove(onPreDestroy);
-            value.Messages().Remove(onPostDestroy);
-        }
-        public override Property Check(World value, Model model) =>
-            value.Entities().Has(_entity).Not().Label("Entities.Has()")
-            .And(value.Entities().Has<T>(_entity).Not().Label("Entities.Has()"))
-            .And(value.Entities().Destroy(_entity).Not().Label("Entities.Destroy()"))
-            .And(value.Entities().Destroy<T>(_entity).Not().Label("Entities.Destroy()"))
-            .And((_onPreDestroy.Length == _onPostDestroy.Length).Label("OnDestroy.Length"))
-            .And((_onPreDestroy.Length == 1 && _onPreDestroy[0].Entity == _entity).Label("OnPreDestroy"))
-            .And((_onPostDestroy.Length == 1 && _onPostDestroy[0].Entity == _entity).Label("OnPostDestroy"));
-        public override string ToString() => $"{GetType().Format()}({_entity})";
-    }
-
     public class ClearEntities : Action<World, Model>
     {
         Entity[] _entities;
@@ -178,7 +108,6 @@ namespace Entia.Test
             .And(_entities.None(value.Entities().Destroy).Label("Entities.Destroy()"))
             .And(value.Entities().Clear().Not().Label("Entities.Clear()"))
             .And(value.Components().None().Label("Components.None()"))
-            .And(value.Tags().None().Label("Tags.None()"))
             .And((_onPreDestroy.Length == _onPostDestroy.Length).Label("OnDestroy.Length"))
             .And((_entities.Length == _onPreDestroy.Length).Label("OnPreDestroy.Length"))
             .And(_entities.OrderBy(_ => _).SequenceEqual(_onPreDestroy.Select(message => message.Entity).OrderBy(_ => _)).Label("OnPreDestroy.Entity"))

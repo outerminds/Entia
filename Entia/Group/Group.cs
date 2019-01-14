@@ -1,154 +1,256 @@
-﻿using Entia.Core;
-using Entia.Modules.Query;
-using Entia.Queryables;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Entia;
+using Entia.Core;
+using Entia.Messages.Segment;
+using Entia.Modules;
+using Entia.Modules.Component;
+using Entia.Modules.Query;
+using Entia.Queryables;
 
 namespace Entia.Modules.Group
 {
-    public interface IGroup
+    public interface IGroup : IResolvable { }
+
+    public sealed class Group<T> : IGroup, IEnumerable<(Entity entity, T item)> where T : struct, IQueryable
     {
-        int Count { get; }
-        IEnumerable<Entity> Entities { get; }
-
-        IQuery Query { get; }
-        Type Type { get; }
-
-        bool Has(Entity entity);
-        bool Update(Entity entity);
-        bool Fits(Entity entity);
-        bool Remove(Entity entity);
-        bool Clear();
-    }
-
-    public sealed class Group<T> : IGroup, IEnumerable<T> where T : struct, IQueryable
-    {
-        public struct Enumerator : IEnumerator<T>
+        public struct Enumerator : IEnumerator<(Entity entity, T item)>
         {
-            public ref readonly T Current => ref _enumerator.Current;
-            T IEnumerator<T>.Current => Current;
+            public (Entity entity, T item) Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => (_entities.items[_index.Value], _value);
+            }
             object IEnumerator.Current => Current;
 
-            SwissList<T>.Enumerator _enumerator;
+            Group<T> _group;
+            int _segment;
+            Box<int> _index;
+            T _value;
+            (Entity[] items, int count) _entities;
 
-            public Enumerator(SwissList<T>.Enumerator enumerator) { _enumerator = enumerator; }
+            public Enumerator(Group<T> group, int segment = 0, int entity = 0)
+            {
+                _group = group;
+                _segment = int.MaxValue - 1;
+                _index = _group.Box(int.MaxValue - 1);
+                _entities = (Array.Empty<Entity>(), 0);
+                _value = default;
+                // NOTE: use 'segment', not '_segment' and use 'entity', not '_entity' here
+                Update(segment, entity - 1);
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() => _enumerator.MoveNext();
-            public void Reset() => _enumerator.Reset();
+            public bool MoveNext() => ++_index.Value < _entities.count || Update(_segment + 1, 0);
+
+            bool Update(int segment, int entity)
+            {
+                for (int i = segment; i < _group._segments.count; i++)
+                {
+                    var current = _group._segments.items[i];
+                    _entities = current.Entities;
+                    if (entity >= _entities.count) { entity -= _entities.count; continue; }
+
+                    _segment = i;
+                    _index.Value = entity;
+                    _value = _group._indexToQuery[current.Index].Get(_index);
+                    return true;
+                }
+
+                return false;
+            }
+
+            public void Reset() => Update(0, 0);
+            public void Dispose() => _group = null;
+        }
+
+        public readonly struct SplitEnumerable : IEnumerable<SegmentEnumerable>
+        {
+            readonly Group<T> _group;
+            readonly int _count;
+
+            public SplitEnumerable(Group<T> group, int count)
+            {
+                _group = group;
+                _count = count;
+            }
+
+            public SplitEnumerator GetEnumerator() => new SplitEnumerator(_group, _count);
+            IEnumerator<SegmentEnumerable> IEnumerable<SegmentEnumerable>.GetEnumerator() => GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        public struct SplitEnumerator : IEnumerator<SegmentEnumerable>
+        {
+            public SegmentEnumerable Current => new SegmentEnumerable(_group, _count, _current.segment, _current.entity);
+            object IEnumerator.Current => Current;
+
+            Group<T> _group;
+            int _count;
+            (int segment, int entity) _current;
+            (int segment, int entity) _next;
+
+            public SplitEnumerator(Group<T> group, int count)
+            {
+                _group = group;
+                _count = count;
+                _current = (0, 0);
+                _next = (0, 0);
+            }
+
+            public bool MoveNext()
+            {
+                _current = _next;
+                var current = _count;
+
+                while (_next.segment < _group._segments.count)
+                {
+                    var segment = _group._segments.items[_next.segment];
+                    var remaining = segment.Entities.count - _next.entity;
+                    var minimum = Math.Min(current, remaining);
+                    _next.entity += minimum;
+                    current -= minimum;
+                    if (current <= 0) return true;
+
+                    _next.segment++;
+                    _next.entity = 0;
+                }
+
+                return current < _count;
+            }
+
+            public void Reset()
+            {
+                _current = (0, 0);
+                _next = (0, 0);
+            }
+
+            public void Dispose() => _group = null;
+        }
+
+        public readonly struct SegmentEnumerable : IEnumerable<(Entity, T)>
+        {
+            readonly Group<T> _group;
+            readonly int _count;
+            readonly int _segment;
+            readonly int _entity;
+
+            public SegmentEnumerable(Group<T> group, int count, int segment, int entity)
+            {
+                _group = group;
+                _count = count;
+                _segment = segment;
+                _entity = entity;
+            }
+
+            public SegmentEnumerator GetEnumerator() => new SegmentEnumerator(_group, _count, _segment, _entity);
+            IEnumerator<(Entity, T)> IEnumerable<(Entity, T)>.GetEnumerator() => GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        public struct SegmentEnumerator : IEnumerator<(Entity entity, T item)>
+        {
+            public (Entity entity, T item) Current => _enumerator.Current;
+            object IEnumerator.Current => Current;
+
+            Enumerator _enumerator;
+            int _count;
+            int _index;
+
+            public SegmentEnumerator(Group<T> group, int count, int segment, int entity)
+            {
+                _enumerator = new Enumerator(group, segment, entity);
+                _count = count;
+                _index = -1;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext() => ++_index < _count && _enumerator.MoveNext();
+            public void Reset()
+            {
+                _enumerator.Reset();
+                _index = -1;
+            }
             public void Dispose() => _enumerator.Dispose();
         }
 
-        const int _sentinel = int.MaxValue;
+        public int Count { get; private set; }
 
-        public int Count
+        readonly Components _components;
+        readonly Queriers _queriers;
+        readonly Messages _messages;
+        readonly Pool<Box<int>> _pool = new Pool<Box<int>>(() => new Box<int>());
+        (Box<int>[] items, int count) _boxes = (new Box<int>[2], 0);
+        (Segment[] items, int count) _segments = (new Segment[4], 0);
+        Segment[] _indexToSegment = new Segment[4];
+        Query<T>[] _indexToQuery = new Query<T>[4];
+
+        public Group(Components components, Queriers queriers, Messages messages)
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _indices.Count;
-        }
-        public Query<T> Query { get; }
-        public IEnumerable<Entity> Entities => _indices.Keys;
-        public ref readonly T this[int index]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ref _items[_indirectToDirect[index]];
-        }
-
-        IQuery IGroup.Query => Query;
-        Type IGroup.Type => typeof(T);
-
-        readonly Entities _entities;
-        readonly Dictionary<Entity, int> _indices = new Dictionary<Entity, int>();
-        readonly SwissList<T> _items = new SwissList<T>();
-        readonly SwitchList<int> _indirectToDirect = new SwitchList<int>();
-        int[] _directToIndirect = new int[4];
-
-        public Group(Query<T> query, Entities entities)
-        {
-            Query = query;
-            _entities = entities;
+            _components = components;
+            _queriers = queriers;
+            _messages = messages;
+            _messages.React((in OnCreate message) => TryAdd(message.Segment));
+            _messages.React((in OnMove message) => Move(message.Source, message.Target));
+            foreach (var segment in _components.Segments) TryAdd(segment);
         }
 
-        public bool Has(Entity entity) => _indices.ContainsKey(entity);
+        public SplitEnumerable Split(int count) => new SplitEnumerable(this, count);
 
-        public bool Fits(Entity entity) => _entities.TryMask(entity, out var mask) && Query.Fits(mask);
+        public bool Has(Entity entity) => _components.TryGetSegment(entity, out var pair) && Has(pair.segment);
 
         public bool TryGet(Entity entity, out T item)
         {
-            if (_indices.TryGetValue(entity, out var index) && _items.TryGet(index, out item)) return true;
+            if (_components.TryGetSegment(entity, out var pair) && Has(pair.segment))
+            {
+                item = _indexToQuery[pair.segment.Index].Get(Box(pair.index));
+                return true;
+            }
+
             item = default;
             return false;
         }
 
-        public bool Update(Entity entity)
+        public void Resolve()
         {
-            if (Create(entity, out var item))
-            {
-                Allocate(entity, item);
-                return true;
-            }
-            else
-            {
-                Free(entity);
-                return false;
-            }
+            for (int i = 0; i < _boxes.count; i++) _pool.Put(_boxes.items[i]);
+            _boxes.Clear();
         }
 
-        public bool Remove(Entity entity) => Free(entity);
-
-        public bool Clear()
-        {
-            var cleared = _items.Clear() | _indirectToDirect.Clear() | _indices.Count > 0;
-            _directToIndirect.Clear();
-            _indices.Clear();
-            return cleared;
-        }
-
-        public T[] ToArray() => _items.ToArray();
-
-        public Enumerator GetEnumerator() => new Enumerator(_items.GetEnumerator());
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
+        public Enumerator GetEnumerator() => new Enumerator(this);
+        IEnumerator<(Entity entity, T item)> IEnumerable<(Entity entity, T item)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        bool Create(Entity entity, out T item)
+        Box<int> Box(int value = 0)
         {
-            if (Fits(entity) && Query.TryGet(entity, out item)) return true;
-            item = default;
-            return false;
+            Box<int> box;
+            lock (_pool.Lock) { _boxes.Push(box = _pool.Take()); }
+            box.Value = value;
+            return box;
         }
 
-        void Allocate(Entity entity, in T item)
+        bool Has(Segment segment) => segment.Index < _indexToSegment.Length && _indexToSegment[segment.Index] == segment;
+
+        bool TryAdd(Segment segment)
         {
-            if (_indices.TryGetValue(entity, out var index)) _items.TrySet(index, item);
-            else
+            if (!Has(segment) && _queriers.TryQuery<T>(segment, out var query))
             {
-                var direct = _items.Add(item);
-                var indirect = _indirectToDirect.Add(direct);
-
-                ArrayUtility.Ensure(ref _directToIndirect, direct + 1);
-                _directToIndirect[direct] = indirect;
-                _indices[entity] = direct;
-            }
-        }
-
-        bool Free(Entity entity)
-        {
-            if (_indices.TryGetValue(entity, out var index))
-            {
-                _indices.Remove(entity);
-                _items.Remove(index);
-
-                var indirect = _directToIndirect[index];
-                _indirectToDirect.Remove(indirect);
-                _directToIndirect[index] = _sentinel;
-                if (_indirectToDirect.TryGet(indirect, out var direct)) _directToIndirect[direct] = indirect;
-
+                ArrayUtility.Set(ref _indexToSegment, segment, segment.Index);
+                ArrayUtility.Set(ref _indexToQuery, query, segment.Index);
+                _segments.Push(segment);
+                Count += segment.Entities.count;
                 return true;
             }
 
             return false;
+        }
+
+        void Move(in (Segment segment, int index) source, in (Segment segment, int index) target)
+        {
+            var has = (source: Has(source.segment), target: Has(target.segment));
+            Count += (has.source ? -1 : 0) + (has.target ? 1 : 0);
         }
     }
 }

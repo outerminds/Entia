@@ -114,11 +114,8 @@ namespace Entia.Core
 
         public bool Clear()
         {
-            var cleared = _items.count > 0 || _free.count > 0;
-            _free.Clear();
-            _items.Clear();
             _allocated.Clear();
-            return cleared;
+            return _items.Clear() | _free.Clear();
         }
 
         public T[] ToArray()

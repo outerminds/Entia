@@ -1,24 +1,36 @@
-﻿using Entia.Stores;
-using System;
+﻿using System;
+using Entia.Modules.Component;
 
 namespace Entia.Messages
 {
     public struct OnAdd : IMessage
     {
         public Entity Entity;
-        public Type Type;
-        public (int global, int local) Index;
+        public Metadata Component;
     }
 
     public struct OnRemove : IMessage
     {
         public Entity Entity;
-        public Type Type;
-        public (int global, int local) Index;
+        public Metadata Component;
     }
 
-    public struct OnAdd<T> : IMessage where T : struct { public Entity Entity; }
-    public struct OnRemove<T> : IMessage where T : struct { public Entity Entity; }
-    public struct OnResolve : IMessage { public IStore Store; }
+    public struct OnAdd<T> : IMessage where T : struct, IComponent { public Entity Entity; }
+    public struct OnRemove<T> : IMessage where T : struct, IComponent { public Entity Entity; }
     public struct OnException : IMessage { public Exception Exception; }
+
+    namespace Segment
+    {
+        public struct OnCreate : IMessage
+        {
+            public Modules.Component.Segment Segment;
+        }
+
+        public struct OnMove : IMessage
+        {
+            public Entity Entity;
+            public (Modules.Component.Segment segment, int index) Source;
+            public (Modules.Component.Segment segment, int index) Target;
+        }
+    }
 }

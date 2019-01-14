@@ -268,10 +268,8 @@ namespace Entia.Core
 
         public bool Clear()
         {
-            var cleared = _values.count > 0;
-            _values.Clear();
             _allocated.Clear();
-            return cleared;
+            return _values.Clear();
         }
 
         public Enumerator GetEnumerator() => new Enumerator(this);

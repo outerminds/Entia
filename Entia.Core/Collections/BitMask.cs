@@ -140,10 +140,8 @@ namespace Entia.Core
 
         public bool Clear()
         {
-            var cleared = !IsEmpty;
-            _buckets.Clear();
             _hash = null;
-            return cleared;
+            return _buckets.Clear();
         }
 
         public bool Equals(BitMask other)

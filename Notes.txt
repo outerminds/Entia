@@ -20,6 +20,8 @@ Features:
 - finish implementation of Group3.cs
 	- Count doesn't take into account entity creation and destruction
 	- Don't forget to resolve groups to retrieve boxes
+	- add an 'Entities' property that enumerates over entities
+		- will require an EntityEnumerable and EntityEnumerator
 - finish implementation of Component3.cs
 	- requires to modify the IQueryable interface to add a 'Initialize' method
 - Node.Resolve()
@@ -30,6 +32,8 @@ Features:
 - promote Resolvers as a supported module with the Defer injectable
 - promote Components3.cs as the official component module
 	- implement 'transient' stores to make the API more consistent
+- don't forget to add dependencies to new modules
+	- new queryables
 - merge Components and Tags
 	- remove everything that has to do with tags
 	- ITag
@@ -54,6 +58,11 @@ Features:
 - OnAdd<T>/OnRemove<T> shoud have the IComponent constraint
 - use ComponentUtility instead of IndexUtility
 - adjust tests to changes
+- adapt generator to generate extensions for 'Item<T>'
+- support for attributes on a Group field
+- make a non-generic Group for entity queries?
+	- enumeration would yield entities
+	- should be vaguely faster than Group<T>
 - create github repository
 - when merging, fix .meta files
 
