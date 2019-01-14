@@ -14,10 +14,9 @@ namespace Entia.Modules.Message
         bool Clear();
     }
 
-    public sealed class Receiver<T> : IReceiver
-        where T : struct, IMessage
+    public sealed class Receiver<T> : IReceiver where T : struct, IMessage
     {
-        public int Count => _messages.ReadCount();
+        public int Count => _messages.Count;
         public int Capacity
         {
             get => _capacity;
@@ -26,43 +25,30 @@ namespace Entia.Modules.Message
 
         Type IReceiver.Type => typeof(T);
 
-        // TODO: is this thread safe?
+        readonly ConcurrentQueue<T> _messages = new ConcurrentQueue<T>();
         int _capacity;
-
-        readonly Concurrent<Queue<T>> _messages = new Queue<T>();
 
         public Receiver(int capacity = -1) { _capacity = capacity; }
 
-        public bool TryPop(out T message)
-        {
-            using (var write = _messages.Write()) return write.Value.TryDequeue(out message);
-        }
+        public bool TryPop(out T message) => _messages.TryDequeue(out message);
 
         public bool Clear()
         {
-            using (var write = _messages.Write())
-            {
-                var cleared = write.Value.Count > 0;
-                write.Value.Clear();
-                return cleared;
-            }
+            var cleared = false;
+            while (_messages.TryDequeue(out _)) cleared = true;
+            return cleared;
         }
 
         public void Receive(in T message)
         {
             if (_capacity == 0) return;
-
-            using (var write = _messages.Write())
-            {
-                write.Value.Enqueue(message);
-                Trim(Capacity);
-            }
+            _messages.Enqueue(message);
+            Trim(Capacity);
         }
 
         void Trim(int count)
         {
-            using (var write = _messages.Write())
-                if (count >= 0) while (write.Value.Count > count) write.Value.Dequeue();
+            while (count >= 0 && _messages.Count > count) _messages.TryDequeue(out _);
         }
     }
 }

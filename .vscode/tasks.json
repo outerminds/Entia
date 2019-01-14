@@ -60,7 +60,9 @@
 			"args": [
 				"run",
 				"--project",
-				"${workspaceFolder}/Entia.Test/Entia.Test.csproj"
+				"${workspaceFolder}/Entia.Test/Entia.Test.csproj",
+				"--configuration",
+				"Release"
 			],
 			"group": {
 				"kind": "test",

@@ -2,6 +2,7 @@
 using Entia.Messages;
 using Entia.Modules;
 using Entia.Modules.Message;
+using Entia.Modules.Component;
 using FsCheck;
 using System.Linq;
 
@@ -15,7 +16,7 @@ namespace Entia.Test
 
         public override bool Pre(World value, Model model)
         {
-            if (value.Entities().Count() <= 0) return false;
+            if (value.Entities().Count <= 0) return false;
             var entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count()));
             if (value.Components().Has<T>(entity)) return false;
             _entity = entity;
@@ -51,7 +52,7 @@ namespace Entia.Test
             .And((value.Components().Get(typeof(T)).Count() == model.Components.Count(pair => pair.Value.ContainsKey(typeof(T)))).Label("Components.Get(type).Count() == model.Components"))
             .And(value.Components().Get(_entity).OfType<T>().Any().Label("Components.Get().OfType<T>().Any()"))
             .And(value.Components().TryGet<T>(_entity, out _).Label("Components.TryGet<T>()"))
-            .And((_onAdd.Length == 1 && _onAdd[0].Entity == _entity && _onAdd[0].Component == typeof(T)).Label("OnAdd"))
+            .And((_onAdd.Length == 1 && _onAdd[0].Entity == _entity && _onAdd[0].Component.Type == typeof(T)).Label("OnAdd"))
             .And((_onAddT.Length == 1 && _onAddT[0].Entity == _entity).Label("OnAddT"))
             .And(value.Components().Set(_entity, default(T)).Not().Label("Components.Set<T>()"))
             .And(value.Components().Set(_entity, default(T)).Not().Label("Components.Set()"));
@@ -66,7 +67,7 @@ namespace Entia.Test
 
         public override bool Pre(World value, Model model)
         {
-            if (value.Entities().Count() <= 0) return false;
+            if (value.Entities().Count <= 0) return false;
             var entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count()));
             if (value.Components().Has<T>(entity))
             {
@@ -95,7 +96,7 @@ namespace Entia.Test
             .And(value.Components().Remove(_entity, typeof(T)).Not().Label("Components.Remove<T>()"))
             .And(value.Components().Get(_entity).OfType<T>().None().Label("Components.Get().OfType<T>().None()"))
             .And(value.Components().TryGet<T>(_entity, out _).Not().Label("Components.TryGet<T>()"))
-            .And((_onRemove.Length == 1 && _onRemove[0].Entity == _entity && _onRemove[0].Component == typeof(T)).Label("OnRemove"))
+            .And((_onRemove.Length == 1 && _onRemove[0].Entity == _entity && _onRemove[0].Component.Type == typeof(T)).Label("OnRemove"))
             .And((_onRemoveT.Length == 1 && _onRemoveT[0].Entity == _entity).Label("OnRemoveT"));
         public override string ToString() => $"{GetType().Format()}({_entity})";
     }
@@ -131,9 +132,9 @@ namespace Entia.Test
             .And(value.Components().Clear(typeof(T)).Not().Label("Components.Clear()"))
             .And((_entities.Length == _onRemove.Length).Label("OnRemove.Length"))
             .And(_entities.OrderBy(_ => _).SequenceEqual(_onRemove.Select(message => message.Entity).OrderBy(_ => _)).Label("OnRemove.Entity"))
-            .And(_onRemove.All(message => message.Component == typeof(T)).Label("OnRemove.Type"))
+            .And(_onRemove.All(message => message.Component.Type == typeof(T)).Label("OnRemove.Type"))
             .And((_entities.Length == _onRemoveT.Length).Label("OnRemove<T>.Length"))
             .And(_entities.OrderBy(_ => _).SequenceEqual(_onRemoveT.Select(message => message.Entity).OrderBy(_ => _)).Label("OnRemoveT.Entity"));
-        public override string ToString() => GetType().Format();
+        public override string ToString() => $"{GetType().Format()}({_entities.Length})";
     }
 }

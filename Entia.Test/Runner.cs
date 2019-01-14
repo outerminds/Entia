@@ -20,6 +20,8 @@ namespace Entia.Test
             public TestResult Result;
         }
 
+        public (bool success, Action.Sequence<World, Model> original, Action.Sequence<World, Model> shrunk, int seed) Result { get; private set; }
+
         readonly object _lock = new object();
         readonly State[] _states;
         readonly Stopwatch _watch = Stopwatch.StartNew();
@@ -49,14 +51,20 @@ namespace Entia.Test
                 var smallest = _states.OrderBy(current => current.Size).FirstOrDefault();
                 switch (smallest.Result)
                 {
+                    case TestResult.True @true:
+                        Result = (true, default, default, 0);
+                        break;
                     case TestResult.False @false:
                         Console.WriteLine();
                         var original = @false.Item2.Select(value => value is IFormatted formatted ? Format.Wrap(formatted, Format.Types.Summary) : value);
                         var shrunk = @false.Item3.Select(value => value is IFormatted formatted ? Format.Wrap(formatted, Format.Types.Detailed) : value);
                         var wrapped = TestResult.NewFalse(@false.Item1, ListModule.OfSeq(original), ListModule.OfSeq(shrunk), @false.Item4, @false.Item5);
-                        if (slave.Throw) throw new Exception();
                         FsCheck.Runner.consoleRunner.OnFinished(value1, wrapped);
                         Console.WriteLine();
+                        Result = (false,
+                            @false.Item2.OfType<Action.Sequence<World, Model>>().FirstOrDefault(),
+                            @false.Item3.OfType<Action.Sequence<World, Model>>().FirstOrDefault(),
+                            @false.Item2.OfType<DoNotSize<int>>().Select(value => value.Item).FirstOrDefault());
                         break;
                 }
 
@@ -100,15 +108,13 @@ namespace Entia.Test
     {
         public int Index { get; }
         public int Count { get; }
-        public bool Throw { get; }
 
         readonly MasterRunner _master;
 
-        public SlaveRunner(int index, int count, bool @throw, MasterRunner master)
+        public SlaveRunner(int index, int count, MasterRunner master)
         {
             Index = index;
             Count = count;
-            Throw = @throw;
             _master = master;
         }
 

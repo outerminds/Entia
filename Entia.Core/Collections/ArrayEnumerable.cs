@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Entia.Core
 {
@@ -21,7 +22,11 @@ namespace Entia.Core
 
     public struct ArrayEnumerator<T> : IEnumerator<T>
     {
-        public ref T Current => ref _array[_index];
+        public ref T Current
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref _array[_index];
+        }
         T IEnumerator<T>.Current => Current;
         object IEnumerator.Current => Current;
 
@@ -36,6 +41,7 @@ namespace Entia.Core
             _index = -1;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool MoveNext() => ++_index < _count;
         public void Reset() => _index = -1;
         public void Dispose() => _array = null;

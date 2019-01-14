@@ -10,6 +10,21 @@ using Entia.Dependables;
 
 namespace Entia.Queryables
 {
+    public readonly struct All : IQueryable
+    {
+        sealed class Querier : Querier<All>
+        {
+            public override bool TryQuery(Segment segment, World world, out Query<All> query)
+            {
+                query = new Query<All>(_ => new All());
+                return true;
+            }
+        }
+
+        [Querier]
+        static readonly Querier _querier = new Querier();
+    }
+
     public readonly struct All<T1, T2> : IQueryable, IDepend<T1, T2> where T1 : struct, IQueryable where T2 : struct, IQueryable
     {
         sealed class Querier : Querier<All<T1, T2>>

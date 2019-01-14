@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Entia.Core
 {
@@ -69,6 +70,14 @@ namespace Entia.Core
             }
 
             return false;
+        }
+
+        public static int GetHashCode<T>(T[] array)
+        {
+            if (array == null) return 0;
+            var hash = 0;
+            foreach (var item in array) hash ^= EqualityComparer<T>.Default.GetHashCode(item);
+            return hash;
         }
     }
 }

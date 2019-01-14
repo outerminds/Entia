@@ -4,7 +4,6 @@ using Entia.Modules;
 using Entia.Modules.Component;
 using Entia.Nodes;
 using Entia.Queryables;
-using Entia.Queryables;
 using Entia.Systems;
 using System;
 using System.Collections.Generic;
@@ -217,7 +216,7 @@ namespace Entia.Experiment
                 world.Resolve();
             }
 
-            var group = world.Groups().Get<All<Write<Position>, Write<Velocity>>>();
+            var group = world.Groups().Get(world.Queriers().Get<All<Write<Position>, Write<Velocity>>>());
             var array = group.ToArray();
 
             void ArrayIndexer()
@@ -321,7 +320,7 @@ namespace Entia.Experiment
                 SetRandom(entity);
             }
 
-            var group = world.Groups().Get<Write<Position>>();
+            var group = world.Groups().Get(world.Queriers().Get<Write<Position>>());
             world.Entities().Clear();
 
             for (var i = 0; i < iterations; i++)

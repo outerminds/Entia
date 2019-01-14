@@ -12,6 +12,8 @@ namespace Entia.Modules
     {
         struct Data
         {
+            public bool IsValid => Segment != null;
+
             public Segment Segment;
             public int Index;
             public int? Transient;
@@ -19,6 +21,7 @@ namespace Entia.Modules
 
         public ArrayEnumerable<Segment> Segments => _segments.Enumerate();
 
+        readonly Entities _entities;
         readonly Messages _messages;
         readonly Transient _transient = new Transient();
         readonly Segment _created = new Segment(int.MaxValue, new BitMask());
@@ -28,14 +31,16 @@ namespace Entia.Modules
         (Data[] items, int count) _data = (new Data[64], 0);
         (Segment[] items, int count) _segments;
 
-        public Components(Messages messages)
+        public Components(Entities entities, Messages messages)
         {
+            _entities = entities;
             _messages = messages;
             // NOTE: do not include '_pending' here
             _segments = (new Segment[] { _empty }, 1);
             _maskToSegment = new Dictionary<BitMask, Segment> { { _empty.Mask, _empty } };
             _messages.React((in OnCreate message) => Initialize(message.Entity));
             _messages.React((in OnPreDestroy message) => Dispose(message.Entity));
+            foreach (var entity in entities) Initialize(entity);
         }
 
         public ref T Get<T>(Entity entity) where T : struct, IComponent
@@ -101,7 +106,7 @@ namespace Entia.Modules
             for (int i = 0; i < _data.count; i++)
             {
                 var data = _data.items[i];
-                if (TryGetStore<T>(data, out var store, out var index))
+                if (data.IsValid && TryGetStore<T>(data, out var store, out var index))
                     yield return (data.Segment.Entities.items[data.Index], store[index]);
             }
         }
@@ -113,8 +118,8 @@ namespace Entia.Modules
                 for (int i = 0; i < _data.count; i++)
                 {
                     var data = _data.items[i];
-                    if (TryGetStore(data, metadata, out var store, out var index))
-                        yield return (data.Segment.Entities.items[data.Index], (IComponent)store.GetValue(i));
+                    if (data.IsValid && TryGetStore(data, metadata, out var store, out var index))
+                        yield return (data.Segment.Entities.items[data.Index], (IComponent)store.GetValue(index));
                 }
             }
         }
@@ -148,7 +153,13 @@ namespace Entia.Modules
                 if (data.Segment.TryStore<T>(out var store))
                 {
                     store[data.Index] = component;
-                    return data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index);
+                    if (data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index))
+                    {
+                        MessageUtility.OnAdd<T>(_messages, entity);
+                        return true;
+                    }
+
+                    return false;
                 }
 
                 ref var slot = ref GetTransientSlot(entity, ref data);
@@ -176,7 +187,13 @@ namespace Entia.Modules
                 if (data.Segment.TryStore(metadata, out var store))
                 {
                     store.SetValue(component, data.Index);
-                    return data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index);
+                    if (data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index))
+                    {
+                        MessageUtility.OnAdd(_messages, entity, metadata);
+                        return true;
+                    }
+
+                    return false;
                 }
 
                 ref var slot = ref GetTransientSlot(entity, ref data);
@@ -229,9 +246,8 @@ namespace Entia.Modules
 
         public void Resolve()
         {
-            for (int i = 0; i < _transient.Slots.count; i++)
+            foreach (ref var slot in _transient.Slots.Enumerate())
             {
-                ref var slot = ref _transient.Slots.items[i];
                 ref var data = ref GetData(slot.Entity, out var success);
 
                 if (success)
@@ -242,6 +258,7 @@ namespace Entia.Modules
                             {
                                 var segment = GetSegment(slot.Mask);
                                 CopyTo((data.Segment, data.Index), (segment, segment.Entities.count++));
+                                data.Transient = default;
                                 break;
                             }
                         case Transient.Resolutions.Remove:
@@ -255,12 +272,11 @@ namespace Entia.Modules
                             {
                                 var segment = GetSegment(slot.Mask);
                                 MoveTo((data.Segment, data.Index), segment);
+                                data.Transient = default;
                                 break;
                             }
                     }
                 }
-
-                data.Transient = default;
             }
 
             _created.Entities.count = 0;
@@ -303,7 +319,7 @@ namespace Entia.Modules
         public IEnumerator<IComponent> GetEnumerator()
         {
             foreach (var data in _data.Enumerate())
-                foreach (var component in Get(data)) yield return component;
+                if (data.IsValid) foreach (var component in Get(data)) yield return component;
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -322,7 +338,7 @@ namespace Entia.Modules
         int Count(in Metadata metadata)
         {
             var count = 0;
-            foreach (ref var data in _data.Enumerate()) if (Has(data, metadata.Index)) count++;
+            foreach (ref var data in _data.Enumerate()) if (data.IsValid && Has(data, metadata.Index)) count++;
             return count;
         }
 
@@ -341,7 +357,7 @@ namespace Entia.Modules
         {
             var cleared = false;
             foreach (ref var data in _data.Enumerate())
-                cleared |= Remove(data.Segment.Entities.items[data.Index], ref data, metadata, onRemove);
+                cleared |= data.IsValid && Remove(data.Segment.Entities.items[data.Index], ref data, metadata, onRemove);
             return cleared;
         }
 
@@ -368,8 +384,7 @@ namespace Entia.Modules
                 if (data.Segment is Segment segment)
                 {
                     ref var entities = ref data.Segment.Entities;
-                    // NOTE: use 'entities.items.Length' rather than 'entities.count' to include newly created entities
-                    success = data.Index < entities.items.Length && entities.items[data.Index] == entity;
+                    success = data.Index < entities.count && entities.items[data.Index] == entity;
                     return ref data;
                 }
             }
@@ -428,8 +443,10 @@ namespace Entia.Modules
             if (source == target) return false;
 
             ref var entity = ref source.segment.Entities.items[source.index];
-            target.segment.Entities.Set(target.index, entity);
+            if (entity == Entity.Zero) return false;
+
             ref var data = ref _data.items[entity.Index];
+            target.segment.Entities.Set(target.index, entity);
 
             var types = target.segment.Types.data;
             for (int i = 0; i < types.Length; i++)

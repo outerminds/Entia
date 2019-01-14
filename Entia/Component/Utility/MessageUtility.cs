@@ -35,7 +35,7 @@ namespace Entia.Modules.Component
         public static void OnAdd(this Messages messages, Entity entity, in Metadata metadata) => OnAdd(metadata)(messages, entity);
         public static Action<Messages, Entity> OnAdd(in Metadata metadata) => GetOrAdd<OnAdd, IComponent>(metadata, nameof(OnAdd));
         public static Action<Messages, Entity> OnAdd<T>() where T : struct, IComponent => GetOrAdd<OnAdd, IComponent>(
-            IndexUtility<IComponent>.Cache<T>.Index.local,
+            ComponentUtility.Cache<T>.Data.Index,
             () => (messages, entity) =>
             {
                 messages.Emit(new OnAdd<T> { Entity = entity });
@@ -47,7 +47,7 @@ namespace Entia.Modules.Component
         public static void OnRemove(this Messages messages, Entity entity, in Metadata metadata) => OnRemove(metadata)(messages, entity);
         public static Action<Messages, Entity> OnRemove(in Metadata metadata) => GetOrAdd<OnRemove, IComponent>(metadata, nameof(OnRemove));
         public static Action<Messages, Entity> OnRemove<T>() where T : struct, IComponent => GetOrAdd<OnRemove, IComponent>(
-            IndexUtility<IComponent>.Cache<T>.Index.local,
+            ComponentUtility.Cache<T>.Data.Index,
             () => (messages, entity) =>
             {
                 messages.Emit(new OnRemove<T> { Entity = entity });

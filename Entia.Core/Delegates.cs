@@ -1,6 +1,7 @@
 ﻿namespace Entia.Core
 {
     public delegate bool TryFunc<TIn, TOut>(TIn input, out TOut output);
+    public delegate bool TryFunc<TIn1, TIn2, TOut>(TIn1 input, TIn2 inpu2, out TOut output);
     public delegate bool TryInFunc<TIn, TOut>(in TIn input, out TOut output);
     public delegate bool TryInFunc<TIn1, TIn2, TOut>(in TIn1 input1, in TIn2 input2, out TOut output);
     public delegate bool TryRefFunc<TIn, TOut>(ref TIn input, out TOut output);

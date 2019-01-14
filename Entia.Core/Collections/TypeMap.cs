@@ -13,7 +13,7 @@ namespace Entia.Core
             public (Type type, TValue value) Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => (_types.ReadAt(_index), _map._values.items[_index]);
+                get => (_state.Read(_index, (in State state, in int index) => state.Types[index]), _map._values.items[_index]);
             }
             object IEnumerator.Current => Current;
 
@@ -43,7 +43,7 @@ namespace Entia.Core
             public Type Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _types.ReadAt(_index);
+                get => _state.Read(_index, (in State state, in int index) => state.Types[index]);
             }
             object IEnumerator.Current => Current;
 
@@ -126,37 +126,71 @@ namespace Entia.Core
             public static readonly int[] Indices = GetIndices(typeof(T));
         }
 
-        static readonly Concurrent<List<Type>> _types = new List<Type>();
-        static readonly Concurrent<Dictionary<Type, int>> _typeToIndex = new Dictionary<Type, int>();
-        static readonly Concurrent<Dictionary<Type, int[]>> _typeToIndices = new Dictionary<Type, int[]>();
+        struct State
+        {
+            public List<Type> Types;
+            public Dictionary<Type, int> TypeToIndex;
+            public Dictionary<Type, int[]> TypeToIndices;
+        }
 
-        public static bool TryGetType(int index, out Type type) => _types.TryReadAt(index, out type);
-        public static bool TryGetIndex(Type type, out int index) => _typeToIndex.TryReadValue(type, out index);
+        static readonly Concurrent<State> _state = new State
+        {
+            Types = new List<Type>(),
+            TypeToIndex = new Dictionary<Type, int>(),
+            TypeToIndices = new Dictionary<Type, int[]>()
+        };
 
-        public static int GetIndex(Type type) =>
-            _typeToIndex.ReadValueOrWrite(type, type, key =>
+        public static bool TryGetType(int index, out Type type)
+        {
+            using (var read = _state.Read())
             {
-                using (var types = _types.Write())
+                type = index < read.Value.Types.Count ? read.Value.Types[index] : default;
+                return type != null;
+            }
+        }
+        public static bool TryGetIndex(Type type, out int index)
+        {
+            using (var read = _state.Read()) return read.Value.TypeToIndex.TryGetValue(type, out index);
+        }
+
+        public static int GetIndex(Type type)
+        {
+            using (var read = _state.Read(true))
+            {
+                if (read.Value.TypeToIndex.TryGetValue(type, out var index)) return index;
+                using (var write = _state.Write())
                 {
-                    var index = types.Value.Count;
-                    types.Value.Add(key);
-                    return (key, index);
+                    if (write.Value.TypeToIndex.TryGetValue(type, out index)) return index;
+                    index = write.Value.Types.Count;
+                    write.Value.Types.Add(type);
+                    return write.Value.TypeToIndex[type] = index;
                 }
-            });
+            }
+        }
 
-        public static int[] GetIndices(Type type) =>
-            _typeToIndices.ReadValueOrWrite(type, type, key =>
+        public static int[] GetIndices(Type type)
+        {
+            using (var read = _state.Read(true))
             {
-                var indices = key.GetInterfaces()
-                    .Prepend(key)
-                    .Concat(key.Bases())
-                    .Where(TypeUtility.Is<TBase>)
-                    .Select(GetIndex)
-                    .ToArray();
-                return (key, indices);
-            });
+                if (read.Value.TypeToIndices.TryGetValue(type, out var indices)) return indices;
+                using (var write = _state.Write())
+                {
+                    if (write.Value.TypeToIndices.TryGetValue(type, out indices)) return indices;
+                    indices = type.GetInterfaces()
+                        .Prepend(type)
+                        .Concat(type.Bases())
+                        .Where(TypeUtility.Is<TBase>)
+                        .Select(GetIndex)
+                        .ToArray();
+                    return write.Value.TypeToIndices[type] = indices;
+                }
+            }
+        }
 
-        public static bool TryGetIndices(Type type, out int[] indices) => _typeToIndices.TryReadValue(type, out indices);
+        public static bool TryGetIndices(Type type, out int[] indices)
+        {
+            using (var read = _state.Read()) return read.Value.TypeToIndices.TryGetValue(type, out indices);
+        }
 
         public KeyEnumerable Keys => new KeyEnumerable(this);
         public ValueEnumerable Values => new ValueEnumerable(this);

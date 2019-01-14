@@ -9,7 +9,7 @@ namespace Entia.Modules.Query
     public readonly struct Query
     {
         public readonly Metadata[] Types;
-        public Query(Metadata[] types) { Types = types; }
+        public Query(params Metadata[] types) { Types = types; }
     }
 
     public readonly struct Query<T> where T : struct, Queryables.IQueryable

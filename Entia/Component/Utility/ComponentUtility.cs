@@ -14,16 +14,47 @@ namespace Entia.Modules.Component
             static Cache() { TryGetMetadata(typeof(T), out Data); }
         }
 
-        public static int Count => _metadata.ReadCount();
+        struct State
+        {
+            public (Metadata[] items, int count) Metadata;
+            public Dictionary<Type, Metadata> TypeToMetadata;
+        }
 
-        static readonly Concurrent<(Metadata[] items, int count)> _metadata = (new Metadata[8], 0);
-        static readonly Concurrent<Dictionary<Type, Metadata>> _typeToMetadata = new Dictionary<Type, Metadata>();
+        public static int Count => _state.Read((in State state) => state.Metadata.count);
 
-        public static bool TryGetMetadata(int index, out Metadata data) => _metadata.TryReadAt(index, out data);
+        static readonly Concurrent<State> _state = new State
+        {
+            Metadata = (new Metadata[8], 0),
+            TypeToMetadata = new Dictionary<Type, Metadata>()
+        };
+
+        public static bool TryGetMetadata(int index, out Metadata data)
+        {
+            using (var read = _state.Read())
+            {
+                if (index < read.Value.Metadata.count)
+                {
+                    data = read.Value.Metadata.items[index];
+                    return data.IsValid;
+                }
+            }
+
+            data = default;
+            return true;
+        }
 
         public static bool TryGetMetadata(Type type, out Metadata data)
         {
-            data = _typeToMetadata.ReadValueOrWrite(type, type, key => (key, CreateMetadata(key)));
+            using (var read = _state.Read(true))
+            {
+                if (read.Value.TypeToMetadata.TryGetValue(type, out data)) return data.IsValid;
+                using (var write = _state.Write())
+                {
+                    if (write.Value.TypeToMetadata.TryGetValue(type, out data)) return data.IsValid;
+                    data = write.Value.TypeToMetadata[type] = CreateMetadata(type);
+                }
+            }
+
             return data.IsValid;
         }
 
@@ -41,14 +72,18 @@ namespace Entia.Modules.Component
         {
             if (type.Is<IComponent>())
             {
-                using (var metadata = _metadata.Write())
+                using (var write = _state.Write())
                 {
-                    var data = new Metadata(type, metadata.Value.count, new BitMask(metadata.Value.count), type.GetFields(TypeUtility.Instance));
-                    return metadata.Value.Push(data);
+                    var data = new Metadata(
+                        type,
+                        write.Value.Metadata.count,
+                        new BitMask(write.Value.Metadata.count),
+                        type.GetFields(TypeUtility.Instance));
+                    return write.Value.Metadata.Push(data);
                 }
             }
 
-            return new Metadata(type, -1, new BitMask(), Array.Empty<FieldInfo>());
+            return Metadata.Invalid;
         }
     }
 }

@@ -79,14 +79,18 @@ namespace Entia.Modules
 
         public bool Clear()
         {
-            var cleared = _free.count > 0 || _frozen.count > 0 || _data.count > 0;
+            var cleared = false;
             for (int i = 0; i < _data.count; i++)
             {
                 ref var data = ref _data.items[i];
-                if (data.Allocated) Destroy(new Entity(i, data.Generation), ref data);
+                if (data.Allocated)
+                {
+                    cleared = true;
+                    Destroy(new Entity(i, data.Generation), ref data);
+                }
             }
-            // NOTE: do not clear '_data' such that the generation counters are not lost; this prevents collisions if a reference to an old entity was kept
-            return _free.Clear() | _frozen.Clear() | cleared;
+            // NOTE: do not clear '_data', '_free' and '_frozen' such that the generation counters are not lost; this prevents collisions if a reference to an old entity was kept
+            return cleared;
         }
 
         public void Resolve()

@@ -64,30 +64,37 @@ $@"
             }
         }
 
+        public static Sequence<T, TModel> Clone<T, TModel>(this Sequence<T, TModel> sequence) =>
+            new Sequence<T, TModel>(sequence.Initial, sequence.Check, Clone(sequence.Actions));
+
+        public static T[] Clone<T>(T[] array) => array.Select(CloneUtility.Shallow).ToArray();
+
         public static Property ToProperty<T, TModel>(this Arbitrary<Sequence<T, TModel>> arbitrary) =>
-            Prop.ForAll(arbitrary, Arb.Default.DoNotSizeInt32().WithoutShrink(), (sequence, seed) =>
+            Prop.ForAll(arbitrary, Arb.Default.DoNotSizeInt32().WithoutShrink(), (sequence, seed) => sequence.ToProperty(seed.Item));
+
+        public static Property ToProperty<T, TModel>(this Sequence<T, TModel> sequence, int seed)
+        {
+            var (value, model) = sequence.Initial(seed);
+            var property = Prop.OfTestable(true);
+
+            foreach (var action in Clone(sequence.Actions))
             {
-                var (value, model) = sequence.Initial(seed.Item);
-                var property = Prop.OfTestable(true);
-
-                foreach (var action in sequence.Actions)
+                if (action.Pre(value, model))
                 {
-                    if (action.Pre(value, model))
-                    {
-                        sequence.Did.Add(action);
-                        action.Do(value, model);
-                        property = property.And(action.Check(value, model).Label($"-> {action}"));
-                        action.Post(value, model);
-                    }
+                    sequence.Did.Add(action);
+                    action.Do(value, model);
+                    property = property.And(action.Check(value, model).Label($"-> {action}"));
+                    action.Post(value, model);
                 }
+            }
 
-                return property.And(sequence.Check(value, model));
-            });
+            return property.And(sequence.Check(value, model));
+        }
 
         public static Arbitrary<Sequence<T, TModel>> ToArbitrary<T, TModel>(this Gen<Sequence<T, TModel>> generator, bool shrink = true) => shrink ?
             Arb.From(generator, sequence =>
                 Arb.Shrink(sequence.Actions)
-                    .Select(actions => new Sequence<T, TModel>(sequence.Initial, sequence.Check, actions.Select(CloneUtility.Shallow).ToArray()))) :
+                    .Select(actions => new Sequence<T, TModel>(sequence.Initial, sequence.Check, actions))) :
             Arb.From(generator);
 
         public static Gen<Sequence<T, TModel>> ToSequence<T, TModel>(this Gen<Action<T, TModel>> generator, Func<int, (T, TModel)> initial, Func<T, TModel, Property> check = null)

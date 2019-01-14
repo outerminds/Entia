@@ -4,6 +4,8 @@ using Entia.Core;
 using System.Collections.Generic;
 using System.Collections;
 using System;
+using System.Reflection;
+using Entia.Queriers;
 
 namespace Entia.Modules
 {
@@ -11,28 +13,31 @@ namespace Entia.Modules
     {
         public int Count => _groups.count;
 
-        readonly Components _components;
+        readonly World _world;
         readonly Queriers _queriers;
-        readonly Messages _messages;
         (IGroup[] items, int count) _groups = (new IGroup[8], 0);
+        readonly Dictionary<IQuerier, IGroup> _querierToGroup = new Dictionary<IQuerier, IGroup>();
 
-        public Groups(Components components, Queriers queriers, Messages messages)
+        public Groups(World world)
         {
-            _components = components;
-            _queriers = queriers;
-            _messages = messages;
+            _world = world;
+            _queriers = world.Queriers();
         }
 
-        public Group<T> Get<T>() where T : struct, IQueryable
+        public Group<T> Get<T>(Querier<T> querier) where T : struct, IQueryable
         {
-            var group = new Group<T>(_components, _queriers, _messages);
+            if (_querierToGroup.TryGetValue(querier, out var value) && value is Group<T> group) return group;
+            _querierToGroup[querier] = group = new Group<T>(querier, _world);
             _groups.Push(group);
             return group;
         }
 
         public bool Has(IGroup group) => _groups.Contains(group);
-
-        public bool Clear() => _groups.Clear();
+        public bool Clear()
+        {
+            _querierToGroup.Clear();
+            return _groups.Clear();
+        }
 
         public void Resolve()
         {

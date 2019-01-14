@@ -112,18 +112,20 @@ namespace Entia.Core
 
         public static TValue ReadValueOrWrite<TBase, TValue, TState>(this Concurrent<TypeMap<TBase, TValue>> concurrent, int index, TState state, Func<TState, TValue> provide, Action<TState> onWrite = null)
         {
+            TValue value;
             using (var read = concurrent.Read(true))
             {
-                if (read.Value.TryGet(index, out var types)) return types;
+                if (read.Value.TryGet(index, out value)) return value;
                 using (var write = concurrent.Write())
                 {
-                    if (write.Value.TryGet(index, out types)) return types;
-                    var value = provide(state);
+                    if (write.Value.TryGet(index, out value)) return value;
+                    value = provide(state);
                     write.Value.Set(index, value);
-                    onWrite?.Invoke(state);
-                    return value;
                 }
             }
+
+            onWrite?.Invoke(state);
+            return value;
         }
     }
 }

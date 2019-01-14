@@ -8,11 +8,20 @@ using Entia.Messages.Segment;
 using Entia.Modules;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
+using Entia.Queriers;
 using Entia.Queryables;
 
 namespace Entia.Modules.Group
 {
-    public interface IGroup : IResolvable { }
+    public interface IGroup : IResolvable
+    {
+        int Count { get; }
+        Type Type { get; }
+        IEnumerable<Entity> Entities { get; }
+        IQuerier Querier { get; }
+
+        bool Has(Entity entity);
+    }
 
     public sealed class Group<T> : IGroup, IEnumerable<(Entity entity, T item)> where T : struct, IQueryable
     {
@@ -56,6 +65,71 @@ namespace Entia.Modules.Group
                     _segment = i;
                     _index.Value = entity;
                     _value = _group._indexToQuery[current.Index].Get(_index);
+                    return true;
+                }
+
+                return false;
+            }
+
+            public void Reset() => Update(0, 0);
+            public void Dispose() => _group = null;
+        }
+
+        public readonly struct EntityEnumerable : IEnumerable<Entity>
+        {
+            readonly Group<T> _group;
+            readonly int _segment;
+            readonly int _entity;
+
+            public EntityEnumerable(Group<T> group, int segment = 0, int entity = 0)
+            {
+                _group = group;
+                _segment = segment;
+                _entity = entity;
+            }
+
+            public EntityEnumerator GetEnumerator() => new EntityEnumerator(_group);
+            IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        public struct EntityEnumerator : IEnumerator<Entity>
+        {
+            public Entity Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => _entities.items[_index];
+            }
+            object IEnumerator.Current => Current;
+
+            Group<T> _group;
+            int _segment;
+            int _index;
+            (Entity[] items, int count) _entities;
+
+            public EntityEnumerator(Group<T> group, int segment = 0, int entity = 0)
+            {
+                _group = group;
+                _segment = int.MaxValue - 1;
+                _index = int.MaxValue - 1;
+                _entities = (Array.Empty<Entity>(), 0);
+                // NOTE: use 'segment', not '_segment' and use 'entity', not '_entity' here
+                Update(segment, entity - 1);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext() => ++_index < _entities.count || Update(_segment + 1, 0);
+
+            bool Update(int segment, int entity)
+            {
+                for (int i = segment; i < _group._segments.count; i++)
+                {
+                    var current = _group._segments.items[i];
+                    _entities = current.Entities;
+                    if (entity >= _entities.count) { entity -= _entities.count; continue; }
+
+                    _segment = i;
+                    _index = entity;
                     return true;
                 }
 
@@ -177,23 +251,28 @@ namespace Entia.Modules.Group
         }
 
         public int Count { get; private set; }
+        public Querier<T> Querier => _querier;
+        public EntityEnumerable Entities => new EntityEnumerable(this);
+        IQuerier IGroup.Querier => Querier;
+        Type IGroup.Type => typeof(T);
+        IEnumerable<Entity> IGroup.Entities => Entities;
 
+        readonly Querier<T> _querier;
+        readonly World _world;
         readonly Components _components;
-        readonly Queriers _queriers;
-        readonly Messages _messages;
         readonly Pool<Box<int>> _pool = new Pool<Box<int>>(() => new Box<int>());
         (Box<int>[] items, int count) _boxes = (new Box<int>[2], 0);
         (Segment[] items, int count) _segments = (new Segment[4], 0);
         Segment[] _indexToSegment = new Segment[4];
         Query<T>[] _indexToQuery = new Query<T>[4];
 
-        public Group(Components components, Queriers queriers, Messages messages)
+        public Group(Querier<T> querier, World world)
         {
-            _components = components;
-            _queriers = queriers;
-            _messages = messages;
-            _messages.React((in OnCreate message) => TryAdd(message.Segment));
-            _messages.React((in OnMove message) => Move(message.Source, message.Target));
+            _querier = querier;
+            _world = world;
+            _components = world.Components();
+            world.Messages().React((in OnCreate message) => TryAdd(message.Segment));
+            world.Messages().React((in OnMove message) => Move(message.Source, message.Target));
             foreach (var segment in _components.Segments) TryAdd(segment);
         }
 
@@ -235,7 +314,7 @@ namespace Entia.Modules.Group
 
         bool TryAdd(Segment segment)
         {
-            if (!Has(segment) && _queriers.TryQuery<T>(segment, out var query))
+            if (!Has(segment) && _querier.TryQuery(segment, _world, out var query))
             {
                 ArrayUtility.Set(ref _indexToSegment, segment, segment.Index);
                 ArrayUtility.Set(ref _indexToQuery, query, segment.Index);

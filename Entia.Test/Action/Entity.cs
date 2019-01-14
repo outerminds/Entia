@@ -22,7 +22,6 @@ namespace Entia.Test
                 _entity = value.Entities().Create();
                 model.Entities.Add(_entity);
                 model.Components.Add(_entity, new Dictionary<Type, IComponent>());
-                model.Tags.Add(_entity, new HashSet<Type>());
             }
             _onCreate = onCreate.Pop().ToArray();
             value.Messages().Remove(onCreate);
@@ -57,7 +56,6 @@ namespace Entia.Test
                 value.Entities().Destroy(_entity);
                 model.Entities.Remove(_entity);
                 model.Components.Remove(_entity);
-                model.Tags.Remove(_entity);
             }
             _onPreDestroy = onPreDestroy.Pop().ToArray();
             _onPostDestroy = onPostDestroy.Pop().ToArray();
@@ -94,7 +92,6 @@ namespace Entia.Test
                 value.Entities().Clear();
                 model.Entities.Clear();
                 model.Components.Clear();
-                model.Tags.Clear();
             }
             _onPreDestroy = onPreDestroy.Pop().ToArray();
             _onPostDestroy = onPostDestroy.Pop().ToArray();
@@ -106,13 +103,13 @@ namespace Entia.Test
             .And((value.Entities().Count() == 0).Label("Entities.Count"))
             .And(_entities.None(value.Entities().Has).Label("Entities.Has()"))
             .And(_entities.None(value.Entities().Destroy).Label("Entities.Destroy()"))
-            .And(value.Entities().Clear().Not().Label("Entities.Clear()"))
+            .And(value.Entities().Clear().Not().Label("Entities.Clear().Not()"))
             .And(value.Components().None().Label("Components.None()"))
             .And((_onPreDestroy.Length == _onPostDestroy.Length).Label("OnDestroy.Length"))
             .And((_entities.Length == _onPreDestroy.Length).Label("OnPreDestroy.Length"))
             .And(_entities.OrderBy(_ => _).SequenceEqual(_onPreDestroy.Select(message => message.Entity).OrderBy(_ => _)).Label("OnPreDestroy.Entity"))
             .And((_entities.Length == _onPostDestroy.Length).Label("OnPostDestroy.Length"))
             .And(_entities.OrderBy(_ => _).SequenceEqual(_onPostDestroy.Select(message => message.Entity).OrderBy(_ => _)).Label("OnPostDestroy.Entity"));
-        public override string ToString() => GetType().Format();
+        public override string ToString() => $"{GetType().Format()}({_entities.Length})";
     }
 }
