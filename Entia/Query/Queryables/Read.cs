@@ -17,7 +17,7 @@ namespace Entia.Queryables
                 if (segment.Has<T>())
                 {
                     var metadata = ComponentUtility.Cache<T>.Data;
-                    query = new Query<Read<T>>(index => new Read<T>(segment.Store<T>(), index), new[] { metadata });
+                    query = new Query<Read<T>>(index => new Read<T>(segment.GetStore<T>(), index), metadata);
                     return true;
                 }
 

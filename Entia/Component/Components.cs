@@ -150,7 +150,7 @@ namespace Entia.Modules
             if (success)
             {
                 var metadata = ComponentUtility.Cache<T>.Data;
-                if (data.Segment.TryStore<T>(out var store))
+                if (data.Segment.TryGetStore<T>(out var store))
                 {
                     store[data.Index] = component;
                     if (data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index))
@@ -184,7 +184,7 @@ namespace Entia.Modules
             ref var data = ref GetData(entity, out var success);
             if (success && ComponentUtility.TryGetMetadata(component.GetType(), out var metadata))
             {
-                if (data.Segment.TryStore(metadata, out var store))
+                if (data.Segment.TryGetStore(metadata, out var store))
                 {
                     store.SetValue(component, data.Index);
                     if (data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index))
@@ -366,11 +366,18 @@ namespace Entia.Modules
             if (Has(data, metadata.Index))
             {
                 ref var slot = ref GetTransientSlot(entity, ref data);
-                if (slot.Mask.Remove(metadata.Index))
-                {
-                    onRemove(_messages, entity);
-                    return true;
-                }
+                return Remove(entity, ref slot, metadata, onRemove);
+            }
+
+            return false;
+        }
+
+        bool Remove(Entity entity, ref Transient.Slot slot, in Metadata metadata, Action<Messages, Entity> onRemove)
+        {
+            if (slot.Mask.Remove(metadata.Index))
+            {
+                onRemove(_messages, entity);
+                return true;
             }
 
             return false;
@@ -414,7 +421,7 @@ namespace Entia.Modules
         bool TryGetStore(in Data data, in Metadata metadata, out Array store, out int adjusted)
         {
             adjusted = data.Index;
-            data.Segment.TryStore(metadata, out store);
+            data.Segment.TryGetStore(metadata, out store);
 
             if (data.Transient is int transient)
             {
@@ -452,7 +459,7 @@ namespace Entia.Modules
             for (int i = 0; i < types.Length; i++)
             {
                 ref readonly var metadata = ref types[i];
-                ref var targetStore = ref target.segment.Store(metadata.Index);
+                ref var targetStore = ref target.segment.GetStore(metadata.Index);
                 ArrayUtility.Ensure(ref targetStore, metadata.Type, target.segment.Entities.items.Length);
 
                 if (TryGetStore(data, metadata, out var sourceStore, out var sourceIndex))
@@ -501,8 +508,10 @@ namespace Entia.Modules
             if (success)
             {
                 ref var slot = ref GetTransientSlot(entity, ref data);
+                var segment = GetSegment(slot.Mask);
+                foreach (var metadata in segment.Types.data)
+                    Remove(entity, ref slot, metadata, MessageUtility.OnRemove(metadata));
                 slot.Resolution = Transient.Resolutions.Remove;
-                slot.Mask.Clear();
             }
         }
 

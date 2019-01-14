@@ -216,26 +216,17 @@ namespace Entia.Experiment
                 world.Resolve();
             }
 
-            var group = world.Groups().Get(world.Queriers().Get<All<Write<Position>, Write<Velocity>>>());
-            var array = group.ToArray();
+            var group = world.Groups().Get(world.Queriers().Get<All<Write<Position>, Read<Velocity>>>());
+            var array = group.Select(pair => (pair.entity, position: pair.item.Value1.Value, velocity: pair.item.Value2.Value)).ToArray();
+            group.ToArray();
 
             void ArrayIndexer()
             {
                 for (int i = 0; i < array.Length; i++)
                 {
-                    ref readonly var item = ref array[i];
-                    ref var position = ref item.item.Value1.Value;
-                    ref var Velocity = ref item.item.Value2.Value;
-                    position.X += Velocity.X;
-                }
-            }
-
-            void ArrayForeach()
-            {
-                foreach (var item in array)
-                {
-                    ref var position = ref item.item.Value1.Value;
-                    ref var Velocity = ref item.item.Value2.Value;
+                    ref var item = ref array[i];
+                    ref var position = ref item.position;
+                    ref readonly var Velocity = ref item.velocity;
                     position.X += Velocity.X;
                 }
             }
@@ -245,8 +236,8 @@ namespace Entia.Experiment
                 foreach (var (_, item) in group)
                 {
                     ref var position = ref item.Value1.Value;
-                    ref var Velocity = ref item.Value2.Value;
-                    position.X += Velocity.X;
+                    ref readonly var velocity = ref item.Value2.Value;
+                    position.X += velocity.X;
                 }
             }
 
@@ -257,8 +248,8 @@ namespace Entia.Experiment
                     foreach (var (_, item) in split)
                     {
                         ref var position = ref item.Value1.Value;
-                        ref var Velocity = ref item.Value2.Value;
-                        position.X += Velocity.X;
+                        ref readonly var velocity = ref item.Value2.Value;
+                        position.X += velocity.X;
                     }
                 }))).Wait();
             }
@@ -270,15 +261,14 @@ namespace Entia.Experiment
                     foreach (var (_, item) in split)
                     {
                         ref var position = ref item.Value1.Value;
-                        ref var Velocity = ref item.Value2.Value;
-                        position.X += Velocity.X;
+                        ref readonly var velocity = ref item.Value2.Value;
+                        position.X += velocity.X;
                     }
                 });
             }
 
             Action[] tests =
             {
-                () => Measure($"Array Foreach ({group.Count})", ArrayForeach, 1000),
                 () => Measure($"Array Indexer ({group.Count})", ArrayIndexer, 1000),
                 () => Measure($"Group Foreach ({group.Count})", GroupForeach, 1000),
                 () => Measure($"Group Task.WhenAll ({group.Count})", GroupTask, 1000),

@@ -21,6 +21,7 @@ namespace Entia.Modules.Component
         }
 
         public static int Count => _state.Read((in State state) => state.Metadata.count);
+        public static Metadata[] Types => _state.Read((in State state) => state.Metadata.ToArray());
 
         static readonly Concurrent<State> _state = new State
         {

@@ -17,7 +17,7 @@ namespace Entia.Queryables
                 if (segment.Has<T>())
                 {
                     var metadata = ComponentUtility.Cache<T>.Data;
-                    query = new Query<Write<T>>(index => new Write<T>(segment.Store<T>(), index), new[] { metadata });
+                    query = new Query<Write<T>>(index => new Write<T>(segment.GetStore<T>(), index), metadata);
                     return true;
                 }
 

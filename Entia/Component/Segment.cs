@@ -26,15 +26,15 @@ namespace Entia.Modules.Component
             Types = (metadata, metadata.Select(data => data.Index).FirstOrDefault(), metadata.Select(data => data.Index + 1).LastOrDefault());
             Entities = (new Entity[capacity], 0);
             Stores = new Array[Types.maximum - Types.minimum];
-            foreach (var datum in Types.data) Stores[StoreIndex(datum.Index)] = Array.CreateInstance(datum.Type, capacity);
+            foreach (var datum in Types.data) Stores[GetStoreIndex(datum.Index)] = Array.CreateInstance(datum.Type, capacity);
         }
 
         public bool Has<T>() where T : struct, IComponent => Has(ComponentUtility.Cache<T>.Data.Index);
         public bool Has(int component) => Mask.Has(component);
 
-        public bool TryStore<T>(out T[] store) where T : struct, IComponent
+        public bool TryGetStore<T>(out T[] store) where T : struct, IComponent
         {
-            var index = StoreIndex<T>();
+            var index = GetStoreIndex<T>();
             if (index >= 0 && index < Stores.Length && Stores[index] is T[] casted)
             {
                 store = casted;
@@ -45,12 +45,12 @@ namespace Entia.Modules.Component
             return false;
         }
 
-        public T[] Store<T>() where T : struct, IComponent => (T[])Stores[StoreIndex<T>()];
-        public ref Array Store(int component) => ref Stores[StoreIndex(component)];
+        public T[] GetStore<T>() where T : struct, IComponent => (T[])Stores[GetStoreIndex<T>()];
+        public ref Array GetStore(int component) => ref Stores[GetStoreIndex(component)];
 
-        public bool TryStore(in Metadata metadata, out Array store)
+        public bool TryGetStore(in Metadata metadata, out Array store)
         {
-            var index = StoreIndex(metadata.Index);
+            var index = GetStoreIndex(metadata.Index);
             if (index >= 0 && index < Stores.Length && Stores[index] is Array casted)
             {
                 store = casted;
@@ -61,7 +61,7 @@ namespace Entia.Modules.Component
             return false;
         }
 
-        int StoreIndex(int component) => component - Types.minimum;
-        int StoreIndex<T>() where T : struct, IComponent => StoreIndex(ComponentUtility.Cache<T>.Data.Index);
+        int GetStoreIndex(int component) => component - Types.minimum;
+        int GetStoreIndex<T>() where T : struct, IComponent => GetStoreIndex(ComponentUtility.Cache<T>.Data.Index);
     }
 }
