@@ -40,6 +40,7 @@ namespace Entia.Test
             .And((_group as IGroup).Querier.Equals(_querier).Label("Group.Query"))
             .And(_group.Entities.OrderBy(_ => _).SequenceEqual(_entities.OrderBy(_ => _)).Label("Group.Entities"))
             .And((_group.Entities.Count() == _group.Count).Label("Group.Entities.Count()"))
+            .And((_group.Items.Count() == _group.Count).Label("Group.Items.Count()"))
             .And(_group.Entities.All(_group.Has).Label("Group.Entities.Has()"))
             .And(_group.Entities.All(entity => _group.TryGet(entity, out _)).Label("Group.Entities.TryGet()"))
             .And(_entities.All(entity => _group.Has(entity)).Label("Group.Has()"))

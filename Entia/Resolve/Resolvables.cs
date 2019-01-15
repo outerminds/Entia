@@ -1,19 +1,19 @@
 using System;
 using System.Runtime.CompilerServices;
 using Entia.Core;
-using Entia.Experiment.Resolvers;
+using Entia.Resolvers;
 using Entia.Modules;
 
-namespace Entia.Experiment.Resolvables
+namespace Entia.Resolvables
 {
-    public interface IResolvablez { }
-    public interface IResolvablez<T> where T : IResolver, new() { }
+    public interface IResolvable { }
+    public interface IResolvable<T> where T : IResolver, new() { }
 
-    public readonly struct Do<T> : IResolvablez
+    public readonly struct Do<T> : IResolvable
     {
-        sealed class Resolver : IResolver<Do<T>>
+        sealed class Resolver : Resolver<Do<T>>
         {
-            public void Resolve(in Do<T> resolvable) => resolvable.Action(resolvable.State);
+            public override void Resolve(in Do<T> resolvable) => resolvable.Action(resolvable.State);
         }
 
         [Resolver]
