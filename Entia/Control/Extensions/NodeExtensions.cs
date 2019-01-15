@@ -11,7 +11,6 @@ namespace Entia.Nodes
     {
         public static IEnumerable<Node> Family(this Node node) => node.Descendants().Append(node);
         public static IEnumerable<Node> Descendants(this Node node) => node.Children.SelectMany(Family);
-
         public static Node Descend<TFilter>(this Node node, Func<Node, Node> replace) => node.Descend(child => child.Value is TFilter, replace);
         public static Node Descend(this Node node, Func<Node, Node> replace) => node.Descend(_ => true, replace);
         public static Node Descend(this Node node, Func<Node, bool> filter, Func<Node, Node> replace)
@@ -38,13 +37,19 @@ namespace Entia.Nodes
         public static Node Do(this Node node, Action<IRunner> @do) =>
             Node.Of(node.Name, new Map { Mapper = runner => { @do(runner); return Result.Success(runner); } }, node);
 
-        public static Node Flatten(this Node node, bool recursive = false) =>
+        public static Node Flatten(this Node node, bool recursive = true) =>
             Node.Of(node.Name, node.Value, recursive ?
-                node.Family().Where(child => child.Children.Length == 0).ToArray() :
-                node.Children.SelectMany(child => child.Children.Length == 0 ? new[] { child } : child.Children).ToArray());
+                node.Family().Where(child => child.Value is IAtomic || child.Children.Length == 0).ToArray() :
+                node.Children.SelectMany(child => child.Value is IAtomic || child.Children.Length == 0 ? new[] { child } : child.Children).ToArray());
 
         public static Node Repeat(this Node node, int count) => Node.Of(node.Name, node.Value, node.Children.Repeat(count).ToArray());
-
         public static Node Distinct(this Node node) => Node.Of(node.Name, node.Value, node.Children.Distinct().ToArray());
+        public static Node Separate(this Node node, Node separator, bool recursive = true) => node.Separate(() => separator, recursive);
+        public static Node Separate(this Node node, Func<Node> provider, bool recursive = true)
+        {
+            if (node.Value is IAtomic) return node;
+            var children = recursive ? node.Children.Select(child => child.Separate(provider, recursive)).ToArray() : node.Children;
+            return Node.Of(node.Name, node.Value, children.Separate(provider).ToArray());
+        }
     }
 }

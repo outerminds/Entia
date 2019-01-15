@@ -18,46 +18,11 @@ Frictions:
 
 Features:
 - add tests fof 'Resolvers' module
-- Node.Resolve()
-	- Can be used with the 'Separate' combinator which will insert an instance of the provided node between each child nodes
-	- ex: Node.Sequence(...).Separate(() => Node.Resolve()) // with lambda or not
 - make random access work for Group3.cs
-- promote Resolvers as a supported module with the Defer injectable
-- promote Components3.cs as the official component module
-	- implement 'transient' stores to make the API more consistent
 - don't forget to add dependencies to new modules
 	- new queryables
-- merge Components and Tags
-	- remove everything that has to do with tags
-	- ITag
-	- ITagReference
-	- tag generation
-	- tag template
-	- tag analysis in VSIX
-- remove Query<T> as an injectable
-	- Group<T> is now lightweight enough to be the only option
-- replace 'SegmentData' in the Entities module with just the generations counters
-- Count in the Entities module should be a property
-- remove naming conventions from VSIX
-- remove Stores
-- remove old segments and all ISegment related logic
-- make BitMask immutable
-	- everywhere 'new BitMask()' is used, replace it with BitMask.Empty
-- Query combinators can be simplified alot
-	- maybe Filter can be removed?
-	- remove bitwise operator from BitMask
-- MessageUtility should use 'Metadata'
-- OnAdd<T>/OnAdd and OnRemove<T>/OnRemove should use Metadata
-- OnAdd<T>/OnRemove<T> shoud have the IComponent constraint
-- use ComponentUtility instead of IndexUtility
-- adjust tests to changes
-- adapt generator to generate extensions for 'Item<T>'
-- support for attributes on a Group field
-- make a non-generic Group for entity queries?
-	- enumeration would yield entities
-	- should be vaguely faster than Group<T>
-- create github repository
 - when merging, fix .meta files
+- when merging, add '.Separate(Resolve())' to controllers
 
 - improve better removal actions in tests by querying all removable entities from the world and choosing from that query
 	- currently, a random entity is chosen from the world and if it is not removable, the action is considered invalid

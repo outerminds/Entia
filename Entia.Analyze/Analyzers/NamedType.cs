@@ -101,14 +101,6 @@ namespace Entia.Analyze.Analyzers
                 nameof(Entia),
                 DiagnosticSeverity.Warning,
                 true);
-
-            public static readonly DiagnosticDescriptor MessagePrefix = new DiagnosticDescriptor(
-                "Entia_" + nameof(MessagePrefix),
-                nameof(MessagePrefix),
-                $"Message '{{0}}' should be prefixed with 'On' or 'Do'.",
-                nameof(Entia),
-                DiagnosticSeverity.Warning,
-                true);
         }
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
@@ -122,8 +114,7 @@ namespace Entia.Analyze.Analyzers
             Rules.MustBeInstancePublicField,
             Rules.MustImplementOnlyOneEntiaInterface,
             Rules.SystemPublicFieldMustBeInjectable,
-            Rules.SystemNotPublicFieldWillNotBeInjected,
-            Rules.MessagePrefix
+            Rules.SystemNotPublicFieldWillNotBeInjected
         );
 
         public override void Initialize(AnalysisContext context) => context.RegisterSymbolAction(Analyze, SymbolKind.NamedType);
@@ -181,13 +172,6 @@ namespace Entia.Analyze.Analyzers
                             if (field.Type.Implements(symbols.Phase)) ReportMember(Rules.FieldMustNotBePhase, field);
                         }
                     }
-                }
-
-                if (isMessage)
-                {
-                    if (!symbol.Name.StartsWith("On", System.StringComparison.CurrentCulture) &&
-                        !symbol.Name.StartsWith("Do", System.StringComparison.CurrentCulture))
-                        ReportType(Rules.MessagePrefix);
                 }
 
                 if (isSystem)

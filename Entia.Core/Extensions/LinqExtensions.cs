@@ -35,7 +35,9 @@ namespace Entia.Core
             return (head.ToArray(), tail);
         }
 
-        public static IEnumerable<T> Separate<T>(this IEnumerable<T> source, T separator)
+        public static IEnumerable<T> Separate<T>(this IEnumerable<T> source, T separator) => source.Separate(() => separator);
+
+        public static IEnumerable<T> Separate<T>(this IEnumerable<T> source, Func<T> provider)
         {
             var first = true;
             var previous = default(T);
@@ -44,7 +46,7 @@ namespace Entia.Core
                 if (!first)
                 {
                     yield return previous;
-                    yield return separator;
+                    yield return provider();
                 }
 
                 first = false;

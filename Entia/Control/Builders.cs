@@ -147,6 +147,17 @@ namespace Entia.Builders
         }
     }
 
+    public sealed class Resolve : IBuilder
+    {
+        public Option<Runner<T>> Build<T>(Node node, Controller controller, World world) where T : struct, IPhase
+        {
+            if (Option.Cast<Nodes.Resolve>(node.Value).TryValue(out var data))
+                return new Runner<T>(data, (in T _) => world.Resolve());
+
+            return Option.None();
+        }
+    }
+
     public sealed class Automatic : IBuilder
     {
         public Option<Runner<T>> Build<T>(Node node, Controller controller, World world) where T : struct, IPhase

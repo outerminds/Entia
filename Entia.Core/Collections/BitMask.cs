@@ -21,26 +21,6 @@ namespace Entia.Core
             public static Bucket OfIndex(int index) => new Bucket((index / Size), 1uL << (index % Size));
         }
 
-        public static BitMask operator ~(BitMask mask)
-        {
-            var result = new BitMask(mask);
-            for (var i = 0; i < result._buckets.count; i++) result._buckets.items[i] = ~result._buckets.items[i];
-            result.RefreshRange();
-            return result;
-        }
-
-        public static BitMask operator |(BitMask a, BitMask b) => new BitMask(a, b);
-
-        public static BitMask operator &(BitMask a, BitMask b)
-        {
-            var result = new BitMask();
-            var count = Math.Min(a._buckets.count, b._buckets.count);
-            result._buckets.Ensure(count);
-            for (var i = 0; i < count; i++) result._buckets.items[i] = a._buckets.items[i] & b._buckets.items[i];
-            result.RefreshRange();
-            return result;
-        }
-
         public bool IsEmpty => _buckets.count == 0;
         public int Capacity => _buckets.count * Bucket.Size;
 
