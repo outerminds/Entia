@@ -17,7 +17,7 @@ Frictions:
 - can not add a component/tag/resource by dragging the file on a gameObject
 
 Features:
-- add tests fof 'Resolvers' module
+- add tests for 'Resolvers' module
 - make random access work for Group3.cs
 - don't forget to add dependencies to new modules
 	- new queryables
@@ -33,7 +33,6 @@ Features:
 	: should not be a component, but a module since changes to one hierarchy must echo throughout the other related hierarchies
 - write property and performance tests
 	- C# QuickCheck implementation: https://github.com/fscheck/FsCheck/
-	- add a 'Resolve' action for the world in tests
 	- run tests on device
 	- find a way to run tests in parallel
 		- static caches cause race conditions
