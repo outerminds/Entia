@@ -59,6 +59,15 @@ namespace Entia.Core
             return resized;
         }
 
+        public static ref T Add<T>(ref T[] array, T item)
+        {
+            var index = array.Length;
+            Array.Resize(ref array, index + 1);
+            ref var slot = ref array[index];
+            slot = item;
+            return ref slot;
+        }
+
         public static bool TryAdd<T>(ref Array array, in T item, int index)
         {
             if (array is T[] casted)

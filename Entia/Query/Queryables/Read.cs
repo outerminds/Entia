@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Entia.Core;
 using Entia.Dependables;
 using Entia.Modules.Component;
@@ -29,12 +30,16 @@ namespace Entia.Queryables
         [Querier]
         static readonly Querier _querier = new Querier();
 
-        public ref readonly T Value => ref _array[_index.Value];
+        public ref readonly T Value
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref _array[_index];
+        }
 
         readonly T[] _array;
-        readonly Box<int> _index;
+        readonly int _index;
 
-        public Read(T[] array, Box<int> index)
+        public Read(T[] array, int index)
         {
             _array = array;
             _index = index;
