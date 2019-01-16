@@ -10,13 +10,21 @@ using System.Reflection;
 
 namespace Entia.Test
 {
+    public sealed class GetEntityGroup : GetGroup<Entity>
+    {
+        public GetEntityGroup(ICustomAttributeProvider provider = null) : base(provider) { }
+
+        public override Property Check(World value, Model model) => base.Check(value, model)
+            .And(_group.SequenceEqual(_group.Entities).Label("Group.SequenceEqual(Group.Entities)"));
+    }
+
     public class GetGroup<T> : Action<World, Model> where T : struct, Queryables.IQueryable
     {
-        ICustomAttributeProvider _provider;
-        Querier<T> _querier;
-        Segment[] _segments;
-        Entity[] _entities;
-        Group<T> _group;
+        protected ICustomAttributeProvider _provider;
+        protected Querier<T> _querier;
+        protected Segment[] _segments;
+        protected Entity[] _entities;
+        protected Group<T> _group;
 
         public GetGroup(ICustomAttributeProvider provider = null) { _provider = provider; }
 
@@ -40,11 +48,15 @@ namespace Entia.Test
             .And((_group as IGroup).Querier.Equals(_querier).Label("Group.Query"))
             .And(_group.Entities.OrderBy(_ => _).SequenceEqual(_entities.OrderBy(_ => _)).Label("Group.Entities"))
             .And((_group.Entities.Count() == _group.Count).Label("Group.Entities.Count()"))
-            .And((_group.Items.Count() == _group.Count).Label("Group.Items.Count()"))
             .And(_group.Entities.All(_group.Has).Label("Group.Entities.Has()"))
             .And(_group.Entities.All(entity => _group.TryGet(entity, out _)).Label("Group.Entities.TryGet()"))
+            .And(_group.Split(0).None().Label("Group.Split(0).None()"))
+            .And(_group.Split(1).SelectMany(_ => _).SequenceEqual(_group).Label("Group.Split(1).SequenceEqual()"))
+            .And(_group.Split(2).SelectMany(_ => _).SequenceEqual(_group).Label("Group.Split(2).SequenceEqual()"))
+            .And(_group.Split(3).SelectMany(_ => _).SequenceEqual(_group).Label("Group.Split(3).SequenceEqual()"))
             .And(_entities.All(entity => _group.Has(entity)).Label("Group.Has()"))
             .And(_entities.All(entity => _group.TryGet(entity, out _)).Label("Group.TryGet()"));
+
         public override string ToString() => GetType().Format();
     }
 }

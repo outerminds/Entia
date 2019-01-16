@@ -18,25 +18,24 @@ namespace Entia.Modules.Group
         Type Type { get; }
         IQuerier Querier { get; }
         IEnumerable<Entity> Entities { get; }
-        IEnumerable<IQueryable> Items { get; }
 
         bool Has(Entity entity);
     }
 
-    public sealed class Group<T> : IGroup, IEnumerable<(Entity entity, T item)> where T : struct, IQueryable
+    public sealed class Group<T> : IGroup, IEnumerable<T> where T : struct, IQueryable
     {
-        public struct Enumerator : IEnumerator<(Entity entity, T item)>
+        public struct Enumerator : IEnumerator<T>
         {
-            public (Entity entity, T item) Current
+            public ref readonly T Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => (_entities[_index], _items[_index]);
+                get => ref _items[_index];
             }
 
+            T IEnumerator<T>.Current => Current;
             object IEnumerator.Current => Current;
 
             Segment<T>[] _segments;
-            Entity[] _entities;
             T[] _items;
             int _segment;
             int _index;
@@ -45,7 +44,6 @@ namespace Entia.Modules.Group
             public Enumerator(Segment<T>[] segments)
             {
                 _segments = segments;
-                _entities = Array.Empty<Entity>();
                 _items = Array.Empty<T>();
                 _segment = -1;
                 _index = -1;
@@ -62,7 +60,6 @@ namespace Entia.Modules.Group
                     _count = segment.Count;
                     if (_count > 0)
                     {
-                        _entities = segment.Entities;
                         _items = segment.Items;
                         _index = 0;
                         return true;
@@ -80,7 +77,6 @@ namespace Entia.Modules.Group
             public void Dispose()
             {
                 _segments = default;
-                _entities = default;
                 _items = default;
             }
         }
@@ -150,72 +146,6 @@ namespace Entia.Modules.Group
             }
         }
 
-        public readonly struct ItemEnumerable : IEnumerable<T>
-        {
-            readonly Segment<T>[] _segments;
-            public ItemEnumerable(Segment<T>[] segments) { _segments = segments; }
-            public ItemEnumerator GetEnumerator() => new ItemEnumerator(_segments);
-            IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        }
-
-        public struct ItemEnumerator : IEnumerator<T>
-        {
-            public ref readonly T Current
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => ref _items[_index];
-            }
-
-            T IEnumerator<T>.Current => Current;
-            object IEnumerator.Current => Current;
-
-            Segment<T>[] _segments;
-            T[] _items;
-            int _segment;
-            int _index;
-            int _count;
-
-            public ItemEnumerator(Segment<T>[] segments)
-            {
-                _segments = segments;
-                _items = Array.Empty<T>();
-                _segment = -1;
-                _index = -1;
-                _count = 0;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext()
-            {
-                if (++_index < _count) return true;
-                while (++_segment < _segments.Length)
-                {
-                    var segment = _segments[_segment];
-                    _count = segment.Count;
-                    if (_count > 0)
-                    {
-                        _items = segment.Items;
-                        _index = 0;
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            public void Reset()
-            {
-                _segment = -1;
-                _index = -1;
-            }
-
-            public void Dispose()
-            {
-                _segments = default;
-                _items = default;
-            }
-        }
-
         public readonly struct SplitEnumerable : IEnumerable<Split<T>>
         {
             readonly Segment<T>[] _segments;
@@ -268,7 +198,7 @@ namespace Entia.Modules.Group
                     if (_count == _size)
                     {
                         _next.index += minimum;
-                        return true;
+                        return _count > 0;
                     }
 
                     _next.segment++;
@@ -290,12 +220,10 @@ namespace Entia.Modules.Group
         public int Count { get; private set; }
         public Segment<T>[] Segments => _segments;
         public EntityEnumerable Entities => new EntityEnumerable(_segments);
-        public ItemEnumerable Items => new ItemEnumerable(_segments);
 
         IQuerier IGroup.Querier => _querier;
         Type IGroup.Type => typeof(T);
         IEnumerable<Entity> IGroup.Entities => Entities;
-        IEnumerable<IQueryable> IGroup.Items => System.Linq.Enumerable.Cast<IQueryable>(Items);
 
         readonly Querier<T> _querier;
         readonly World _world;
@@ -333,13 +261,14 @@ namespace Entia.Modules.Group
 
         public SplitEnumerable Split(int count)
         {
-            var size = Count / count;
-            if (Count % size > 0) size++;
-            return new SplitEnumerable(_segments, Math.Max(size, 1));
+            count = Math.Min(Count, count);
+            var size = count == 0 ? 0 : Count / count;
+            if (size > 0 && Count % size > 0) size++;
+            return new SplitEnumerable(_segments, size);
         }
 
         public Enumerator GetEnumerator() => new Enumerator(_segments);
-        IEnumerator<(Entity entity, T item)> IEnumerable<(Entity entity, T item)>.GetEnumerator() => GetEnumerator();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         bool Has(Component.Segment segment) => segment.Index < _indexToComponentSegment.Length && _indexToComponentSegment[segment.Index] == segment;
@@ -367,17 +296,26 @@ namespace Entia.Modules.Group
             var has = (source: Has(source.segment), target: Has(target.segment));
             Count += (has.source ? -1 : 0) + (has.target ? 1 : 0);
 
+            if (has.source)
+            {
+                ref var segment = ref _segments[_indexToSegment[source.segment.Index]];
+                var query = _indexToQuery[source.segment.Index];
+                segment.Items[source.index] = query.Get(source.index);
+            }
+
             if (has.target)
             {
                 ref var segment = ref _segments[_indexToSegment[target.segment.Index]];
+                var query = _indexToQuery[target.segment.Index];
                 var items = segment.Items;
                 var count = items.Length;
                 if (ArrayUtility.Ensure(ref items, segment.Count))
                 {
-                    var query = _indexToQuery[target.segment.Index];
                     for (int i = count; i < segment.Count; i++) items[i] = query.Get(i);
                     segment = new Segment<T>(target.segment, items);
                 }
+                // NOTE: do this step after ensuring that the 'items' array is large enough
+                items[target.index] = query.Get(target.index);
             }
         }
     }

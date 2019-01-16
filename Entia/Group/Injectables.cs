@@ -12,28 +12,7 @@ using System.Reflection;
 
 namespace Entia.Injectables
 {
-    public readonly struct Group : IInjectable, IDepend<Dependables.Read<Entity>>, IEnumerable<Entity>
-    {
-        sealed class Injector : IInjector
-        {
-            public Result<object> Inject(MemberInfo member, World world) => new Group(world.Groups().Get(world.Queriers().Get<Empty>(member)));
-        }
-
-        [Injector]
-        static readonly Injector _injector = new Injector();
-
-        public int Count => _group.Count;
-
-        readonly Modules.Group.Group<Empty> _group;
-
-        public Group(Modules.Group.Group<Empty> group) { _group = group; }
-        public bool Has(Entity entity) => _group.Has(entity);
-        public Modules.Group.Group<Empty>.EntityEnumerator GetEnumerator() => _group.Entities.GetEnumerator();
-        IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-    public readonly struct Group<T> : IInjectable, IDepend<Dependables.Read<Entity>, T>, IEnumerable<(Entity entity, T item)> where T : struct, IQueryable
+    public readonly struct Group<T> : IInjectable, IDepend<Dependables.Read<Entity>, T>, IEnumerable<T> where T : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
@@ -46,7 +25,6 @@ namespace Entia.Injectables
         public int Count => _group.Count;
         public Segment<T>[] Segments => _group.Segments;
         public Modules.Group.Group<T>.EntityEnumerable Entities => _group.Entities;
-        public Modules.Group.Group<T>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<T> _group;
 
@@ -55,11 +33,11 @@ namespace Entia.Injectables
         public bool TryGet(Entity entity, out T item) => _group.TryGet(entity, out item);
         public Modules.Group.Group<T>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<T>.Enumerator GetEnumerator() => _group.GetEnumerator();
-        IEnumerator<(Entity entity, T item)> IEnumerable<(Entity entity, T item)>.GetEnumerator() => GetEnumerator();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2>, IEnumerable<(Entity entity, All<T1, T2> item)> where T1 : struct, IQueryable where T2 : struct, IQueryable
+    public readonly struct Group<T1, T2> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2>, IEnumerable<All<T1, T2>> where T1 : struct, IQueryable where T2 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
@@ -72,7 +50,6 @@ namespace Entia.Injectables
         public int Count => _group.Count;
         public Segment<All<T1, T2>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2>>.EntityEnumerable Entities => _group.Entities;
-        public Modules.Group.Group<All<T1, T2>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2>> _group;
 
@@ -81,11 +58,11 @@ namespace Entia.Injectables
         public bool TryGet(Entity entity, out All<T1, T2> item) => _group.TryGet(entity, out item);
         public Modules.Group.Group<All<T1, T2>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2>>.Enumerator GetEnumerator() => _group.GetEnumerator();
-        IEnumerator<(Entity entity, All<T1, T2> item)> IEnumerable<(Entity entity, All<T1, T2> item)>.GetEnumerator() => GetEnumerator();
+        IEnumerator<All<T1, T2>> IEnumerable<All<T1, T2>>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3>, IEnumerable<(Entity entity, All<T1, T2, T3> item)> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3>, IEnumerable<All<T1, T2, T3>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
@@ -98,7 +75,6 @@ namespace Entia.Injectables
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3>>.EntityEnumerable Entities => _group.Entities;
-        public Modules.Group.Group<All<T1, T2, T3>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3>> _group;
 
@@ -107,11 +83,11 @@ namespace Entia.Injectables
         public bool TryGet(Entity entity, out All<T1, T2, T3> item) => _group.TryGet(entity, out item);
         public Modules.Group.Group<All<T1, T2, T3>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3>>.Enumerator GetEnumerator() => _group.GetEnumerator();
-        IEnumerator<(Entity entity, All<T1, T2, T3> item)> IEnumerable<(Entity entity, All<T1, T2, T3> item)>.GetEnumerator() => GetEnumerator();
+        IEnumerator<All<T1, T2, T3>> IEnumerable<All<T1, T2, T3>>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4>, IEnumerable<(Entity entity, All<T1, T2, T3, T4> item)> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4>, IEnumerable<All<T1, T2, T3, T4>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
@@ -124,7 +100,6 @@ namespace Entia.Injectables
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4>>.EntityEnumerable Entities => _group.Entities;
-        public Modules.Group.Group<All<T1, T2, T3, T4>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4>> _group;
 
@@ -133,11 +108,11 @@ namespace Entia.Injectables
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4> item) => _group.TryGet(entity, out item);
         public Modules.Group.Group<All<T1, T2, T3, T4>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4>>.Enumerator GetEnumerator() => _group.GetEnumerator();
-        IEnumerator<(Entity entity, All<T1, T2, T3, T4> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4> item)>.GetEnumerator() => GetEnumerator();
+        IEnumerator<All<T1, T2, T3, T4>> IEnumerable<All<T1, T2, T3, T4>>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4, T5> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5>, IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5> item)> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4, T5> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5>, IEnumerable<All<T1, T2, T3, T4, T5>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
@@ -150,7 +125,6 @@ namespace Entia.Injectables
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4, T5>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4, T5>>.EntityEnumerable Entities => _group.Entities;
-        public Modules.Group.Group<All<T1, T2, T3, T4, T5>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5>> _group;
 
@@ -159,11 +133,11 @@ namespace Entia.Injectables
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5> item) => _group.TryGet(entity, out item);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5>>.Enumerator GetEnumerator() => _group.GetEnumerator();
-        IEnumerator<(Entity entity, All<T1, T2, T3, T4, T5> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5> item)>.GetEnumerator() => GetEnumerator();
+        IEnumerator<All<T1, T2, T3, T4, T5>> IEnumerable<All<T1, T2, T3, T4, T5>>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4, T5, T6> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6>, IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6> item)> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4, T5, T6> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6>, IEnumerable<All<T1, T2, T3, T4, T5, T6>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
@@ -176,7 +150,6 @@ namespace Entia.Injectables
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4, T5, T6>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.EntityEnumerable Entities => _group.Entities;
-        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>> _group;
 
@@ -185,11 +158,11 @@ namespace Entia.Injectables
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5, T6> item) => _group.TryGet(entity, out item);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.Enumerator GetEnumerator() => _group.GetEnumerator();
-        IEnumerator<(Entity entity, All<T1, T2, T3, T4, T5, T6> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6> item)>.GetEnumerator() => GetEnumerator();
+        IEnumerator<All<T1, T2, T3, T4, T5, T6>> IEnumerable<All<T1, T2, T3, T4, T5, T6>>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6, T7>, IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7> item)> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6, T7>, IEnumerable<All<T1, T2, T3, T4, T5, T6, T7>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
@@ -202,7 +175,6 @@ namespace Entia.Injectables
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4, T5, T6, T7>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.EntityEnumerable Entities => _group.Entities;
-        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>> _group;
 
@@ -211,11 +183,11 @@ namespace Entia.Injectables
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5, T6, T7> item) => _group.TryGet(entity, out item);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.Enumerator GetEnumerator() => _group.GetEnumerator();
-        IEnumerator<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7> item)>.GetEnumerator() => GetEnumerator();
+        IEnumerator<All<T1, T2, T3, T4, T5, T6, T7>> IEnumerable<All<T1, T2, T3, T4, T5, T6, T7>>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7, T8> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6, T7, T8>, IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7, T8> item)> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7, T8> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6, T7, T8>, IEnumerable<All<T1, T2, T3, T4, T5, T6, T7, T8>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
@@ -228,7 +200,6 @@ namespace Entia.Injectables
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4, T5, T6, T7, T8>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8>>.EntityEnumerable Entities => _group.Entities;
-        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8>> _group;
 
@@ -237,11 +208,11 @@ namespace Entia.Injectables
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5, T6, T7, T8> item) => _group.TryGet(entity, out item);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8>>.Enumerator GetEnumerator() => _group.GetEnumerator();
-        IEnumerator<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7, T8> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7, T8> item)>.GetEnumerator() => GetEnumerator();
+        IEnumerator<All<T1, T2, T3, T4, T5, T6, T7, T8>> IEnumerable<All<T1, T2, T3, T4, T5, T6, T7, T8>>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6, T7, T8, T9>, IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7, T8, T9> item)> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable where T9 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6, T7, T8, T9>, IEnumerable<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable where T9 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
@@ -254,7 +225,6 @@ namespace Entia.Injectables
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.EntityEnumerable Entities => _group.Entities;
-        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>> _group;
 
@@ -263,7 +233,7 @@ namespace Entia.Injectables
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5, T6, T7, T8, T9> item) => _group.TryGet(entity, out item);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.Enumerator GetEnumerator() => _group.GetEnumerator();
-        IEnumerator<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7, T8, T9> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7, T8, T9> item)>.GetEnumerator() => GetEnumerator();
+        IEnumerator<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>> IEnumerable<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 

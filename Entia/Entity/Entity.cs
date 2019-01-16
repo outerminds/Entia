@@ -1,12 +1,28 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Entia.Modules.Component;
+using Entia.Modules.Query;
+using Entia.Queriers;
+using Entia.Queryables;
 
 namespace Entia
 {
     [StructLayout(LayoutKind.Explicit)]
-    public readonly struct Entity : IEquatable<Entity>, IComparable<Entity>
+    public readonly struct Entity : IQueryable, IEquatable<Entity>, IComparable<Entity>
     {
+        sealed class Querier : Querier<Entity>
+        {
+            public override bool TryQuery(Segment segment, World world, out Query<Entity> query)
+            {
+                query = new Query<Entity>(index => segment.Entities.items[index]);
+                return true;
+            }
+        }
+
         public static readonly Entity Zero;
+
+        [Querier]
+        static readonly Querier _querier = new Querier();
 
         [FieldOffset(0)]
         public readonly ulong Identifier;

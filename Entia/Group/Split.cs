@@ -6,164 +6,9 @@ using Entia.Queryables;
 
 namespace Entia.Modules.Group
 {
-    public readonly struct Split<T> : IEnumerable<(Entity entity, T item)> where T : struct, IQueryable
+    public readonly struct Split<T> : IEnumerable<T> where T : struct, IQueryable
     {
-        public struct Enumerator : IEnumerator<(Entity entity, T item)>
-        {
-            public (Entity entity, T item) Current
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => (_entities[_index], _items[_index]);
-            }
-            object IEnumerator.Current => Current;
-
-            Split<T> _split;
-            int _segment;
-            int _index;
-            int _total;
-            int _count;
-            Entity[] _entities;
-            T[] _items;
-
-            public Enumerator(in Split<T> split)
-            {
-                _split = split;
-                _segment = split._segment;
-                _index = split._index - 1;
-                _total = split.Count;
-
-                var segment = split._segments[_segment];
-                _entities = segment.Entities;
-                _items = segment.Items;
-                _count = segment.Count;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext()
-            {
-                // NOTE: check '_total' after the '_index' such that it is not decremented if the current segment is exhausted
-                if (++_index < _count && --_total >= 0) return true;
-                while (++_segment < _split._segments.Length)
-                {
-                    var segment = _split._segments[_segment];
-                    _count = segment.Count;
-                    if (_count > 0)
-                    {
-                        _entities = segment.Entities;
-                        _items = segment.Items;
-                        _index = 0;
-                        return --_total >= 0;
-                    }
-                }
-
-                return false;
-            }
-
-            public void Reset()
-            {
-                _segment = _split._segment;
-                _index = _split._index;
-                _total = _split.Count;
-
-                var segment = _split._segments[_segment];
-                _entities = segment.Entities;
-                _items = segment.Items;
-                _count = segment.Count;
-            }
-
-            public void Dispose()
-            {
-                _split = default;
-                _entities = default;
-                _items = default;
-            }
-        }
-
-        public readonly struct EntityEnumerable : IEnumerable<Entity>
-        {
-            readonly Split<T> _split;
-            public EntityEnumerable(in Split<T> split) { _split = split; }
-            public EntityEnumerator GetEnumerator() => new EntityEnumerator(_split);
-            IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        }
-
-        public struct EntityEnumerator : IEnumerator<Entity>
-        {
-            public Entity Current
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _entities[_index];
-            }
-            object IEnumerator.Current => Current;
-
-            Split<T> _split;
-            int _segment;
-            int _index;
-            int _total;
-            int _count;
-            Entity[] _entities;
-
-            public EntityEnumerator(in Split<T> split)
-            {
-                _split = split;
-                _segment = split._segment;
-                _index = split._index - 1;
-                _total = split.Count;
-
-                var segment = split._segments[_segment];
-                _entities = segment.Entities;
-                _count = segment.Count;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext()
-            {
-                // NOTE: check '_total' after the '_index' such that it is not decremented if the current segment is exhausted
-                if (++_index < _count && _total-- > 0) return true;
-                while (++_segment < _split._segments.Length)
-                {
-                    var segment = _split._segments[_segment];
-                    _count = segment.Count;
-                    if (_count > 0)
-                    {
-                        _entities = segment.Entities;
-                        _index = 0;
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            public void Reset()
-            {
-                _segment = _split._segment;
-                _index = _split._index;
-                _total = _split.Count;
-
-                var segment = _split._segments[_segment];
-                _entities = segment.Entities;
-                _count = segment.Count;
-            }
-
-            public void Dispose()
-            {
-                _split = default;
-                _entities = default;
-            }
-        }
-
-        public readonly struct ItemEnumerable : IEnumerable<T>
-        {
-            readonly Split<T> _split;
-            public ItemEnumerable(in Split<T> split) { _split = split; }
-            public ItemEnumerator GetEnumerator() => new ItemEnumerator(_split);
-            IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        }
-
-        public struct ItemEnumerator : IEnumerator<T>
+        public struct Enumerator : IEnumerator<T>
         {
             public ref readonly T Current
             {
@@ -180,7 +25,7 @@ namespace Entia.Modules.Group
             int _count;
             T[] _items;
 
-            public ItemEnumerator(in Split<T> split)
+            public Enumerator(in Split<T> split)
             {
                 _split = split;
                 _segment = split._segment;
@@ -196,7 +41,7 @@ namespace Entia.Modules.Group
             public bool MoveNext()
             {
                 // NOTE: check '_total' after the '_index' such that it is not decremented if the current segment is exhausted
-                if (++_index < _count && _total-- > 0) return true;
+                if (++_index < _count && --_total >= 0) return true;
                 while (++_segment < _split._segments.Length)
                 {
                     var segment = _split._segments[_segment];
@@ -205,7 +50,7 @@ namespace Entia.Modules.Group
                     {
                         _items = segment.Items;
                         _index = 0;
-                        return true;
+                        return --_total >= 0;
                     }
                 }
 
@@ -231,8 +76,6 @@ namespace Entia.Modules.Group
         }
 
         public readonly int Count;
-        public ItemEnumerable Items => new ItemEnumerable(this);
-        public EntityEnumerable Entities => new EntityEnumerable(this);
 
         readonly Segment<T>[] _segments;
         readonly int _segment;
@@ -247,7 +90,7 @@ namespace Entia.Modules.Group
         }
 
         public Enumerator GetEnumerator() => new Enumerator(this);
-        IEnumerator<(Entity entity, T item)> IEnumerable<(Entity entity, T item)>.GetEnumerator() => GetEnumerator();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

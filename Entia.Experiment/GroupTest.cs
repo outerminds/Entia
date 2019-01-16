@@ -19,7 +19,7 @@ namespace Entia.Experiment
             {
                 for (int i = 0; i < array.Length; i++)
                 {
-                    ref var item = ref array[i].item;
+                    ref var item = ref array[i];
                     ref var position = ref item.Value1.Value;
                     ref readonly var velocity = ref item.Value2.Value;
                     position.X += velocity.X;
@@ -28,7 +28,7 @@ namespace Entia.Experiment
 
             void ArrayForeach()
             {
-                foreach (var (_, item) in array)
+                foreach (var item in array)
                 {
                     ref var position = ref item.Value1.Value;
                     ref readonly var velocity = ref item.Value2.Value;
@@ -40,7 +40,7 @@ namespace Entia.Experiment
             {
                 System.Threading.Tasks.Parallel.For(0, array.Length, index =>
                 {
-                    ref var item = ref array[index].item;
+                    ref var item = ref array[index];
                     ref var position = ref item.Value1.Value;
                     ref readonly var velocity = ref item.Value2.Value;
                     position.X += velocity.X;
@@ -49,7 +49,7 @@ namespace Entia.Experiment
 
             void GroupForeach1()
             {
-                foreach (var (_, item) in group)
+                foreach (var item in group)
                 {
                     ref var position = ref item.Value1.Value;
                     ref readonly var velocity = ref item.Value2.Value;
@@ -59,7 +59,7 @@ namespace Entia.Experiment
 
             void GroupForeach2()
             {
-                foreach (ref readonly var item in group.Items)
+                foreach (ref readonly var item in group)
                 {
                     ref var position = ref item.Value1.Value;
                     ref readonly var velocity = ref item.Value2.Value;
@@ -127,7 +127,7 @@ namespace Entia.Experiment
             {
                 Parallel.ForEach(group.Split(Environment.ProcessorCount), split =>
                 {
-                    foreach (ref readonly var item in split.Items)
+                    foreach (ref readonly var item in split)
                     {
                         ref var position = ref item.Value1.Value;
                         ref readonly var velocity = ref item.Value2.Value;
@@ -154,7 +154,7 @@ namespace Entia.Experiment
             {
                 var tasks = group.Split(Environment.ProcessorCount).Select(split => Task.Run(() =>
                 {
-                    foreach (ref readonly var item in split.Items)
+                    foreach (ref readonly var item in split)
                     {
                         ref var position = ref item.Value1.Value;
                         ref readonly var velocity = ref item.Value2.Value;
@@ -229,7 +229,7 @@ namespace Entia.Experiment
 
             world.Resolve();
 
-            foreach (var (_, item) in group)
+            foreach (var item in group)
             {
                 item.Value.Y++;
                 item.Value.Z--;

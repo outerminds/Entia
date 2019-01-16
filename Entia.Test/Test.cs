@@ -56,7 +56,7 @@ namespace Entia.Test
                 (5, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<ComponentC>>>().ToAction())),
                 (5, Gen.Fresh(() => new GetGroup<Maybe<Read<ComponentA>>>().ToAction())),
                 (5, Gen.Fresh(() => new GetGroup<Read<ComponentC>>(Providers.A).ToAction())),
-                (5, Gen.Fresh(() => new GetGroup<Empty>(Providers.B).ToAction())),
+                (5, Gen.Fresh(() => new GetEntityGroup(Providers.B).ToAction())),
                 (5, Gen.Fresh(() => new GetGroup<Any<Write<ComponentC>, Read<ComponentB>>>().ToAction())),
 
                 // Message

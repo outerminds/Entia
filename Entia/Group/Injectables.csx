@@ -15,11 +15,10 @@ IEnumerable<string> Generate(int depth)
         var generics = GenericParameters(i);
         var parameters = string.Join(", ", generics);
         var itemType = i == 1 ? parameters : $"All<{string.Join(", ", generics)}>";
-        var tupleType = $"(Entity entity, {itemType} item)";
         var constraints = string.Join(" ", generics.Select(generic => $"where {generic} : struct, IQueryable"));
 
         yield return
-$@"    public readonly struct Group<{parameters}> : IInjectable, IDepend<Dependables.Read<Entity>, {parameters}>, IEnumerable<{tupleType}> {constraints}
+$@"    public readonly struct Group<{parameters}> : IInjectable, IDepend<Dependables.Read<Entity>, {parameters}>, IEnumerable<{itemType}> {constraints}
     {{
         sealed class Injector : IInjector
         {{
@@ -32,7 +31,6 @@ $@"    public readonly struct Group<{parameters}> : IInjectable, IDepend<Dependa
         public int Count => _group.Count;
         public Segment<{itemType}>[] Segments => _group.Segments;
         public Modules.Group.Group<{itemType}>.EntityEnumerable Entities => _group.Entities;
-        public Modules.Group.Group<{itemType}>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<{itemType}> _group;
 
@@ -41,7 +39,7 @@ $@"    public readonly struct Group<{parameters}> : IInjectable, IDepend<Dependa
         public bool TryGet(Entity entity, out {itemType} item) => _group.TryGet(entity, out item);
         public Modules.Group.Group<{itemType}>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<{itemType}>.Enumerator GetEnumerator() => _group.GetEnumerator();
-        IEnumerator<{tupleType}> IEnumerable<{tupleType}>.GetEnumerator() => GetEnumerator();
+        IEnumerator<{itemType}> IEnumerable<{itemType}>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }}
 ";
@@ -64,27 +62,6 @@ using System.Reflection;
 
 namespace Entia.Injectables
 {{
-    public readonly struct Group : IInjectable, IDepend<Dependables.Read<Entity>>, IEnumerable<Entity>
-    {{
-        sealed class Injector : IInjector
-        {{
-            public Result<object> Inject(MemberInfo member, World world) => new Group(world.Groups().Get(world.Queriers().Get<Empty>(member)));
-        }}
-
-        [Injector]
-        static readonly Injector _injector = new Injector();
-
-        public int Count => _group.Count;
-
-        readonly Modules.Group.Group<Empty> _group;
-
-        public Group(Modules.Group.Group<Empty> group) {{ _group = group; }}
-        public bool Has(Entity entity) => _group.Has(entity);
-        public Modules.Group.Group<Empty>.EntityEnumerator GetEnumerator() => _group.Entities.GetEnumerator();
-        IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }}
-
 {string.Join(Environment.NewLine, Generate(9))}
 }}";
 
