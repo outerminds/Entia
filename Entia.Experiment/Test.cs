@@ -37,7 +37,7 @@ namespace Entia.Experiment
                 }
                 after?.Invoke();
 
-                return (test.Method.Name, test, total, minimum, maximum);
+                return (test.Method.Name.Split("__").LastOrDefault().Split('|').FirstOrDefault(), test, total, minimum, maximum);
             }
 
             string Format((string name, Action test, long total, long minimum, long maximum) result, double baseTotal)
@@ -47,7 +47,7 @@ namespace Entia.Experiment
                 var average = TimeSpan.FromTicks(result.total / iterations);
                 var minimum = TimeSpan.FromTicks(result.minimum);
                 var maximum = TimeSpan.FromTicks(result.maximum);
-                return $"{result.name} \t->   Total: {total} | Ratio: {ratio} | Average: {average} | Minimum: {minimum} | Maximum: {maximum}";
+                return $"{result.name} \t   -> \t   Total: {total} \t   Ratio: {ratio} \t   Average: {average} \t   Minimum: {minimum} \t   Maximum: {maximum}";
             }
 
             var runners = tests.Prepend(@base).ToArray();
