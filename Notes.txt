@@ -23,6 +23,7 @@ Features:
 	- new queryables
 - when merging, fix .meta files
 - when merging, add '.Separate(Resolve())' to controllers
+- make Components.Set / Components.Remove / Entities.Create / Entities.Destroy thread safe?
 
 - improve better removal actions in tests by querying all removable entities from the world and choosing from that query
 	- currently, a random entity is chosen from the world and if it is not removable, the action is considered invalid
