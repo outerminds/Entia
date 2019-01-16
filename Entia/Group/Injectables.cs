@@ -4,6 +4,7 @@ using Entia.Core;
 using Entia.Dependables;
 using Entia.Injectors;
 using Entia.Modules;
+using Entia.Modules.Group;
 using Entia.Queryables;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ namespace Entia.Injectables
     {
         sealed class Injector : IInjector
         {
-            public Result<object> Inject(MemberInfo member, World world) => new Group(world.Groups().Get(world.Queriers().Get<All>(member)));
+            public Result<object> Inject(MemberInfo member, World world) => new Group(world.Groups().Get(world.Queriers().Get<Empty>(member)));
         }
 
         [Injector]
@@ -23,11 +24,11 @@ namespace Entia.Injectables
 
         public int Count => _group.Count;
 
-        readonly Modules.Group.Group<All> _group;
+        readonly Modules.Group.Group<Empty> _group;
 
-        public Group(Modules.Group.Group<All> group) { _group = group; }
+        public Group(Modules.Group.Group<Empty> group) { _group = group; }
         public bool Has(Entity entity) => _group.Has(entity);
-        public Modules.Group.Group<All>.EntityEnumerator GetEnumerator() => _group.Entities.GetEnumerator();
+        public Modules.Group.Group<Empty>.EntityEnumerator GetEnumerator() => _group.Entities.GetEnumerator();
         IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
@@ -43,13 +44,16 @@ namespace Entia.Injectables
         static readonly Injector _injector = new Injector();
 
         public int Count => _group.Count;
+        public Segment<T>[] Segments => _group.Segments;
         public Modules.Group.Group<T>.EntityEnumerable Entities => _group.Entities;
+        public Modules.Group.Group<T>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<T> _group;
 
         public Group(Modules.Group.Group<T> group) { _group = group; }
         public bool Has(Entity entity) => _group.Has(entity);
         public bool TryGet(Entity entity, out T item) => _group.TryGet(entity, out item);
+        public Modules.Group.Group<T>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<T>.Enumerator GetEnumerator() => _group.GetEnumerator();
         IEnumerator<(Entity entity, T item)> IEnumerable<(Entity entity, T item)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -66,13 +70,16 @@ namespace Entia.Injectables
         static readonly Injector _injector = new Injector();
 
         public int Count => _group.Count;
+        public Segment<All<T1, T2>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2>>.EntityEnumerable Entities => _group.Entities;
+        public Modules.Group.Group<All<T1, T2>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2>> _group;
 
         public Group(Modules.Group.Group<All<T1, T2>> group) { _group = group; }
         public bool Has(Entity entity) => _group.Has(entity);
         public bool TryGet(Entity entity, out All<T1, T2> item) => _group.TryGet(entity, out item);
+        public Modules.Group.Group<All<T1, T2>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2>>.Enumerator GetEnumerator() => _group.GetEnumerator();
         IEnumerator<(Entity entity, All<T1, T2> item)> IEnumerable<(Entity entity, All<T1, T2> item)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -89,13 +96,16 @@ namespace Entia.Injectables
         static readonly Injector _injector = new Injector();
 
         public int Count => _group.Count;
+        public Segment<All<T1, T2, T3>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3>>.EntityEnumerable Entities => _group.Entities;
+        public Modules.Group.Group<All<T1, T2, T3>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3>> _group;
 
         public Group(Modules.Group.Group<All<T1, T2, T3>> group) { _group = group; }
         public bool Has(Entity entity) => _group.Has(entity);
         public bool TryGet(Entity entity, out All<T1, T2, T3> item) => _group.TryGet(entity, out item);
+        public Modules.Group.Group<All<T1, T2, T3>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3>>.Enumerator GetEnumerator() => _group.GetEnumerator();
         IEnumerator<(Entity entity, All<T1, T2, T3> item)> IEnumerable<(Entity entity, All<T1, T2, T3> item)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -112,13 +122,16 @@ namespace Entia.Injectables
         static readonly Injector _injector = new Injector();
 
         public int Count => _group.Count;
+        public Segment<All<T1, T2, T3, T4>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4>>.EntityEnumerable Entities => _group.Entities;
+        public Modules.Group.Group<All<T1, T2, T3, T4>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4>> _group;
 
         public Group(Modules.Group.Group<All<T1, T2, T3, T4>> group) { _group = group; }
         public bool Has(Entity entity) => _group.Has(entity);
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4> item) => _group.TryGet(entity, out item);
+        public Modules.Group.Group<All<T1, T2, T3, T4>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4>>.Enumerator GetEnumerator() => _group.GetEnumerator();
         IEnumerator<(Entity entity, All<T1, T2, T3, T4> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4> item)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -135,13 +148,16 @@ namespace Entia.Injectables
         static readonly Injector _injector = new Injector();
 
         public int Count => _group.Count;
+        public Segment<All<T1, T2, T3, T4, T5>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4, T5>>.EntityEnumerable Entities => _group.Entities;
+        public Modules.Group.Group<All<T1, T2, T3, T4, T5>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5>> _group;
 
         public Group(Modules.Group.Group<All<T1, T2, T3, T4, T5>> group) { _group = group; }
         public bool Has(Entity entity) => _group.Has(entity);
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5> item) => _group.TryGet(entity, out item);
+        public Modules.Group.Group<All<T1, T2, T3, T4, T5>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5>>.Enumerator GetEnumerator() => _group.GetEnumerator();
         IEnumerator<(Entity entity, All<T1, T2, T3, T4, T5> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5> item)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -158,13 +174,16 @@ namespace Entia.Injectables
         static readonly Injector _injector = new Injector();
 
         public int Count => _group.Count;
+        public Segment<All<T1, T2, T3, T4, T5, T6>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.EntityEnumerable Entities => _group.Entities;
+        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>> _group;
 
         public Group(Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>> group) { _group = group; }
         public bool Has(Entity entity) => _group.Has(entity);
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5, T6> item) => _group.TryGet(entity, out item);
+        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.Enumerator GetEnumerator() => _group.GetEnumerator();
         IEnumerator<(Entity entity, All<T1, T2, T3, T4, T5, T6> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6> item)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -181,13 +200,16 @@ namespace Entia.Injectables
         static readonly Injector _injector = new Injector();
 
         public int Count => _group.Count;
+        public Segment<All<T1, T2, T3, T4, T5, T6, T7>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.EntityEnumerable Entities => _group.Entities;
+        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>> _group;
 
         public Group(Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>> group) { _group = group; }
         public bool Has(Entity entity) => _group.Has(entity);
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5, T6, T7> item) => _group.TryGet(entity, out item);
+        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.Enumerator GetEnumerator() => _group.GetEnumerator();
         IEnumerator<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7> item)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -204,13 +226,16 @@ namespace Entia.Injectables
         static readonly Injector _injector = new Injector();
 
         public int Count => _group.Count;
+        public Segment<All<T1, T2, T3, T4, T5, T6, T7, T8>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8>>.EntityEnumerable Entities => _group.Entities;
+        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8>> _group;
 
         public Group(Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8>> group) { _group = group; }
         public bool Has(Entity entity) => _group.Has(entity);
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5, T6, T7, T8> item) => _group.TryGet(entity, out item);
+        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8>>.Enumerator GetEnumerator() => _group.GetEnumerator();
         IEnumerator<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7, T8> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7, T8> item)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -227,13 +252,16 @@ namespace Entia.Injectables
         static readonly Injector _injector = new Injector();
 
         public int Count => _group.Count;
+        public Segment<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>[] Segments => _group.Segments;
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.EntityEnumerable Entities => _group.Entities;
+        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>> _group;
 
         public Group(Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>> group) { _group = group; }
         public bool Has(Entity entity) => _group.Has(entity);
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5, T6, T7, T8, T9> item) => _group.TryGet(entity, out item);
+        public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.Enumerator GetEnumerator() => _group.GetEnumerator();
         IEnumerator<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7, T8, T9> item)> IEnumerable<(Entity entity, All<T1, T2, T3, T4, T5, T6, T7, T8, T9> item)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

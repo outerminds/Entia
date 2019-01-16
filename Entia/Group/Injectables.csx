@@ -30,13 +30,16 @@ $@"    public readonly struct Group<{parameters}> : IInjectable, IDepend<Dependa
         static readonly Injector _injector = new Injector();
 
         public int Count => _group.Count;
+        public Segment<{itemType}>[] Segments => _group.Segments;
         public Modules.Group.Group<{itemType}>.EntityEnumerable Entities => _group.Entities;
+        public Modules.Group.Group<{itemType}>.ItemEnumerable Items => _group.Items;
 
         readonly Modules.Group.Group<{itemType}> _group;
 
         public Group(Modules.Group.Group<{itemType}> group) {{ _group = group; }}
         public bool Has(Entity entity) => _group.Has(entity);
         public bool TryGet(Entity entity, out {itemType} item) => _group.TryGet(entity, out item);
+        public Modules.Group.Group<{itemType}>.SplitEnumerable Split(int count) => _group.Split(count);
         public Modules.Group.Group<{itemType}>.Enumerator GetEnumerator() => _group.GetEnumerator();
         IEnumerator<{tupleType}> IEnumerable<{tupleType}>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -53,6 +56,7 @@ using Entia.Core;
 using Entia.Dependables;
 using Entia.Injectors;
 using Entia.Modules;
+using Entia.Modules.Group;
 using Entia.Queryables;
 using System.Collections;
 using System.Collections.Generic;
@@ -64,7 +68,7 @@ namespace Entia.Injectables
     {{
         sealed class Injector : IInjector
         {{
-            public Result<object> Inject(MemberInfo member, World world) => new Group(world.Groups().Get(world.Queriers().Get<All>(member)));
+            public Result<object> Inject(MemberInfo member, World world) => new Group(world.Groups().Get(world.Queriers().Get<Empty>(member)));
         }}
 
         [Injector]
@@ -72,11 +76,11 @@ namespace Entia.Injectables
 
         public int Count => _group.Count;
 
-        readonly Modules.Group.Group<All> _group;
+        readonly Modules.Group.Group<Empty> _group;
 
-        public Group(Modules.Group.Group<All> group) {{ _group = group; }}
+        public Group(Modules.Group.Group<Empty> group) {{ _group = group; }}
         public bool Has(Entity entity) => _group.Has(entity);
-        public Modules.Group.Group<All>.EntityEnumerator GetEnumerator() => _group.Entities.GetEnumerator();
+        public Modules.Group.Group<Empty>.EntityEnumerator GetEnumerator() => _group.Entities.GetEnumerator();
         IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }}

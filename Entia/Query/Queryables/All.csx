@@ -65,21 +65,6 @@ using Entia.Dependables;
 
 namespace Entia.Queryables
 {{
-    public readonly struct All : IQueryable
-    {{
-        sealed class Querier : Querier<All>
-        {{
-            public override bool TryQuery(Segment segment, World world, out Query<All> query)
-            {{
-                query = new Query<All>(_ => new All());
-                return true;
-            }}
-        }}
-
-        [Querier]
-        static readonly Querier _querier = new Querier();
-    }}
-
 {string.Join(Environment.NewLine + Environment.NewLine, Generate(9))}
 }}";
 

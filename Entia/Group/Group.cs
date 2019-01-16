@@ -216,6 +216,77 @@ namespace Entia.Modules.Group
             }
         }
 
+        public readonly struct SplitEnumerable : IEnumerable<Split<T>>
+        {
+            readonly Segment<T>[] _segments;
+            readonly int _size;
+
+            public SplitEnumerable(Segment<T>[] segments, int size)
+            {
+                _segments = segments;
+                _size = size;
+            }
+
+            public SplitEnumerator GetEnumerator() => new SplitEnumerator(_segments, _size);
+            IEnumerator<Split<T>> IEnumerable<Split<T>>.GetEnumerator() => GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        public struct SplitEnumerator : IEnumerator<Split<T>>
+        {
+            public Split<T> Current => new Split<T>(_segments, _current.segment, _current.index, _count);
+            object IEnumerator.Current => Current;
+
+            Segment<T>[] _segments;
+            int _size;
+            int _count;
+            (int segment, int index) _current;
+            (int segment, int index) _next;
+
+            public SplitEnumerator(Segment<T>[] segments, int size)
+            {
+                _segments = segments;
+                _size = size;
+                _count = 0;
+                _current = (0, 0);
+                _next = (0, 0);
+            }
+
+            public bool MoveNext()
+            {
+                _current = _next;
+                _count = 0;
+
+                while (_next.segment < _segments.Length)
+                {
+                    var segment = _segments[_next.segment];
+                    var remaining = segment.Count - _next.index;
+                    var minimum = Math.Min(_size - _count, remaining);
+                    _count += minimum;
+
+                    // NOTE: '_clamped' must never go over '_count'
+                    if (_count == _size)
+                    {
+                        _next.index += minimum;
+                        return true;
+                    }
+
+                    _next.segment++;
+                    _next.index = 0;
+                }
+
+                return _count > 0;
+            }
+
+            public void Reset()
+            {
+                _current = (-1, -1);
+                _next = (0, 0);
+            }
+
+            public void Dispose() { _segments = default; }
+        }
+
         public int Count { get; private set; }
         public Segment<T>[] Segments => _segments;
         public EntityEnumerable Entities => new EntityEnumerable(_segments);
@@ -258,6 +329,13 @@ namespace Entia.Modules.Group
 
             item = default;
             return false;
+        }
+
+        public SplitEnumerable Split(int count)
+        {
+            var size = Count / count;
+            if (Count % size > 0) size++;
+            return new SplitEnumerable(_segments, Math.Max(size, 1));
         }
 
         public Enumerator GetEnumerator() => new Enumerator(_segments);
