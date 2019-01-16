@@ -17,6 +17,8 @@ Frictions:
 - can not add a component/tag/resource by dragging the file on a gameObject
 
 Features:
+- Link doesn't work?
+
 - add tests for 'Resolvers' module
 - make random access work for Group3.cs
 - don't forget to add dependencies to new modules
