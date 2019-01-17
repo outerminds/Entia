@@ -14,6 +14,8 @@ namespace Entia.Core
             return (left, right);
         }
 
+        public static ArrayEnumerable<T> Enumerate<T>(this T[] array, int count) => new ArrayEnumerable<T>(array, Math.Min(count, array.Length));
+
         public static void Fill<T>(this T[] source, T value) => source.Fill(value, 0, source.Length);
 
         public static void Fill<T>(this T[] source, Func<T> provider) => source.Fill(provider, 0, source.Length);

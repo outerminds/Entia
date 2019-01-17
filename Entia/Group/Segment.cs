@@ -19,7 +19,6 @@ namespace Entia.Modules.Group
             Segment<T> _segment;
             int _index;
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Enumerator(Segment<T> segment)
             {
                 _segment = segment;
@@ -62,6 +61,9 @@ namespace Entia.Modules.Group
             _segment = segment;
             Items = items;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TComponent[] Store<TComponent>() where TComponent : struct, IComponent => _segment.GetStore<TComponent>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator() => new Enumerator(this);

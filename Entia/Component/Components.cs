@@ -509,8 +509,13 @@ namespace Entia.Modules
             {
                 ref var slot = ref GetTransientSlot(entity, ref data);
                 var segment = GetSegment(slot.Mask);
-                foreach (var metadata in segment.Types.data)
+                var types = segment.Types.data;
+                for (int i = 0; i < types.Length; i++)
+                {
+                    var metadata = types[i];
                     Remove(entity, ref slot, metadata, MessageUtility.OnRemove(metadata));
+                }
+
                 slot.Resolution = Transient.Resolutions.Remove;
             }
         }

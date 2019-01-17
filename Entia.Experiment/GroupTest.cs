@@ -14,8 +14,73 @@ namespace Entia.Experiment
             var world = WorldTest.RandomWorld(iterations);
             var group = world.Groups().Get(world.Queriers().Get<All<Write<Position>, Read<Velocity>>>());
             var array = group.ToArray();
+            var segments = world.Components().Segments
+                .Where(segment => group.Querier.TryQuery(segment, world, out _))
+                .ToArray();
+            var arrays = segments
+                .Select(segment => (segment.Entities.count, positions: segment.GetStore<Position>(), velocities: segment.GetStore<Velocity>()))
+                .ToArray();
 
-            void ArrayIndexer()
+            void DirectFor()
+            {
+                for (int i = 0; i < arrays.Length; i++)
+                {
+                    var (count, positions, velocities) = arrays[i];
+                    for (int j = 0; j < count; j++)
+                    {
+                        ref var position = ref positions[j];
+                        ref readonly var velocity = ref velocities[j];
+                        position.X += velocity.X;
+                    }
+                }
+            }
+
+            void DirectParallel1()
+            {
+                Parallel.For(0, arrays.Length, i =>
+                {
+                    var (count, positions, velocities) = arrays[i];
+                    for (int j = 0; j < count; j++)
+                    {
+                        ref var position = ref positions[j];
+                        ref readonly var velocity = ref velocities[j];
+                        position.X += velocity.X;
+                    }
+                });
+            }
+
+            void DirectParallel2()
+            {
+                Parallel.For(0, arrays.Length, i =>
+                {
+                    var (count, positions, velocities) = arrays[i];
+                    Parallel.For(0, count, j =>
+                    {
+                        ref var position = ref positions[j];
+                        ref readonly var velocity = ref velocities[j];
+                        position.X += velocity.X;
+                    });
+                });
+            }
+
+            void SegmentFor()
+            {
+                for (int i = 0; i < segments.Length; i++)
+                {
+                    var segment = segments[i];
+                    var count = segment.Entities.count;
+                    var positions = segment.GetStore<Position>();
+                    var velocities = segment.GetStore<Velocity>();
+                    for (int j = 0; j < count; j++)
+                    {
+                        ref var position = ref positions[j];
+                        ref readonly var velocity = ref velocities[j];
+                        position.X += velocity.X;
+                    }
+                }
+            }
+
+            void ArrayFor()
             {
                 for (int i = 0; i < array.Length; i++)
                 {
@@ -38,7 +103,7 @@ namespace Entia.Experiment
 
             void ArrayParallel()
             {
-                System.Threading.Tasks.Parallel.For(0, array.Length, index =>
+                Parallel.For(0, array.Length, index =>
                 {
                     ref var item = ref array[index];
                     ref var position = ref item.Value1.Value;
@@ -80,7 +145,7 @@ namespace Entia.Experiment
                 }
             }
 
-            void GroupFor()
+            void GroupFor1()
             {
                 for (int i = 0; i < group.Segments.Length; i++)
                 {
@@ -90,6 +155,23 @@ namespace Entia.Experiment
                         ref readonly var item = ref segment.Items[j];
                         ref var position = ref item.Value1.Value;
                         ref readonly var velocity = ref item.Value2.Value;
+                        position.X += velocity.X;
+                    }
+                }
+            }
+
+            void GroupFor2()
+            {
+                for (int i = 0; i < group.Segments.Length; i++)
+                {
+                    ref readonly var segment = ref group.Segments[i];
+                    var count = segment.Count;
+                    var positions = segment.Store<Position>();
+                    var velocities = segment.Store<Velocity>();
+                    for (int j = 0; j < count; j++)
+                    {
+                        ref var position = ref positions[j];
+                        ref readonly var velocity = ref velocities[j];
                         position.X += velocity.X;
                     }
                 }
@@ -124,6 +206,40 @@ namespace Entia.Experiment
             }
 
             void GroupParallel3()
+            {
+                Parallel.For(0, group.Segments.Length, i =>
+                {
+                    ref readonly var segment = ref group.Segments[i];
+                    var count = segment.Count;
+                    var positions = segment.Store<Position>();
+                    var velocities = segment.Store<Velocity>();
+                    Parallel.For(0, count, j =>
+                    {
+                        ref var position = ref positions[j];
+                        ref readonly var velocity = ref velocities[j];
+                        position.X += velocity.X;
+                    });
+                });
+            }
+
+            void GroupParallel4()
+            {
+                Parallel.For(0, group.Segments.Length, i =>
+                {
+                    ref readonly var segment = ref group.Segments[i];
+                    var count = segment.Count;
+                    var positions = segment.Store<Position>();
+                    var velocities = segment.Store<Velocity>();
+                    for (int j = 0; j < count; j++)
+                    {
+                        ref var position = ref positions[j];
+                        ref readonly var velocity = ref velocities[j];
+                        position.X += velocity.X;
+                    }
+                });
+            }
+
+            void GroupParallel5()
             {
                 Parallel.ForEach(group.Split(Environment.ProcessorCount), split =>
                 {
@@ -164,22 +280,47 @@ namespace Entia.Experiment
                 Task.WhenAll(tasks).Wait();
             }
 
+            void GroupTask3()
+            {
+                var tasks = group.Segments.Select(segment => Task.Run(() =>
+                {
+                    var count = segment.Count;
+                    var positions = segment.Store<Position>();
+                    var velocities = segment.Store<Velocity>();
+                    for (int j = 0; j < count; j++)
+                    {
+                        ref var position = ref positions[j];
+                        ref readonly var velocity = ref velocities[j];
+                        position.X += velocity.X;
+                    }
+                }));
+                Task.WhenAll(tasks).Wait();
+            }
+
             Console.WriteLine($"Size: {array.Length} | Processors: {Environment.ProcessorCount}");
             Test.Measure(
-                ArrayForeach,
+                DirectFor,
                 new Action[]
                 {
-                    ArrayIndexer,
+                    DirectParallel1,
+                    DirectParallel2,
+                    SegmentFor,
+                    ArrayFor,
+                    ArrayForeach,
                     ArrayParallel,
                     GroupForeach1,
                     GroupForeach2,
                     GroupForeach3,
-                    GroupFor,
+                    GroupFor1,
+                    GroupFor2,
                     GroupParallel1,
                     GroupParallel2,
                     GroupParallel3,
+                    GroupParallel4,
+                    GroupParallel5,
                     GroupTask1,
-                    GroupTask2
+                    GroupTask2,
+                    GroupTask3
                 },
                 1000,
                 after: world.Resolve);

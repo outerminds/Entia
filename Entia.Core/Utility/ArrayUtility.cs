@@ -68,6 +68,17 @@ namespace Entia.Core
             return ref slot;
         }
 
+        public static bool Remove<T>(ref T[] array, T item)
+        {
+            var index = Array.IndexOf(array, item);
+            if (index < 0) return false;
+            var shrunk = new T[array.Length - 1];
+            Array.Copy(array, 0, shrunk, 0, index);
+            Array.Copy(array, index + 1, shrunk, index, shrunk.Length - index);
+            array = shrunk;
+            return true;
+        }
+
         public static bool TryAdd<T>(ref Array array, in T item, int index)
         {
             if (array is T[] casted)

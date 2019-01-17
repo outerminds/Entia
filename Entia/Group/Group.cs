@@ -220,23 +220,23 @@ namespace Entia.Modules.Group
         public int Count { get; private set; }
         public Segment<T>[] Segments => _segments;
         public EntityEnumerable Entities => new EntityEnumerable(_segments);
+        public readonly Querier<T> Querier;
 
-        IQuerier IGroup.Querier => _querier;
+        IQuerier IGroup.Querier => Querier;
         Type IGroup.Type => typeof(T);
         IEnumerable<Entity> IGroup.Entities => Entities;
 
-        readonly Querier<T> _querier;
         readonly World _world;
         readonly Components _components;
         readonly Messages _messages;
         Component.Segment[] _indexToComponentSegment = new Component.Segment[4];
         Query<T>[] _indexToQuery = new Query<T>[4];
-        Segment<T>[] _segments = { };
+        Segment<T>[] _segments = Array.Empty<Segment<T>>();
         int[] _indexToSegment = new int[4];
 
         public Group(Querier<T> querier, World world)
         {
-            _querier = querier;
+            Querier = querier;
             _world = world;
             _components = world.Components();
             _messages = world.Messages();
@@ -275,7 +275,7 @@ namespace Entia.Modules.Group
 
         bool TryAdd(Component.Segment segment)
         {
-            if (!Has(segment) && _querier.TryQuery(segment, _world, out var query))
+            if (!Has(segment) && Querier.TryQuery(segment, _world, out var query))
             {
                 Count += segment.Entities.count;
                 ArrayUtility.Set(ref _indexToComponentSegment, segment, segment.Index);

@@ -40,14 +40,22 @@ namespace Entia.Experiment
                 return (test.Method.Name.Split("__").LastOrDefault().Split('|').FirstOrDefault(), test, total, minimum, maximum);
             }
 
+            string Justify(object value, int length)
+            {
+                var format = value.ToString();
+                return format + new string(' ', Math.Max(length - format.Length, 0));
+            }
+
             string Format((string name, Action test, long total, long minimum, long maximum) result, double baseTotal)
             {
-                var total = TimeSpan.FromTicks(result.total);
-                var ratio = (result.total / baseTotal).ToString("0.000");
-                var average = TimeSpan.FromTicks(result.total / iterations);
-                var minimum = TimeSpan.FromTicks(result.minimum);
-                var maximum = TimeSpan.FromTicks(result.maximum);
-                return $"{result.name} \t   -> \t   Total: {total} \t   Ratio: {ratio} \t   Average: {average} \t   Minimum: {minimum} \t   Maximum: {maximum}";
+                var column = 25;
+                var name = Justify(result.name, column);
+                var total = Justify(TimeSpan.FromTicks(result.total), column);
+                var ratio = Justify((result.total / baseTotal).ToString("0.000"), column);
+                var average = Justify(TimeSpan.FromTicks(result.total / iterations), column);
+                var minimum = Justify(TimeSpan.FromTicks(result.minimum), column);
+                var maximum = Justify(TimeSpan.FromTicks(result.maximum), column);
+                return $"{name} ->   Total: {total} Ratio: {ratio} Average: {average} Minimum: {minimum} Maximum: {maximum}";
             }
 
             var runners = tests.Prepend(@base).ToArray();
