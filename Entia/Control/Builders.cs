@@ -87,35 +87,13 @@ namespace Entia.Builders
             if (world.Builders().Build<T>(Node.Sequence(node.Name, node.Children), controller).TryValue(out var runner))
             {
                 var watch = new Stopwatch();
+                var messages = world.Messages();
                 return new Runner<T>(runner, (in T phase) =>
                 {
                     watch.Restart();
                     runner.Run(phase);
                     watch.Stop();
-                    world.Messages().Emit(new OnProfile { Node = node, Elapsed = watch.Elapsed });
-                });
-            }
-
-            return Option.None();
-        }
-    }
-
-    public sealed class Interval : IBuilder
-    {
-        public Option<Runner<T>> Build<T>(Node node, Controller controller, World world) where T : struct, IPhase
-        {
-            if (Option.Cast<Nodes.Interval>(node.Value).TryValue(out var data) &&
-                world.Builders().Build<T>(Node.Sequence(node.Name, node.Children), controller).TryValue(out var runner))
-            {
-                var last = data.Time();
-                return new Runner<T>(runner, (in T phase) =>
-                {
-                    var current = data.Time();
-                    if (current - last > data.Delay)
-                    {
-                        last = current;
-                        runner.Run(phase);
-                    }
+                    messages.Emit(new OnProfile { Node = node, Phase = typeof(T), Elapsed = watch.Elapsed });
                 });
             }
 
@@ -151,7 +129,7 @@ namespace Entia.Builders
     {
         public Option<Runner<T>> Build<T>(Node node, Controller controller, World world) where T : struct, IPhase
         {
-            if (Option.Cast<Nodes.Resolve>(node.Value).TryValue(out var data))
+            if (!typeof(T).Is<IReact>() && Option.Cast<Nodes.Resolve>(node.Value).TryValue(out var data))
                 return new Runner<T>(data, (in T _) => world.Resolve());
 
             return Option.None();

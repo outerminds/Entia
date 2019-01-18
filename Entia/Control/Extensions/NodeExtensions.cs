@@ -18,12 +18,6 @@ namespace Entia.Nodes
             node.Descend(child => child.Value is IWrapper ? child : child.Profile(false)) :
             Node.Of<Profile>(node.Name, node);
 
-        public static Node Interval(this Node node, TimeSpan delay, Func<TimeSpan> time = null)
-        {
-            var initial = DateTime.UtcNow;
-            return Node.Of(node.Name, new Interval { Delay = delay, Time = time ?? (() => DateTime.UtcNow - initial) }, node);
-        }
-
         public static Node Do(this Node node, Action<IRunner> @do) =>
             Node.Of(node.Name, new Map { Mapper = runner => { @do(runner); return Result.Success(runner); } }, node);
 

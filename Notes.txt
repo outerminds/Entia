@@ -18,6 +18,7 @@ Frictions:
 
 Features:
 - Link doesn't work?
+- use the 'Phase' field in the 'OnProfile' message to show better profiling info in the inspector
 
 - add tests for 'Resolvers' module
 - make random access work for Group3.cs
