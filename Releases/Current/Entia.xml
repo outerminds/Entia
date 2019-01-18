@@ -1,0 +1,542 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<doc>
+  <assembly>
+    <name>Entia</name>
+  </assembly>
+  <members>
+    <member name="T:Entia.Modules.Components">
+      <summary>
+            Module that stores components and allows to operate on them.
+            </summary>
+    </member>
+    <member name="P:Entia.Modules.Components.Segments">
+      <summary>
+            Gets all the component segments.
+            </summary>
+      <value>
+            The segments.
+            </value>
+    </member>
+    <member name="M:Entia.Modules.Components.#ctor(Entia.Modules.Entities,Entia.Modules.Messages)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Modules.Components" /> class.
+            </summary>
+      <param name="entities"></param>
+      <param name="messages"></param>
+    </member>
+    <member name="M:Entia.Modules.Components.Get``1(Entia.Entity)">
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the entity <paramref name="entity" />.
+            If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity associated with the component.</param>
+      <returns>The component reference or a dummy reference if the component is missing.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.GetOrDummy``1(Entia.Entity,System.Boolean@)">
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
+            If the component is missing, a dummy reference will be returned.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity associated with the component.</param>
+      <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
+      <returns>The component reference or a dummy reference.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.GetOrAdd``1(Entia.Entity,System.Func{``0})">
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
+            If the component is missing, a new instance will be created using the <paramref name="create" /> function.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity associated with the component.</param>
+      <param name="create">A function that creates a component of type <typeparamref name="T" />.</param>
+      <returns>The existing or added component reference.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.TryGet``1(Entia.Entity,``0@)">
+      <summary>
+            Tries to get a component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity.</param>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.TryGet(Entia.Entity,System.Type,Entia.IComponent@)">
+      <summary>
+            Tries to get a component of provided <paramref name="type" /> associated with the <paramref name="entity" />.
+            </summary>
+      <param name="entity">The entity.</param>
+      <param name="type">The component type.</param>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Get(Entia.Entity,System.Type)">
+      <summary>
+            Gets a component of provided <paramref name="type" /> associated with the entity <paramref name="entity" />.
+            If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
+            </summary>
+      <param name="entity">The entity associated with the component.</param>
+      <param name="type">The component type.</param>
+      <returns>The component or null reference if the component is missing.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Get(Entia.Entity)">
+      <summary>
+            Gets all the components associated with the <paramref name="entity" />.
+            </summary>
+      <param name="entity">The entity associated with the components.</param>
+      <returns>The components.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Get``1">
+      <summary>
+            Gets all entity-component pairs that have a component of type <typeparamref name="T" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <returns>The entity-component pairs.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Get(System.Type)">
+      <summary>
+            Gets all entity-component pairs that have a component of provided <paramref name="type" />.
+            </summary>
+      <param name="type">The component type.</param>
+      <returns>The entity-component pairs.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Has``1(Entia.Entity)">
+      <summary>
+            Determines whether the <paramref name="entity" /> has a component of type <typeparamref name="T" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Has(Entia.Entity,System.Type)">
+      <summary>
+            Determines whether the <paramref name="entity" /> has a component of provided <paramref name="type" />.
+            </summary>
+      <param name="entity">The entity.</param>
+      <param name="type">The component type.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Count(Entia.Entity)">
+      <summary>
+            Counts the components associated with the entity.
+            </summary>
+      <param name="entity">The entity.</param>
+      <returns>The number of components.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Count``1">
+      <summary>
+            Counts all the components of type <typeparamref name="T" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <returns>The number of components.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Count(System.Type)">
+      <summary>
+            Counts all the components of provided <paramref name="type" />.
+            </summary>
+      <param name="type">The component type.</param>
+      <returns>The number of components.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Set``1(Entia.Entity,``0@)">
+      <summary>
+            Sets the <paramref name="component" /> of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            If the component is missing, it is added.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity.</param>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Set(Entia.Entity,Entia.IComponent)">
+      <summary>
+            Sets the <paramref name="component" /> associated with the <paramref name="entity" />.
+            If the component is missing, it is added.
+            </summary>
+      <param name="entity">The entity.</param>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Remove``1(Entia.Entity)">
+      <summary>
+            Removes the component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity.</param>
+      <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Remove(Entia.Entity,System.Type)">
+      <summary>
+            Removes the component of provided <paramref name="type" /> associated with the <paramref name="entity" />.
+            </summary>
+      <param name="entity">The entity.</param>
+      <param name="type">The component type.</param>
+      <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Clear``1">
+      <summary>
+            Clears all components of type <typeparamref name="T" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Clear(System.Type)">
+      <summary>
+            Clears all components of provided <paramref name="type" />.
+            </summary>
+      <param name="type">The component type.</param>
+      <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Clear(Entia.Entity)">
+      <summary>
+            Clears all components associated with the <paramref name="entity" />.
+            </summary>
+      <param name="entity">The entity.</param>
+      <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Clear">
+      <summary>
+            Clears all components.
+            </summary>
+      <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.Resolve">
+      <summary>
+            Resolves all pending changes.
+            </summary>
+    </member>
+    <member name="M:Entia.Modules.Components.TryGetStore``1(Entia.Entity,``0[]@,System.Int32@)">
+      <summary>
+            Tries to get the component store of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity.</param>
+      <param name="store">The store.</param>
+      <param name="index">The index in the store where the component is.</param>
+      <returns>Returns <c>true</c> if the store was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.TryGetStore(Entia.Entity,System.Type,System.Array@,System.Int32@)">
+      <summary>
+            Tries to get the component store of provided <paramref name="type" /> associated with the <paramref name="entity" />.
+            </summary>
+      <param name="entity">The entity.</param>
+      <param name="type">The component type.</param>
+      <param name="store">The store.</param>
+      <param name="index">The index in the store where the component is.</param>
+      <returns>Returns <c>true</c> if the store was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.TryGetSegment(Entia.Entity,System.ValueTuple{Entia.Modules.Component.Segment,System.Int32}@)">
+      <summary>
+            Tries the get segment associated with the <paramref name="entity" />.
+            </summary>
+      <param name="entity">The entity.</param>
+      <param name="pair">The segment and the index of the entity within it.</param>
+      <returns>Returns <c>true</c> if the segment was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member name="M:Entia.Modules.Components.GetEnumerator">
+      <summary>
+            Returns an enumerator that iterates through all components.
+            </summary>
+      <returns>An enumerator that can be used to iterate through all components.</returns>
+    </member>
+    <member name="T:Entia.Injectables.AllComponents">
+      <summary>
+            Gives access to all component operations.
+            </summary>
+    </member>
+    <member name="M:Entia.Injectables.AllComponents.#ctor(Entia.Modules.Components)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Injectables.AllComponents" /> struct.
+            </summary>
+      <param name="components"></param>
+    </member>
+    <member>
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the entity <paramref name="entity" />.
+            If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity associated with the component.</param>
+      <returns>The component reference or a dummy reference if the component is missing.</returns>
+    </member>
+    <member>
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
+            If the component is missing, a new instance will be created using the <paramref name="create" /> function.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="create">A function that creates a component of type <typeparamref name="T" />.</param>
+      <returns>The existing or added component reference.</returns>
+    </member>
+    <member>
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
+            If the component is missing, a dummy reference will be returned.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
+      <returns>The component reference or a dummy reference.</returns>
+    </member>
+    <member>
+      <summary>
+            Tries to get a component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Tries to get a component of provided <paramref name="type" /> associated with the <paramref name="entity" />.
+            </summary>
+      <param name="type">The component type.</param>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Gets all the components associated with the <paramref name="entity" />.
+            </summary>
+      <param name="entity">The entity associated with the components.</param>
+      <returns>The components.</returns>
+    </member>
+    <member>
+      <summary>
+            Gets all entity-component pairs that have a component of type <typeparamref name="T" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <returns>The entity-component pairs.</returns>
+    </member>
+    <member>
+      <summary>
+            Gets all entity-component pairs that have a component of provided <paramref name="type" />.
+            </summary>
+      <param name="type">The component type.</param>
+      <returns>The entity-component pairs.</returns>
+    </member>
+    <member>
+      <summary>
+            Sets the <paramref name="component" /> of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            If the component is missing, it is added.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Sets the <paramref name="component" /> associated with the <paramref name="entity" />.
+            If the component is missing, it is added.
+            </summary>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Determines whether the <paramref name="entity" /> has a component of type <typeparamref name="T" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Determines whether the <paramref name="entity" /> has a component of provided <paramref name="type" />.
+            </summary>
+      <param name="type">The component type.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Removes the component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity.</param>
+      <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Removes the component of provided <paramref name="type" /> associated with the <paramref name="entity" />.
+            </summary>
+      <param name="type">The component type.</param>
+      <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Clears all components of type <typeparamref name="T" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Clears all components of provided <paramref name="type" />.
+            </summary>
+      <param name="type">The component type.</param>
+      <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Clears all components associated with the <paramref name="entity" />.
+            </summary>
+      <param name="entity">The entity.</param>
+      <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Clears all components.
+            </summary>
+      <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Returns an enumerator that iterates through all components.
+            </summary>
+      <returns>An enumerator that can be used to iterate through all components.</returns>
+    </member>
+    <member name="T:Entia.Injectables.Components`1">
+      <summary>
+            Gives access to component operations for type <typeparamref name="T" />.
+            </summary>
+    </member>
+    <member name="T:Entia.Injectables.Components`1.Read">
+      <summary>
+            Gives access to component read operations for type <typeparamref name="T" />.
+            </summary>
+    </member>
+    <member name="M:Entia.Injectables.Components`1.Read.#ctor(Entia.Modules.Components)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Injectables.Components`1.Read" /> struct.
+            </summary>
+      <param name="components"></param>
+    </member>
+    <member>
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
+            If the component is missing, a dummy reference will be returned.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
+      <returns>The component reference or a dummy reference.</returns>
+    </member>
+    <member>
+      <summary>
+            Tries to get a component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the entity <paramref name="entity" />.
+            If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity associated with the component.</param>
+      <returns>The component reference or a dummy reference if the component is missing.</returns>
+    </member>
+    <member>
+      <summary>
+            Determines whether the <paramref name="entity" /> has a component of type <typeparamref name="T" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Returns an enumerator that iterates through all components.
+            </summary>
+      <returns>An enumerator that can be used to iterate through all components.</returns>
+    </member>
+    <member name="M:Entia.Injectables.Components`1.op_Implicit(Entia.Injectables.Components{`0})~Entia.Injectables.Components{`0}.Read">
+      <summary>
+            Performs an implicit conversion from <see cref="T:Entia.Injectables.Components`1" /> to <see cref="T:Entia.Injectables.Components`1.Read" />.
+            </summary>
+      <param name="components"></param>
+      <returns>
+            The result of the conversion.
+            </returns>
+    </member>
+    <member name="M:Entia.Injectables.Components`1.#ctor(Entia.Modules.Components)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Injectables.Components`1" /> struct.
+            </summary>
+      <param name="components"></param>
+    </member>
+    <member>
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
+            If the component is missing, a new instance will be created using the <paramref name="create" /> function.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="create">A function that creates a component of type <typeparamref name="T" />.</param>
+      <returns>The existing or added component reference.</returns>
+    </member>
+    <member>
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
+            If the component is missing, a dummy reference will be returned.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
+      <returns>The component reference or a dummy reference.</returns>
+    </member>
+    <member>
+      <summary>
+            Tries to get a component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the entity <paramref name="entity" />.
+            If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity associated with the component.</param>
+      <returns>The component reference or a dummy reference if the component is missing.</returns>
+    </member>
+    <member>
+      <summary>
+            Sets the <paramref name="component" /> of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            If the component is missing, it is added.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Determines whether the <paramref name="entity" /> has a component of type <typeparamref name="T" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Removes the component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity.</param>
+      <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Clears all components of type <typeparamref name="T" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Returns an enumerator that iterates through all components.
+            </summary>
+      <returns>An enumerator that can be used to iterate through all components.</returns>
+    </member>
+  </members>
+</doc>

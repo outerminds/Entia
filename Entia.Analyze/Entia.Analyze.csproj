@@ -5,15 +5,15 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <LangVersion>7.3</LangVersion>
-    <Configurations>Release With Analyzer;Debug With Analyzer</Configurations>
+    <Configurations>Debug VS;Release VS</Configurations>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)'=='Debug With Analyzer'">
+  <PropertyGroup Condition="'$(Configuration)'=='Debug VS'">
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <Optimize>false</Optimize>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)'=='Release With Analyzer'">
+  <PropertyGroup Condition="'$(Configuration)'=='Release VS'">
     <Optimize>true</Optimize>
   </PropertyGroup>
 

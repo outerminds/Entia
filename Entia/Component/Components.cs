@@ -1,13 +1,15 @@
 using Entia.Core;
 using Entia.Messages;
 using Entia.Modules.Component;
-using Entia.Queryables;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Entia.Modules
 {
+    /// <summary>
+    /// Module that stores components and allows to operate on them.
+    /// </summary>
     public sealed class Components : IModule, IResolvable, IEnumerable<IComponent>
     {
         struct Data
@@ -19,6 +21,12 @@ namespace Entia.Modules
             public int? Transient;
         }
 
+        /// <summary>
+        /// Gets all the component segments.
+        /// </summary>
+        /// <value>
+        /// The segments.
+        /// </value>
         public ArrayEnumerable<Segment> Segments => _segments.Enumerate();
 
         readonly Entities _entities;
@@ -31,6 +39,11 @@ namespace Entia.Modules
         (Data[] items, int count) _data = (new Data[64], 0);
         (Segment[] items, int count) _segments;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Components"/> class.
+        /// </summary>
+        /// <param name="entities"></param>
+        /// <param name="messages"></param>
         public Components(Entities entities, Messages messages)
         {
             _entities = entities;
@@ -43,6 +56,13 @@ namespace Entia.Modules
             foreach (var entity in entities) Initialize(entity);
         }
 
+        /// <summary>
+        /// Gets a component of type <typeref name="T"/> associated with the entity <paramref name="entity"/>.
+        /// If the component is missing, a <see cref="OnException"/> message will be emitted.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <param name="entity">The entity associated with the component.</param>
+        /// <returns>The component reference or a dummy reference if the component is missing.</returns>
         public ref T Get<T>(Entity entity) where T : struct, IComponent
         {
             if (TryGetStore<T>(entity, out var store, out var adjusted)) return ref store[adjusted];
@@ -50,6 +70,14 @@ namespace Entia.Modules
             return ref Dummy<T>.Value;
         }
 
+        /// <summary>
+        /// Gets a component of type <typeref name="T"/> associated with the <paramref name="entity"/>.
+        /// If the component is missing, a dummy reference will be returned.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <param name="entity">The entity associated with the component.</param>
+        /// <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
+        /// <returns>The component reference or a dummy reference.</returns>
         public ref T GetOrDummy<T>(Entity entity, out bool success) where T : struct, IComponent
         {
             if (TryGetStore<T>(entity, out var store, out var adjusted))
@@ -62,6 +90,14 @@ namespace Entia.Modules
             return ref Dummy<T>.Value;
         }
 
+        /// <summary>
+        /// Gets a component of type <typeref name="T"/> associated with the <paramref name="entity"/>.
+        /// If the component is missing, a new instance will be created using the <paramref name="create"/> function.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <param name="entity">The entity associated with the component.</param>
+        /// <param name="create">A function that creates a component of type <typeparamref name="T"/>.</param>
+        /// <returns>The existing or added component reference.</returns>
         public ref T GetOrAdd<T>(Entity entity, Func<T> create = null) where T : struct, IComponent
         {
             if (TryGetStore<T>(entity, out var store, out var adjusted)) return ref store[adjusted];
@@ -69,12 +105,26 @@ namespace Entia.Modules
             return ref Get<T>(entity);
         }
 
+        /// <summary>
+        /// Tries to get a component of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <param name="entity">The entity.</param>
+        /// <param name="component">The component.</param>
+        /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
         public bool TryGet<T>(Entity entity, out T component) where T : struct, IComponent
         {
             component = GetOrDummy<T>(entity, out var success);
             return success;
         }
 
+        /// <summary>
+        /// Tries to get a component of provided <paramref name="type"/> associated with the <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="type">The component type.</param>
+        /// <param name="component">The component.</param>
+        /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
         public bool TryGet(Entity entity, Type type, out IComponent component)
         {
             if (TryGetStore(entity, type, out var store, out var index))
@@ -87,6 +137,13 @@ namespace Entia.Modules
             return false;
         }
 
+        /// <summary>
+        /// Gets a component of provided <paramref name="type"/> associated with the entity <paramref name="entity"/>.
+        /// If the component is missing, a <see cref="OnException"/> message will be emitted.
+        /// </summary>
+        /// <param name="entity">The entity associated with the component.</param>
+        /// <param name="type">The component type.</param>
+        /// <returns>The component or null reference if the component is missing.</returns>
         public IComponent Get(Entity entity, Type type)
         {
             if (TryGet(entity, type, out var component)) return component;
@@ -94,6 +151,11 @@ namespace Entia.Modules
             return null;
         }
 
+        /// <summary>
+        /// Gets all the components associated with the <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="entity">The entity associated with the components.</param>
+        /// <returns>The components.</returns>
         public IEnumerable<IComponent> Get(Entity entity)
         {
             ref var data = ref GetData(entity, out var success);
@@ -101,9 +163,14 @@ namespace Entia.Modules
             return Array.Empty<IComponent>();
         }
 
+        /// <summary>
+        /// Gets all entity-component pairs that have a component of type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <returns>The entity-component pairs.</returns>
         public IEnumerable<(Entity entity, T component)> Get<T>() where T : struct, IComponent
         {
-            for (int i = 0; i < _data.count; i++)
+            for (var i = 0; i < _data.count; i++)
             {
                 var data = _data.items[i];
                 if (data.IsValid && TryGetStore<T>(data, out var store, out var index))
@@ -111,11 +178,16 @@ namespace Entia.Modules
             }
         }
 
-        public IEnumerable<(Entity entity, IComponent component)> Get(Type component)
+        /// <summary>
+        /// Gets all entity-component pairs that have a component of provided <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The component type.</param>
+        /// <returns>The entity-component pairs.</returns>
+        public IEnumerable<(Entity entity, IComponent component)> Get(Type type)
         {
-            if (ComponentUtility.TryGetMetadata(component, out var metadata))
+            if (ComponentUtility.TryGetMetadata(type, out var metadata))
             {
-                for (int i = 0; i < _data.count; i++)
+                for (var i = 0; i < _data.count; i++)
                 {
                     var data = _data.items[i];
                     if (data.IsValid && TryGetStore(data, metadata, out var store, out var index))
@@ -124,10 +196,27 @@ namespace Entia.Modules
             }
         }
 
+        /// <summary>
+        /// Determines whether the <paramref name="entity"/> has a component of type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <param name="entity">The entity.</param>
+        /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
         public bool Has<T>(Entity entity) where T : struct, IComponent => Has(entity, ComponentUtility.Cache<T>.Data.Index);
 
-        public bool Has(Entity entity, Type component) => ComponentUtility.TryGetMetadata(component, out var data) && Has(entity, data.Index);
+        /// <summary>
+        /// Determines whether the <paramref name="entity"/> has a component of provided <paramref name="type"/>.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="type">The component type.</param>
+        /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+        public bool Has(Entity entity, Type type) => ComponentUtility.TryGetMetadata(type, out var data) && Has(entity, data.Index);
 
+        /// <summary>
+        /// Counts the components associated with the entity.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <returns>The number of components.</returns>
         public int Count(Entity entity)
         {
             ref var data = ref GetData(entity, out var success);
@@ -140,10 +229,28 @@ namespace Entia.Modules
             return 0;
         }
 
+        /// <summary>
+        /// Counts all the components of type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <returns>The number of components.</returns>
         public int Count<T>() where T : struct, IComponent => Count(ComponentUtility.Cache<T>.Data);
 
-        public int Count(Type component) => ComponentUtility.TryGetMetadata(component, out var metadata) ? Count(metadata) : 0;
+        /// <summary>
+        /// Counts all the components of provided <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The component type.</param>
+        /// <returns>The number of components.</returns>
+        public int Count(Type type) => ComponentUtility.TryGetMetadata(type, out var metadata) ? Count(metadata) : 0;
 
+        /// <summary>
+        /// Sets the <paramref name="component"/> of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
+        /// If the component is missing, it is added.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <param name="entity">The entity.</param>
+        /// <param name="component">The component.</param>
+        /// <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
         public bool Set<T>(Entity entity, in T component) where T : struct, IComponent
         {
             ref var data = ref GetData(entity, out var success);
@@ -179,6 +286,13 @@ namespace Entia.Modules
             return false;
         }
 
+        /// <summary>
+        /// Sets the <paramref name="component"/> associated with the <paramref name="entity"/>.
+        /// If the component is missing, it is added.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="component">The component.</param>
+        /// <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
         public bool Set(Entity entity, IComponent component)
         {
             ref var data = ref GetData(entity, out var success);
@@ -213,30 +327,61 @@ namespace Entia.Modules
             return false;
         }
 
+        /// <summary>
+        /// Removes the component of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <param name="entity">The entity.</param>
+        /// <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
         public bool Remove<T>(Entity entity) where T : struct, IComponent
         {
             ref var data = ref GetData(entity, out var success);
             return success && Remove(entity, ref data, ComponentUtility.Cache<T>.Data, MessageUtility.OnRemove<T>());
         }
 
-        public bool Remove(Entity entity, Type component)
+        /// <summary>
+        /// Removes the component of provided <paramref name="type"/> associated with the <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="type">The component type.</param>
+        /// <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
+        public bool Remove(Entity entity, Type type)
         {
             ref var data = ref GetData(entity, out var success);
             return success &&
-                ComponentUtility.TryGetMetadata(component, out var metadata) &&
+                ComponentUtility.TryGetMetadata(type, out var metadata) &&
                 Remove(entity, ref data, metadata, MessageUtility.OnRemove(metadata));
         }
 
+        /// <summary>
+        /// Clears all components of type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
         public bool Clear<T>() where T : struct, IComponent => Clear(ComponentUtility.Cache<T>.Data, MessageUtility.OnRemove<T>());
 
-        public bool Clear(Type component) => ComponentUtility.TryGetMetadata(component, out var metadata) && Clear(metadata, MessageUtility.OnRemove(metadata));
+        /// <summary>
+        /// Clears all components of provided <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The component type.</param>
+        /// <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
+        public bool Clear(Type type) => ComponentUtility.TryGetMetadata(type, out var metadata) && Clear(metadata, MessageUtility.OnRemove(metadata));
 
+        /// <summary>
+        /// Clears all components associated with the <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
         public bool Clear(Entity entity)
         {
             ref var data = ref GetData(entity, out var success);
             return success && Clear(entity, ref data);
         }
 
+        /// <summary>
+        /// Clears all components.
+        /// </summary>
+        /// <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
         public bool Clear()
         {
             var cleared = false;
@@ -244,6 +389,9 @@ namespace Entia.Modules
             return cleared;
         }
 
+        /// <summary>
+        /// Resolves all pending changes.
+        /// </summary>
         public void Resolve()
         {
             foreach (ref var slot in _transient.Slots.Enumerate())
@@ -255,26 +403,26 @@ namespace Entia.Modules
                     switch (slot.Resolution)
                     {
                         case Transient.Resolutions.Add:
-                            {
-                                var segment = GetSegment(slot.Mask);
-                                CopyTo((data.Segment, data.Index), (segment, segment.Entities.count++));
-                                data.Transient = default;
-                                break;
-                            }
+                        {
+                            var segment = GetSegment(slot.Mask);
+                            CopyTo((data.Segment, data.Index), (segment, segment.Entities.count++));
+                            data.Transient = default;
+                            break;
+                        }
                         case Transient.Resolutions.Remove:
-                            {
-                                MoveTo((data.Segment, data.Index), _destroyed);
-                                _destroyed.Entities.count = 0;
-                                data = default;
-                                break;
-                            }
+                        {
+                            MoveTo((data.Segment, data.Index), _destroyed);
+                            _destroyed.Entities.count = 0;
+                            data = default;
+                            break;
+                        }
                         default:
-                            {
-                                var segment = GetSegment(slot.Mask);
-                                MoveTo((data.Segment, data.Index), segment);
-                                data.Transient = default;
-                                break;
-                            }
+                        {
+                            var segment = GetSegment(slot.Mask);
+                            MoveTo((data.Segment, data.Index), segment);
+                            data.Transient = default;
+                            break;
+                        }
                     }
                 }
             }
@@ -284,14 +432,30 @@ namespace Entia.Modules
             _transient.Slots.count = 0;
         }
 
+        /// <summary>
+        /// Tries to get the component store of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <param name="entity">The entity.</param>
+        /// <param name="store">The store.</param>
+        /// <param name="index">The index in the store where the component is.</param>
+        /// <returns>Returns <c>true</c> if the store was found; otherwise, <c>false</c>.</returns>
         public bool TryGetStore<T>(Entity entity, out T[] store, out int index) where T : struct, IComponent
         {
-            if (TryGetData(entity, out var data) && TryGetStore<T>(data, out store, out index)) return true;
+            if (TryGetData(entity, out var data) && TryGetStore(data, out store, out index)) return true;
             store = default;
             index = default;
             return false;
         }
 
+        /// <summary>
+        /// Tries to get the component store of provided <paramref name="type"/> associated with the <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="type">The component type.</param>
+        /// <param name="store">The store.</param>
+        /// <param name="index">The index in the store where the component is.</param>
+        /// <returns>Returns <c>true</c> if the store was found; otherwise, <c>false</c>.</returns>
         public bool TryGetStore(Entity entity, Type type, out Array store, out int index)
         {
             if (TryGetData(entity, out var data) &&
@@ -304,6 +468,12 @@ namespace Entia.Modules
             return false;
         }
 
+        /// <summary>
+        /// Tries the get segment associated with the <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="pair">The segment and the index of the entity within it.</param>
+        /// <returns>Returns <c>true</c> if the segment was found; otherwise, <c>false</c>.</returns>
         public bool TryGetSegment(Entity entity, out (Segment segment, int index) pair)
         {
             if (TryGetData(entity, out var data))
@@ -316,6 +486,10 @@ namespace Entia.Modules
             return false;
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through all components.
+        /// </summary>
+        /// <returns>An enumerator that can be used to iterate through all components.</returns>
         public IEnumerator<IComponent> GetEnumerator()
         {
             foreach (var data in _data.Enumerate())
@@ -328,7 +502,7 @@ namespace Entia.Modules
         {
             var segment = GetTargetSegment(data);
             var types = segment.Types.data;
-            for (int i = 0; i < types.Length; i++)
+            for (var i = 0; i < types.Length; i++)
             {
                 if (TryGetStore(data, types[i], out var store, out var index))
                     yield return (IComponent)store.GetValue(index);
@@ -456,7 +630,7 @@ namespace Entia.Modules
             target.segment.Entities.Set(target.index, entity);
 
             var types = target.segment.Types.data;
-            for (int i = 0; i < types.Length; i++)
+            for (var i = 0; i < types.Length; i++)
             {
                 ref readonly var metadata = ref types[i];
                 ref var targetStore = ref target.segment.GetStore(metadata.Index);
@@ -510,7 +684,7 @@ namespace Entia.Modules
                 ref var slot = ref GetTransientSlot(entity, ref data);
                 var segment = GetSegment(slot.Mask);
                 var types = segment.Types.data;
-                for (int i = 0; i < types.Length; i++)
+                for (var i = 0; i < types.Length; i++)
                 {
                     var metadata = types[i];
                     Remove(entity, ref slot, metadata, MessageUtility.OnRemove(metadata));
