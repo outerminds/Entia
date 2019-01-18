@@ -24,7 +24,7 @@ namespace Entia.Nodes
         public static Node System(Type system) => Of(system.Format(), new System { Type = system });
         public static Node System<T>() where T : struct, ISystem => System(typeof(T));
         public static Node[] Systems(Assembly assembly) => assembly.GetTypes().Where(type => type.IsValueType && type.Is<ISystem>()).Select(System).ToArray();
-        public static Node Resolve() => Of(nameof(Nodes.Resolve), new Resolve());
+        public static Node Resolve(Node node) => Of<Resolve>(nameof(Nodes.Resolve), node);
 
         public readonly string Name;
         public readonly IData Value;

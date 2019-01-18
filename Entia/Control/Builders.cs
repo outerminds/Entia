@@ -129,8 +129,9 @@ namespace Entia.Builders
     {
         public Option<Runner<T>> Build<T>(Node node, Controller controller, World world) where T : struct, IPhase
         {
-            if (typeof(T).Is<IResolve>() && Option.Cast<Nodes.Resolve>(node.Value).TryValue(out var data))
-                return new Runner<T>(data, (in T _) => world.Resolve());
+            if (Option.Cast<Nodes.Resolve>(node.Value).TryValue(out var data) &&
+                world.Builders().Build<T>(Node.Sequence(node.Name, node.Children), controller).TryValue(out var runner))
+                return typeof(T).Is<IResolve>() ? new Runner<T>(data, (in T phase) => { runner.Run(phase); world.Resolve(); }) : runner;
 
             return Option.None();
         }

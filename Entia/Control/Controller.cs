@@ -81,14 +81,8 @@ namespace Entia.Modules.Control
         public bool Disable(Node node) => TryIndex(node, out var index) && Disable(index);
         public bool Disable(int index) => _states[index].Change(States.Disabled);
 
-        public void Run<T>(bool resolve = true) where T : struct, IPhase => Run(default(T), resolve);
-
-        public void Run<T>(in T phase, bool resolve = true) where T : struct, IPhase
-        {
-            var runner = Runner<T>();
-            runner.Run(phase);
-            if (resolve) World.Resolve();
-        }
+        public void Run<T>() where T : struct, IPhase => Run(default(T));
+        public void Run<T>(in T phase) where T : struct, IPhase => Runner<T>().Run(phase);
 
         public Runner<T> Runner<T>() where T : struct, IPhase
         {

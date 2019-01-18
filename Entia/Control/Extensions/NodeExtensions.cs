@@ -41,5 +41,11 @@ namespace Entia.Nodes
             var children = recursive ? node.Children.Select(child => child.Separate(provider, recursive)).ToArray() : node.Children;
             return Node.Of(node.Name, node.Value, children.Separate(provider).ToArray());
         }
+
+        public static Node Resolve(this Node node)
+        {
+            var children = node.Children.Select(child => child.Value is IAtomic ? Node.Resolve(child) : child.Resolve()).ToArray();
+            return Node.Of(node.Name, node.Value, children);
+        }
     }
 }

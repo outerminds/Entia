@@ -15,5 +15,5 @@ namespace Entia.Nodes
     public struct Profile : IWrapper, IBuildable<Builders.Profile> { }
     public struct State : IWrapper, IBuildable<Builders.State> { public Func<Controller.States> Get; }
     public struct Map : IWrapper, IBuildable<Builders.Map> { public Func<IRunner, Option<IRunner>> Mapper; }
-    public struct Resolve : IAtomic, IBuildable<Builders.Resolve> { public Func<IRunner, Option<IRunner>> Mapper; }
+    public struct Resolve : IWrapper, IBuildable<Builders.Resolve> { public Func<IRunner, Option<IRunner>> Mapper; }
 }
