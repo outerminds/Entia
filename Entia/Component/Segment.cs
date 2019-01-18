@@ -1,6 +1,7 @@
 using Entia.Core;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Entia.Modules.Component
 {
@@ -45,7 +46,9 @@ namespace Entia.Modules.Component
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T[] GetStore<T>() where T : struct, IComponent => (T[])Stores[GetStoreIndex<T>()];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref Array GetStore(int component) => ref Stores[GetStoreIndex(component)];
 
         public bool TryGetStore(in Metadata metadata, out Array store)
@@ -61,7 +64,9 @@ namespace Entia.Modules.Component
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         int GetStoreIndex(int component) => component - Types.minimum;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         int GetStoreIndex<T>() where T : struct, IComponent => GetStoreIndex(ComponentUtility.Cache<T>.Data.Index);
     }
 }
