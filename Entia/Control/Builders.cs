@@ -129,7 +129,7 @@ namespace Entia.Builders
     {
         public Option<Runner<T>> Build<T>(Node node, Controller controller, World world) where T : struct, IPhase
         {
-            if (!typeof(T).Is<IReact>() && Option.Cast<Nodes.Resolve>(node.Value).TryValue(out var data))
+            if (typeof(T).Is<IResolve>() && Option.Cast<Nodes.Resolve>(node.Value).TryValue(out var data))
                 return new Runner<T>(data, (in T _) => world.Resolve());
 
             return Option.None();
