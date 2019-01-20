@@ -7,6 +7,7 @@ Gotchas:
 	: enforced by the Visual Studio extension
 - forgetting to add Nodes.Default in the controller sequence
 - nesting generics deeper than 6 (limit is 7 but 1 nesting depth is needed internally)
+- users need to have dotnet core 2.1 installed for the generator to work
 
 Conventions:
 - reactions should not be used when an equivalent solution exists
