@@ -399,14 +399,14 @@
             Gives access to component operations for type <typeparamref name="T" />.
             </summary>
     </member>
-    <member name="T:Entia.Injectables.Components`1.Write">
+    <member>
       <summary>
-            Gives access to component read operations for type <typeparamref name="T" />.
+            Gives access to component operations for type <typeparamref name="T" />.
             </summary>
     </member>
     <member name="M:Entia.Injectables.Components`1.Write.#ctor(Entia.Modules.Components)">
       <summary>
-            Initializes a new instance of the <see cref="T:Entia.Injectables.Components`1.Read" /> struct.
+            Initializes a new instance of the <see cref="T:Entia.Injectables.Components`1.Write" /> struct.
             </summary>
       <param name="components"></param>
     </member>
@@ -450,9 +450,9 @@
             </summary>
       <returns>An enumerator that can be used to iterate through all components.</returns>
     </member>
-    <member name="T:Entia.Injectables.Components`1.Read">
+    <member>
       <summary>
-            Gives access to component read operations for type <typeparamref name="T" />.
+            Gives access to component operations for type <typeparamref name="T" />.
             </summary>
     </member>
     <member name="M:Entia.Injectables.Components`1.Read.#ctor(Entia.Modules.Components)">
