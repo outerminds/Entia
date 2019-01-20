@@ -8,19 +8,19 @@ Gotchas:
 - forgetting to add Nodes.Default in the controller sequence
 - nesting generics deeper than 6 (limit is 7 but 1 nesting depth is needed internally)
 - users need to have dotnet core 2.1 installed for the generator to work
+	: added error message
 
 Conventions:
 - reactions should not be used when an equivalent solution exists
+- use 'On' or 'Do' prefix when defining a message
+- use 'Is', 'Has', 'Will' or 'Was' prefix when defining a tag
 
 Frictions:
 - no default values (for components, messages, resources, systems)
 	: components and resources can now use the 'DefaultAttribute'
-- can not add a component/tag/resource by dragging the file on a gameObject
+- can not add a component/resource by dragging the file on a gameObject
 
 Features:
-- Link doesn't work?
-- use the 'Phase' field in the 'OnProfile' message to show better profiling info in the inspector
-
 - add tests for 'Resolvers' module
 - make random access work for Group3.cs
 - don't forget to add dependencies to new modules
@@ -43,7 +43,7 @@ Features:
 		- static caches cause race conditions
 
 Bugs:
-- error in Unity when renaming a component/tag/resource.
+- error in Unity when renaming a component/resource.
 	- the error prevents to go in play mode while it is there
 	- the error disapears on the next compilation
 	: the error appears in the console but is removed when compilation is done
@@ -65,6 +65,7 @@ Bugs:
 	- this might be not be realistically solvable
 
 Optimization:
+- do not reserve a store for empty components
 - WorldReferenceEditor is very slow. Can try to cache stuff.
 - find a way to order groups items and/or store items in such a way that they will be better accessed contiguously
 	- ordering items with the 'Entity.Index' might work

@@ -30,6 +30,8 @@ namespace Entia.Nodes
         public readonly IData Value;
         public readonly Node[] Children;
 
+        int? _hash;
+
         Node(string name, IData value, params Node[] children)
         {
             Name = name;
@@ -37,9 +39,22 @@ namespace Entia.Nodes
             Children = children;
         }
 
-        public bool Equals(Node other) => Name == other.Name && EqualityComparer<IData>.Default.Equals(Value, other.Value) && Children.SequenceEqual(other.Children);
+        public bool Equals(Node other)
+        {
+            if (ReferenceEquals(this, other)) return true;
+            return
+                GetHashCode() == other.GetHashCode() &&
+                Name == other.Name &&
+                EqualityComparer<IData>.Default.Equals(Value, other.Value) &&
+                Children.SequenceEqual(other.Children);
+        }
         public override bool Equals(object obj) => obj is Node node && Equals(node);
-        public override int GetHashCode() => Children.Aggregate(Name.GetHashCode() ^ EqualityComparer<IData>.Default.GetHashCode(Value), (hash, child) => hash ^ child.GetHashCode());
+        public override int GetHashCode()
+        {
+            if (_hash.HasValue) return _hash.Value;
+            _hash = Children.Aggregate(Name.GetHashCode() ^ EqualityComparer<IData>.Default.GetHashCode(Value), (hash, child) => hash ^ child.GetHashCode());
+            return _hash.Value;
+        }
         public override string ToString() => string.IsNullOrWhiteSpace(Name) ? $"[{string.Join(", ", Children.AsEnumerable())}]" : Name;
     }
 }

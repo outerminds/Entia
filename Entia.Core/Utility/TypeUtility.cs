@@ -37,17 +37,21 @@ namespace Entia.Core
         public const BindingFlags PublicStatic = BindingFlags.Static | BindingFlags.Public;
         public const BindingFlags Static = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
-        static readonly Concurrent<Dictionary<Type, object>> _typeToDefaults = new Dictionary<Type, object>();
-        static readonly Concurrent<Dictionary<(Type, BindingFlags), FieldInfo[]>> _typeToFields = new Dictionary<(Type, BindingFlags), FieldInfo[]>();
-
-        public static IEnumerable<Type> AllTypes()
+        public static IEnumerable<Assembly> AllAssemblies => AppDomain.CurrentDomain.GetAssemblies();
+        public static IEnumerable<Type> AllTypes
         {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            get
             {
-                try { foreach (var type in assembly.GetTypes()) yield return type; }
-                finally { }
+                foreach (var assembly in AllAssemblies)
+                {
+                    try { foreach (var type in assembly.GetTypes()) yield return type; }
+                    finally { }
+                }
             }
         }
+
+        static readonly Concurrent<Dictionary<Type, object>> _typeToDefaults = new Dictionary<Type, object>();
+        static readonly Concurrent<Dictionary<(Type, BindingFlags), FieldInfo[]>> _typeToFields = new Dictionary<(Type, BindingFlags), FieldInfo[]>();
 
         public static object GetDefault(Type type) => type.IsValueType ?
             _typeToDefaults.ReadValueOrWrite(type, type, key => (key, Activator.CreateInstance(key))) :
