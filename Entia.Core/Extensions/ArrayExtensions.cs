@@ -14,8 +14,6 @@ namespace Entia.Core
             return (left, right);
         }
 
-        public static ArrayEnumerable<T> Enumerate<T>(this T[] array, int count) => new ArrayEnumerable<T>(array, Math.Min(count, array.Length));
-
         public static void Fill<T>(this T[] source, T value) => source.Fill(value, 0, source.Length);
 
         public static void Fill<T>(this T[] source, Func<T> provider) => source.Fill(provider, 0, source.Length);
@@ -60,7 +58,9 @@ namespace Entia.Core
             return array;
         }
 
-        public static ArrayEnumerable<T> Enumerate<T>(in this (T[] items, int count) pair) => new ArrayEnumerable<T>(pair.items, pair.count);
+        public static Slice<T> Slice<T>(this T[] array, int index, int count) => new Slice<T>(array, index, count);
+        public static Slice<T> Slice<T>(this T[] array, int count) => array.Slice(0, count);
+        public static Slice<T> Slice<T>(in this (T[] items, int count) pair) => pair.items.Slice(pair.count);
 
         public static bool Ensure<T>(ref this (T[] items, int count) pair) => ArrayUtility.Ensure(ref pair.items, pair.count);
         public static bool Ensure<T>(ref this (T[] items, int count) pair, uint size) => ArrayUtility.Ensure(ref pair.items, size);

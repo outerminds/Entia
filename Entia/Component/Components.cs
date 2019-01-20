@@ -27,7 +27,7 @@ namespace Entia.Modules
         /// <value>
         /// The segments.
         /// </value>
-        public ArrayEnumerable<Segment> Segments => _segments.Enumerate();
+        public Slice<Segment>.Read Segments => _segments.Slice();
 
         readonly Entities _entities;
         readonly Messages _messages;
@@ -385,7 +385,7 @@ namespace Entia.Modules
         public bool Clear()
         {
             var cleared = false;
-            foreach (ref var data in _data.Enumerate()) cleared |= Clear(data.Segment.Entities.items[data.Index], ref data);
+            foreach (ref var data in _data.Slice()) cleared |= Clear(data.Segment.Entities.items[data.Index], ref data);
             return cleared;
         }
 
@@ -394,7 +394,7 @@ namespace Entia.Modules
         /// </summary>
         public void Resolve()
         {
-            foreach (ref var slot in _transient.Slots.Enumerate())
+            foreach (ref var slot in _transient.Slots.Slice())
             {
                 ref var data = ref GetData(slot.Entity, out var success);
 
@@ -403,26 +403,26 @@ namespace Entia.Modules
                     switch (slot.Resolution)
                     {
                         case Transient.Resolutions.Add:
-                        {
-                            var segment = GetSegment(slot.Mask);
-                            CopyTo((data.Segment, data.Index), (segment, segment.Entities.count++));
-                            data.Transient = default;
-                            break;
-                        }
+                            {
+                                var segment = GetSegment(slot.Mask);
+                                CopyTo((data.Segment, data.Index), (segment, segment.Entities.count++));
+                                data.Transient = default;
+                                break;
+                            }
                         case Transient.Resolutions.Remove:
-                        {
-                            MoveTo((data.Segment, data.Index), _destroyed);
-                            _destroyed.Entities.count = 0;
-                            data = default;
-                            break;
-                        }
+                            {
+                                MoveTo((data.Segment, data.Index), _destroyed);
+                                _destroyed.Entities.count = 0;
+                                data = default;
+                                break;
+                            }
                         default:
-                        {
-                            var segment = GetSegment(slot.Mask);
-                            MoveTo((data.Segment, data.Index), segment);
-                            data.Transient = default;
-                            break;
-                        }
+                            {
+                                var segment = GetSegment(slot.Mask);
+                                MoveTo((data.Segment, data.Index), segment);
+                                data.Transient = default;
+                                break;
+                            }
                     }
                 }
             }
@@ -492,7 +492,7 @@ namespace Entia.Modules
         /// <returns>An enumerator that can be used to iterate through all components.</returns>
         public IEnumerator<IComponent> GetEnumerator()
         {
-            foreach (var data in _data.Enumerate())
+            foreach (var data in _data.Slice())
                 if (data.IsValid) foreach (var component in Get(data)) yield return component;
         }
 
@@ -512,7 +512,7 @@ namespace Entia.Modules
         int Count(in Metadata metadata)
         {
             var count = 0;
-            foreach (ref var data in _data.Enumerate()) if (data.IsValid && Has(data, metadata.Index)) count++;
+            foreach (ref var data in _data.Slice()) if (data.IsValid && Has(data, metadata.Index)) count++;
             return count;
         }
 
@@ -530,7 +530,7 @@ namespace Entia.Modules
         bool Clear(Metadata metadata, Action<Messages, Entity> onRemove)
         {
             var cleared = false;
-            foreach (ref var data in _data.Enumerate())
+            foreach (ref var data in _data.Slice())
                 cleared |= data.IsValid && Remove(data.Segment.Entities.items[data.Index], ref data, metadata, onRemove);
             return cleared;
         }

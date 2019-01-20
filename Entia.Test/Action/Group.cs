@@ -32,7 +32,7 @@ namespace Entia.Test
         {
             _querier = _provider == null ? value.Queriers().Get<T>() : value.Queriers().Get<T>(_provider);
             _segments = value.Components().Segments.Where(segment => _querier.TryQuery(segment, value, out _)).ToArray();
-            _entities = _segments.SelectMany(segment => segment.Entities.Enumerate()).ToArray();
+            _entities = _segments.SelectMany(segment => segment.Entities.Slice()).ToArray();
             return true;
         }
         public override void Do(World value, Model model)

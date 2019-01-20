@@ -79,9 +79,39 @@ namespace Entia.Injectables
         IDepend<Read<Entity>, Write<T>, Emit<Messages.OnAdd>, Emit<Messages.OnRemove>, Emit<Messages.OnAdd<T>>, Emit<Messages.OnRemove<T>>>
         where T : struct, IComponent
     {
-        /// <summary>
-        /// Gives access to component read operations for type <typeparamref name="T"/>.
-        /// </summary>
+        /// <inheritdoc cref="Components{T}"/>
+        public readonly struct Write : IInjectable, IDepend<Read<Entity>, Write<T>>, IEnumerable<(Entity entity, T component)>
+        {
+            sealed class Injector : Injector<Write>
+            {
+                public override Result<Write> Inject(MemberInfo member, World world) => new Write(world.Components());
+            }
+
+            [Injector]
+            static readonly Injector _injector = new Injector();
+
+            readonly Components _components;
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Components{T}.Write" /> struct.
+            /// </summary>
+            /// <param name="components"></param>
+            public Write(Components components) { _components = components; }
+
+            /// <inheritdoc cref="Components.GetOrDummy{T}(Entity, out bool)"/>
+            public ref T GetOrDummy(Entity entity, out bool success) => ref _components.GetOrDummy<T>(entity, out success);
+            /// <inheritdoc cref="Components.TryGet{T}(Entity, out T)"/>
+            public bool TryGet(Entity entity, out T component) => _components.TryGet(entity, out component);
+            /// <inheritdoc cref="Components.Get{T}(Entity)"/>
+            public ref T Get(Entity entity) => ref _components.Get<T>(entity);
+            /// <inheritdoc cref="Components.Has{T}(Entity)"/>
+            public bool Has(Entity entity) => _components.Has<T>(entity);
+            /// <inheritdoc cref="Components.GetEnumerator()"/>
+            public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>().GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        /// <inheritdoc cref="Components{T}"/>
         public readonly struct Read : IInjectable, IDepend<Read<Entity>, Read<T>>, IEnumerable<(Entity entity, T component)>
         {
             sealed class Injector : Injector<Read>
@@ -120,15 +150,6 @@ namespace Entia.Injectables
 
         [Injector]
         static readonly Injector _injector = new Injector();
-
-        /// <summary>
-        /// Performs an implicit conversion from <see cref="Injectables.Components{T}" /> to <see cref="Components{T}.Read" />.
-        /// </summary>
-        /// <param name="components"></param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        public static implicit operator Read(Components<T> components) => new Read(components._components);
 
         readonly Components _components;
 

@@ -399,6 +399,57 @@
             Gives access to component operations for type <typeparamref name="T" />.
             </summary>
     </member>
+    <member name="T:Entia.Injectables.Components`1.Write">
+      <summary>
+            Gives access to component read operations for type <typeparamref name="T" />.
+            </summary>
+    </member>
+    <member name="M:Entia.Injectables.Components`1.Write.#ctor(Entia.Modules.Components)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Injectables.Components`1.Read" /> struct.
+            </summary>
+      <param name="components"></param>
+    </member>
+    <member>
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
+            If the component is missing, a dummy reference will be returned.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
+      <returns>The component reference or a dummy reference.</returns>
+    </member>
+    <member>
+      <summary>
+            Tries to get a component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="component">The component.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Gets a component of type <typeref name="T" /> associated with the entity <paramref name="entity" />.
+            If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity associated with the component.</param>
+      <returns>The component reference or a dummy reference if the component is missing.</returns>
+    </member>
+    <member>
+      <summary>
+            Determines whether the <paramref name="entity" /> has a component of type <typeparamref name="T" />.
+            </summary>
+      <typeparam name="T">The component type.</typeparam>
+      <param name="entity">The entity.</param>
+      <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
+    </member>
+    <member>
+      <summary>
+            Returns an enumerator that iterates through all components.
+            </summary>
+      <returns>An enumerator that can be used to iterate through all components.</returns>
+    </member>
     <member name="T:Entia.Injectables.Components`1.Read">
       <summary>
             Gives access to component read operations for type <typeparamref name="T" />.
@@ -449,15 +500,6 @@
             Returns an enumerator that iterates through all components.
             </summary>
       <returns>An enumerator that can be used to iterate through all components.</returns>
-    </member>
-    <member name="M:Entia.Injectables.Components`1.op_Implicit(Entia.Injectables.Components{`0})~Entia.Injectables.Components{`0}.Read">
-      <summary>
-            Performs an implicit conversion from <see cref="T:Entia.Injectables.Components`1" /> to <see cref="T:Entia.Injectables.Components`1.Read" />.
-            </summary>
-      <param name="components"></param>
-      <returns>
-            The result of the conversion.
-            </returns>
     </member>
     <member name="M:Entia.Injectables.Components`1.#ctor(Entia.Modules.Components)">
       <summary>

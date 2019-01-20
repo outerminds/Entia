@@ -43,8 +43,6 @@ namespace Entia.Injectables
         [Injector]
         static readonly Injector _injector = new Injector();
 
-        public static implicit operator Read(AllEntities entities) => new Read(entities._entities);
-
         public int Count => _entities.Count;
 
         readonly Entities _entities;

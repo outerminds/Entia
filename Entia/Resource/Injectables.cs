@@ -6,8 +6,7 @@ using System.Reflection;
 
 namespace Entia.Injectables
 {
-    public readonly struct Resource<T> : IInjectable, IDepend<Write<T>>
-        where T : struct, IResource
+    public readonly struct Resource<T> : IInjectable, IDepend<Write<T>> where T : struct, IResource
     {
         public readonly struct Read : IInjectable, IDepend<Read<T>>
         {
@@ -24,8 +23,6 @@ namespace Entia.Injectables
             readonly Box<T> _box;
 
             public Read(Box<T> box) { _box = box; }
-
-            public static implicit operator Read(Resource<T> write) => new Read(write._box);
         }
 
         sealed class Injector : Injector<Resource<T>>
@@ -35,7 +32,6 @@ namespace Entia.Injectables
 
         [Injector]
         static readonly Injector _injector = new Injector();
-        public static implicit operator Read(Resource<T> resource) => new Read(resource._box);
 
         public ref T Value => ref _box.Value;
 
