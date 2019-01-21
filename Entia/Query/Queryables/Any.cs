@@ -14,6 +14,10 @@ using System.Reflection;
 
 namespace Entia.Queryables
 {
+    /// <summary>
+    /// Query that must satisfy at least one of its sub queries.
+    /// Only the first match will be kept.
+    /// </summary>
     public readonly struct Any<T1, T2> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable
     {
         sealed class Querier : Querier<Any<T1, T2>>
@@ -41,11 +45,28 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly Maybe<T1> Value1; public readonly Maybe<T2> Value2;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly Maybe<T1> Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly Maybe<T2> Value2;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2}"/> struct.
+        /// </summary>
         public Any(in T1 value) : this() { Value1 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2}"/> struct.
+        /// </summary>
         public Any(in T2 value) : this() { Value2 = value; }
     }
 
+    /// <summary>
+    /// Query that must satisfy at least one of its sub queries.
+    /// Only the first match will be kept.
+    /// </summary>
     public readonly struct Any<T1, T2, T3> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable
     {
         sealed class Querier : Querier<Any<T1, T2, T3>>
@@ -75,12 +96,36 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly Maybe<T1> Value1; public readonly Maybe<T2> Value2; public readonly Maybe<T3> Value3;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly Maybe<T1> Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly Maybe<T2> Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly Maybe<T3> Value3;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3}"/> struct.
+        /// </summary>
         public Any(in T1 value) : this() { Value1 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3}"/> struct.
+        /// </summary>
         public Any(in T2 value) : this() { Value2 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3}"/> struct.
+        /// </summary>
         public Any(in T3 value) : this() { Value3 = value; }
     }
 
+    /// <summary>
+    /// Query that must satisfy at least one of its sub queries.
+    /// Only the first match will be kept.
+    /// </summary>
     public readonly struct Any<T1, T2, T3, T4> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable
     {
         sealed class Querier : Querier<Any<T1, T2, T3, T4>>
@@ -112,13 +157,44 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly Maybe<T1> Value1; public readonly Maybe<T2> Value2; public readonly Maybe<T3> Value3; public readonly Maybe<T4> Value4;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly Maybe<T1> Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly Maybe<T2> Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly Maybe<T3> Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly Maybe<T4> Value4;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4}"/> struct.
+        /// </summary>
         public Any(in T1 value) : this() { Value1 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4}"/> struct.
+        /// </summary>
         public Any(in T2 value) : this() { Value2 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4}"/> struct.
+        /// </summary>
         public Any(in T3 value) : this() { Value3 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4}"/> struct.
+        /// </summary>
         public Any(in T4 value) : this() { Value4 = value; }
     }
 
+    /// <summary>
+    /// Query that must satisfy at least one of its sub queries.
+    /// Only the first match will be kept.
+    /// </summary>
     public readonly struct Any<T1, T2, T3, T4, T5> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable
     {
         sealed class Querier : Querier<Any<T1, T2, T3, T4, T5>>
@@ -152,14 +228,52 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly Maybe<T1> Value1; public readonly Maybe<T2> Value2; public readonly Maybe<T3> Value3; public readonly Maybe<T4> Value4; public readonly Maybe<T5> Value5;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly Maybe<T1> Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly Maybe<T2> Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly Maybe<T3> Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly Maybe<T4> Value4;
+        /// <summary>
+        /// The value5.
+        /// </summary>
+        public readonly Maybe<T5> Value5;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5}"/> struct.
+        /// </summary>
         public Any(in T1 value) : this() { Value1 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5}"/> struct.
+        /// </summary>
         public Any(in T2 value) : this() { Value2 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5}"/> struct.
+        /// </summary>
         public Any(in T3 value) : this() { Value3 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5}"/> struct.
+        /// </summary>
         public Any(in T4 value) : this() { Value4 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5}"/> struct.
+        /// </summary>
         public Any(in T5 value) : this() { Value5 = value; }
     }
 
+    /// <summary>
+    /// Query that must satisfy at least one of its sub queries.
+    /// Only the first match will be kept.
+    /// </summary>
     public readonly struct Any<T1, T2, T3, T4, T5, T6> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable
     {
         sealed class Querier : Querier<Any<T1, T2, T3, T4, T5, T6>>
@@ -195,15 +309,60 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly Maybe<T1> Value1; public readonly Maybe<T2> Value2; public readonly Maybe<T3> Value3; public readonly Maybe<T4> Value4; public readonly Maybe<T5> Value5; public readonly Maybe<T6> Value6;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly Maybe<T1> Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly Maybe<T2> Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly Maybe<T3> Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly Maybe<T4> Value4;
+        /// <summary>
+        /// The value5.
+        /// </summary>
+        public readonly Maybe<T5> Value5;
+        /// <summary>
+        /// The value6.
+        /// </summary>
+        public readonly Maybe<T6> Value6;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6}"/> struct.
+        /// </summary>
         public Any(in T1 value) : this() { Value1 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6}"/> struct.
+        /// </summary>
         public Any(in T2 value) : this() { Value2 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6}"/> struct.
+        /// </summary>
         public Any(in T3 value) : this() { Value3 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6}"/> struct.
+        /// </summary>
         public Any(in T4 value) : this() { Value4 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6}"/> struct.
+        /// </summary>
         public Any(in T5 value) : this() { Value5 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6}"/> struct.
+        /// </summary>
         public Any(in T6 value) : this() { Value6 = value; }
     }
 
+    /// <summary>
+    /// Query that must satisfy at least one of its sub queries.
+    /// Only the first match will be kept.
+    /// </summary>
     public readonly struct Any<T1, T2, T3, T4, T5, T6, T7> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable
     {
         sealed class Querier : Querier<Any<T1, T2, T3, T4, T5, T6, T7>>
@@ -241,16 +400,68 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly Maybe<T1> Value1; public readonly Maybe<T2> Value2; public readonly Maybe<T3> Value3; public readonly Maybe<T4> Value4; public readonly Maybe<T5> Value5; public readonly Maybe<T6> Value6; public readonly Maybe<T7> Value7;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly Maybe<T1> Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly Maybe<T2> Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly Maybe<T3> Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly Maybe<T4> Value4;
+        /// <summary>
+        /// The value5.
+        /// </summary>
+        public readonly Maybe<T5> Value5;
+        /// <summary>
+        /// The value6.
+        /// </summary>
+        public readonly Maybe<T6> Value6;
+        /// <summary>
+        /// The value7.
+        /// </summary>
+        public readonly Maybe<T7> Value7;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7}"/> struct.
+        /// </summary>
         public Any(in T1 value) : this() { Value1 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7}"/> struct.
+        /// </summary>
         public Any(in T2 value) : this() { Value2 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7}"/> struct.
+        /// </summary>
         public Any(in T3 value) : this() { Value3 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7}"/> struct.
+        /// </summary>
         public Any(in T4 value) : this() { Value4 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7}"/> struct.
+        /// </summary>
         public Any(in T5 value) : this() { Value5 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7}"/> struct.
+        /// </summary>
         public Any(in T6 value) : this() { Value6 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7}"/> struct.
+        /// </summary>
         public Any(in T7 value) : this() { Value7 = value; }
     }
 
+    /// <summary>
+    /// Query that must satisfy at least one of its sub queries.
+    /// Only the first match will be kept.
+    /// </summary>
     public readonly struct Any<T1, T2, T3, T4, T5, T6, T7, T8> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable
     {
         sealed class Querier : Querier<Any<T1, T2, T3, T4, T5, T6, T7, T8>>
@@ -290,17 +501,76 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly Maybe<T1> Value1; public readonly Maybe<T2> Value2; public readonly Maybe<T3> Value3; public readonly Maybe<T4> Value4; public readonly Maybe<T5> Value5; public readonly Maybe<T6> Value6; public readonly Maybe<T7> Value7; public readonly Maybe<T8> Value8;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly Maybe<T1> Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly Maybe<T2> Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly Maybe<T3> Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly Maybe<T4> Value4;
+        /// <summary>
+        /// The value5.
+        /// </summary>
+        public readonly Maybe<T5> Value5;
+        /// <summary>
+        /// The value6.
+        /// </summary>
+        public readonly Maybe<T6> Value6;
+        /// <summary>
+        /// The value7.
+        /// </summary>
+        public readonly Maybe<T7> Value7;
+        /// <summary>
+        /// The value8.
+        /// </summary>
+        public readonly Maybe<T8> Value8;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8}"/> struct.
+        /// </summary>
         public Any(in T1 value) : this() { Value1 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8}"/> struct.
+        /// </summary>
         public Any(in T2 value) : this() { Value2 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8}"/> struct.
+        /// </summary>
         public Any(in T3 value) : this() { Value3 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8}"/> struct.
+        /// </summary>
         public Any(in T4 value) : this() { Value4 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8}"/> struct.
+        /// </summary>
         public Any(in T5 value) : this() { Value5 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8}"/> struct.
+        /// </summary>
         public Any(in T6 value) : this() { Value6 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8}"/> struct.
+        /// </summary>
         public Any(in T7 value) : this() { Value7 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8}"/> struct.
+        /// </summary>
         public Any(in T8 value) : this() { Value8 = value; }
     }
 
+    /// <summary>
+    /// Query that must satisfy at least one of its sub queries.
+    /// Only the first match will be kept.
+    /// </summary>
     public readonly struct Any<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable where T9 : struct, IQueryable
     {
         sealed class Querier : Querier<Any<T1, T2, T3, T4, T5, T6, T7, T8, T9>>
@@ -342,15 +612,77 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly Maybe<T1> Value1; public readonly Maybe<T2> Value2; public readonly Maybe<T3> Value3; public readonly Maybe<T4> Value4; public readonly Maybe<T5> Value5; public readonly Maybe<T6> Value6; public readonly Maybe<T7> Value7; public readonly Maybe<T8> Value8; public readonly Maybe<T9> Value9;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly Maybe<T1> Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly Maybe<T2> Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly Maybe<T3> Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly Maybe<T4> Value4;
+        /// <summary>
+        /// The value5.
+        /// </summary>
+        public readonly Maybe<T5> Value5;
+        /// <summary>
+        /// The value6.
+        /// </summary>
+        public readonly Maybe<T6> Value6;
+        /// <summary>
+        /// The value7.
+        /// </summary>
+        public readonly Maybe<T7> Value7;
+        /// <summary>
+        /// The value8.
+        /// </summary>
+        public readonly Maybe<T8> Value8;
+        /// <summary>
+        /// The value9.
+        /// </summary>
+        public readonly Maybe<T9> Value9;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8, T9}"/> struct.
+        /// </summary>
         public Any(in T1 value) : this() { Value1 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8, T9}"/> struct.
+        /// </summary>
         public Any(in T2 value) : this() { Value2 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8, T9}"/> struct.
+        /// </summary>
         public Any(in T3 value) : this() { Value3 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8, T9}"/> struct.
+        /// </summary>
         public Any(in T4 value) : this() { Value4 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8, T9}"/> struct.
+        /// </summary>
         public Any(in T5 value) : this() { Value5 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8, T9}"/> struct.
+        /// </summary>
         public Any(in T6 value) : this() { Value6 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8, T9}"/> struct.
+        /// </summary>
         public Any(in T7 value) : this() { Value7 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8, T9}"/> struct.
+        /// </summary>
         public Any(in T8 value) : this() { Value8 = value; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Any{T1, T2, T3, T4, T5, T6, T7, T8, T9}"/> struct.
+        /// </summary>
         public Any(in T9 value) : this() { Value9 = value; }
     }
 }

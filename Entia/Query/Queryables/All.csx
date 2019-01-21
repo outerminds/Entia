@@ -9,9 +9,14 @@ IEnumerable<string> Generate(int depth)
     for (var i = 2; i <= depth; i++)
     {
         var generics = GenericParameters(i).ToArray();
-        var type = $"All<{string.Join(", ", generics)}>";
+        var parameters = string.Join(", ", generics);
+        var type = $"All<{parameters}>";
         var constraints = string.Join(" ", generics.Select(generic => $"where {generic} : struct, IQueryable"));
-        var fields = string.Join(" ", generics.Select((generic, index) => $"public readonly {generic} Value{index + 1};"));
+        var fields = string.Join(Environment.NewLine, generics.Select((generic, index) =>
+$@"        /// <summary>
+        /// The value{index + 1}.
+        /// </summary>
+        public readonly {generic} Value{index + 1};"));
         var inValues = string.Join(", ", generics.Select((generic, index) => $"in {generic} value{index + 1}"));
         var initializers = string.Join(" ", generics.Select((_, index) => $"Value{index + 1} = value{index + 1};"));
 
@@ -29,7 +34,10 @@ IEnumerable<string> Generate(int depth)
             generics.Select(generic => $"foreach (var dependency in world.Dependers().Dependencies<{generic}>()) yield return dependency;"));
 
         yield return
-$@"    public readonly struct {type} : IQueryable {constraints}
+$@"    /// <summary>
+    /// Query that must satisfy all its sub queries.
+    /// </summary>
+    public readonly struct {type} : IQueryable {constraints}
     {{
         sealed class Querier : Querier<{type}>
         {{
@@ -59,7 +67,11 @@ $@"    public readonly struct {type} : IQueryable {constraints}
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        {fields}
+{fields}
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref=""All{{{parameters}}}""/> struct.
+        /// </summary>
         public All({inValues}) {{ {initializers} }}
     }}";
     }

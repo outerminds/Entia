@@ -9,12 +9,21 @@ IEnumerable<string> Generate(int depth)
     for (var i = 2; i <= depth; i++)
     {
         var generics = GenericParameters(i).ToArray();
-        var type = $"Any<{string.Join(", ", generics)}>";
+        var parameters = string.Join(", ", generics);
+        var type = $"Any<{parameters}>";
         var constraints = string.Join(" ", generics.Select(generic => $"where {generic} : struct, {nameof(IQueryable)}"));
-        var fields = string.Join(" ", generics.Select((generic, index) => $"public readonly Maybe<{generic}> Value{index + 1};"));
+        var fields = string.Join(Environment.NewLine, generics.Select((generic, index) =>
+$@"        /// <summary>
+        /// The value{index + 1}.
+        /// </summary>
+        public readonly Maybe<{generic}> Value{index + 1};"));
         var constructors = string.Join(
-            $"{Environment.NewLine}        ",
-            generics.Select((generic, index) => $"public Any(in {generic} value) : this() {{ Value{index + 1} = value; }}"));
+            Environment.NewLine,
+            generics.Select((generic, index) =>
+$@"        /// <summary>
+        /// Initializes a new instance of the <see cref=""Any{{{parameters}}}""/> struct.
+        /// </summary>
+        public Any(in {generic} value) : this() {{ Value{index + 1} = value; }}"));
         var queryIfs = string.Join(
             $"{Environment.NewLine}                ",
             generics.Select((generic, index) => $"if (world.Queriers().TryQuery<{generic}>(segment, out var query{index + 1})) {{ query = new Query<{type}>(index => new {type}(query{index + 1}.Get(index)), query{index + 1}.Types); return true; }}"));
@@ -26,7 +35,11 @@ IEnumerable<string> Generate(int depth)
             generics.Select(generic => $"foreach (var dependency in world.Dependers().Dependencies<{generic}>()) yield return dependency;"));
 
         yield return
-$@"    public readonly struct {type} : IQueryable {constraints}
+$@"    /// <summary>
+    /// Query that must satisfy at least one of its sub queries.
+    /// Only the first match will be kept.
+    /// </summary>
+    public readonly struct {type} : IQueryable {constraints}
     {{
         sealed class Querier : Querier<{type}>
         {{
@@ -51,8 +64,8 @@ $@"    public readonly struct {type} : IQueryable {constraints}
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        {fields}
-        {constructors}
+{fields}
+{constructors}
     }}";
     }
 }

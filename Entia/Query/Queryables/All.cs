@@ -14,6 +14,9 @@ using System.Reflection;
 
 namespace Entia.Queryables
 {
+    /// <summary>
+    /// Query that must satisfy all its sub queries.
+    /// </summary>
     public readonly struct All<T1, T2> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable
     {
         sealed class Querier : Querier<All<T1, T2>>
@@ -45,10 +48,24 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly T1 Value1; public readonly T2 Value2;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly T1 Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly T2 Value2;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="All{T1, T2}"/> struct.
+        /// </summary>
         public All(in T1 value1, in T2 value2) { Value1 = value1; Value2 = value2; }
     }
 
+    /// <summary>
+    /// Query that must satisfy all its sub queries.
+    /// </summary>
     public readonly struct All<T1, T2, T3> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable
     {
         sealed class Querier : Querier<All<T1, T2, T3>>
@@ -81,10 +98,28 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly T1 Value1; public readonly T2 Value2; public readonly T3 Value3;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly T1 Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly T2 Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly T3 Value3;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="All{T1, T2, T3}"/> struct.
+        /// </summary>
         public All(in T1 value1, in T2 value2, in T3 value3) { Value1 = value1; Value2 = value2; Value3 = value3; }
     }
 
+    /// <summary>
+    /// Query that must satisfy all its sub queries.
+    /// </summary>
     public readonly struct All<T1, T2, T3, T4> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable
     {
         sealed class Querier : Querier<All<T1, T2, T3, T4>>
@@ -118,10 +153,32 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly T1 Value1; public readonly T2 Value2; public readonly T3 Value3; public readonly T4 Value4;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly T1 Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly T2 Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly T3 Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly T4 Value4;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="All{T1, T2, T3, T4}"/> struct.
+        /// </summary>
         public All(in T1 value1, in T2 value2, in T3 value3, in T4 value4) { Value1 = value1; Value2 = value2; Value3 = value3; Value4 = value4; }
     }
 
+    /// <summary>
+    /// Query that must satisfy all its sub queries.
+    /// </summary>
     public readonly struct All<T1, T2, T3, T4, T5> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable
     {
         sealed class Querier : Querier<All<T1, T2, T3, T4, T5>>
@@ -156,10 +213,36 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly T1 Value1; public readonly T2 Value2; public readonly T3 Value3; public readonly T4 Value4; public readonly T5 Value5;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly T1 Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly T2 Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly T3 Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly T4 Value4;
+        /// <summary>
+        /// The value5.
+        /// </summary>
+        public readonly T5 Value5;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="All{T1, T2, T3, T4, T5}"/> struct.
+        /// </summary>
         public All(in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5) { Value1 = value1; Value2 = value2; Value3 = value3; Value4 = value4; Value5 = value5; }
     }
 
+    /// <summary>
+    /// Query that must satisfy all its sub queries.
+    /// </summary>
     public readonly struct All<T1, T2, T3, T4, T5, T6> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable
     {
         sealed class Querier : Querier<All<T1, T2, T3, T4, T5, T6>>
@@ -195,10 +278,40 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly T1 Value1; public readonly T2 Value2; public readonly T3 Value3; public readonly T4 Value4; public readonly T5 Value5; public readonly T6 Value6;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly T1 Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly T2 Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly T3 Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly T4 Value4;
+        /// <summary>
+        /// The value5.
+        /// </summary>
+        public readonly T5 Value5;
+        /// <summary>
+        /// The value6.
+        /// </summary>
+        public readonly T6 Value6;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="All{T1, T2, T3, T4, T5, T6}"/> struct.
+        /// </summary>
         public All(in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6) { Value1 = value1; Value2 = value2; Value3 = value3; Value4 = value4; Value5 = value5; Value6 = value6; }
     }
 
+    /// <summary>
+    /// Query that must satisfy all its sub queries.
+    /// </summary>
     public readonly struct All<T1, T2, T3, T4, T5, T6, T7> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable
     {
         sealed class Querier : Querier<All<T1, T2, T3, T4, T5, T6, T7>>
@@ -235,10 +348,44 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly T1 Value1; public readonly T2 Value2; public readonly T3 Value3; public readonly T4 Value4; public readonly T5 Value5; public readonly T6 Value6; public readonly T7 Value7;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly T1 Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly T2 Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly T3 Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly T4 Value4;
+        /// <summary>
+        /// The value5.
+        /// </summary>
+        public readonly T5 Value5;
+        /// <summary>
+        /// The value6.
+        /// </summary>
+        public readonly T6 Value6;
+        /// <summary>
+        /// The value7.
+        /// </summary>
+        public readonly T7 Value7;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="All{T1, T2, T3, T4, T5, T6, T7}"/> struct.
+        /// </summary>
         public All(in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6, in T7 value7) { Value1 = value1; Value2 = value2; Value3 = value3; Value4 = value4; Value5 = value5; Value6 = value6; Value7 = value7; }
     }
 
+    /// <summary>
+    /// Query that must satisfy all its sub queries.
+    /// </summary>
     public readonly struct All<T1, T2, T3, T4, T5, T6, T7, T8> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable
     {
         sealed class Querier : Querier<All<T1, T2, T3, T4, T5, T6, T7, T8>>
@@ -276,10 +423,48 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly T1 Value1; public readonly T2 Value2; public readonly T3 Value3; public readonly T4 Value4; public readonly T5 Value5; public readonly T6 Value6; public readonly T7 Value7; public readonly T8 Value8;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly T1 Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly T2 Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly T3 Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly T4 Value4;
+        /// <summary>
+        /// The value5.
+        /// </summary>
+        public readonly T5 Value5;
+        /// <summary>
+        /// The value6.
+        /// </summary>
+        public readonly T6 Value6;
+        /// <summary>
+        /// The value7.
+        /// </summary>
+        public readonly T7 Value7;
+        /// <summary>
+        /// The value8.
+        /// </summary>
+        public readonly T8 Value8;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="All{T1, T2, T3, T4, T5, T6, T7, T8}"/> struct.
+        /// </summary>
         public All(in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6, in T7 value7, in T8 value8) { Value1 = value1; Value2 = value2; Value3 = value3; Value4 = value4; Value5 = value5; Value6 = value6; Value7 = value7; Value8 = value8; }
     }
 
+    /// <summary>
+    /// Query that must satisfy all its sub queries.
+    /// </summary>
     public readonly struct All<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IQueryable where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable where T9 : struct, IQueryable
     {
         sealed class Querier : Querier<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>
@@ -318,7 +503,46 @@ namespace Entia.Queryables
         [Depender]
         static readonly Depender _depender = new Depender();
 
-        public readonly T1 Value1; public readonly T2 Value2; public readonly T3 Value3; public readonly T4 Value4; public readonly T5 Value5; public readonly T6 Value6; public readonly T7 Value7; public readonly T8 Value8; public readonly T9 Value9;
+        /// <summary>
+        /// The value1.
+        /// </summary>
+        public readonly T1 Value1;
+        /// <summary>
+        /// The value2.
+        /// </summary>
+        public readonly T2 Value2;
+        /// <summary>
+        /// The value3.
+        /// </summary>
+        public readonly T3 Value3;
+        /// <summary>
+        /// The value4.
+        /// </summary>
+        public readonly T4 Value4;
+        /// <summary>
+        /// The value5.
+        /// </summary>
+        public readonly T5 Value5;
+        /// <summary>
+        /// The value6.
+        /// </summary>
+        public readonly T6 Value6;
+        /// <summary>
+        /// The value7.
+        /// </summary>
+        public readonly T7 Value7;
+        /// <summary>
+        /// The value8.
+        /// </summary>
+        public readonly T8 Value8;
+        /// <summary>
+        /// The value9.
+        /// </summary>
+        public readonly T9 Value9;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="All{T1, T2, T3, T4, T5, T6, T7, T8, T9}"/> struct.
+        /// </summary>
         public All(in T1 value1, in T2 value2, in T3 value3, in T4 value4, in T5 value5, in T6 value6, in T7 value7, in T8 value8, in T9 value9) { Value1 = value1; Value2 = value2; Value3 = value3; Value4 = value4; Value5 = value5; Value6 = value6; Value7 = value7; Value8 = value8; Value9 = value9; }
     }
 }
