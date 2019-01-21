@@ -11,6 +11,9 @@ namespace Entia.Nodes
 {
     public sealed class Node : IEquatable<Node>
     {
+        /// <summary>
+        /// Tag interface that all node data must implement.
+        /// </summary>
         public interface IData : IAnalyzable, IBuildable { }
 
         public static Node Of(string name, IData value, params Node[] nodes) => new Node(name, value, nodes);

@@ -32,6 +32,7 @@ namespace Entia.Modules
         public bool Remove(Type buildable) => _builders.Remove(buildable);
         public bool Clear() => _defaults.Clear() | _builders.Clear();
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IBuilder> GetEnumerator() => _builders.Values.Concat(_defaults.Values).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

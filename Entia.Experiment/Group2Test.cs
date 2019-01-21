@@ -87,6 +87,7 @@ namespace Entia.Experiment
         {
             public struct Enumerator
             {
+                /// <inheritdoc cref="IEnumerator{T}.Current"/>
                 public (Entity entity, T item) Current
                 {
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -106,6 +107,7 @@ namespace Entia.Experiment
                     _index = -1;
                 }
 
+                /// <inheritdoc cref="IEnumerator.MoveNext"/>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public bool MoveNext()
                 {
@@ -172,6 +174,7 @@ namespace Entia.Experiment
                 return list.ToArray();
             }
 
+            /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
             public Enumerator GetEnumerator() => new Enumerator(_segmentz);
 
             bool Has(Segment segment) => segment.Index < _indexToSegment.Length && _indexToSegment[segment.Index] == segment;

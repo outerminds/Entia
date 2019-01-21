@@ -1,31 +1,69 @@
+using Entia.Core;
+using Entia.Messages.Segment;
+using Entia.Modules.Query;
+using Entia.Queriers;
+using Entia.Queryables;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Entia;
-using Entia.Core;
-using Entia.Messages.Segment;
-using Entia.Modules;
-using Entia.Modules.Query;
-using Entia.Queriers;
-using Entia.Queryables;
 
 namespace Entia.Modules.Group
 {
+    /// <summary>
+    /// Interface that all groups must implement.
+    /// </summary>
     public interface IGroup
     {
+        /// <summary>
+        /// Gets the current entity count that are in the group.
+        /// </summary>
+        /// <value>
+        /// The count.
+        /// </value>
         int Count { get; }
+        /// <summary>
+        /// Gets the item type.
+        /// </summary>
+        /// <value>
+        /// The type.
+        /// </value>
         Type Type { get; }
+        /// <summary>
+        /// Gets the querier.
+        /// </summary>
+        /// <value>
+        /// The querier.
+        /// </value>
         IQuerier Querier { get; }
+        /// <summary>
+        /// Gets the entities currently in the group.
+        /// </summary>
+        /// <value>
+        /// The entities.
+        /// </value>
         IEnumerable<Entity> Entities { get; }
 
+        /// <summary>
+        /// Determines whether the group has the <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <returns>Returns <c>true</c> if the group has the <paramref name="entity"/>; otherwise, <c>false</c>.</returns>
         bool Has(Entity entity);
     }
 
+    /// <summary>
+    /// Queries and caches all entities that satisfy the query of type <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">The query type.</typeparam>
     public sealed class Group<T> : IGroup, IEnumerable<T> where T : struct, IQueryable
     {
+        /// <summary>
+        /// An enumerator that enumerates over the group items.
+        /// </summary>
         public struct Enumerator : IEnumerator<T>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public ref readonly T Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -41,6 +79,10 @@ namespace Entia.Modules.Group
             int _index;
             int _count;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Enumerator"/> struct.
+            /// </summary>
+            /// <param name="segments">The segments.</param>
             public Enumerator(Segment<T>[] segments)
             {
                 _segments = segments;
@@ -50,6 +92,7 @@ namespace Entia.Modules.Group
                 _count = 0;
             }
 
+            /// <inheritdoc cref="IEnumerator.MoveNext"/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
@@ -68,12 +111,14 @@ namespace Entia.Modules.Group
                 return false;
             }
 
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset()
             {
                 _segment = -1;
                 _index = -1;
             }
 
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose()
             {
                 _segments = default;
@@ -81,17 +126,30 @@ namespace Entia.Modules.Group
             }
         }
 
+        /// <summary>
+        /// An enumerable that enumerates over the group entities.
+        /// </summary>
         public readonly struct EntityEnumerable : IEnumerable<Entity>
         {
             readonly Segment<T>[] _segments;
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="EntityEnumerable"/> struct.
+            /// </summary>
+            /// <param name="segments">The segments.</param>
             public EntityEnumerable(Segment<T>[] segments) { _segments = segments; }
+            /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
             public EntityEnumerator GetEnumerator() => new EntityEnumerator(_segments);
             IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
+        /// <summary>
+        /// An enumerator that enumerates over the group entities.
+        /// </summary>
         public struct EntityEnumerator : IEnumerator<Entity>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public Entity Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -106,6 +164,10 @@ namespace Entia.Modules.Group
             int _index;
             int _count;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="EntityEnumerator"/> struct.
+            /// </summary>
+            /// <param name="segments">The segments.</param>
             public EntityEnumerator(Segment<T>[] segments)
             {
                 _segments = segments;
@@ -115,6 +177,7 @@ namespace Entia.Modules.Group
                 _count = 0;
             }
 
+            /// <inheritdoc cref="IEnumerator.MoveNext"/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
@@ -133,12 +196,14 @@ namespace Entia.Modules.Group
                 return false;
             }
 
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset()
             {
                 _segment = -1;
                 _index = -1;
             }
 
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose()
             {
                 _segments = default;
@@ -146,24 +211,37 @@ namespace Entia.Modules.Group
             }
         }
 
+        /// <summary>
+        /// An enumerable that enumerates over splits of a given size.
+        /// </summary>
         public readonly struct SplitEnumerable : IEnumerable<Split<T>>
         {
             readonly Segment<T>[] _segments;
             readonly int _size;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="SplitEnumerable"/> struct.
+            /// </summary>
+            /// <param name="segments">The segments.</param>
+            /// <param name="size">The size of the splits.</param>
             public SplitEnumerable(Segment<T>[] segments, int size)
             {
                 _segments = segments;
                 _size = size;
             }
 
+            /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
             public SplitEnumerator GetEnumerator() => new SplitEnumerator(_segments, _size);
             IEnumerator<Split<T>> IEnumerable<Split<T>>.GetEnumerator() => GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
+        /// <summary>
+        /// An enumerator that enumerates over splits of a given size.
+        /// </summary>
         public struct SplitEnumerator : IEnumerator<Split<T>>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public Split<T> Current => new Split<T>(_segments, _current.segment, _current.index, _count);
             object IEnumerator.Current => Current;
 
@@ -173,6 +251,11 @@ namespace Entia.Modules.Group
             (int segment, int index) _current;
             (int segment, int index) _next;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="SplitEnumerator"/> struct.
+            /// </summary>
+            /// <param name="segments">The segments.</param>
+            /// <param name="size">The size of the splits.</param>
             public SplitEnumerator(Segment<T>[] segments, int size)
             {
                 _segments = segments;
@@ -182,6 +265,7 @@ namespace Entia.Modules.Group
                 _next = (0, 0);
             }
 
+            /// <inheritdoc cref="IEnumerator.MoveNext"/>
             public bool MoveNext()
             {
                 _current = _next;
@@ -208,18 +292,29 @@ namespace Entia.Modules.Group
                 return _count > 0;
             }
 
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset()
             {
                 _current = (-1, -1);
                 _next = (0, 0);
             }
 
-            public void Dispose() { _segments = default; }
+            /// <inheritdoc cref="IDisposable.Dispose"/>
+            public void Dispose() => _segments = default;
         }
 
+        /// <inheritdoc cref="IGroup.Count"/>
         public int Count { get; private set; }
+        /// <summary>
+        /// Gets the segments that fit the group query.
+        /// </summary>
+        /// <value>
+        /// The segments.
+        /// </value>
         public Segment<T>[] Segments => _segments;
+        /// <inheritdoc cref="IGroup.Entities"/>
         public EntityEnumerable Entities => new EntityEnumerable(_segments);
+        /// <inheritdoc cref="IGroup.Querier"/>
         public readonly Querier<T> Querier;
 
         IQuerier IGroup.Querier => Querier;
@@ -234,6 +329,11 @@ namespace Entia.Modules.Group
         Segment<T>[] _segments = Array.Empty<Segment<T>>();
         int[] _indexToSegment = new int[4];
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Group{T}"/> class.
+        /// </summary>
+        /// <param name="querier">The querier.</param>
+        /// <param name="world">The world.</param>
         public Group(Querier<T> querier, World world)
         {
             Querier = querier;
@@ -245,8 +345,15 @@ namespace Entia.Modules.Group
             foreach (var segment in _components.Segments) TryAdd(segment);
         }
 
+        /// <inheritdoc cref="IGroup.Has(Entity)"/>
         public bool Has(Entity entity) => _components.TryGetSegment(entity, out var pair) && Has(pair.segment);
 
+        /// <summary>
+        /// Tries to get the <paramref name="item"/> associated with the provided <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="item">The item.</param>
+        /// <returns>Returns <c>true</c> if an <paramref name="item"/> was found; otherwise, <c>false</c>.</returns>
         public bool TryGet(Entity entity, out T item)
         {
             if (_components.TryGetSegment(entity, out var pair) && Has(pair.segment))
@@ -259,6 +366,11 @@ namespace Entia.Modules.Group
             return false;
         }
 
+        /// <summary>
+        /// Splits the group into splits of the same size.
+        /// </summary>
+        /// <param name="count">The amount of splits.</param>
+        /// <returns>The split enumerable.</returns>
         public SplitEnumerable Split(int count)
         {
             count = Math.Min(Count, count);
@@ -267,6 +379,7 @@ namespace Entia.Modules.Group
             return new SplitEnumerable(_segments, size);
         }
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public Enumerator GetEnumerator() => new Enumerator(_segments);
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -283,7 +396,7 @@ namespace Entia.Modules.Group
                 ArrayUtility.Set(ref _indexToSegment, _segments.Length, segment.Index);
 
                 var items = new T[segment.Entities.items.Length];
-                for (int i = 0; i < items.Length; i++) items[i] = query.Get(i);
+                for (var i = 0; i < items.Length; i++) items[i] = query.Get(i);
                 ArrayUtility.Add(ref _segments, new Segment<T>(segment, items));
                 return true;
             }
@@ -311,7 +424,7 @@ namespace Entia.Modules.Group
                 var count = items.Length;
                 if (ArrayUtility.Ensure(ref items, segment.Count))
                 {
-                    for (int i = count; i < segment.Count; i++) items[i] = query.Get(i);
+                    for (var i = count; i < segment.Count; i++) items[i] = query.Get(i);
                     segment = new Segment<T>(target.segment, items);
                 }
                 // NOTE: do this step after ensuring that the 'items' array is large enough

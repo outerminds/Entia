@@ -18,7 +18,10 @@ IEnumerable<string> Generate(int depth)
         var constraints = string.Join(" ", generics.Select(generic => $"where {generic} : struct, IQueryable"));
 
         yield return
-$@"    public readonly struct Group<{parameters}> : IInjectable, IEnumerable<{itemType}> {constraints}
+$@"    /// <summary>
+    /// Gives access to group operations.
+    /// </summary>
+    public readonly struct Group<{parameters}> : IInjectable, IEnumerable<{itemType}> {constraints}
     {{
         sealed class Injector : IInjector
         {{
@@ -39,16 +42,27 @@ $@"    public readonly struct Group<{parameters}> : IInjectable, IEnumerable<{it
         [Depender]
         static readonly Depender _depender = new Depender();
 
+        /// <inheritdoc cref=""Modules.Group.Group{{T}}.Count""/>
         public int Count => _group.Count;
+        /// <inheritdoc cref=""Modules.Group.Group{{T}}.Segments""/>
         public Segment<{itemType}>[] Segments => _group.Segments;
+        /// <inheritdoc cref=""Modules.Group.Group{{T}}.Entities""/>
         public Modules.Group.Group<{itemType}>.EntityEnumerable Entities => _group.Entities;
 
         readonly Modules.Group.Group<{itemType}> _group;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref=""Group{{{parameters}}}""/> struct.
+        /// </summary>
+        /// <param name=""group"">The group.</param>
         public Group(Modules.Group.Group<{itemType}> group) {{ _group = group; }}
+        /// <inheritdoc cref=""Modules.Group.Group{{T}}.Has(Entity)""/>
         public bool Has(Entity entity) => _group.Has(entity);
+        /// <inheritdoc cref=""Modules.Group.Group{{T}}.TryGet(Entity, out T)""/>
         public bool TryGet(Entity entity, out {itemType} item) => _group.TryGet(entity, out item);
+        /// <inheritdoc cref=""Modules.Group.Group{{T}}.Split(int)""/>
         public Modules.Group.Group<{itemType}>.SplitEnumerable Split(int count) => _group.Split(count);
+        /// <inheritdoc cref=""Modules.Group.Group{{T}}.GetEnumerator""/>
         public Modules.Group.Group<{itemType}>.Enumerator GetEnumerator() => _group.GetEnumerator();
         IEnumerator<{itemType}> IEnumerable<{itemType}>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

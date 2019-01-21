@@ -1,15 +1,24 @@
+using Entia.Queryables;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Entia.Queryables;
 
 namespace Entia.Modules.Group
 {
+    /// <summary>
+    /// Represents a slice of a give size over an array of segments.
+    /// A split may span over multiple segments.
+    /// </summary>
+    /// <typeparam name="T">The query type.</typeparam>
     public readonly struct Split<T> : IEnumerable<T> where T : struct, IQueryable
     {
+        /// <summary>
+        /// An enumerator that enumerates over the split's items.
+        /// </summary>
         public struct Enumerator : IEnumerator<T>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public ref readonly T Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -25,6 +34,10 @@ namespace Entia.Modules.Group
             int _count;
             T[] _items;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Enumerator"/> struct.
+            /// </summary>
+            /// <param name="split">The split.</param>
             public Enumerator(in Split<T> split)
             {
                 _split = split;
@@ -37,6 +50,7 @@ namespace Entia.Modules.Group
                 _count = segment.Count;
             }
 
+            /// <inheritdoc cref="IEnumerator.MoveNext"/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
@@ -57,6 +71,7 @@ namespace Entia.Modules.Group
                 return false;
             }
 
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset()
             {
                 _segment = _split._segment;
@@ -68,6 +83,7 @@ namespace Entia.Modules.Group
                 _count = segment.Count;
             }
 
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose()
             {
                 _split = default;
@@ -75,12 +91,22 @@ namespace Entia.Modules.Group
             }
         }
 
+        /// <summary>
+        /// The entity count.
+        /// </summary>
         public readonly int Count;
 
         readonly Segment<T>[] _segments;
         readonly int _segment;
         readonly int _index;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Split{T}"/> struct.
+        /// </summary>
+        /// <param name="segments">The segments.</param>
+        /// <param name="segment">The segment.</param>
+        /// <param name="index">The index.</param>
+        /// <param name="count">The count.</param>
         public Split(Segment<T>[] segments, int segment, int index, int count)
         {
             _segments = segments;
@@ -89,6 +115,7 @@ namespace Entia.Modules.Group
             Count = count;
         }
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

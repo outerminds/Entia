@@ -8,6 +8,7 @@ namespace Entia.Core
     {
         public struct Enumerator : IEnumerator<T>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public ref T Current => ref _chunk[_adjusted];
             T IEnumerator<T>.Current => Current;
             object IEnumerator.Current => Current;
@@ -25,6 +26,7 @@ namespace Entia.Core
                 _chunk = buffer._items;
             }
 
+            /// <inheritdoc cref="IEnumerator.MoveNext"/>
             public bool MoveNext()
             {
                 while (++_index < _buffer.Maximum)
@@ -37,6 +39,7 @@ namespace Entia.Core
                 return false;
             }
 
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset()
             {
                 _index = -1;
@@ -44,6 +47,7 @@ namespace Entia.Core
                 _chunk = _buffer._items;
             }
 
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose()
             {
                 _buffer = null;
@@ -196,6 +200,7 @@ namespace Entia.Core
             return moved;
         }
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

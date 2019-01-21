@@ -151,6 +151,7 @@ namespace Entia.Core
             _hash = null;
         }
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<int> GetEnumerator()
         {
             var index = 0;

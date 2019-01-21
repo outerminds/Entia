@@ -1,6 +1,7 @@
-﻿using System;
-
-namespace Entia
+﻿namespace Entia
 {
-	public interface IMessage { }
+    /// <summary>
+    /// Tag interface that all messages must implement.
+    /// </summary>
+    public interface IMessage { }
 }

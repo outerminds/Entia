@@ -10,6 +10,7 @@ namespace Entia.Core
 
         public Disposable(Action dispose) { _dispose = dispose; }
 
+        /// <inheritdoc cref="IDisposable.Dispose"/>
         public void Dispose() => _dispose();
     }
 
@@ -26,6 +27,7 @@ namespace Entia.Core
             _dispose = dispose;
         }
 
+        /// <inheritdoc cref="IDisposable.Dispose"/>
         public void Dispose() => _dispose(_state);
     }
 }

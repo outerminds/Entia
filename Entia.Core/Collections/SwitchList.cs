@@ -8,6 +8,7 @@ namespace Entia.Core
     {
         public struct Enumerator : IEnumerator<T>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public ref T Current => ref _list._items.items[_index];
             T IEnumerator<T>.Current => Current;
             object IEnumerator.Current => Current;
@@ -22,7 +23,9 @@ namespace Entia.Core
             }
 
             public bool MoveNext() => ++_index < _list._items.count;
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose() => _list = null;
         }
 
@@ -84,6 +87,7 @@ namespace Entia.Core
 
         public bool Clear() => _items.Clear();
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

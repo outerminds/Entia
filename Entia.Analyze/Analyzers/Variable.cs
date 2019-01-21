@@ -37,13 +37,15 @@ namespace Entia.Analyze.Analyzers
 
         static void Analyze(SyntaxNodeAnalysisContext context)
         {
-            if (context.Node is VariableDeclaratorSyntax variable && variable?.Initializer?.Value is ExpressionSyntax expression)
+            if (context.Node is VariableDeclaratorSyntax variable &&
+                variable?.Initializer?.Value is ExpressionSyntax expression &&
+                context.SemanticModel.GetSymbolInfo(expression).Symbol is ISymbol symbol)
             {
-                var symbol = context.SemanticModel.GetSymbolInfo(expression).Symbol;
                 var (type, @ref, @readonly) =
                     symbol is IPropertySymbol property ? (property.Type, property.ReturnsByRef, property.ReturnsByRefReadonly) :
                     symbol is IMethodSymbol method ? (method.ReturnType, method.ReturnsByRef, method.ReturnsByRefReadonly) :
                     default;
+                if (type.IsReferenceType) return;
                 var rule = @ref ? Rules.MissingVariableRef : @readonly ? Rules.MissingVariableRefReadonly : default;
                 if (rule == null) return;
 

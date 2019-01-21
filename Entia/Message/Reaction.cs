@@ -60,6 +60,7 @@ namespace Entia.Modules.Message
 
         public void React(in T message) => _reaction(message);
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<Delegate> GetEnumerator() => _reactions.Keys.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 

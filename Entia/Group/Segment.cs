@@ -1,73 +1,76 @@
+using Entia.Core;
+using Entia.Queryables;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Entia.Queryables;
 
 namespace Entia.Modules.Group
 {
-    public readonly struct Segment<T> : IEnumerable<(Entity entity, T item)> where T : struct, IQueryable
+    /// <summary>
+    /// Stores the entities and items that satisfy the query of type <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">The query type.</typeparam>
+    public readonly struct Segment<T> : IEnumerable<T> where T : struct, IQueryable
     {
-        public struct Enumerator : IEnumerator<(Entity entity, T item)>
-        {
-            public (Entity entity, T item) Current
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _segment[_index];
-            }
-            object IEnumerator.Current => Current;
-
-            Segment<T> _segment;
-            int _index;
-
-            public Enumerator(Segment<T> segment)
-            {
-                _segment = segment;
-                _index = -1;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() => ++_index < _segment.Count;
-            public void Reset() => _index = -1;
-            public void Dispose() => _segment = default;
-        }
-
+        /// <summary>
+        /// Gets the entity count.
+        /// </summary>
+        /// <value>
+        /// The count.
+        /// </value>
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _segment.Entities.count;
         }
-        public (Entity entity, T item) this[int index]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (Entities[index], Items[index]);
-        }
+
+        /// <summary>
+        /// Gets the selection of component types that are stored in this segment.
+        /// </summary>
+        /// <value>
+        /// The types.
+        /// </value>
         public Component.Metadata[] Types
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _segment.Types.data;
         }
+        /// <inheritdoc cref="Component.Segment.Entities"/>
         public Entity[] Entities
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _segment.Entities.items;
         }
-
+        /// <summary>
+        /// The items.
+        /// </summary>
         public readonly T[] Items;
 
         readonly Component.Segment _segment;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Segment{T}"/> struct.
+        /// </summary>
+        /// <param name="segment">The segment.</param>
+        /// <param name="items">The items.</param>
         public Segment(Component.Segment segment, T[] items)
         {
             _segment = segment;
             Items = items;
         }
 
+        /// <inheritdoc cref="Component.Segment.GetStore{T}"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TComponent[] Store<TComponent>() where TComponent : struct, IComponent => _segment.GetStore<TComponent>();
 
+        /// <inheritdoc cref="Component.Segment.TryGetStore{T}(out T[])"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerator GetEnumerator() => new Enumerator(this);
-        IEnumerator<(Entity entity, T item)> IEnumerable<(Entity entity, T item)>.GetEnumerator() => GetEnumerator();
+        public bool TryStore<TComponent>(out TComponent[] store) where TComponent : struct, IComponent => _segment.TryGetStore(out store);
+
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Slice<T>.Read.Enumerator GetEnumerator() => new Slice<T>.Read(Items, 0, Count).GetEnumerator();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

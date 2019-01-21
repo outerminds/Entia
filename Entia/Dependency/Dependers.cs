@@ -65,6 +65,7 @@ namespace Entia.Modules
             _dependencies.Clear();
             return cleared;
         }
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IDepender> GetEnumerator() => _dependers.Values.Concat(_defaults.Values).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

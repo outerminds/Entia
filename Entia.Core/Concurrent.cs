@@ -18,6 +18,7 @@ namespace Entia.Core
                 _dispose = dispose;
             }
 
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose() => _dispose(_concurrent);
         }
 
@@ -34,6 +35,7 @@ namespace Entia.Core
                 _dispose = dispose;
             }
 
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose() => _dispose(_concurrent);
         }
 

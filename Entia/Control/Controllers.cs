@@ -46,6 +46,7 @@ namespace Entia.Modules
             return result.AsFailure();
         }
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<Controller> GetEnumerator() => _controllers.Values.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

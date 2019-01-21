@@ -2,6 +2,12 @@
 
 namespace Entia.Modules.Build
 {
-	public interface IBuildable { }
-	public interface IBuildable<T> : IBuildable where T : IBuilder, new() { }
+    /// <summary>
+    /// Tag interface that all buildables must implement.
+    /// </summary>
+    public interface IBuildable { }
+    /// <summary>
+    /// Tag interface that links a buildable to its builder implementation.
+    /// </summary>
+    public interface IBuildable<T> : IBuildable where T : IBuilder, new() { }
 }

@@ -41,6 +41,7 @@ namespace Entia.Modules
         public bool Remove<T>() where T : IInjectable => _injectors.Remove<T>();
         public bool Remove(Type injectable) => _injectors.Remove(injectable);
         public bool Clear() => _defaults.Clear() | _injectors.Clear();
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IInjector> GetEnumerator() => _injectors.Values.Concat(_defaults.Values).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

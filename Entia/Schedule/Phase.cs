@@ -4,6 +4,9 @@ using System;
 
 namespace Entia.Phases
 {
+    /// <summary>
+    /// Tag interface that all phases must implement.
+    /// </summary>
     public interface IPhase { }
 }
 

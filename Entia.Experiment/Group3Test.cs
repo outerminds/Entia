@@ -61,6 +61,7 @@ namespace Entia.Experiment
         {
             public struct Enumerator : IEnumerator<(Entity entity, T item)>
             {
+                /// <inheritdoc cref="IEnumerator{T}.Current"/>
                 public ref readonly (Entity entity, T item) Current
                 {
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -83,6 +84,7 @@ namespace Entia.Experiment
                     _index = -1;
                 }
 
+                /// <inheritdoc cref="IEnumerator.MoveNext"/>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public bool MoveNext()
                 {
@@ -99,12 +101,14 @@ namespace Entia.Experiment
                     return false;
                 }
 
+                /// <inheritdoc cref="IEnumerator.Reset"/>
                 public void Reset()
                 {
                     _segment = -1;
                     _index = -1;
                 }
 
+                /// <inheritdoc cref="IDisposable.Dispose"/>
                 public void Dispose()
                 {
                     _segments = default;
@@ -127,6 +131,7 @@ namespace Entia.Experiment
                 foreach (var segment in world.Components().Segments) TryAdd(segment);
             }
 
+            /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
             public Enumerator GetEnumerator() => new Enumerator(Segments);
             IEnumerator<(Entity entity, T item)> IEnumerable<(Entity entity, T item)>.GetEnumerator() => GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

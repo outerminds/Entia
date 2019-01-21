@@ -11,6 +11,7 @@ namespace Entia.Core
         {
             public struct Enumerator : IEnumerator<T>
             {
+                /// <inheritdoc cref="IEnumerator{T}.Current"/>
                 public ref readonly T Current
                 {
                     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -28,9 +29,12 @@ namespace Entia.Core
                     _index = -1;
                 }
 
+                /// <inheritdoc cref="IEnumerator.MoveNext"/>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public bool MoveNext() => ++_index < _slice.Count;
+                /// <inheritdoc cref="IDisposable.Dispose"/>
                 public void Dispose() => _slice = default;
+                /// <inheritdoc cref="IEnumerator.Reset"/>
                 public void Reset() => _index = -1;
             }
 
@@ -58,6 +62,7 @@ namespace Entia.Core
                 return current;
             }
 
+            /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
             public Enumerator GetEnumerator() => new Enumerator(this);
             IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -65,6 +70,7 @@ namespace Entia.Core
 
         public struct Enumerator : IEnumerator<T>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public ref T Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,9 +88,12 @@ namespace Entia.Core
                 _index = -1;
             }
 
+            /// <inheritdoc cref="IEnumerator.MoveNext"/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => ++_index < _slice.Count;
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose() => _slice = default;
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
         }
 
@@ -114,6 +123,7 @@ namespace Entia.Core
             return current;
         }
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

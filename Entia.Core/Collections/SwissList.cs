@@ -10,6 +10,7 @@ namespace Entia.Core
     {
         public struct Enumerator : IEnumerator<T>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public ref T Current => ref _list._items.items[_index];
             T IEnumerator<T>.Current => Current;
             object IEnumerator.Current => Current;
@@ -23,6 +24,7 @@ namespace Entia.Core
                 _index = -1;
             }
 
+            /// <inheritdoc cref="IEnumerator.MoveNext"/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
@@ -32,7 +34,9 @@ namespace Entia.Core
                 return false;
             }
 
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose() => _list = null;
         }
 
@@ -128,6 +132,7 @@ namespace Entia.Core
             return array;
         }
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

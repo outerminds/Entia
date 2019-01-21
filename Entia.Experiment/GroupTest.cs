@@ -1,10 +1,8 @@
+using Entia.Modules;
+using Entia.Queryables;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Entia.Modules;
-using Entia.Queryables;
-using Entia.Modules.Group;
-using System.Threading;
 
 namespace Entia.Experiment
 {
@@ -31,10 +29,10 @@ namespace Entia.Experiment
 
             void DirectFor()
             {
-                for (int i = 0; i < arrays.Length; i++)
+                for (var i = 0; i < arrays.Length; i++)
                 {
                     var (count, positions, velocities) = arrays[i];
-                    for (int j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
+                    for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
                 }
             }
 
@@ -43,7 +41,7 @@ namespace Entia.Experiment
                 Parallel.For(0, arrays.Length, i =>
                 {
                     var (count, positions, velocities) = arrays[i];
-                    for (int j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
+                    for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
                 });
             }
 
@@ -58,19 +56,19 @@ namespace Entia.Experiment
 
             void SegmentFor()
             {
-                for (int i = 0; i < segments.Length; i++)
+                for (var i = 0; i < segments.Length; i++)
                 {
                     var segment = segments[i];
                     var count = segment.Entities.count;
                     var positions = segment.GetStore<Position>();
                     var velocities = segment.GetStore<Velocity>();
-                    for (int j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
+                    for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
                 }
             }
 
             void ArrayFor()
             {
-                for (int i = 0; i < array.Length; i++)
+                for (var i = 0; i < array.Length; i++)
                 {
                     ref var item = ref array[i];
                     Body(ref item.Value1.Value, item.Value2.Value);
@@ -104,15 +102,15 @@ namespace Entia.Experiment
             void GroupForeach3()
             {
                 foreach (var segment in group.Segments)
-                    foreach (var item in segment.Items) Body(ref item.Value1.Value, item.Value2.Value);
+                    foreach (ref readonly var item in segment) Body(ref item.Value1.Value, item.Value2.Value);
             }
 
             void GroupFor1()
             {
-                for (int i = 0; i < group.Segments.Length; i++)
+                for (var i = 0; i < group.Segments.Length; i++)
                 {
                     ref readonly var segment = ref group.Segments[i];
-                    for (int j = 0; j < segment.Count; j++)
+                    for (var j = 0; j < segment.Count; j++)
                     {
                         ref readonly var item = ref segment.Items[j];
                         Body(ref item.Value1.Value, item.Value2.Value);
@@ -122,13 +120,13 @@ namespace Entia.Experiment
 
             void GroupFor2()
             {
-                for (int i = 0; i < group.Segments.Length; i++)
+                for (var i = 0; i < group.Segments.Length; i++)
                 {
                     ref readonly var segment = ref group.Segments[i];
                     var count = segment.Count;
                     var positions = segment.Store<Position>();
                     var velocities = segment.Store<Velocity>();
-                    for (int j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
+                    for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
                 }
             }
 
@@ -136,7 +134,7 @@ namespace Entia.Experiment
             {
                 Parallel.ForEach(group.Segments, segment =>
                 {
-                    for (int i = 0; i < segment.Count; i++)
+                    for (var i = 0; i < segment.Count; i++)
                     {
                         ref readonly var item = ref segment.Items[i];
                         Body(ref item.Value1.Value, item.Value2.Value);
@@ -177,7 +175,7 @@ namespace Entia.Experiment
                     var count = segment.Count;
                     var positions = segment.Store<Position>();
                     var velocities = segment.Store<Velocity>();
-                    for (int j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
+                    for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
                 });
             }
 
@@ -193,7 +191,7 @@ namespace Entia.Experiment
             {
                 var tasks = group.Segments.Select(segment => Task.Run(() =>
                 {
-                    for (int i = 0; i < segment.Count; i++)
+                    for (var i = 0; i < segment.Count; i++)
                     {
                         ref readonly var item = ref segment.Items[i];
                         Body(ref item.Value1.Value, item.Value2.Value);
@@ -218,7 +216,7 @@ namespace Entia.Experiment
                     var count = segment.Count;
                     var positions = segment.Store<Position>();
                     var velocities = segment.Store<Velocity>();
-                    for (int j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
+                    for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
                 }));
                 Task.WhenAll(tasks).Wait();
             }

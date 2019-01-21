@@ -1,4 +1,7 @@
 ﻿namespace Entia.Modules
 {
-	public interface IModule { }
+    /// <summary>
+    /// Tag interface that all modules must implement.
+    /// </summary>
+    public interface IModule { }
 }

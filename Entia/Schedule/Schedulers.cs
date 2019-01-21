@@ -48,6 +48,7 @@ namespace Entia.Modules
         public bool Remove<T>() where T : ISchedulable => _schedulers.Remove<T>();
         public bool Remove(Type schedulable) => _schedulers.Remove(schedulable);
         public bool Clear() => _schedulers.Clear() | _defaults.Clear();
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IScheduler> GetEnumerator() => _schedulers.Values.Concat(_defaults.Values).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

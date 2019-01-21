@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace Entia.Modules
 {
     /// <summary>
-    /// Module that stores components and allows to operate on them.
+    /// Module that stores and manages components.
     /// </summary>
     public sealed class Components : IModule, IResolvable, IEnumerable<IComponent>
     {
@@ -298,7 +298,7 @@ namespace Entia.Modules
             ref var data = ref GetData(entity, out var success);
             if (success && ComponentUtility.TryGetMetadata(component.GetType(), out var metadata))
             {
-                if (data.Segment.TryGetStore(metadata, out var store))
+                if (data.Segment.TryGetStore(metadata.Index, out var store))
                 {
                     store.SetValue(component, data.Index);
                     if (data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index))
@@ -390,49 +390,6 @@ namespace Entia.Modules
         }
 
         /// <summary>
-        /// Resolves all pending changes.
-        /// </summary>
-        public void Resolve()
-        {
-            foreach (ref var slot in _transient.Slots.Slice())
-            {
-                ref var data = ref GetData(slot.Entity, out var success);
-
-                if (success)
-                {
-                    switch (slot.Resolution)
-                    {
-                        case Transient.Resolutions.Add:
-                            {
-                                var segment = GetSegment(slot.Mask);
-                                CopyTo((data.Segment, data.Index), (segment, segment.Entities.count++));
-                                data.Transient = default;
-                                break;
-                            }
-                        case Transient.Resolutions.Remove:
-                            {
-                                MoveTo((data.Segment, data.Index), _destroyed);
-                                _destroyed.Entities.count = 0;
-                                data = default;
-                                break;
-                            }
-                        default:
-                            {
-                                var segment = GetSegment(slot.Mask);
-                                MoveTo((data.Segment, data.Index), segment);
-                                data.Transient = default;
-                                break;
-                            }
-                    }
-                }
-            }
-
-            _created.Entities.count = 0;
-            _destroyed.Entities.count = 0;
-            _transient.Slots.count = 0;
-        }
-
-        /// <summary>
         /// Tries to get the component store of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
         /// </summary>
         /// <typeparam name="T">The component type.</typeparam>
@@ -486,16 +443,12 @@ namespace Entia.Modules
             return false;
         }
 
-        /// <summary>
-        /// Returns an enumerator that iterates through all components.
-        /// </summary>
-        /// <returns>An enumerator that can be used to iterate through all components.</returns>
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IComponent> GetEnumerator()
         {
             foreach (var data in _data.Slice())
                 if (data.IsValid) foreach (var component in Get(data)) yield return component;
         }
-
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         IEnumerable<IComponent> Get(Data data)
@@ -507,6 +460,46 @@ namespace Entia.Modules
                 if (TryGetStore(data, types[i], out var store, out var index))
                     yield return (IComponent)store.GetValue(index);
             }
+        }
+
+        void IResolvable.Resolve()
+        {
+            foreach (ref var slot in _transient.Slots.Slice())
+            {
+                ref var data = ref GetData(slot.Entity, out var success);
+
+                if (success)
+                {
+                    switch (slot.Resolution)
+                    {
+                        case Transient.Resolutions.Add:
+                            {
+                                var segment = GetSegment(slot.Mask);
+                                CopyTo((data.Segment, data.Index), (segment, segment.Entities.count++));
+                                data.Transient = default;
+                                break;
+                            }
+                        case Transient.Resolutions.Remove:
+                            {
+                                MoveTo((data.Segment, data.Index), _destroyed);
+                                _destroyed.Entities.count = 0;
+                                data = default;
+                                break;
+                            }
+                        default:
+                            {
+                                var segment = GetSegment(slot.Mask);
+                                MoveTo((data.Segment, data.Index), segment);
+                                data.Transient = default;
+                                break;
+                            }
+                    }
+                }
+            }
+
+            _created.Entities.count = 0;
+            _destroyed.Entities.count = 0;
+            _transient.Slots.count = 0;
         }
 
         int Count(in Metadata metadata)
@@ -595,7 +588,7 @@ namespace Entia.Modules
         bool TryGetStore(in Data data, in Metadata metadata, out Array store, out int adjusted)
         {
             adjusted = data.Index;
-            data.Segment.TryGetStore(metadata, out store);
+            data.Segment.TryGetStore(metadata.Index, out store);
 
             if (data.Transient is int transient)
             {

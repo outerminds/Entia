@@ -40,6 +40,7 @@ namespace Entia.Modules
             return cleared;
         }
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IAnalyzer> GetEnumerator() => _analyzers.Values.Concat(_defaults.Values).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

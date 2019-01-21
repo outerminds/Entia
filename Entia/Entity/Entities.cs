@@ -7,10 +7,17 @@ using System.Runtime.CompilerServices;
 
 namespace Entia.Modules
 {
+    /// <summary>
+    /// Module that manages entities.
+    /// </summary>
     public sealed class Entities : IModule, IResolvable, IEnumerable<Entity>
     {
+        /// <summary>
+        /// An enumerator that enumerates over all existing entities.
+        /// </summary>
         public struct Enumerator : IEnumerator<Entity>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public Entity Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -21,12 +28,17 @@ namespace Entia.Modules
             Entities _entities;
             int _index;
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Enumerator"/> struct.
+            /// </summary>
+            /// <param name="entities">The entities.</param>
             public Enumerator(Entities entities)
             {
                 _entities = entities;
                 _index = -1;
             }
 
+            /// <inheritdoc cref="IEnumerator.MoveNext"/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
@@ -35,7 +47,9 @@ namespace Entia.Modules
 
                 return false;
             }
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose() => _entities = null;
         }
 
@@ -45,7 +59,19 @@ namespace Entia.Modules
             public bool Allocated;
         }
 
+        /// <summary>
+        /// Gets the current entity capacity.
+        /// </summary>
+        /// <value>
+        /// The capacity.
+        /// </value>
         public int Capacity => _data.items.Length;
+        /// <summary>
+        /// Gets the current entity count.
+        /// </summary>
+        /// <value>
+        /// The count.
+        /// </value>
         public int Count => _data.count - _free.count - _frozen.count;
 
         readonly Messages _messages;
@@ -53,8 +79,16 @@ namespace Entia.Modules
         (int[] items, int count) _frozen = (new int[8], 0);
         (Data[] items, int count) _data = (new Data[64], 0);
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Entities"/> class.
+        /// </summary>
+        /// <param name="messages">The messages.</param>
         public Entities(Messages messages) { _messages = messages; }
 
+        /// <summary>
+        /// Creates a world-unique entity.
+        /// </summary>
+        /// <returns>The entity.</returns>
         public Entity Create()
         {
             var reserved = ReserveIndex();
@@ -65,6 +99,11 @@ namespace Entia.Modules
             return entity;
         }
 
+        /// <summary>
+        /// Destroys an existing <paramref name="entity"/>.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <returns>Returns <c>true</c> if the entity was destroyed; otherwise, <c>false</c>.</returns>
         public bool Destroy(Entity entity)
         {
             ref var data = ref GetData(entity, out var success);
@@ -77,16 +116,25 @@ namespace Entia.Modules
             return false;
         }
 
+        /// <summary>
+        /// Determines whether the <paramref name="entity"/> is alive.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <returns>Returns <c>true</c> if the <paramref name="entity"/> is alive; otherwise, <c>false</c>.</returns>
         public bool Has(Entity entity)
         {
             GetData(entity, out var success);
             return success;
         }
 
+        /// <summary>
+        /// Clears all entities.
+        /// </summary>
+        /// <returns>Returns <c>true</c> if any entity was destroyed; otherwise, <c>false</c>.</returns>
         public bool Clear()
         {
             var cleared = false;
-            for (int i = 0; i < _data.count; i++)
+            for (var i = 0; i < _data.count; i++)
             {
                 ref var data = ref _data.items[i];
                 if (data.Allocated)
@@ -99,14 +147,15 @@ namespace Entia.Modules
             return cleared;
         }
 
-        public void Resolve()
-        {
-            while (_frozen.count > 0) _free.Push(_frozen.Pop());
-        }
-
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        void IResolvable.Resolve()
+        {
+            while (_frozen.count > 0) _free.Push(_frozen.Pop());
+        }
 
         ref Data GetData(Entity entity, out bool success)
         {
@@ -131,7 +180,7 @@ namespace Entia.Modules
 
         int ReserveIndex()
         {
-            // Priotising the increase of the maximum index until it hits the capacity makes sure that all available indices are used.
+            // Prioritizing the increase of the maximum index until it hits the capacity makes sure that all available indices are used.
             var index = _data.count < _data.items.Length || _free.count == 0 ? _data.count++ : _free.Pop();
             _data.Ensure();
             return index;

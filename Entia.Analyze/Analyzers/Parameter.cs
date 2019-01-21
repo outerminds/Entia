@@ -30,6 +30,7 @@ namespace Entia.Analyze.Analyzers
                 context.SemanticModel.GetDeclaredSymbol(parameter) is IParameterSymbol symbol &&
                 !symbol.IsOptional &&
                 !symbol.HasExplicitDefaultValue &&
+                symbol.Type.IsValueType &&
                 symbol.RefKind == RefKind.None)
             {
                 var global = context.Compilation.GlobalNamespace;

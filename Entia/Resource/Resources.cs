@@ -70,6 +70,7 @@ namespace Entia.Modules
         }
 
         public bool Clear() => _boxes.Clear();
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IResource> GetEnumerator() => _boxes.Values.Select(pair => pair.Value).OfType<IResource>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

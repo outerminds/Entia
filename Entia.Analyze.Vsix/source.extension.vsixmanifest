@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="Entia.Analyze.0223938b-be05-44ef-8494-9c79ba6bb7bb" Version="1.05" Language="en-US" Publisher="Outerminds"/>
+        <Identity Id="Entia.Analyze.0223938b-be05-44ef-8494-9c79ba6bb7bb" Version="1.06" Language="en-US" Publisher="Outerminds"/>
         <DisplayName>Entia.Analyze</DisplayName>
         <Description xml:space="preserve">Code analysis and fixes designed to facilitate usage of the 'Entia' framework.Code analysis and refactorings</Description>
     </Metadata>

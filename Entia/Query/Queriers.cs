@@ -69,6 +69,7 @@ namespace Entia.Modules
         public bool Remove(Type queryable) => _queriers.Remove(queryable);
         public bool Clear() => _defaults.Clear() | _queriers.Clear() | _queriers.Clear();
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IQuerier> GetEnumerator() => _queriers.Values.SelectMany(cache => cache.Values).Concat(_defaults.Values).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 

@@ -1,4 +1,7 @@
 ﻿namespace Entia
 {
-	public interface IComponent { }
+    /// <summary>
+    /// Tag interface that all components must implement.
+    /// </summary>
+    public interface IComponent { }
 }

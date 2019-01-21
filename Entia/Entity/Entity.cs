@@ -1,13 +1,21 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+﻿using Entia.Dependencies;
+using Entia.Dependers;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
 using Entia.Queriers;
 using Entia.Queryables;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Entia
 {
+    /// <summary>
+    /// Represents a world-unique identifier used to logically group components.
+    /// </summary>
+    /// <seealso cref="IQueryable" />
     [StructLayout(LayoutKind.Explicit)]
     public readonly struct Entity : IQueryable, IEquatable<Entity>, IComparable<Entity>
     {
@@ -20,15 +28,48 @@ namespace Entia
             }
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Read(typeof(Entity));
+            }
+        }
+
+        /// <summary>
+        /// A zero initialized entity that will always be invalid.
+        /// </summary>
         public static readonly Entity Zero;
 
         [Querier]
         static readonly Querier _querier = new Querier();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
+        /// <summary>
+        /// Implements the operator ==.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(Entity a, Entity b) => a.Equals(b);
+        /// <summary>
+        /// Implements the operator !=.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(Entity a, Entity b) => !a.Equals(b);
+
+        /// <summary>
+        /// The world-unique identifier.
+        /// </summary>
         [FieldOffset(0)]
         public readonly ulong Identifier;
+        /// <summary>
+        /// The index where the entity is stored within its world.
+        /// </summary>
         [FieldOffset(0)]
         public readonly int Index;
+        /// <summary>
+        /// The generation of the index.
+        /// </summary>
         [FieldOffset(sizeof(int))]
         public readonly uint Generation;
 
@@ -40,13 +81,19 @@ namespace Entia
             Generation = generation;
         }
 
+        /// <inheritdoc cref="IComparable{T}.CompareTo(T)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CompareTo(Entity other) => Identifier.CompareTo(other.Identifier);
+        /// <inheritdoc cref="IEquatable{T}.Equals(T)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(Entity other) => Identifier == other.Identifier;
+        /// <inheritdoc cref="ValueType.Equals(object)"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj) => obj is Entity entity && Equals(entity);
+        /// <inheritdoc cref="ValueType.GetHashCode"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() => Identifier.GetHashCode();
+        /// <inheritdoc cref="ValueType.ToString()"/>
         public override string ToString() => $"{{ Index: {Index}, Generation: {Generation} }}";
-
-        public static bool operator ==(Entity a, Entity b) => a.Equals(b);
-        public static bool operator !=(Entity a, Entity b) => !a.Equals(b);
     }
 }

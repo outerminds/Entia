@@ -68,6 +68,7 @@ namespace Entia
             for (int i = 0; i < _resolvables.Length; i++) _resolvables[i].Resolve();
         }
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public TypeMap<IModule, IModule>.ValueEnumerator GetEnumerator() => _modules.Values.GetEnumerator();
         IEnumerator<IModule> IEnumerable<IModule>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

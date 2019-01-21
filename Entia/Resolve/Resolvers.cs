@@ -91,6 +91,7 @@ namespace Entia.Modules
         public bool Remove<T>() where T : struct, Resolvables.IResolvable => _resolvers.Remove<T>();
         public bool Remove(Type resolvable) => _resolvers.Remove(resolvable);
         public bool Clear() => _defaults.Clear() | _resolvers.Clear();
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IResolver> GetEnumerator() => _resolvers.Values.Concat(_defaults.Values).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 

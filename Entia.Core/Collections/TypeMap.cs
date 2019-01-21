@@ -10,6 +10,7 @@ namespace Entia.Core
     {
         public struct Enumerator : IEnumerator<(Type type, TValue value)>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public (Type type, TValue value) Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -26,6 +27,7 @@ namespace Entia.Core
                 _index = -1;
             }
 
+            /// <inheritdoc cref="IEnumerator.MoveNext"/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
@@ -34,12 +36,15 @@ namespace Entia.Core
 
                 return false;
             }
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose() => _map = null;
         }
 
         public struct KeyEnumerator : IEnumerator<Type>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public Type Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -56,6 +61,7 @@ namespace Entia.Core
                 _index = -1;
             }
 
+            /// <inheritdoc cref="IEnumerator.MoveNext"/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
@@ -64,7 +70,9 @@ namespace Entia.Core
 
                 return false;
             }
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose() => _map = null;
         }
 
@@ -73,6 +81,7 @@ namespace Entia.Core
             readonly TypeMap<TBase, TValue> _map;
 
             public KeyEnumerable(TypeMap<TBase, TValue> map) { _map = map; }
+            /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
             public KeyEnumerator GetEnumerator() => new KeyEnumerator(_map);
             IEnumerator<Type> IEnumerable<Type>.GetEnumerator() => GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -80,6 +89,7 @@ namespace Entia.Core
 
         public struct ValueEnumerator : IEnumerator<TValue>
         {
+            /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public ref TValue Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -97,6 +107,7 @@ namespace Entia.Core
                 _index = -1;
             }
 
+            /// <inheritdoc cref="IEnumerator.MoveNext"/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
@@ -106,7 +117,9 @@ namespace Entia.Core
                 return false;
             }
 
+            /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
+            /// <inheritdoc cref="IDisposable.Dispose"/>
             public void Dispose() => _map = null;
         }
 
@@ -115,6 +128,7 @@ namespace Entia.Core
             readonly TypeMap<TBase, TValue> _map;
 
             public ValueEnumerable(TypeMap<TBase, TValue> map) { _map = map; }
+            /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
             public ValueEnumerator GetEnumerator() => new ValueEnumerator(_map);
             IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator() => GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -306,6 +320,7 @@ namespace Entia.Core
             return _values.Clear();
         }
 
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<(Type type, TValue value)> IEnumerable<(Type type, TValue value)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
