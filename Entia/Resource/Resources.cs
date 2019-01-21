@@ -9,22 +9,18 @@ namespace Entia.Modules
 {
     public sealed class Resources : IModule, IEnumerable<IResource>
     {
+        public TypeMap<IResource, IBox>.ValueEnumerable Boxes => _boxes.Values;
+
         readonly TypeMap<IResource, IBox> _boxes = new TypeMap<IResource, IBox>();
 
-        public ref T Get<T>() where T : struct, IResource => ref Box<T>().Value;
-        public IResource Get(Type resource) => (IResource)Box(resource).Value;
-        public void Set<T>(in T resource) where T : struct, IResource => Box<T>().Value = resource;
-        public void Set(IResource resource) => Box(resource.GetType()).Value = resource;
-
-        public bool CopyTo(Resources resources)
-        {
-            foreach (var pair in _boxes) pair.value.CopyTo(resources.Box(pair.type));
-            return true;
-        }
+        public ref T Get<T>() where T : struct, IResource => ref GetBox<T>().Value;
+        public IResource Get(Type resource) => (IResource)GetBox(resource).Value;
+        public void Set<T>(in T resource) where T : struct, IResource => GetBox<T>().Value = resource;
+        public void Set(IResource resource) => GetBox(resource.GetType()).Value = resource;
 
         public bool Remove<T>() where T : struct, IResource
         {
-            if (TryBox<T>(out var box))
+            if (TryGetBox<T>(out var box))
             {
                 box.Value = default;
                 return true;
@@ -35,7 +31,7 @@ namespace Entia.Modules
 
         public bool Remove(Type resource)
         {
-            if (TryBox(resource, out var box))
+            if (TryGetBox(resource, out var box))
             {
                 box.Value = null;
                 return true;
@@ -44,9 +40,9 @@ namespace Entia.Modules
             return false;
         }
 
-        public bool TryBox(Type resource, out IBox box) => _boxes.TryGet(resource, out box);
+        public bool TryGetBox(Type resource, out IBox box) => _boxes.TryGet(resource, out box);
 
-        public bool TryBox<T>(out Box<T> box) where T : struct, IResource
+        public bool TryGetBox<T>(out Box<T> box) where T : struct, IResource
         {
             if (_boxes.TryGet<T>(out var value) && value is Box<T> casted)
             {
@@ -58,17 +54,17 @@ namespace Entia.Modules
             return false;
         }
 
-        public IBox Box(Type resource)
+        public IBox GetBox(Type resource)
         {
-            if (TryBox(resource, out var box)) return box;
+            if (TryGetBox(resource, out var box)) return box;
             var type = typeof(Box<>).MakeGenericType(resource);
             _boxes.Set(resource, box = Activator.CreateInstance(type) as IBox);
             return box;
         }
 
-        public Box<T> Box<T>() where T : struct, IResource
+        public Box<T> GetBox<T>() where T : struct, IResource
         {
-            if (TryBox<T>(out var box)) return box;
+            if (TryGetBox<T>(out var box)) return box;
             _boxes.Set<T>(box = new Box<T>());
             return box;
         }

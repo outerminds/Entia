@@ -52,7 +52,7 @@ namespace Entia.Modules
             _segments = (new Segment[] { _empty }, 1);
             _maskToSegment = new Dictionary<BitMask, Segment> { { _empty.Mask, _empty } };
             _messages.React((in OnCreate message) => Initialize(message.Entity));
-            _messages.React((in OnPreDestroy message) => Dispose(message.Entity));
+            _messages.React((in OnPostDestroy message) => Dispose(message.Entity));
             foreach (var entity in entities) Initialize(entity);
         }
 

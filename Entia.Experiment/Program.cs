@@ -139,7 +139,7 @@ namespace Entia.Experiment
                 System<Systems.B>(),
                 System<Systems.C>()
             );
-            var game = world.Resources().Box<Game>();
+            var game = world.Resources().GetBox<Game>();
             var result = world.Controllers().Run(node, () => !game.Value.Quit);
         }
 

@@ -3,6 +3,7 @@ using Entia.Messages;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Entia.Modules
 {
@@ -10,7 +11,11 @@ namespace Entia.Modules
     {
         public struct Enumerator : IEnumerator<Entity>
         {
-            public Entity Current => new Entity(_index, _entities._data.items[_index].Generation);
+            public Entity Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => new Entity(_index, _entities._data.items[_index].Generation);
+            }
             object IEnumerator.Current => Current;
 
             Entities _entities;
@@ -22,6 +27,7 @@ namespace Entia.Modules
                 _index = -1;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
                 while (++_index < _entities._data.count)

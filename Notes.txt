@@ -21,13 +21,15 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- allow exclusive queries to run in parallel
+	- ex: 
+		[All(typeof(B))] Group<Write<A>> GroupA; // defined in 'SystemA'
+		[None(typeof(B))] Group<Write<A>> GroupB; // defined in 'SystemB'
+	- 'SystemA' and 'SystemB' should be allowed to run in parallel
+	- they are safe because they will have no common segments even though they both have a write dependency on 'A'
 - add tests for 'Resolvers' module
-- make random access work for Group3.cs
-- don't forget to add dependencies to new modules
-	- new queryables
-- when merging, fix .meta files
-- when merging, add '.Separate(Resolve())' to controllers
 - make Components.Set / Components.Remove / Entities.Create / Entities.Destroy thread safe?
+	- this might be very hard or impossible to accomplish without locking
 
 - improve better removal actions in tests by querying all removable entities from the world and choosing from that query
 	- currently, a random entity is chosen from the world and if it is not removable, the action is considered invalid
@@ -38,9 +40,7 @@ Features:
 	: should not be a component, but a module since changes to one hierarchy must echo throughout the other related hierarchies
 - write property and performance tests
 	- C# QuickCheck implementation: https://github.com/fscheck/FsCheck/
-	- run tests on device
-	- find a way to run tests in parallel
-		- static caches cause race conditions
+	- run tests on device with IL2CPP build
 
 Bugs:
 - error in Unity when renaming a component/resource.
@@ -58,29 +58,12 @@ Bugs:
 - If 2 components of the same name but in different namespaces are included in a query, the generator will generate ambiguous extensions
 	-ex: Group<All<Components.Boba.A, Components.Fett.A>>; item.A();
 	- would require adding namespace elements to the extensions until they are no longer ambiguous; item.BobaA(); item.FettA();
-- Generator will not generate appropriate extensions for generic systems
-- Show appropriate World content at editor time in WorldReferenceEditor
-	- use FindObjectsOfType to retrieve entities/components/tags/resources in scene?
-- 'Read<T>' doesn't prevent the modification of mutable classes in a component
-	- this might be not be realistically solvable
 
 Optimization:
 - do not reserve a store for empty components
 - WorldReferenceEditor is very slow. Can try to cache stuff.
-- find a way to order groups items and/or store items in such a way that they will be better accessed contiguously
-	- ordering items with the 'Entity.Index' might work
-- reuse equivalent Component.Mask instances rather having 1 per entity
-	- would reduce the memory footprint which can be significant when there are alot of entities
-	- would also allow to make Component.Mask immutable and thus less prone to bugs
-- add _bitHead and _bitTail to BitMask and use them to exit early HasAny/All/None calls rather than _head (renamed to _bucketHead) and _tail (renamed to _bucketTail)
-	- RefreshRange will be a bit more involved but might be removeable from 'Add(int index)' and sometimes from 'Remove(int index)'
-	- Since I'm basicaly never using 'Add/Remove(Bucket bucket)', the impact should be close to zero
-	- *** the _bitHead/_bitTail optimization might not be worth it; simply doing all bitwise comparisons might be faster even if they require a loop
 - make sure every 'Enumerable<T>' is implemented in such a way that it doesn't allocate 
 	- especially check stores
-- do proper Buffer<T> defragmentation (a callback for moved indices?)
-- do I really need to store entities in stores?
-- could parallelize entities between segments?
 
 Questions:
 - should system methods be implemented explicitly by convention?

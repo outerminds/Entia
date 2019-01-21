@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
@@ -31,6 +32,7 @@ namespace Entia
         [FieldOffset(sizeof(int))]
         public readonly uint Generation;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal Entity(int index, uint generation)
         {
             Identifier = default;

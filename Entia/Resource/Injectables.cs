@@ -12,7 +12,7 @@ namespace Entia.Injectables
         {
             sealed class Injector : Injector<Read>
             {
-                public override Result<Read> Inject(MemberInfo member, World world) => new Read(world.Resources().Box<T>());
+                public override Result<Read> Inject(MemberInfo member, World world) => new Read(world.Resources().GetBox<T>());
             }
 
             [Injector]
@@ -27,7 +27,7 @@ namespace Entia.Injectables
 
         sealed class Injector : Injector<Resource<T>>
         {
-            public override Result<Resource<T>> Inject(MemberInfo member, World world) => new Resource<T>(world.Resources().Box<T>());
+            public override Result<Resource<T>> Inject(MemberInfo member, World world) => new Resource<T>(world.Resources().GetBox<T>());
         }
 
         [Injector]

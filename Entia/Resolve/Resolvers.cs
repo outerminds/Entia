@@ -37,7 +37,10 @@ namespace Entia.Modules
         readonly TypeMap<Resolvables.IResolvable, IResolver> _defaults = new TypeMap<Resolvables.IResolvable, IResolver>();
         readonly TypeMap<Resolvables.IResolvable, IResolver> _resolvers = new TypeMap<Resolvables.IResolvable, IResolver>();
         readonly TypeMap<Resolvables.IResolvable, Data> _data = new TypeMap<Resolvables.IResolvable, Data>();
+        readonly World _world;
         ((int data, int resolvable)[] items, int count) _queue = (new (int, int)[32], 0);
+
+        public Resolvers(World world) { _world = world; }
 
         public void Resolve()
         {
@@ -69,6 +72,10 @@ namespace Entia.Modules
                 _queue.Push((dataIndex, 0));
             }
         }
+
+        public void Defer<T>(in T state, Action<T> @do) => Defer(new Do<T>(state, @do));
+        public void Defer<T>(in T state, Action<T, World> @do) => Defer((state, world: _world, @do), input => input.@do(input.state, input.world));
+        public void Defer<T>(Action<World> @do) => Defer(_world, @do);
 
         public Resolver<T> Default<T>() where T : struct, Resolvables.IResolvable =>
             _defaults.Default(typeof(T), typeof(Resolvables.IResolvable<>), typeof(ResolverAttribute), () => new Default<T>()) as Resolver<T>;
