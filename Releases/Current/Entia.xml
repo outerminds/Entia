@@ -2187,6 +2187,794 @@
             Tag interface that all messages must implement.
             </summary>
     </member>
+    <member name="T:Entia.Queryables.All`2">
+      <summary>
+            Query that must satisfy all its sub queries.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`2.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`2.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.All`2.#ctor(`0@,`1@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.All`2" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.All`3">
+      <summary>
+            Query that must satisfy all its sub queries.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`3.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`3.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`3.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.All`3.#ctor(`0@,`1@,`2@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.All`3" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.All`4">
+      <summary>
+            Query that must satisfy all its sub queries.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`4.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`4.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`4.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`4.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.All`4.#ctor(`0@,`1@,`2@,`3@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.All`4" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.All`5">
+      <summary>
+            Query that must satisfy all its sub queries.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`5.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`5.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`5.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`5.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`5.Value5">
+      <summary>
+            The value5.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.All`5.#ctor(`0@,`1@,`2@,`3@,`4@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.All`5" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.All`6">
+      <summary>
+            Query that must satisfy all its sub queries.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`6.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`6.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`6.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`6.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`6.Value5">
+      <summary>
+            The value5.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`6.Value6">
+      <summary>
+            The value6.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.All`6.#ctor(`0@,`1@,`2@,`3@,`4@,`5@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.All`6" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.All`7">
+      <summary>
+            Query that must satisfy all its sub queries.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`7.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`7.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`7.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`7.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`7.Value5">
+      <summary>
+            The value5.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`7.Value6">
+      <summary>
+            The value6.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`7.Value7">
+      <summary>
+            The value7.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.All`7.#ctor(`0@,`1@,`2@,`3@,`4@,`5@,`6@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.All`7" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.All`8">
+      <summary>
+            Query that must satisfy all its sub queries.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`8.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`8.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`8.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`8.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`8.Value5">
+      <summary>
+            The value5.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`8.Value6">
+      <summary>
+            The value6.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`8.Value7">
+      <summary>
+            The value7.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`8.Value8">
+      <summary>
+            The value8.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.All`8.#ctor(`0@,`1@,`2@,`3@,`4@,`5@,`6@,`7@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.All`8" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.All`9">
+      <summary>
+            Query that must satisfy all its sub queries.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`9.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`9.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`9.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`9.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`9.Value5">
+      <summary>
+            The value5.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`9.Value6">
+      <summary>
+            The value6.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`9.Value7">
+      <summary>
+            The value7.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`9.Value8">
+      <summary>
+            The value8.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.All`9.Value9">
+      <summary>
+            The value9.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.All`9.#ctor(`0@,`1@,`2@,`3@,`4@,`5@,`6@,`7@,`8@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.All`9" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.Any`2">
+      <summary>
+            Query that must satisfy at least one of its sub queries.
+            Only the first match will be kept.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`2.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`2.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`2.#ctor(`0@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`2" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`2.#ctor(`1@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`2" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.Any`3">
+      <summary>
+            Query that must satisfy at least one of its sub queries.
+            Only the first match will be kept.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`3.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`3.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`3.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`3.#ctor(`0@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`3" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`3.#ctor(`1@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`3" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`3.#ctor(`2@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`3" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.Any`4">
+      <summary>
+            Query that must satisfy at least one of its sub queries.
+            Only the first match will be kept.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`4.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`4.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`4.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`4.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`4.#ctor(`0@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`4" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`4.#ctor(`1@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`4" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`4.#ctor(`2@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`4" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`4.#ctor(`3@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`4" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.Any`5">
+      <summary>
+            Query that must satisfy at least one of its sub queries.
+            Only the first match will be kept.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`5.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`5.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`5.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`5.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`5.Value5">
+      <summary>
+            The value5.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`5.#ctor(`0@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`5" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`5.#ctor(`1@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`5" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`5.#ctor(`2@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`5" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`5.#ctor(`3@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`5" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`5.#ctor(`4@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`5" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.Any`6">
+      <summary>
+            Query that must satisfy at least one of its sub queries.
+            Only the first match will be kept.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`6.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`6.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`6.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`6.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`6.Value5">
+      <summary>
+            The value5.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`6.Value6">
+      <summary>
+            The value6.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`6.#ctor(`0@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`6" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`6.#ctor(`1@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`6" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`6.#ctor(`2@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`6" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`6.#ctor(`3@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`6" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`6.#ctor(`4@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`6" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`6.#ctor(`5@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`6" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.Any`7">
+      <summary>
+            Query that must satisfy at least one of its sub queries.
+            Only the first match will be kept.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`7.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`7.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`7.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`7.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`7.Value5">
+      <summary>
+            The value5.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`7.Value6">
+      <summary>
+            The value6.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`7.Value7">
+      <summary>
+            The value7.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`7.#ctor(`0@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`7" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`7.#ctor(`1@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`7" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`7.#ctor(`2@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`7" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`7.#ctor(`3@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`7" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`7.#ctor(`4@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`7" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`7.#ctor(`5@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`7" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`7.#ctor(`6@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`7" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.Any`8">
+      <summary>
+            Query that must satisfy at least one of its sub queries.
+            Only the first match will be kept.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`8.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`8.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`8.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`8.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`8.Value5">
+      <summary>
+            The value5.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`8.Value6">
+      <summary>
+            The value6.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`8.Value7">
+      <summary>
+            The value7.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`8.Value8">
+      <summary>
+            The value8.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`8.#ctor(`0@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`8" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`8.#ctor(`1@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`8" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`8.#ctor(`2@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`8" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`8.#ctor(`3@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`8" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`8.#ctor(`4@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`8" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`8.#ctor(`5@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`8" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`8.#ctor(`6@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`8" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`8.#ctor(`7@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`8" /> struct.
+            </summary>
+    </member>
+    <member name="T:Entia.Queryables.Any`9">
+      <summary>
+            Query that must satisfy at least one of its sub queries.
+            Only the first match will be kept.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`9.Value1">
+      <summary>
+            The value1.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`9.Value2">
+      <summary>
+            The value2.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`9.Value3">
+      <summary>
+            The value3.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`9.Value4">
+      <summary>
+            The value4.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`9.Value5">
+      <summary>
+            The value5.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`9.Value6">
+      <summary>
+            The value6.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`9.Value7">
+      <summary>
+            The value7.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`9.Value8">
+      <summary>
+            The value8.
+            </summary>
+    </member>
+    <member name="F:Entia.Queryables.Any`9.Value9">
+      <summary>
+            The value9.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`9.#ctor(`0@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`9" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`9.#ctor(`1@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`9" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`9.#ctor(`2@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`9" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`9.#ctor(`3@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`9" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`9.#ctor(`4@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`9" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`9.#ctor(`5@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`9" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`9.#ctor(`6@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`9" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`9.#ctor(`7@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`9" /> struct.
+            </summary>
+    </member>
+    <member name="M:Entia.Queryables.Any`9.#ctor(`8@)">
+      <summary>
+            Initializes a new instance of the <see cref="T:Entia.Queryables.Any`9" /> struct.
+            </summary>
+    </member>
     <member>
       <summary>Returns an enumerator that iterates through the collection.</summary>
       <returns>An enumerator that can be used to iterate through the collection.</returns>

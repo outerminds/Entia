@@ -424,7 +424,7 @@ namespace Entia.Modules.Group
                 var count = items.Length;
                 if (ArrayUtility.Ensure(ref items, segment.Count))
                 {
-                    for (var i = count; i < segment.Count; i++) items[i] = query.Get(i);
+                    for (var i = 0; i < segment.Count; i++) items[i] = query.Get(i);
                     segment = new Segment<T>(target.segment, items);
                 }
                 // NOTE: do this step after ensuring that the 'items' array is large enough
