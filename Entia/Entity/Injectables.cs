@@ -1,5 +1,7 @@
 ﻿using Entia.Core;
 using Entia.Dependables;
+using Entia.Dependencies;
+using Entia.Dependers;
 using Entia.Injectors;
 using Entia.Modules;
 using System;
@@ -9,18 +11,27 @@ using System.Reflection;
 
 namespace Entia.Injectables
 {
-    public readonly struct AllEntities : IInjectable, IEnumerable<Entity>,
-        IDepend<Write<Entity>, Emit<Messages.OnCreate>, Emit<Messages.OnPreDestroy>, Emit<Messages.OnPostDestroy>>
+    public readonly struct AllEntities : IInjectable, IEnumerable<Entity>
     {
-        public readonly struct Read : IInjectable, IEnumerable<Entity>, IDepend<Read<Entity>>
+        public readonly struct Read : IInjectable, IEnumerable<Entity>
         {
             sealed class Injector : Injector<Read>
             {
                 public override Result<Read> Inject(MemberInfo member, World world) => new Read(world.Entities());
             }
 
+            sealed class Depender : IDepender
+            {
+                public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+                {
+                    yield return new Dependencies.Read(typeof(Entity));
+                }
+            }
+
             [Injector]
             static readonly Injector _injector = new Injector();
+            [Depender]
+            static readonly Depender _depender = new Depender();
 
             public int Count => _entities.Count;
 
@@ -40,8 +51,21 @@ namespace Entia.Injectables
             public override Result<AllEntities> Inject(MemberInfo member, World world) => new AllEntities(world.Entities());
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Write(typeof(Entity));
+                yield return new Dependencies.Emit(typeof(Messages.OnCreate));
+                yield return new Dependencies.Emit(typeof(Messages.OnPreDestroy));
+                yield return new Dependencies.Emit(typeof(Messages.OnPostDestroy));
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public int Count => _entities.Count;
 

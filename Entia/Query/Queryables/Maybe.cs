@@ -1,4 +1,8 @@
+using System.Collections.Generic;
+using System.Reflection;
 using Entia.Dependables;
+using Entia.Dependencies;
+using Entia.Dependers;
 using Entia.Modules;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
@@ -7,7 +11,7 @@ using Entia.Queryables;
 
 namespace Entia.Queryables
 {
-    public readonly struct Maybe<T> : IQueryable, IDepend<T> where T : struct, IQueryable
+    public readonly struct Maybe<T> : IQueryable where T : struct, IQueryable
     {
         sealed class Querier : Querier<Maybe<T>>
         {
@@ -20,8 +24,15 @@ namespace Entia.Queryables
             }
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world) => world.Dependers().Dependencies<T>();
+        }
+
         [Querier]
         static readonly Querier _querier = new Querier();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public static implicit operator Maybe<T>(in T value) => new Maybe<T>(value);
 

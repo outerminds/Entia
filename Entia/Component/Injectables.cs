@@ -1,10 +1,13 @@
 ﻿using Entia.Core;
 using Entia.Dependables;
+using Entia.Dependencies;
+using Entia.Dependers;
 using Entia.Injectors;
 using Entia.Modules;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Entia.Injectables
@@ -12,16 +15,30 @@ namespace Entia.Injectables
     /// <summary>
     /// Gives access to all component operations.
     /// </summary>
-    public readonly struct AllComponents : IInjectable, IEnumerable<IComponent>,
-        IDepend<Dependencies.Unknown, Read<Entity>, Emit<Messages.OnAdd>, Emit<Messages.OnRemove>>
+    public readonly struct AllComponents : IInjectable, IEnumerable<IComponent>
     {
         sealed class Injector : Injector<AllComponents>
         {
             public override Result<AllComponents> Inject(MemberInfo member, World world) => new AllComponents(world.Components());
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Read(typeof(Entity));
+                yield return new Dependencies.Write(typeof(IComponent));
+                yield return new Dependencies.Emit(typeof(Messages.OnAdd));
+                yield return new Dependencies.Emit(typeof(Messages.OnAdd<>));
+                yield return new Dependencies.Emit(typeof(Messages.OnRemove));
+                yield return new Dependencies.Emit(typeof(Messages.OnRemove<>));
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         readonly Components _components;
 
@@ -75,20 +92,30 @@ namespace Entia.Injectables
     /// <summary>
     /// Gives access to component operations for type <typeparamref name="T"/>.
     /// </summary>
-    public readonly struct Components<T> : IInjectable, IEnumerable<(Entity entity, T component)>,
-        IDepend<Read<Entity>, Write<T>, Emit<Messages.OnAdd>, Emit<Messages.OnRemove>, Emit<Messages.OnAdd<T>>, Emit<Messages.OnRemove<T>>>
-        where T : struct, IComponent
+    public readonly struct Components<T> : IInjectable, IEnumerable<(Entity entity, T component)> where T : struct, IComponent
     {
         /// <inheritdoc cref="Components{T}"/>
-        public readonly struct Write : IInjectable, IDepend<Read<Entity>, Write<T>>, IEnumerable<(Entity entity, T component)>
+        public readonly struct Write : IInjectable, IEnumerable<(Entity entity, T component)>
         {
             sealed class Injector : Injector<Write>
             {
                 public override Result<Write> Inject(MemberInfo member, World world) => new Write(world.Components());
             }
 
+            sealed class Depender : IDepender
+            {
+                public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+                {
+                    yield return new Dependencies.Read(typeof(Entity));
+                    yield return new Dependencies.Write(typeof(T));
+                    foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
+                }
+            }
+
             [Injector]
             static readonly Injector _injector = new Injector();
+            [Depender]
+            static readonly Depender _depender = new Depender();
 
             readonly Components _components;
 
@@ -112,15 +139,27 @@ namespace Entia.Injectables
         }
 
         /// <inheritdoc cref="Components{T}"/>
-        public readonly struct Read : IInjectable, IDepend<Read<Entity>, Read<T>>, IEnumerable<(Entity entity, T component)>
+        public readonly struct Read : IInjectable, IEnumerable<(Entity entity, T component)>
         {
             sealed class Injector : Injector<Read>
             {
                 public override Result<Read> Inject(MemberInfo member, World world) => new Read(world.Components());
             }
 
+            sealed class Depender : IDepender
+            {
+                public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+                {
+                    yield return new Dependencies.Read(typeof(Entity));
+                    yield return new Dependencies.Read(typeof(T));
+                    foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
+                }
+            }
+
             [Injector]
             static readonly Injector _injector = new Injector();
+            [Depender]
+            static readonly Depender _depender = new Depender();
 
             readonly Components _components;
 
@@ -148,8 +187,24 @@ namespace Entia.Injectables
             public override Result<Components<T>> Inject(MemberInfo member, World world) => new Components<T>(world.Components());
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Read(typeof(Entity));
+                yield return new Dependencies.Write(typeof(T));
+                yield return new Dependencies.Emit(typeof(Messages.OnAdd));
+                yield return new Dependencies.Emit(typeof(Messages.OnAdd<T>));
+                yield return new Dependencies.Emit(typeof(Messages.OnRemove));
+                yield return new Dependencies.Emit(typeof(Messages.OnRemove<T>));
+                foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         readonly Components _components;
 

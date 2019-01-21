@@ -1,7 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Entia.Core;
 using Entia.Dependables;
+using Entia.Dependencies;
+using Entia.Dependers;
+using Entia.Modules;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
 using Entia.Queriers;
@@ -9,7 +14,7 @@ using Entia.Queryables;
 
 namespace Entia.Queryables
 {
-    public readonly struct Read<T> : IQueryable, IDepend<Dependables.Read<T>> where T : struct, IComponent
+    public readonly struct Read<T> : IQueryable where T : struct, IComponent
     {
         sealed class Querier : Querier<Read<T>>
         {
@@ -27,8 +32,19 @@ namespace Entia.Queryables
             }
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Read(typeof(T));
+                foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
+            }
+        }
+
         [Querier]
         static readonly Querier _querier = new Querier();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public ref readonly T Value
         {

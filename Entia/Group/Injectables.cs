@@ -2,6 +2,8 @@
 
 using Entia.Core;
 using Entia.Dependables;
+using Entia.Dependencies;
+using Entia.Dependers;
 using Entia.Injectors;
 using Entia.Modules;
 using Entia.Modules.Group;
@@ -12,15 +14,26 @@ using System.Reflection;
 
 namespace Entia.Injectables
 {
-    public readonly struct Group<T> : IInjectable, IDepend<Dependables.Read<Entity>, T>, IEnumerable<T> where T : struct, IQueryable
+    public readonly struct Group<T> : IInjectable, IEnumerable<T> where T : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
             public Result<object> Inject(MemberInfo member, World world) => new Group<T>(world.Groups().Get(world.Queriers().Get<T>(member)));
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Read(typeof(Entity));
+                foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public int Count => _group.Count;
         public Segment<T>[] Segments => _group.Segments;
@@ -37,15 +50,26 @@ namespace Entia.Injectables
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2>, IEnumerable<All<T1, T2>> where T1 : struct, IQueryable where T2 : struct, IQueryable
+    public readonly struct Group<T1, T2> : IInjectable, IEnumerable<All<T1, T2>> where T1 : struct, IQueryable where T2 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
             public Result<object> Inject(MemberInfo member, World world) => new Group<T1, T2>(world.Groups().Get(world.Queriers().Get<All<T1, T2>>(member)));
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Read(typeof(Entity));
+                foreach (var dependency in world.Dependers().Dependencies<All<T1, T2>>()) yield return dependency;
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public int Count => _group.Count;
         public Segment<All<T1, T2>>[] Segments => _group.Segments;
@@ -62,15 +86,26 @@ namespace Entia.Injectables
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3>, IEnumerable<All<T1, T2, T3>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3> : IInjectable, IEnumerable<All<T1, T2, T3>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
             public Result<object> Inject(MemberInfo member, World world) => new Group<T1, T2, T3>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3>>(member)));
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Read(typeof(Entity));
+                foreach (var dependency in world.Dependers().Dependencies<All<T1, T2, T3>>()) yield return dependency;
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3>>[] Segments => _group.Segments;
@@ -87,15 +122,26 @@ namespace Entia.Injectables
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4>, IEnumerable<All<T1, T2, T3, T4>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4> : IInjectable, IEnumerable<All<T1, T2, T3, T4>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
             public Result<object> Inject(MemberInfo member, World world) => new Group<T1, T2, T3, T4>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4>>(member)));
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Read(typeof(Entity));
+                foreach (var dependency in world.Dependers().Dependencies<All<T1, T2, T3, T4>>()) yield return dependency;
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4>>[] Segments => _group.Segments;
@@ -112,15 +158,26 @@ namespace Entia.Injectables
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4, T5> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5>, IEnumerable<All<T1, T2, T3, T4, T5>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4, T5> : IInjectable, IEnumerable<All<T1, T2, T3, T4, T5>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
             public Result<object> Inject(MemberInfo member, World world) => new Group<T1, T2, T3, T4, T5>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4, T5>>(member)));
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Read(typeof(Entity));
+                foreach (var dependency in world.Dependers().Dependencies<All<T1, T2, T3, T4, T5>>()) yield return dependency;
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4, T5>>[] Segments => _group.Segments;
@@ -137,15 +194,26 @@ namespace Entia.Injectables
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4, T5, T6> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6>, IEnumerable<All<T1, T2, T3, T4, T5, T6>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4, T5, T6> : IInjectable, IEnumerable<All<T1, T2, T3, T4, T5, T6>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
             public Result<object> Inject(MemberInfo member, World world) => new Group<T1, T2, T3, T4, T5, T6>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4, T5, T6>>(member)));
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Read(typeof(Entity));
+                foreach (var dependency in world.Dependers().Dependencies<All<T1, T2, T3, T4, T5, T6>>()) yield return dependency;
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4, T5, T6>>[] Segments => _group.Segments;
@@ -162,15 +230,26 @@ namespace Entia.Injectables
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6, T7>, IEnumerable<All<T1, T2, T3, T4, T5, T6, T7>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7> : IInjectable, IEnumerable<All<T1, T2, T3, T4, T5, T6, T7>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
             public Result<object> Inject(MemberInfo member, World world) => new Group<T1, T2, T3, T4, T5, T6, T7>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4, T5, T6, T7>>(member)));
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Read(typeof(Entity));
+                foreach (var dependency in world.Dependers().Dependencies<All<T1, T2, T3, T4, T5, T6, T7>>()) yield return dependency;
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4, T5, T6, T7>>[] Segments => _group.Segments;
@@ -187,15 +266,26 @@ namespace Entia.Injectables
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7, T8> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6, T7, T8>, IEnumerable<All<T1, T2, T3, T4, T5, T6, T7, T8>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7, T8> : IInjectable, IEnumerable<All<T1, T2, T3, T4, T5, T6, T7, T8>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
             public Result<object> Inject(MemberInfo member, World world) => new Group<T1, T2, T3, T4, T5, T6, T7, T8>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4, T5, T6, T7, T8>>(member)));
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Read(typeof(Entity));
+                foreach (var dependency in world.Dependers().Dependencies<All<T1, T2, T3, T4, T5, T6, T7, T8>>()) yield return dependency;
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4, T5, T6, T7, T8>>[] Segments => _group.Segments;
@@ -212,15 +302,26 @@ namespace Entia.Injectables
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IInjectable, IDepend<Dependables.Read<Entity>, T1, T2, T3, T4, T5, T6, T7, T8, T9>, IEnumerable<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable where T9 : struct, IQueryable
+    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7, T8, T9> : IInjectable, IEnumerable<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable where T8 : struct, IQueryable where T9 : struct, IQueryable
     {
         sealed class Injector : IInjector
         {
             public Result<object> Inject(MemberInfo member, World world) => new Group<T1, T2, T3, T4, T5, T6, T7, T8, T9>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>(member)));
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Read(typeof(Entity));
+                foreach (var dependency in world.Dependers().Dependencies<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>()) yield return dependency;
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         public int Count => _group.Count;
         public Segment<All<T1, T2, T3, T4, T5, T6, T7, T8, T9>>[] Segments => _group.Segments;

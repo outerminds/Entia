@@ -1,7 +1,8 @@
-﻿using Entia.Injectors;
+﻿using Entia.Dependables;
+using Entia.Injectors;
 
 namespace Entia.Injectables
 {
-	public interface IInjectable { }
-	public interface IInjectable<T> : IInjectable where T : IInjector, new() { }
+    public interface IInjectable : IDependable { }
+    public interface IInjectable<T> : IInjectable where T : IInjector, new() { }
 }

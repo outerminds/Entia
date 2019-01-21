@@ -1,9 +1,12 @@
 ﻿using Entia.Core;
+using Entia.Dependencies;
+using Entia.Dependers;
 using Entia.Modules;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
 using Entia.Queriers;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 

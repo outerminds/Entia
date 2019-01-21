@@ -19,7 +19,7 @@ namespace Entia.Nodes
             Node.Of<Profile>(node.Name, node);
 
         public static Node Do(this Node node, Action<IRunner> @do) =>
-            Node.Of(node.Name, new Map { Mapper = runner => { @do(runner); return Result.Success(runner); } }, node);
+            Node.Of(node.Name, new Map(runner => { @do(runner); return Result.Success(runner); }), node);
 
         public static Node Flatten(this Node node, bool recursive = true)
         {
@@ -30,8 +30,8 @@ namespace Entia.Nodes
                 .ToArray());
         }
 
-        public static Node State(this Node node, Func<Controller.States> get) => Node.Of(node.Name, new State { Get = get }, node);
-        public static Node Map(this Node node, Func<IRunner, Option<IRunner>> map) => Node.Of(node.Name, new Map { Mapper = map }, node);
+        public static Node State(this Node node, Func<Controller.States> get) => Node.Of(node.Name, new State(get), node);
+        public static Node Map(this Node node, Func<IRunner, Option<IRunner>> map) => Node.Of(node.Name, new Map(map), node);
         public static Node Repeat(this Node node, int count) => Node.Of(node.Name, node.Value, node.Children.Repeat(count).ToArray());
         public static Node Distinct(this Node node) => Node.Of(node.Name, node.Value, node.Children.Distinct().ToArray());
         public static Node Separate(this Node node, Node separator, bool recursive = true) => node.Separate(() => separator, recursive);

@@ -10,7 +10,6 @@ IEnumerable<string> Generate(int depth)
     {
         var generics = GenericParameters(i).ToArray();
         var type = $"All<{string.Join(", ", generics)}>";
-        var interfaces = $"IQueryable, IDepend<{string.Join(", ", generics)}>";
         var constraints = string.Join(" ", generics.Select(generic => $"where {generic} : struct, IQueryable"));
         var fields = string.Join(" ", generics.Select((generic, index) => $"public readonly {generic} Value{index + 1};"));
         var inValues = string.Join(", ", generics.Select((generic, index) => $"in {generic} value{index + 1}"));
@@ -25,8 +24,12 @@ IEnumerable<string> Generate(int depth)
         var queryTypes = string.Join(
             $", ",
             generics.Select((_, index) => $"query{index + 1}.Types"));
+        var dependencies = string.Join(
+            Environment.NewLine + "                ",
+            generics.Select(generic => $"foreach (var dependency in world.Dependers().Dependencies<{generic}>()) yield return dependency;"));
+
         yield return
-$@"    public readonly struct {type} : {interfaces} {constraints}
+$@"    public readonly struct {type} : IQueryable {constraints}
     {{
         sealed class Querier : Querier<{type}>
         {{
@@ -43,8 +46,19 @@ $@"    public readonly struct {type} : {interfaces} {constraints}
             }}
         }}
 
+        sealed class Depender : IDepender
+        {{
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {{
+                {dependencies}
+            }}
+        }}
+
         [Querier]
         static readonly Querier _querier = new Querier();
+        [Depender]
+        static readonly Depender _depender = new Depender();
+
         {fields}
         public All({inValues}) {{ {initializers} }}
     }}";
@@ -62,6 +76,10 @@ using Entia.Modules.Query;
 using Entia.Queriers;
 using Entia.Queryables;
 using Entia.Dependables;
+using Entia.Dependers;
+using Entia.Dependencies;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Entia.Queryables
 {{

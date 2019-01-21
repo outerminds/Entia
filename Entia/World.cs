@@ -1,5 +1,7 @@
 ﻿using Entia.Core;
 using Entia.Dependables;
+using Entia.Dependencies;
+using Entia.Dependers;
 using Entia.Injectables;
 using Entia.Injectors;
 using Entia.Modules;
@@ -10,15 +12,25 @@ using System.Reflection;
 
 namespace Entia
 {
-    public sealed class World : IInjectable, IDepend<Dependencies.Unknown>, IEnumerable<IModule>
+    public sealed class World : IInjectable, IEnumerable<IModule>
     {
         sealed class Injector : Injector<World>
         {
             public override Result<World> Inject(MemberInfo member, World world) => world;
         }
 
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Dependencies.Unknown();
+            }
+        }
+
         [Injector]
         static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
 
         readonly TypeMap<IModule, IModule> _modules = new TypeMap<IModule, IModule>();
         IResolvable[] _resolvables = Array.Empty<IResolvable>();

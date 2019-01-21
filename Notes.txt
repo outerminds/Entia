@@ -21,6 +21,12 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- interpret generic definition dependencies correctly
+	- ex: new Dependencies.Emit(typeof(Messages.OnAdd<>))
+	- this should mean that there is an emit dependency on every type 'T' that fits in 'Messages.OnAdd<>'
+- interpret interface dependencies correctly
+	- new Dependencies.Write(typeof(IComponent))
+	- this should mean that there is a write dependency on every type that implements 'IComponent'
 - allow exclusive queries to run in parallel
 	- ex: 
 		[All(typeof(B))] Group<Write<A>> GroupA; // defined in 'SystemA'
