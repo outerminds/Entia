@@ -18,9 +18,37 @@
       <summary>Returns an enumerator that iterates through the collection.</summary>
       <returns>An enumerator that can be used to iterate through the collection.</returns>
     </member>
+    <member name="M:Entia.Modules.WorldExtensions.Analyzers(Entia.World)">
+      <summary>
+            Gets or create the <see cref="T:Entia.Modules.Analyzers" /> module.
+            </summary>
+      <param name="world">The world.</param>
+      <returns>The module.</returns>
+    </member>
+    <member name="M:Entia.Modules.WorldExtensions.Builders(Entia.World)">
+      <summary>
+            Gets or create the <see cref="T:Entia.Modules.Builders" /> module.
+            </summary>
+      <param name="world">The world.</param>
+      <returns>The module.</returns>
+    </member>
     <member name="M:Entia.Modules.WorldExtensions.Components(Entia.World)">
       <summary>
             Gets or create the <see cref="T:Entia.Modules.Components" /> module.
+            </summary>
+      <param name="world">The world.</param>
+      <returns>The module.</returns>
+    </member>
+    <member name="M:Entia.Modules.WorldExtensions.Controllers(Entia.World)">
+      <summary>
+            Gets or create the <see cref="T:Entia.Modules.Controllers" /> module.
+            </summary>
+      <param name="world">The world.</param>
+      <returns>The module.</returns>
+    </member>
+    <member name="M:Entia.Modules.WorldExtensions.Dependers(Entia.World)">
+      <summary>
+            Gets or create the <see cref="T:Entia.Modules.Dependers" /> module.
             </summary>
       <param name="world">The world.</param>
       <returns>The module.</returns>
@@ -35,6 +63,55 @@
     <member name="M:Entia.Modules.WorldExtensions.Groups(Entia.World)">
       <summary>
             Gets or create the <see cref="T:Entia.Modules.Groups" /> module.
+            </summary>
+      <param name="world">The world.</param>
+      <returns>The module.</returns>
+    </member>
+    <member name="M:Entia.Modules.WorldExtensions.Injectors(Entia.World)">
+      <summary>
+            Gets or create the <see cref="T:Entia.Modules.Injectors" /> module.
+            </summary>
+      <param name="world">The world.</param>
+      <returns>The module.</returns>
+    </member>
+    <member name="M:Entia.Modules.WorldExtensions.Messages(Entia.World)">
+      <summary>
+            Gets or create the <see cref="T:Entia.Modules.Messages" /> module.
+            </summary>
+      <param name="world">The world.</param>
+      <returns>The module.</returns>
+    </member>
+    <member name="M:Entia.Modules.WorldExtensions.Queriers(Entia.World)">
+      <summary>
+            Gets or create the <see cref="T:Entia.Modules.Queriers" /> module.
+            </summary>
+      <param name="world">The world.</param>
+      <returns>The module.</returns>
+    </member>
+    <member name="M:Entia.Modules.WorldExtensions.Resolvers(Entia.World)">
+      <summary>
+            Gets or create the <see cref="T:Entia.Modules.Resolvers" /> module.
+            </summary>
+      <param name="world">The world.</param>
+      <returns>The module.</returns>
+    </member>
+    <member name="M:Entia.Modules.WorldExtensions.Resources(Entia.World)">
+      <summary>
+            Gets or create the <see cref="T:Entia.Modules.Resources" /> module.
+            </summary>
+      <param name="world">The world.</param>
+      <returns>The module.</returns>
+    </member>
+    <member name="M:Entia.Modules.WorldExtensions.Schedulers(Entia.World)">
+      <summary>
+            Gets or create the <see cref="T:Entia.Modules.Schedulers" /> module.
+            </summary>
+      <param name="world">The world.</param>
+      <returns>The module.</returns>
+    </member>
+    <member name="M:Entia.Modules.WorldExtensions.Templaters(Entia.World)">
+      <summary>
+            Gets or create the <see cref="T:Entia.Modules.Templaters" /> module.
             </summary>
       <param name="world">The world.</param>
       <returns>The module.</returns>

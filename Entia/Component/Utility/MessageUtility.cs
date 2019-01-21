@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Entia.Modules.Component
 {
-    public static class MessageUtility
+    static class MessageUtility
     {
         static class Cache<TMessage, TBase> where TMessage : struct, IMessage
         {

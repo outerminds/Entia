@@ -273,7 +273,7 @@ namespace Entia.Modules
                 if (slot.Resolution == Transient.Resolutions.Remove) return false;
 
                 var index = data.Transient.Value;
-                store = _transient.Store<T>(index, out var adjusted);
+                store = _transient.GetStore<T>(index, out var adjusted);
                 store[adjusted] = component;
 
                 if (slot.Mask.Add(metadata.Index))
@@ -314,7 +314,7 @@ namespace Entia.Modules
                 if (slot.Resolution == Transient.Resolutions.Remove) return false;
 
                 var index = data.Transient.Value;
-                store = _transient.Store(index, metadata, out var adjusted);
+                store = _transient.GetStore(index, metadata, out var adjusted);
                 store.SetValue(component, adjusted);
 
                 if (slot.Mask.Add(metadata.Index))
@@ -593,7 +593,7 @@ namespace Entia.Modules
             if (data.Transient is int transient)
             {
                 // NOTE: prioritize the segment store
-                store = store ?? _transient.Store(transient, metadata, out adjusted);
+                store = store ?? _transient.GetStore(transient, metadata, out adjusted);
                 ref readonly var slot = ref _transient.Slots.items[transient];
                 return Has(slot, metadata.Index);
             }

@@ -6,7 +6,7 @@ using Entia.Core;
 
 namespace Entia.Modules.Component
 {
-    public static class ComponentUtility
+    static class ComponentUtility
     {
         public static class Cache<T> where T : IComponent
         {

@@ -3,7 +3,7 @@ using System;
 
 namespace Entia.Modules.Component
 {
-    public sealed class Transient
+    sealed class Transient
     {
         public enum Resolutions : byte { Move, Add, Remove }
         public struct Slot
@@ -36,10 +36,10 @@ namespace Entia.Modules.Component
             return index;
         }
 
-        public bool TryStore<T>(int index, out T[] store) where T : struct, IComponent
+        public bool TryGetStore<T>(int index, out T[] store) where T : struct, IComponent
         {
             var component = ComponentUtility.Cache<T>.Data.Index;
-            if (TryChunk(index / ChunkSize, out var chunk) && component < chunk.Length)
+            if (TryGetChunk(index / ChunkSize, out var chunk) && component < chunk.Length)
             {
                 store = chunk[component] as T[];
                 return store != null;
@@ -49,11 +49,11 @@ namespace Entia.Modules.Component
             return false;
         }
 
-        public T[] Store<T>(int index, out int adjusted) where T : struct, IComponent => Store(index, ComponentUtility.Cache<T>.Data, out adjusted) as T[];
+        public T[] GetStore<T>(int index, out int adjusted) where T : struct, IComponent => GetStore(index, ComponentUtility.Cache<T>.Data, out adjusted) as T[];
 
-        public Array Store(int index, in Metadata metadata, out int adjusted)
+        public Array GetStore(int index, in Metadata metadata, out int adjusted)
         {
-            var chunk = Chunk(index, metadata.Index + 1);
+            var chunk = GetChunk(index, metadata.Index + 1);
             adjusted = index % ChunkSize;
 
             if (chunk[metadata.Index] is Array store) return store;
@@ -61,7 +61,7 @@ namespace Entia.Modules.Component
             return store;
         }
 
-        bool TryChunk(int index, out Array[] chunk)
+        bool TryGetChunk(int index, out Array[] chunk)
         {
             index /= ChunkSize;
             if (index < Chunks.Length)
@@ -74,7 +74,7 @@ namespace Entia.Modules.Component
             return false;
         }
 
-        Array[] Chunk(int index, int count)
+        Array[] GetChunk(int index, int count)
         {
             index /= ChunkSize;
             ArrayUtility.Ensure(ref Chunks, index + 1);
