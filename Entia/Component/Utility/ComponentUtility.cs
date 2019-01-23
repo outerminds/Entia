@@ -92,6 +92,9 @@ namespace Entia.Modules.Component
             return Kinds.Invalid;
         }
 
+        public static bool IsConcrete(Type type) => GetKind(type) == Kinds.Concrete;
+        public static bool IsAbstract(Type type) => GetKind(type) == Kinds.Abstract;
+
         public static Metadata GetMetadata(Type type)
         {
             using (var read = _state.Read(true))
