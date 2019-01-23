@@ -346,7 +346,7 @@ namespace Entia.Modules.Group
         }
 
         /// <inheritdoc cref="IGroup.Has(Entity)"/>
-        public bool Has(Entity entity) => _components.TryGetSegment(entity, out var pair) && Has(pair.segment);
+        public bool Has(Entity entity) => _components.TrySegment(entity, out var pair) && Has(pair.segment);
 
         /// <summary>
         /// Tries to get the <paramref name="item"/> associated with the provided <paramref name="entity"/>.
@@ -356,7 +356,7 @@ namespace Entia.Modules.Group
         /// <returns>Returns <c>true</c> if an <paramref name="item"/> was found; otherwise, <c>false</c>.</returns>
         public bool TryGet(Entity entity, out T item)
         {
-            if (_components.TryGetSegment(entity, out var pair) && Has(pair.segment))
+            if (_components.TrySegment(entity, out var pair) && Has(pair.segment))
             {
                 item = _indexToQuery[pair.segment.Index].Get(pair.index);
                 return true;

@@ -50,25 +50,12 @@ namespace Entia.Modules.Component
         }
 
         /// <summary>
-        /// Determines whether the segment has a component store of type <typeparamref name="T"/>.
-        /// </summary>
-        /// <typeparam name="T">The component type.</typeparam>
-        /// <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
-        public bool Has<T>() where T : struct, IComponent => Has(ComponentUtility.Cache<T>.Data.Index);
-        /// <summary>
-        /// Determines whether the segment has a component store of provided component type <paramref name="index"/>.
-        /// </summary>
-        /// <param name="index">The component type index.</param>
-        /// <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
-        public bool Has(int index) => Mask.Has(index);
-
-        /// <summary>
         /// Tries the get the component store of type <typeparamref name="T"/>.
         /// </summary>
         /// <typeparam name="T">The component type.</typeparam>
         /// <param name="store">The store.</param>
         /// <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
-        public bool TryGetStore<T>(out T[] store) where T : struct, IComponent
+        public bool TryStore<T>(out T[] store) where T : struct, IComponent
         {
             var index = GetStoreIndex<T>();
             if (index >= 0 && index < Stores.Length && Stores[index] is T[] casted)
@@ -87,7 +74,7 @@ namespace Entia.Modules.Component
         /// <param name="index">The component type index.</param>
         /// <param name="store">The component store.</param>
         /// <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
-        public bool TryGetStore(int index, out Array store)
+        public bool TryStore(int index, out Array store)
         {
             var storeIndex = GetStoreIndex(index);
             if (storeIndex >= 0 && storeIndex < Stores.Length && Stores[storeIndex] is Array casted)
@@ -106,14 +93,14 @@ namespace Entia.Modules.Component
         /// <typeparam name="T">The component type.</typeparam>
         /// <returns>The component store.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T[] GetStore<T>() where T : struct, IComponent => (T[])Stores[GetStoreIndex<T>()];
+        public T[] Store<T>() where T : struct, IComponent => (T[])Stores[GetStoreIndex<T>()];
         /// <summary>
         /// Gets the component store of provided component type <paramref name="index"/>.
         /// </summary>
         /// <param name="index">The component type index.</param>
         /// <returns>The component store.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref Array GetStore(int index) => ref Stores[GetStoreIndex(index)];
+        public ref Array Store(int index) => ref Stores[GetStoreIndex(index)];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         int GetStoreIndex(int component) => component - Types.minimum;

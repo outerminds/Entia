@@ -48,7 +48,7 @@ namespace Entia.Modules
         {
             _entities = entities;
             _messages = messages;
-            // NOTE: do not include '_pending' here
+            // NOTE: do not include '_created' and '_destroyed' here
             _segments = (new Segment[] { _empty }, 1);
             _maskToSegment = new Dictionary<BitMask, Segment> { { _empty.Mask, _empty } };
             _messages.React((in OnCreate message) => Initialize(message.Entity));
@@ -65,7 +65,7 @@ namespace Entia.Modules
         /// <returns>The component reference or a dummy reference if the component is missing.</returns>
         public ref T Get<T>(Entity entity) where T : struct, IComponent
         {
-            if (TryGetStore<T>(entity, out var store, out var adjusted)) return ref store[adjusted];
+            if (TryStore<T>(entity, out var store, out var adjusted)) return ref store[adjusted];
             if (_messages.Has<OnException>()) _messages.Emit(new OnException { Exception = ExceptionUtility.MissingComponent(entity, typeof(T)) });
             return ref Dummy<T>.Value;
         }
@@ -80,7 +80,7 @@ namespace Entia.Modules
         /// <returns>The component reference or a dummy reference.</returns>
         public ref T GetOrDummy<T>(Entity entity, out bool success) where T : struct, IComponent
         {
-            if (TryGetStore<T>(entity, out var store, out var adjusted))
+            if (TryStore<T>(entity, out var store, out var adjusted))
             {
                 success = true;
                 return ref store[adjusted];
@@ -100,7 +100,7 @@ namespace Entia.Modules
         /// <returns>The existing or added component reference.</returns>
         public ref T GetOrAdd<T>(Entity entity, Func<T> create = null) where T : struct, IComponent
         {
-            if (TryGetStore<T>(entity, out var store, out var adjusted)) return ref store[adjusted];
+            if (TryStore<T>(entity, out var store, out var adjusted)) return ref store[adjusted];
             Set(entity, create?.Invoke() ?? default);
             return ref Get<T>(entity);
         }
@@ -127,7 +127,7 @@ namespace Entia.Modules
         /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
         public bool TryGet(Entity entity, Type type, out IComponent component)
         {
-            if (TryGetStore(entity, type, out var store, out var index))
+            if (TryStore(entity, type, out var store, out var index))
             {
                 component = (IComponent)store.GetValue(index);
                 return true;
@@ -257,7 +257,7 @@ namespace Entia.Modules
             if (success)
             {
                 var metadata = ComponentUtility.Cache<T>.Data;
-                if (data.Segment.TryGetStore<T>(out var store))
+                if (data.Segment.TryStore<T>(out var store))
                 {
                     store[data.Index] = component;
                     if (data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index))
@@ -273,7 +273,7 @@ namespace Entia.Modules
                 if (slot.Resolution == Transient.Resolutions.Remove) return false;
 
                 var index = data.Transient.Value;
-                store = _transient.GetStore<T>(index, out var adjusted);
+                store = _transient.Store<T>(index, out var adjusted);
                 store[adjusted] = component;
 
                 if (slot.Mask.Add(metadata.Index))
@@ -298,7 +298,7 @@ namespace Entia.Modules
             ref var data = ref GetData(entity, out var success);
             if (success && ComponentUtility.TryGetMetadata(component.GetType(), out var metadata))
             {
-                if (data.Segment.TryGetStore(metadata.Index, out var store))
+                if (data.Segment.TryStore(metadata.Index, out var store))
                 {
                     store.SetValue(component, data.Index);
                     if (data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index))
@@ -314,7 +314,7 @@ namespace Entia.Modules
                 if (slot.Resolution == Transient.Resolutions.Remove) return false;
 
                 var index = data.Transient.Value;
-                store = _transient.GetStore(index, metadata, out var adjusted);
+                store = _transient.Store(index, metadata, out var adjusted);
                 store.SetValue(component, adjusted);
 
                 if (slot.Mask.Add(metadata.Index))
@@ -397,7 +397,7 @@ namespace Entia.Modules
         /// <param name="store">The store.</param>
         /// <param name="index">The index in the store where the component is.</param>
         /// <returns>Returns <c>true</c> if the store was found; otherwise, <c>false</c>.</returns>
-        public bool TryGetStore<T>(Entity entity, out T[] store, out int index) where T : struct, IComponent
+        public bool TryStore<T>(Entity entity, out T[] store, out int index) where T : struct, IComponent
         {
             if (TryGetData(entity, out var data) && TryGetStore(data, out store, out index)) return true;
             store = default;
@@ -413,7 +413,7 @@ namespace Entia.Modules
         /// <param name="store">The store.</param>
         /// <param name="index">The index in the store where the component is.</param>
         /// <returns>Returns <c>true</c> if the store was found; otherwise, <c>false</c>.</returns>
-        public bool TryGetStore(Entity entity, Type type, out Array store, out int index)
+        public bool TryStore(Entity entity, Type type, out Array store, out int index)
         {
             if (TryGetData(entity, out var data) &&
                 ComponentUtility.TryGetMetadata(type, out var metadata) &&
@@ -431,7 +431,7 @@ namespace Entia.Modules
         /// <param name="entity">The entity.</param>
         /// <param name="pair">The segment and the index of the entity within it.</param>
         /// <returns>Returns <c>true</c> if the segment was found; otherwise, <c>false</c>.</returns>
-        public bool TryGetSegment(Entity entity, out (Segment segment, int index) pair)
+        public bool TrySegment(Entity entity, out (Segment segment, int index) pair)
         {
             if (TryGetData(entity, out var data))
             {
@@ -588,12 +588,12 @@ namespace Entia.Modules
         bool TryGetStore(in Data data, in Metadata metadata, out Array store, out int adjusted)
         {
             adjusted = data.Index;
-            data.Segment.TryGetStore(metadata.Index, out store);
+            data.Segment.TryStore(metadata.Index, out store);
 
             if (data.Transient is int transient)
             {
                 // NOTE: prioritize the segment store
-                store = store ?? _transient.GetStore(transient, metadata, out adjusted);
+                store = store ?? _transient.Store(transient, metadata, out adjusted);
                 ref readonly var slot = ref _transient.Slots.items[transient];
                 return Has(slot, metadata.Index);
             }
@@ -626,7 +626,7 @@ namespace Entia.Modules
             for (var i = 0; i < types.Length; i++)
             {
                 ref readonly var metadata = ref types[i];
-                ref var targetStore = ref target.segment.GetStore(metadata.Index);
+                ref var targetStore = ref target.segment.Store(metadata.Index);
                 ArrayUtility.Ensure(ref targetStore, metadata.Type, target.segment.Entities.items.Length);
 
                 if (TryGetStore(data, metadata, out var sourceStore, out var sourceIndex))
@@ -654,7 +654,7 @@ namespace Entia.Modules
                 ref readonly var slot = ref _transient.Slots.items[transient];
                 return Has(slot, component);
             }
-            return data.Segment.Has(component);
+            return data.Segment.Mask.Has(component);
         }
 
         bool Has(in Transient.Slot slot, int component) => slot.Resolution != Transient.Resolutions.Remove && slot.Mask.Has(component);

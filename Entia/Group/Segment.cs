@@ -59,13 +59,13 @@ namespace Entia.Modules.Group
             Items = items;
         }
 
-        /// <inheritdoc cref="Component.Segment.GetStore{T}"/>
+        /// <inheritdoc cref="Component.Segment.Store{T}"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TComponent[] Store<TComponent>() where TComponent : struct, IComponent => _segment.GetStore<TComponent>();
+        public TComponent[] Store<TComponent>() where TComponent : struct, IComponent => _segment.Store<TComponent>();
 
-        /// <inheritdoc cref="Component.Segment.TryGetStore{T}(out T[])"/>
+        /// <inheritdoc cref="Component.Segment.TryStore{T}(out T[])"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryStore<TComponent>(out TComponent[] store) where TComponent : struct, IComponent => _segment.TryGetStore(out store);
+        public bool TryStore<TComponent>(out TComponent[] store) where TComponent : struct, IComponent => _segment.TryStore(out store);
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -16,16 +16,16 @@ namespace Entia.Modules.Component
 
         struct State
         {
-            public (Metadata[] items, int count) Metadata;
+            public (Metadata[] items, int count) Types;
             public Dictionary<Type, Metadata> TypeToMetadata;
         }
 
-        public static int Count => _state.Read((in State state) => state.Metadata.count);
-        public static Metadata[] Types => _state.Read((in State state) => state.Metadata.ToArray());
+        public static int Count => _state.Read((in State state) => state.Types.count);
+        public static Metadata[] Types => _state.Read((in State state) => state.Types.ToArray());
 
         static readonly Concurrent<State> _state = new State
         {
-            Metadata = (new Metadata[8], 0),
+            Types = (new Metadata[8], 0),
             TypeToMetadata = new Dictionary<Type, Metadata>()
         };
 
@@ -33,9 +33,9 @@ namespace Entia.Modules.Component
         {
             using (var read = _state.Read())
             {
-                if (index < read.Value.Metadata.count)
+                if (index < read.Value.Types.count)
                 {
-                    data = read.Value.Metadata.items[index];
+                    data = read.Value.Types.items[index];
                     return data.IsValid;
                 }
             }
@@ -77,10 +77,10 @@ namespace Entia.Modules.Component
                 {
                     var data = new Metadata(
                         type,
-                        write.Value.Metadata.count,
-                        new BitMask(write.Value.Metadata.count),
+                        write.Value.Types.count,
+                        new BitMask(write.Value.Types.count),
                         type.GetFields(TypeUtility.Instance));
-                    return write.Value.Metadata.Push(data);
+                    return write.Value.Types.Push(data);
                 }
             }
 

@@ -20,10 +20,10 @@ namespace Entia.Queryables
         {
             public override bool TryQuery(Segment segment, World world, out Query<Write<T>> query)
             {
-                if (segment.Has<T>())
+                var metadata = ComponentUtility.Cache<T>.Data;
+                if (segment.Mask.Has(metadata.Index))
                 {
-                    var metadata = ComponentUtility.Cache<T>.Data;
-                    query = new Query<Write<T>>(index => new Write<T>(segment.GetStore<T>(), index), metadata);
+                    query = new Query<Write<T>>(index => new Write<T>(segment.Store<T>(), index), metadata);
                     return true;
                 }
 

@@ -17,7 +17,7 @@ namespace Entia.Experiment
                 .Where(segment => group.Querier.TryQuery(segment, world, out _))
                 .ToArray();
             var arrays = segments
-                .Select(segment => (segment.Entities.count, positions: segment.GetStore<Position>(), velocities: segment.GetStore<Velocity>()))
+                .Select(segment => (segment.Entities.count, positions: segment.Store<Position>(), velocities: segment.Store<Velocity>()))
                 .ToArray();
 
             void Body(ref Position position, in Velocity velocity)
@@ -60,8 +60,8 @@ namespace Entia.Experiment
                 {
                     var segment = segments[i];
                     var count = segment.Entities.count;
-                    var positions = segment.GetStore<Position>();
-                    var velocities = segment.GetStore<Velocity>();
+                    var positions = segment.Store<Position>();
+                    var velocities = segment.Store<Velocity>();
                     for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
                 }
             }
