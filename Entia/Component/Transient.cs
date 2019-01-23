@@ -3,7 +3,7 @@ using System;
 
 namespace Entia.Modules.Component
 {
-    sealed class Transient
+    public sealed class Transient
     {
         public enum Resolutions : byte { Move, Add, Remove }
         public struct Slot
