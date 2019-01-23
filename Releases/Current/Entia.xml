@@ -155,7 +155,7 @@
             Gets a component of type <typeref name="T" /> associated with the entity <paramref name="entity" />.
             If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
       <returns>The component reference or a dummy reference if the component is missing.</returns>
     </member>
@@ -164,7 +164,7 @@
             Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
             If the component is missing, a dummy reference will be returned.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
       <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
       <returns>The component reference or a dummy reference.</returns>
@@ -174,7 +174,7 @@
             Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
             If the component is missing, a new instance will be created using the <paramref name="create" /> function.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
       <param name="create">A function that creates a component of type <typeparamref name="T" />.</param>
       <returns>The existing or added component reference.</returns>
@@ -183,7 +183,7 @@
       <summary>
             Tries to get a component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity.</param>
       <param name="component">The component.</param>
       <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
@@ -193,7 +193,7 @@
             Tries to get a component of provided <paramref name="type" /> associated with the <paramref name="entity" />.
             </summary>
       <param name="entity">The entity.</param>
-      <param name="type">The component type.</param>
+      <param name="type">The concrete component type.</param>
       <param name="component">The component.</param>
       <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
     </member>
@@ -203,7 +203,7 @@
             If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
             </summary>
       <param name="entity">The entity associated with the component.</param>
-      <param name="type">The component type.</param>
+      <param name="type">The concrete component type.</param>
       <returns>The component or null reference if the component is missing.</returns>
     </member>
     <member name="M:Entia.Modules.Components.Get(Entia.Entity)">
@@ -217,14 +217,14 @@
       <summary>
             Gets all entity-component pairs that have a component of type <typeparamref name="T" />.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <returns>The entity-component pairs.</returns>
     </member>
     <member name="M:Entia.Modules.Components.Get(System.Type)">
       <summary>
             Gets all entity-component pairs that have a component of provided <paramref name="type" />.
             </summary>
-      <param name="type">The component type.</param>
+      <param name="type">The concrete component type.</param>
       <returns>The entity-component pairs.</returns>
     </member>
     <member name="M:Entia.Modules.Components.Has``1(Entia.Entity)">
@@ -269,7 +269,7 @@
             Sets the <paramref name="component" /> of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             If the component is missing, it is added.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity.</param>
       <param name="component">The component.</param>
       <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
@@ -285,7 +285,7 @@
     </member>
     <member name="M:Entia.Modules.Components.Remove``1(Entia.Entity)">
       <summary>
-            Removes the component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            Removes components of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             </summary>
       <typeparam name="T">The component type.</typeparam>
       <param name="entity">The entity.</param>
@@ -293,7 +293,7 @@
     </member>
     <member name="M:Entia.Modules.Components.Remove(Entia.Entity,System.Type)">
       <summary>
-            Removes the component of provided <paramref name="type" /> associated with the <paramref name="entity" />.
+            Removes components of provided <paramref name="type" /> associated with the <paramref name="entity" />.
             </summary>
       <param name="entity">The entity.</param>
       <param name="type">The component type.</param>
@@ -330,7 +330,7 @@
       <summary>
             Tries to get the component store of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity.</param>
       <param name="store">The store.</param>
       <param name="index">The index in the store where the component is.</param>
@@ -341,7 +341,7 @@
             Tries to get the component store of provided <paramref name="type" /> associated with the <paramref name="entity" />.
             </summary>
       <param name="entity">The entity.</param>
-      <param name="type">The component type.</param>
+      <param name="type">The concrete component type.</param>
       <param name="store">The store.</param>
       <param name="index">The index in the store where the component is.</param>
       <returns>Returns <c>true</c> if the store was found; otherwise, <c>false</c>.</returns>
@@ -373,11 +373,6 @@
             Implements the operator !=.
             </summary>
     </member>
-    <member name="F:Entia.Modules.Component.Metadata.Invalid">
-      <summary>
-            An invalid instance.
-            </summary>
-    </member>
     <member name="P:Entia.Modules.Component.Metadata.IsValid">
       <summary>
             Returns true if the instance is valid.
@@ -394,17 +389,7 @@
             The component index.
             </summary>
     </member>
-    <member name="F:Entia.Modules.Component.Metadata.Mask">
-      <summary>
-            The component mask.
-            </summary>
-    </member>
-    <member name="F:Entia.Modules.Component.Metadata.Fields">
-      <summary>
-            The component fields.
-            </summary>
-    </member>
-    <member name="M:Entia.Modules.Component.Metadata.#ctor(System.Type,System.Int32,Entia.Core.BitMask,System.Reflection.FieldInfo[])">
+    <member name="M:Entia.Modules.Component.Metadata.#ctor(System.Type,System.Int32)">
       <summary>
             Initializes a new instance of the <see cref="T:Entia.Modules.Component.Metadata" /> struct.
             </summary>
@@ -1161,7 +1146,7 @@
             Gets a component of type <typeref name="T" /> associated with the entity <paramref name="entity" />.
             If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
       <returns>The component reference or a dummy reference if the component is missing.</returns>
     </member>
@@ -1170,7 +1155,7 @@
             Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
             If the component is missing, a new instance will be created using the <paramref name="create" /> function.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="create">A function that creates a component of type <typeparamref name="T" />.</param>
       <returns>The existing or added component reference.</returns>
     </member>
@@ -1179,7 +1164,7 @@
             Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
             If the component is missing, a dummy reference will be returned.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
       <returns>The component reference or a dummy reference.</returns>
     </member>
@@ -1187,7 +1172,7 @@
       <summary>
             Tries to get a component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="component">The component.</param>
       <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
     </member>
@@ -1195,7 +1180,7 @@
       <summary>
             Tries to get a component of provided <paramref name="type" /> associated with the <paramref name="entity" />.
             </summary>
-      <param name="type">The component type.</param>
+      <param name="type">The concrete component type.</param>
       <param name="component">The component.</param>
       <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
     </member>
@@ -1210,14 +1195,14 @@
       <summary>
             Gets all entity-component pairs that have a component of type <typeparamref name="T" />.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <returns>The entity-component pairs.</returns>
     </member>
     <member>
       <summary>
             Gets all entity-component pairs that have a component of provided <paramref name="type" />.
             </summary>
-      <param name="type">The component type.</param>
+      <param name="type">The concrete component type.</param>
       <returns>The entity-component pairs.</returns>
     </member>
     <member>
@@ -1225,7 +1210,7 @@
             Sets the <paramref name="component" /> of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             If the component is missing, it is added.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="component">The component.</param>
       <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
     </member>
@@ -1254,7 +1239,7 @@
     </member>
     <member>
       <summary>
-            Removes the component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            Removes components of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             </summary>
       <typeparam name="T">The component type.</typeparam>
       <param name="entity">The entity.</param>
@@ -1262,7 +1247,7 @@
     </member>
     <member>
       <summary>
-            Removes the component of provided <paramref name="type" /> associated with the <paramref name="entity" />.
+            Removes components of provided <paramref name="type" /> associated with the <paramref name="entity" />.
             </summary>
       <param name="type">The component type.</param>
       <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
@@ -1319,7 +1304,7 @@
             Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
             If the component is missing, a dummy reference will be returned.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
       <returns>The component reference or a dummy reference.</returns>
     </member>
@@ -1327,7 +1312,7 @@
       <summary>
             Tries to get a component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="component">The component.</param>
       <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
     </member>
@@ -1336,7 +1321,7 @@
             Gets a component of type <typeref name="T" /> associated with the entity <paramref name="entity" />.
             If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
       <returns>The component reference or a dummy reference if the component is missing.</returns>
     </member>
@@ -1368,7 +1353,7 @@
             Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
             If the component is missing, a dummy reference will be returned.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
       <returns>The component reference or a dummy reference.</returns>
     </member>
@@ -1376,7 +1361,7 @@
       <summary>
             Tries to get a component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="component">The component.</param>
       <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
     </member>
@@ -1385,7 +1370,7 @@
             Gets a component of type <typeref name="T" /> associated with the entity <paramref name="entity" />.
             If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
       <returns>The component reference or a dummy reference if the component is missing.</returns>
     </member>
@@ -1412,7 +1397,7 @@
             Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
             If the component is missing, a new instance will be created using the <paramref name="create" /> function.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="create">A function that creates a component of type <typeparamref name="T" />.</param>
       <returns>The existing or added component reference.</returns>
     </member>
@@ -1421,7 +1406,7 @@
             Gets a component of type <typeref name="T" /> associated with the <paramref name="entity" />.
             If the component is missing, a dummy reference will be returned.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
       <returns>The component reference or a dummy reference.</returns>
     </member>
@@ -1429,7 +1414,7 @@
       <summary>
             Tries to get a component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="component">The component.</param>
       <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
     </member>
@@ -1438,7 +1423,7 @@
             Gets a component of type <typeref name="T" /> associated with the entity <paramref name="entity" />.
             If the component is missing, a <see cref="T:Entia.Messages.OnException" /> message will be emitted.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
       <returns>The component reference or a dummy reference if the component is missing.</returns>
     </member>
@@ -1447,7 +1432,7 @@
             Sets the <paramref name="component" /> of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             If the component is missing, it is added.
             </summary>
-      <typeparam name="T">The component type.</typeparam>
+      <typeparam name="T">The concrete component type.</typeparam>
       <param name="component">The component.</param>
       <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
     </member>
@@ -1461,7 +1446,7 @@
     </member>
     <member>
       <summary>
-            Removes the component of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
+            Removes components of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             </summary>
       <typeparam name="T">The component type.</typeparam>
       <param name="entity">The entity.</param>

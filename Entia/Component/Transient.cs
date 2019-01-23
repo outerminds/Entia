@@ -38,7 +38,7 @@ namespace Entia.Modules.Component
 
         public bool TryStore<T>(int index, out T[] store) where T : struct, IComponent
         {
-            var component = ComponentUtility.Cache<T>.Data.Index;
+            var component = ComponentUtility.Concrete<T>.Data.Index;
             if (TryGetChunk(index / ChunkSize, out var chunk) && component < chunk.Length)
             {
                 store = chunk[component] as T[];
@@ -49,7 +49,7 @@ namespace Entia.Modules.Component
             return false;
         }
 
-        public T[] Store<T>(int index, out int adjusted) where T : struct, IComponent => Store(index, ComponentUtility.Cache<T>.Data, out adjusted) as T[];
+        public T[] Store<T>(int index, out int adjusted) where T : struct, IComponent => Store(index, ComponentUtility.Concrete<T>.Data, out adjusted) as T[];
 
         public Array Store(int index, in Metadata metadata, out int adjusted)
         {

@@ -20,7 +20,7 @@ namespace Entia.Queryables
         {
             public override bool TryQuery(Segment segment, World world, out Query<Read<T>> query)
             {
-                var metadata = ComponentUtility.Cache<T>.Data;
+                ref readonly var metadata = ref ComponentUtility.Concrete<T>.Data;
                 if (segment.Mask.Has(metadata.Index))
                 {
                     query = new Query<Read<T>>(index => new Read<T>(segment.Store<T>(), index), metadata);

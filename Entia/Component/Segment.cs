@@ -39,10 +39,7 @@ namespace Entia.Modules.Component
             Index = index;
             Mask = mask;
 
-            var metadata = Mask
-                .Select(bit => ComponentUtility.TryGetMetadata(bit, out var data) ? data : default)
-                .Where(data => data.IsValid)
-                .ToArray();
+            var metadata = ComponentUtility.ToMetadata(mask);
             Types = (metadata, metadata.Select(data => data.Index).FirstOrDefault(), metadata.Select(data => data.Index + 1).LastOrDefault());
             Entities = (new Entity[capacity], 0);
             Stores = new Array[Types.maximum - Types.minimum];
@@ -105,6 +102,6 @@ namespace Entia.Modules.Component
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         int GetStoreIndex(int component) => component - Types.minimum;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        int GetStoreIndex<T>() where T : struct, IComponent => GetStoreIndex(ComponentUtility.Cache<T>.Data.Index);
+        int GetStoreIndex<T>() where T : struct, IComponent => GetStoreIndex(ComponentUtility.Concrete<T>.Data.Index);
     }
 }

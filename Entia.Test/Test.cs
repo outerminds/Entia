@@ -1,4 +1,5 @@
-﻿using Entia.Modules;
+﻿using Entia.Core;
+using Entia.Modules;
 using Entia.Modules.Query;
 using Entia.Queryables;
 using FsCheck;
@@ -11,20 +12,27 @@ namespace Entia.Test
 {
     public static class Test
     {
-        public struct ComponentA : IComponent { }
-        public struct ComponentB : IComponent { public float Value; }
-        public struct ComponentC : IComponent { public ulong A, B, C; }
+        public interface IComponentA : IComponentC { }
+        public interface IComponentB : IComponentC { }
+        public interface IComponentC : IComponent { }
+        public struct ComponentA : IComponentA { }
+        public struct ComponentB : IComponentA { public float Value; }
+        public struct ComponentC<T> : IComponentB { public ulong A, B, C; }
         public struct MessageA : IMessage { }
         public struct MessageB : IMessage { }
         public static class Providers
         {
             public static ICustomAttributeProvider A = new System.Action(MethodA).Method;
             public static ICustomAttributeProvider B = new System.Action(MethodB).Method;
+            public static ICustomAttributeProvider C = new System.Action(MethodC).Method;
 
-            [All(typeof(ComponentC))]
+            [All(typeof(ComponentC<>))]
             static void MethodA() { }
             [None(typeof(ComponentA), typeof(ComponentB))]
             static void MethodB() { }
+            [All(typeof(IComponentA))]
+            [None(typeof(ComponentB))]
+            static void MethodC() { }
         }
 
         public static void Run(int count = 1600, int size = 1600)
@@ -41,23 +49,27 @@ namespace Entia.Test
                 (1, Gen.Fresh(() => new ClearEntities().ToAction())),
 
                 // Component
-                (20, Gen.Fresh(() => new AddComponent<ComponentA>().ToAction())),
-                (20, Gen.Fresh(() => new AddComponent<ComponentB>().ToAction())),
-                (20, Gen.Fresh(() => new AddComponent<ComponentC>().ToAction())),
-                (20, Gen.Fresh(() => new RemoveComponent<ComponentA>().ToAction())),
-                (20, Gen.Fresh(() => new RemoveComponent<ComponentB>().ToAction())),
-                (20, Gen.Fresh(() => new RemoveComponent<ComponentC>().ToAction())),
+                (20, Gen.Fresh(() => new AddComponent<ComponentA, IComponentA>(typeof(IComponentC)).ToAction())),
+                (20, Gen.Fresh(() => new AddComponent<ComponentB, IComponentC>(typeof(IComponentA)).ToAction())),
+                (20, Gen.Fresh(() => new AddComponent<ComponentC<Unit>, IComponentB>(typeof(ComponentC<>)).ToAction())),
+                (15, Gen.Fresh(() => new RemoveComponent<ComponentA>().ToAction())),
+                (15, Gen.Fresh(() => new RemoveComponent<ComponentB>().ToAction())),
+                (15, Gen.Fresh(() => new RemoveComponent<ComponentC<Unit>>().ToAction())),
+                (15, Gen.Fresh(() => new RemoveComponent(typeof(IComponentC)).ToAction())),
+                (15, Gen.Fresh(() => new RemoveComponent(typeof(ComponentC<>)).ToAction())),
                 (2, Gen.Fresh(() => new ClearComponent<ComponentA>().ToAction())),
                 (2, Gen.Fresh(() => new ClearComponent<ComponentB>().ToAction())),
-                (2, Gen.Fresh(() => new ClearComponent<ComponentC>().ToAction())),
+                (2, Gen.Fresh(() => new ClearComponent<ComponentC<Unit>>().ToAction())),
+                (2, Gen.Fresh(() => new ClearComponent(typeof(IComponentB)).ToAction())),
 
                 // Group
                 (5, Gen.Fresh(() => new GetGroup<Read<ComponentA>>().ToAction())),
-                (5, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<ComponentC>>>().ToAction())),
+                (5, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<ComponentC<Unit>>>>().ToAction())),
                 (5, Gen.Fresh(() => new GetGroup<Maybe<Read<ComponentA>>>().ToAction())),
-                (5, Gen.Fresh(() => new GetGroup<Read<ComponentC>>(Providers.A).ToAction())),
+                (5, Gen.Fresh(() => new GetGroup<Read<ComponentC<Unit>>>(Providers.A).ToAction())),
                 (5, Gen.Fresh(() => new GetEntityGroup(Providers.B).ToAction())),
-                (5, Gen.Fresh(() => new GetGroup<Any<Write<ComponentC>, Read<ComponentB>>>().ToAction())),
+                (5, Gen.Fresh(() => new GetEntityGroup(Providers.C).ToAction())),
+                (5, Gen.Fresh(() => new GetGroup<Any<Write<ComponentC<Unit>>, Read<ComponentB>>>().ToAction())),
 
                 // Message
                 (5, Gen.Fresh(() => new EmitMessage<MessageA>().ToAction())),
@@ -71,25 +83,21 @@ namespace Entia.Test
             var sequence = generator.ToSequence(
                 seed => (new World(), new Model(seed)),
                 (world, model) =>
-                {
-                    var components = world.Entities().Select(entity => (entity, world.Components().Get(entity).ToArray())).ToArray();
-                    return
-                        (world.Entities().Count() == model.Entities.Count).Label("Entities.Count")
-                        .And(world.Entities().All(model.Entities.Contains).Label("model.Entities.Contains()"))
-                        .And(model.Entities.All(world.Entities().Has)).Label("world.Entities().Has()")
-                        .And(world.Entities().Distinct().SequenceEqual(world.Entities())).Label("world.Entities().Distinct()")
+                    (world.Entities().Count() == model.Entities.Count).Label("Entities.Count")
+                    .And(world.Entities().All(model.Entities.Contains).Label("model.Entities.Contains()"))
+                    .And(model.Entities.All(world.Entities().Has)).Label("world.Entities().Has()")
+                    .And(world.Entities().Distinct().SequenceEqual(world.Entities())).Label("world.Entities().Distinct()")
 
-                        .And(world.Entities().All(entity => world.Components().Get(entity).Count() == model.Components[entity].Count)
-                            .Label("world.Components().Get().Count()"))
-                        .And(world.Entities().All(entity => world.Components().Get(entity).All(component => model.Components[entity].ContainsKey(component.GetType())))
-                            .Label("model.Components.ContainsKey()"))
-                        .And(model.Components.All(pair => pair.Value.Keys.All(type => world.Components().Has(pair.Key, type)))
-                            .Label("world.Components().Has()"))
+                    .And(world.Entities().All(entity => world.Components().Get(entity).Count() == model.Components[entity].Count)
+                        .Label("world.Components().Get().Count()"))
+                    .And(world.Entities().All(entity => world.Components().Get(entity).All(component => model.Components[entity].ContainsKey(component.GetType())))
+                        .Label("model.Components.ContainsKey()"))
+                    .And(model.Components.All(pair => pair.Value.Keys.All(type => world.Components().Has(pair.Key, type)))
+                        .Label("world.Components().Has()"))
 
-                        .And((world.Groups().Count == model.Groups.Count).Label("Groups.Count"))
-                        .And((world.Groups().Count() == model.Groups.Count).Label("Groups.Count()"))
-                        .And((world.Groups().Count <= 6).Label("world.Groups().Count <= 6"));
-                });
+                    .And((world.Groups().Count == model.Groups.Count).Label("Groups.Count"))
+                    .And((world.Groups().Count() == model.Groups.Count).Label("Groups.Count()"))
+                    .And((world.Groups().Count <= 7).Label("world.Groups().Count <= 7")));
 
             var parallel =
 #if DEBUG
