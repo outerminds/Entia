@@ -21,6 +21,33 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- support for component operations over interfaces and generic definitions
+	- ex:
+		interface IFreezeSource : IComponent {}
+		struct TimedFreeze : IFreezeSource { public float Remaining; }
+		struct InputFreeze : IFreezeSource { public KeyCode[] Keys; public int Remaining; }
+		struct RegionFreeze : IFreezeSource { }
+		if (Components.Has<IFreezeSource>()) // Do not update motion, or take double damage, etc.
+	- ex:
+		[None(typeof(Unity<>))] // Filters out entities that have any concretisation of the generic definition
+		Group<Entity> Group;
+	- compatible operations include:
+		- Components.Has
+		- Components.Count
+		- Components.Remove
+		- Components.Clear
+		- [All], [Any], [None]
+	- incompatible operations include:
+		- Components.Set
+		- Components.Get // and other getters
+		- Group<T>
+		- Segment.Store
+	- for generic API calls, the compiler will be able to ensure a concrete vs abstract generic argument
+	- concrete types will have to be registered with all their related abstract types
+		- struct Unity<T> : IUnity { }
+		- ComponentUtility.Cache<T>.Data will need an indirection to allow the metadata to be changed
+		- ComponentUtility.Cache<T> could get an 'Index' field since it is usually what is used and the index will never change
+			- the index will actually be required for the indirection to work
 - interpret generic definition dependencies correctly
 	- ex: new Dependencies.Emit(typeof(Messages.OnAdd<>))
 	- this should mean that there is an emit dependency on every type 'T' that fits in 'Messages.OnAdd<>'
@@ -66,6 +93,12 @@ Bugs:
 	- would require adding namespace elements to the extensions until they are no longer ambiguous; item.BobaA(); item.FettA();
 
 Optimization:
+- Components.HasAll<T1, T2, ...>, Components.HasAny<T1, T2, ...>, Components.HasNone<T1, T2, ...>
+	- would retrieve a statically cached mask that represents all generic types
+	- would resolve in a single BitMask comparison rather than multiple separate ones
+	- could be done using a tuple type rather than a bagillion overloads
+		- ex: Components.HasAll<(Boba, Fett)>()
+		- I need the 'ITuple' interface to appropriately constrain the generic argument, but it exists only in .Net Standard 2.1
 - do not reserve a store for empty components
 - WorldReferenceEditor is very slow. Can try to cache stuff.
 - make sure every 'Enumerable<T>' is implemented in such a way that it doesn't allocate 
