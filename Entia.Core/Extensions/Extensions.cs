@@ -6,7 +6,11 @@ namespace Entia.Core
     {
         public static bool Not(this bool value) => !value;
 
-        public static bool Change<T>(ref this T source, in T target) where T : struct =>
-            !EqualityComparer<T>.Default.Equals(source, (source = target));
+        public static bool Change<T>(ref this T source, in T target) where T : struct
+        {
+            var changed = !EqualityComparer<T>.Default.Equals(source, target);
+            source = target;
+            return changed;
+        }
     }
 }

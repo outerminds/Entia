@@ -326,7 +326,7 @@
             </summary>
       <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
     </member>
-    <member name="M:Entia.Modules.Components.TryGetStore``1(Entia.Entity,``0[]@,System.Int32@)">
+    <member name="M:Entia.Modules.Components.TryStore``1(Entia.Entity,``0[]@,System.Int32@)">
       <summary>
             Tries to get the component store of type <typeparamref name="T" /> associated with the <paramref name="entity" />.
             </summary>
@@ -336,7 +336,7 @@
       <param name="index">The index in the store where the component is.</param>
       <returns>Returns <c>true</c> if the store was found; otherwise, <c>false</c>.</returns>
     </member>
-    <member name="M:Entia.Modules.Components.TryGetStore(Entia.Entity,System.Type,System.Array@,System.Int32@)">
+    <member name="M:Entia.Modules.Components.TryStore(Entia.Entity,System.Type,System.Array@,System.Int32@)">
       <summary>
             Tries to get the component store of provided <paramref name="type" /> associated with the <paramref name="entity" />.
             </summary>
@@ -346,7 +346,7 @@
       <param name="index">The index in the store where the component is.</param>
       <returns>Returns <c>true</c> if the store was found; otherwise, <c>false</c>.</returns>
     </member>
-    <member name="M:Entia.Modules.Components.TryGetSegment(Entia.Entity,System.ValueTuple{Entia.Modules.Component.Segment,System.Int32}@)">
+    <member name="M:Entia.Modules.Components.TrySegment(Entia.Entity,System.ValueTuple{Entia.Modules.Component.Segment,System.Int32}@)">
       <summary>
             Tries the get segment associated with the <paramref name="entity" />.
             </summary>
@@ -460,21 +460,7 @@
             Initializes a new instance of the <see cref="T:Entia.Modules.Component.Segment" /> class.
             </summary>
     </member>
-    <member name="M:Entia.Modules.Component.Segment.Has``1">
-      <summary>
-            Determines whether the segment has a component store of type <typeparamref name="T" />.
-            </summary>
-      <typeparam name="T">The component type.</typeparam>
-      <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
-    </member>
-    <member name="M:Entia.Modules.Component.Segment.Has(System.Int32)">
-      <summary>
-            Determines whether the segment has a component store of provided component type <paramref name="index" />.
-            </summary>
-      <param name="index">The component type index.</param>
-      <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
-    </member>
-    <member name="M:Entia.Modules.Component.Segment.TryGetStore``1(``0[]@)">
+    <member name="M:Entia.Modules.Component.Segment.TryStore``1(``0[]@)">
       <summary>
             Tries the get the component store of type <typeparamref name="T" />.
             </summary>
@@ -482,7 +468,7 @@
       <param name="store">The store.</param>
       <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
     </member>
-    <member name="M:Entia.Modules.Component.Segment.TryGetStore(System.Int32,System.Array@)">
+    <member name="M:Entia.Modules.Component.Segment.TryStore(System.Int32,System.Array@)">
       <summary>
             Tries the get the component store of provided component type <paramref name="index" />.
             </summary>
@@ -490,14 +476,14 @@
       <param name="store">The component store.</param>
       <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
     </member>
-    <member name="M:Entia.Modules.Component.Segment.GetStore``1">
+    <member name="M:Entia.Modules.Component.Segment.Store``1">
       <summary>
             Gets the component store of type <typeparamref name="T" />.
             </summary>
       <typeparam name="T">The component type.</typeparam>
       <returns>The component store.</returns>
     </member>
-    <member name="M:Entia.Modules.Component.Segment.GetStore(System.Int32)">
+    <member name="M:Entia.Modules.Component.Segment.Store(System.Int32)">
       <summary>
             Gets the component store of provided component type <paramref name="index" />.
             </summary>
