@@ -17,47 +17,31 @@ namespace Entia.Queryables
     {
         public readonly Type Queryable;
         public QueryAttribute(Type queryable) { Queryable = queryable; }
-        public bool TryQuery(Segment segment, World world, out Query query) => world.Queriers().Get(Queryable).TryQuery(segment, world, out query);
+        public bool TryQuery(Segment segment, World world) => world.Queriers().Get(Queryable).TryQuery(segment, world);
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
     public sealed class AllAttribute : Attribute, IQuerier
     {
-        public readonly Metadata[] Types;
-        public readonly BitMask Mask;
+        readonly BitMask[] _masks;
 
-        public AllAttribute(params Type[] components) { ComponentUtility.ToMetadataAndMask(components, out Types, out Mask); }
-
-        public bool TryQuery(Segment segment, World world, out Query query)
+        public AllAttribute(params Type[] components) { _masks = components.Select(ComponentUtility.GetConcrete).ToArray(); }
+        public bool TryQuery(Segment segment, World world)
         {
-            if (segment.Mask.HasAll(Mask))
-            {
-                query = new Query(Types);
-                return true;
-            }
-
-            query = default;
-            return false;
+            for (int i = 0; i < _masks.Length; i++) if (segment.Mask.HasNone(_masks[i])) return false;
+            return true;
         }
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
     public sealed class AnyAttribute : Attribute, IQuerier
     {
-        public readonly Metadata[] Types;
-        public readonly BitMask Mask;
+        readonly BitMask[] _masks;
 
-        public AnyAttribute(params Type[] components) { ComponentUtility.ToMetadataAndMask(components, out Types, out Mask); }
-
-        public bool TryQuery(Segment segment, World world, out Query query)
+        public AnyAttribute(params Type[] components) { _masks = components.Select(ComponentUtility.GetConcrete).ToArray(); }
+        public bool TryQuery(Segment segment, World world)
         {
-            if (segment.Mask.HasAny(Mask))
-            {
-                query = new Query(Types);
-                return true;
-            }
-
-            query = default;
+            for (int i = 0; i < _masks.Length; i++) if (segment.Mask.HasAny(_masks[i])) return true;
             return false;
         }
     }
@@ -65,21 +49,13 @@ namespace Entia.Queryables
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
     public sealed class NoneAttribute : Attribute, IQuerier
     {
-        public readonly Metadata[] Types;
-        public readonly BitMask Mask;
+        readonly BitMask[] _masks;
 
-        public NoneAttribute(params Type[] components) { ComponentUtility.ToMetadataAndMask(components, out Types, out Mask); }
-
-        public bool TryQuery(Segment segment, World world, out Query query)
+        public NoneAttribute(params Type[] components) { _masks = components.Select(ComponentUtility.GetConcrete).ToArray(); }
+        public bool TryQuery(Segment segment, World world)
         {
-            if (segment.Mask.HasNone(Mask))
-            {
-                query = new Query(Types);
-                return true;
-            }
-
-            query = default;
-            return false;
+            for (int i = 0; i < _masks.Length; i++) if (segment.Mask.HasAny(_masks[i])) return false;
+            return true;
         }
     }
 }

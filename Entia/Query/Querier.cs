@@ -11,7 +11,7 @@ namespace Entia.Queriers
 {
     public interface IQuerier
     {
-        bool TryQuery(Segment segment, World world, out Query query);
+        bool TryQuery(Segment segment, World world);
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
@@ -21,17 +21,7 @@ namespace Entia.Queriers
     {
         public abstract bool TryQuery(Segment segment, World world, out Query<T> query);
 
-        bool IQuerier.TryQuery(Segment segment, World world, out Query query)
-        {
-            if (TryQuery(segment, world, out var casted))
-            {
-                query = casted;
-                return true;
-            }
-
-            query = default;
-            return false;
-        }
+        bool IQuerier.TryQuery(Segment segment, World world) => TryQuery(segment, world, out _);
     }
 
     public sealed class Default<T> : Querier<T> where T : struct, Queryables.IQueryable
@@ -47,9 +37,9 @@ namespace Entia.Queriers
     {
         sealed class Try : IQuerier
         {
-            readonly TryFunc<Segment, World, Query> _try;
-            public Try(TryFunc<Segment, World, Query> @try) { _try = @try; }
-            public bool TryQuery(Segment segment, World world, out Query query) => _try(segment, world, out query);
+            readonly Func<Segment, World, bool> _try;
+            public Try(Func<Segment, World, bool> @try) { _try = @try; }
+            public bool TryQuery(Segment segment, World world) => _try(segment, world);
         }
 
         sealed class Try<T> : Querier<T> where T : struct, Queryables.IQueryable
@@ -63,16 +53,13 @@ namespace Entia.Queriers
 
         public static IQuerier All(params IQuerier[] queriers) =>
             queriers.Length == 1 ? queriers[0] :
-            new Try((Segment segment, World world, out Query query) =>
+            new Try((segment, world) =>
             {
-                var types = new List<Metadata>();
                 for (var i = 0; i < queriers.Length; i++)
                 {
-                    if (queriers[i].TryQuery(segment, world, out query)) types.AddRange(query.Types);
-                    else return false;
+                    if (queriers[i].TryQuery(segment, world)) continue;
+                    return false;
                 }
-
-                query = new Query(types.ToArray());
                 return true;
             });
 
@@ -82,16 +69,7 @@ namespace Entia.Queriers
 
             var merged = All(queriers);
             return new Try<T>((Segment segment, World world, out Query<T> query) =>
-            {
-                if (querier.TryQuery(segment, world, out var query1) && merged.TryQuery(segment, world, out var query2))
-                {
-                    query = new Query<T>(query1.Get, query1.Types, query2.Types);
-                    return true;
-                }
-
-                query = default;
-                return false;
-            });
+                querier.TryQuery(segment, world, out query) && merged.TryQuery(segment, world));
         }
     }
 }

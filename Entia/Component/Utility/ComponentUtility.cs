@@ -92,17 +92,7 @@ namespace Entia.Modules.Component
             return Kinds.Invalid;
         }
 
-        public static bool ToMetadataAndMask(Type[] components, out Metadata[] types, out BitMask mask)
-        {
-            types = components
-                .Select(component => ComponentUtility.TryGetMetadata(component, out var metadata) ? metadata : default)
-                .Where(metadata => metadata.IsValid)
-                .ToArray();
-            mask = new BitMask(types.Select(metadata => metadata.Index).ToArray());
-            return components.Length == types.Length;
-        }
-
-        static Metadata GetMetadata(Type type)
+        public static Metadata GetMetadata(Type type)
         {
             using (var read = _state.Read(true))
             {
@@ -111,7 +101,7 @@ namespace Entia.Modules.Component
             }
         }
 
-        static BitMask GetConcrete(Type type)
+        public static BitMask GetConcrete(Type type)
         {
             using (var read = _state.Read(true))
             {
