@@ -1,3 +1,4 @@
+using Entia.Core.Documentation;
 using Entia.Queryables;
 using System;
 using System.Collections;
@@ -11,6 +12,7 @@ namespace Entia.Modules.Group
     /// A split may span over multiple segments.
     /// </summary>
     /// <typeparam name="T">The query type.</typeparam>
+    [ThreadSafe]
     public readonly struct Split<T> : IEnumerable<T> where T : struct, IQueryable
     {
         /// <summary>

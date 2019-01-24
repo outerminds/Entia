@@ -1,38 +1,52 @@
 using System;
-using Entia.Core;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using Entia.Core.Documentation;
 
 namespace Entia.Core
 {
-    public sealed class Pool<T>
+    public struct Pool<T> where T : class
     {
-        public readonly object Lock = new object();
-
         readonly Func<T> _create;
         readonly Action<T> _initialize;
-        readonly Action<T> _dispose;
-        (T[] items, int count) _items = (new T[4], 0);
+        readonly int _chunk;
 
-        public Pool(Func<T> create, Action<T> initialize = null, Action<T> dispose = null)
+        int _next;
+        T[][] _chunks;
+
+        public Pool(Func<T> create, Action<T> initialize = null, int chunk = 8)
         {
             _create = create;
             _initialize = initialize ?? (_ => { });
-            _dispose = dispose ?? (_ => { });
+            _chunk = chunk;
+            _next = -1;
+            _chunks = new T[][] { new T[chunk] };
         }
 
-        public T Take()
+        [ThreadSafe]
+        public T Allocate()
         {
-            T item;
-            bool success;
-            lock (Lock) { success = _items.TryPop(out item); }
-            if (!success) item = _create();
+            var index = Interlocked.Increment(ref _next);
+            var chunk = Chunk(index, out index);
+            var item = chunk[index] ?? (chunk[index] = _create());
             _initialize(item);
             return item;
         }
 
-        public void Put(T item)
+        public bool Free() => _next.Change(-1);
+
+        [ThreadSafe]
+        T[] Chunk(int index, out int adjusted)
         {
-            _dispose(item);
-            lock (Lock) _items.Push(item);
+            var chunk = index / _chunk;
+            adjusted = index % _chunk;
+            if (chunk >= _chunks.Length)
+            {
+                // NOTE: the lock only tries to prevent multiple resize/assign of the array;
+                // it doesn't matter if another thread access different outer chunks arrays since the inner chunk arrays never move
+                lock (_chunks) { if (chunk >= _chunks.Length) ArrayUtility.Add(ref _chunks, new T[_chunk]); }
+            }
+            return _chunks[chunk];
         }
     }
 }

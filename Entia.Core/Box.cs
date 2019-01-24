@@ -1,4 +1,5 @@
 ﻿using System;
+using Entia.Core.Documentation;
 
 namespace Entia.Core
 {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Entia.Core;
+using Entia.Core.Documentation;
 
 namespace Entia.Modules.Component
 {

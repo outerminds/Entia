@@ -63,7 +63,7 @@ namespace Entia.Modules
             if (success && data.Resolvables is T[] resolvables)
             {
                 var index = data.Count++;
-                ArrayUtility.TryAdd(ref data.Resolvables, resolvable, index);
+                ArrayUtility.EnsureSet(ref data.Resolvables, resolvable, index);
                 _queue.Push((dataIndex, index));
             }
             else

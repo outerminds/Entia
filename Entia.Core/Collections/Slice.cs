@@ -2,11 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Entia.Core.Documentation;
 
 namespace Entia.Core
 {
+    [ThreadSafe]
     public readonly struct Slice<T> : IEnumerable<T>
     {
+        [ThreadSafe]
         public readonly struct Read : IEnumerable<T>
         {
             public struct Enumerator : IEnumerator<T>

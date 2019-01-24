@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependers;
@@ -14,6 +15,7 @@ using Entia.Queryables;
 
 namespace Entia.Queryables
 {
+    [ThreadSafe]
     public readonly struct Write<T> : IQueryable where T : struct, IComponent
     {
         sealed class Querier : Querier<Write<T>>

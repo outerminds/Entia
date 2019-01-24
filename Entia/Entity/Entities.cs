@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Messages;
 using System;
 using System.Collections;
@@ -65,6 +66,7 @@ namespace Entia.Modules
         /// <value>
         /// The capacity.
         /// </value>
+        [ThreadSafe]
         public int Capacity => _data.items.Length;
         /// <summary>
         /// Gets the current entity count.
@@ -72,6 +74,7 @@ namespace Entia.Modules
         /// <value>
         /// The count.
         /// </value>
+        [ThreadSafe]
         public int Count => _data.count - _free.count - _frozen.count;
 
         readonly Messages _messages;
@@ -121,6 +124,7 @@ namespace Entia.Modules
         /// </summary>
         /// <param name="entity">The entity.</param>
         /// <returns>Returns <c>true</c> if the <paramref name="entity"/> is alive; otherwise, <c>false</c>.</returns>
+        [ThreadSafe]
         public bool Has(Entity entity)
         {
             GetData(entity, out var success);
@@ -148,6 +152,7 @@ namespace Entia.Modules
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
+        [ThreadSafe]
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -157,6 +162,7 @@ namespace Entia.Modules
             while (_frozen.count > 0) _free.Push(_frozen.Pop());
         }
 
+        [ThreadSafe]
         ref Data GetData(Entity entity, out bool success)
         {
             if (entity.Index < _data.count)

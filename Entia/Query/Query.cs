@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Modules.Component;
 
 namespace Entia.Modules.Query
 {
+    [ThreadSafe]
     public readonly struct Query<T> where T : struct, Queryables.IQueryable
     {
         public readonly Func<int, T> Get;

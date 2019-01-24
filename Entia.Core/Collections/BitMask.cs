@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Entia.Core.Documentation;
 
 namespace Entia.Core
 {
     public sealed class BitMask : IEnumerable<int>, IEquatable<BitMask>
     {
+        [ThreadSafe]
         public readonly struct Bucket : IComparable<Bucket>
         {
             public const int Size = sizeof(ulong) * 8;
@@ -39,10 +41,13 @@ namespace Entia.Core
             foreach (var mask in masks) Add(mask);
         }
 
+        [ThreadSafe]
         public bool Has(int index) => Has(Bucket.OfIndex(index));
 
+        [ThreadSafe]
         public bool Has(Bucket bucket) => bucket.Index < _buckets.count && (_buckets.items[bucket.Index] & bucket.Mask) == bucket.Mask;
 
+        [ThreadSafe]
         public bool HasAll(BitMask mask)
         {
             var count = Math.Min(_buckets.count, mask._buckets.count);
@@ -56,6 +61,7 @@ namespace Entia.Core
             return true;
         }
 
+        [ThreadSafe]
         public bool HasAny(BitMask mask)
         {
             var count = Math.Min(_buckets.count, mask._buckets.count);
@@ -69,6 +75,7 @@ namespace Entia.Core
             return false;
         }
 
+        [ThreadSafe]
         public bool HasNone(BitMask mask) => !HasAny(mask);
 
         public bool Add(int index) => Add(Bucket.OfIndex(index));
@@ -124,6 +131,7 @@ namespace Entia.Core
             return _buckets.Clear();
         }
 
+        [ThreadSafe]
         public bool Equals(BitMask other)
         {
             if (_buckets.count != other._buckets.count) return false;
@@ -131,8 +139,10 @@ namespace Entia.Core
             return true;
         }
 
+        [ThreadSafe]
         public override bool Equals(object obj) => obj is BitMask mask && Equals(mask);
 
+        [ThreadSafe]
         public override int GetHashCode()
         {
             if (_hash is int hash) return hash;
@@ -152,6 +162,7 @@ namespace Entia.Core
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
+        [ThreadSafe]
         public IEnumerator<int> GetEnumerator()
         {
             var index = 0;

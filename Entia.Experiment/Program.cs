@@ -164,7 +164,7 @@ namespace Entia.Experiment
         class Shiatsi { public ulong A; }
         static void TestLaPool()
         {
-            var pool = new ConcurrentPool<Shiatsi>(() => new Shiatsi(), boba => boba.A++);
+            var pool = new Pool<Shiatsi>(() => new Shiatsi(), boba => boba.A++);
 
             for (var i = 0; i < 10; i++)
             {

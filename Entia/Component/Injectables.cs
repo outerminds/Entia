@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Dependencies;
 using Entia.Dependers;
 using Entia.Injectors;

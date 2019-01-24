@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Dependencies;
 using Entia.Dependers;
 using Entia.Injectors;
@@ -17,6 +18,7 @@ namespace Entia.Injectables
         /// <summary>
         /// Gives access to entity read operations.
         /// </summary>
+        [ThreadSafe]
         public readonly struct Read : IInjectable, IEnumerable<Entity>
         {
             sealed class Injector : Injector<Read>
@@ -94,11 +96,13 @@ namespace Entia.Injectables
         /// <inheritdoc cref="Entities.Destroy(Entity)"/>
         public bool Destroy(Entity entity) => _entities.Destroy(entity);
         /// <inheritdoc cref="Entities.Has(Entity)"/>
+        [ThreadSafe]
         public bool Has(Entity entity) => _entities.Has(entity);
         /// <inheritdoc cref="Entities.Clear"/>
         public bool Clear() => _entities.Clear();
 
         /// <inheritdoc cref="Entities.GetEnumerator"/>
+        [ThreadSafe]
         public Entities.Enumerator GetEnumerator() => _entities.GetEnumerator();
         IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Modules.Build;
 using Entia.Nodes;
 using Entia.Phases;

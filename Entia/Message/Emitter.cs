@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Entia.Core;
+using Entia.Core.Documentation;
 
 namespace Entia.Modules.Message
 {
@@ -22,7 +23,9 @@ namespace Entia.Modules.Message
 
     public sealed class Emitter<T> : IEmitter where T : struct, IMessage
     {
+        [ThreadSafe]
         public Slice<Reaction<T>>.Read Reactions => _reactions.Slice();
+        [ThreadSafe]
         public Slice<Receiver<T>>.Read Receivers => _receivers.Slice();
 
         IEnumerable<IReaction> IEmitter.Reactions => Reactions;
@@ -53,7 +56,9 @@ namespace Entia.Modules.Message
             return true;
         }
 
+        [ThreadSafe]
         public bool Has(Reaction<T> reaction) => _reactions.Contains(reaction);
+        [ThreadSafe]
         public bool Has(Receiver<T> receiver) => _receivers.Contains(receiver);
         public bool Remove(Reaction<T> reaction) => _reactions.Remove(reaction);
         public bool Remove(Receiver<T> receiver) => _receivers.Remove(receiver);

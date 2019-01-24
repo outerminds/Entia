@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Phases;
 using System;
 
@@ -12,6 +13,7 @@ namespace Entia.Phases
 
 namespace Entia.Modules.Schedule
 {
+    [ThreadSafe]
     public readonly struct Phase
     {
         public readonly Delegate Delegate;

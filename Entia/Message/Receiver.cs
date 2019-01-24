@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Entia.Core;
+using Entia.Core.Documentation;
 
 namespace Entia.Modules.Message
 {
@@ -14,6 +15,7 @@ namespace Entia.Modules.Message
         bool Clear();
     }
 
+    [ThreadSafe]
     public sealed class Receiver<T> : IReceiver where T : struct, IMessage
     {
         public int Count => _messages.Count;
@@ -39,17 +41,16 @@ namespace Entia.Modules.Message
             return cleared;
         }
 
-        [ThreadSafe]
         public void Receive(in T message)
         {
             if (_capacity == 0) return;
             _messages.Enqueue(message);
-            Trim(Capacity);
+            Trim(_capacity);
         }
 
         void Trim(int count)
         {
-            if (count < 0) return;
+            if (count < 0 || _messages.Count <= count) return;
             // NOTE: a lock is needed in case multiple threads pass the while condition even though only 1 item remains to be dequeued
             lock (_messages) { while (_messages.Count > count) _messages.TryDequeue(out _); }
         }

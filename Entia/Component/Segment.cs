@@ -1,4 +1,5 @@
 using Entia.Core;
+using Entia.Core.Documentation;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -88,6 +89,8 @@ namespace Entia.Modules.Component
 
         /// <summary>
         /// Gets the component store of type <typeparamref name="T"/>.
+        /// If the store doesn't exist, an <see cref="IndexOutOfRangeException"/> may be thrown or a <c>null</c> will be returned.
+        /// Use <see cref="TryStore{T}(out T[])"/> if you are unsure if the store exists.
         /// </summary>
         /// <typeparam name="T">The component type.</typeparam>
         /// <returns>The component store.</returns>
@@ -96,6 +99,8 @@ namespace Entia.Modules.Component
         public T[] Store<T>() where T : struct, IComponent => (T[])Stores[GetStoreIndex<T>()];
         /// <summary>
         /// Gets the component store of provided component type <paramref name="index"/>.
+        /// If the store doesn't exist, an <see cref="IndexOutOfRangeException"/> may be thrown or a <c>null</c> will be returned.
+        /// Use <see cref="TryStore(int, out Array)"/> if you are unsure if the store exists.
         /// </summary>
         /// <param name="index">The component type index.</param>
         /// <returns>The component store.</returns>

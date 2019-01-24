@@ -1,4 +1,5 @@
-﻿using Entia.Dependencies;
+﻿using Entia.Core.Documentation;
+using Entia.Dependencies;
 using Entia.Dependers;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
@@ -16,6 +17,7 @@ namespace Entia
     /// Represents a world-unique identifier used to logically group components.
     /// </summary>
     /// <seealso cref="IQueryable" />
+    [ThreadSafe]
     [StructLayout(LayoutKind.Explicit)]
     public readonly struct Entity : IQueryable, IEquatable<Entity>, IComparable<Entity>
     {

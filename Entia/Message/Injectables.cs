@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependers;
@@ -10,6 +11,7 @@ using System.Reflection;
 
 namespace Entia.Injectables
 {
+    [ThreadSafe]
     public readonly struct Emitter<T> : IInjectable where T : struct, IMessage
     {
         sealed class Injector : Injector<Emitter<T>>
@@ -86,7 +88,9 @@ namespace Entia.Injectables
 
         readonly Modules.Message.Reaction<T> _reaction;
         public Reaction(Modules.Message.Reaction<T> reaction) { _reaction = reaction; }
+        [ThreadSafe]
         public bool Has(Action reaction) => _reaction.Has(reaction);
+        [ThreadSafe]
         public bool Has(InAction<T> reaction) => _reaction.Has(reaction);
         public bool Add(Action reaction) => _reaction.Add(reaction);
         public bool Add(InAction<T> reaction) => _reaction.Add(reaction);

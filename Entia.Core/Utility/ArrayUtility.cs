@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Entia.Core.Documentation;
 
 namespace Entia.Core
 {
@@ -78,19 +79,27 @@ namespace Entia.Core
             return true;
         }
 
-        public static bool TryAdd<T>(ref Array array, in T item, int index)
+        public static bool EnsureSet<T>(ref T[] array, in T item, int index)
+        {
+            var resized = Ensure(ref array, index + 1);
+            array[index] = item;
+            return resized;
+        }
+
+        public static bool EnsureSet<T>(ref Array array, in T item, int index)
         {
             if (array is T[] casted)
             {
-                Ensure(ref casted, index + 1);
+                var resized = Ensure(ref casted, index + 1);
                 casted[index] = item;
                 array = casted;
-                return true;
+                return resized;
             }
 
             return false;
         }
 
+        [ThreadSafe]
         public static int GetHashCode<T>(T[] array)
         {
             if (array == null) return 0;

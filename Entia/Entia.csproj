@@ -4,11 +4,11 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>7.3</LangVersion>
     <Configurations>Debug;Release;Debug VS;Release VS</Configurations>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- <GenerateDocumentationFile>true</GenerateDocumentationFile> -->
   </PropertyGroup>
 
   <Target Name="Copy" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="dotnet &quot;$(SolutionDir)Tools\Documentor\Documentor.dll&quot; &quot;$(PublishDir)$(ProjectName).xml&quot;" />
+    <!-- <Exec Command="dotnet &quot;$(SolutionDir)Tools\Documentor\Documentor.dll&quot; &quot;$(PublishDir)$(ProjectName).xml&quot;" /> -->
     <Exec Command="xcopy /y /q &quot;$(PublishDir)*&quot; &quot;$(SolutionDir)Releases\Current\&quot;" />
   </Target>
 

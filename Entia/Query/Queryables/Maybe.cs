@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Reflection;
+using Entia.Core.Documentation;
 using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependers;
@@ -11,6 +12,7 @@ using Entia.Queryables;
 
 namespace Entia.Queryables
 {
+    [ThreadSafe]
     public readonly struct Maybe<T> : IQueryable where T : struct, IQueryable
     {
         sealed class Querier : Querier<Maybe<T>>

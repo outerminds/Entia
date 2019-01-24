@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ namespace Entia.Modules.Message
     {
         static readonly InAction<T> _empty = (in T _) => { };
 
+        [ThreadSafe]
         public int Count => _reactions.Count;
 
         Type IReaction.Type => typeof(T);
@@ -27,7 +29,9 @@ namespace Entia.Modules.Message
         event InAction<T> _reaction = _empty;
         readonly Dictionary<Delegate, InAction<T>> _reactions = new Dictionary<Delegate, InAction<T>>();
 
+        [ThreadSafe]
         public bool Has(Action reaction) => Has(reaction as Delegate);
+        [ThreadSafe]
         public bool Has(InAction<T> reaction) => Has(reaction as Delegate);
 
         public bool Add(Action reaction)
@@ -65,6 +69,7 @@ namespace Entia.Modules.Message
         public IEnumerator<Delegate> GetEnumerator() => _reactions.Keys.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
+        [ThreadSafe]
         bool Has(Delegate reaction) => _reactions.ContainsKey(reaction);
 
         bool Remove(Delegate reaction)
@@ -79,6 +84,7 @@ namespace Entia.Modules.Message
             return false;
         }
 
+        [ThreadSafe]
         bool IReaction.Has(Delegate reaction) =>
             reaction is Action action ? Has(action) : reaction is InAction<T> actionT ? Has(actionT) : false;
         bool IReaction.Add(Delegate reaction) =>

@@ -1,4 +1,5 @@
 using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Queryables;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ namespace Entia.Modules.Group
     /// Stores the entities and items that satisfy the query of type <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T">The query type.</typeparam>
+    [ThreadSafe]
     public readonly struct Segment<T> : IEnumerable<T> where T : struct, IQueryable
     {
         /// <summary>

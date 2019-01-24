@@ -1,4 +1,5 @@
 using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Messages;
 using Entia.Modules.Component;
 using System;
@@ -63,7 +64,7 @@ namespace Entia.Modules
         /// </summary>
         /// <typeparam name="T">The concrete component type.</typeparam>
         /// <param name="entity">The entity associated with the component.</param>
-        /// <returns>The component reference or a dummy reference if the component is missing.</returns>
+        /// <returns>The component reference or <see cref="Dummy{T}.Value"/> if the component is missing.</returns>
         [ThreadSafe]
         public ref T Get<T>(Entity entity) where T : struct, IComponent
         {
@@ -79,7 +80,7 @@ namespace Entia.Modules
         /// <typeparam name="T">The concrete component type.</typeparam>
         /// <param name="entity">The entity associated with the component.</param>
         /// <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
-        /// <returns>The component reference or a dummy reference.</returns>
+        /// <returns>The component reference or <see cref="Dummy{T}.Value"/> if the component is missing.</returns>
         [ThreadSafe]
         public ref T GetOrDummy<T>(Entity entity, out bool success) where T : struct, IComponent
         {
@@ -610,7 +611,7 @@ namespace Entia.Modules
             var removed = false;
             var segment = GetSegment(mask);
             var types = segment.Types.data;
-            for (int i = 0; i < types.Length; i++)
+            for (var i = 0; i < types.Length; i++)
             {
                 ref readonly var metadata = ref types[i];
                 removed |= Remove(entity, ref slot, metadata, MessageUtility.OnRemove(metadata));

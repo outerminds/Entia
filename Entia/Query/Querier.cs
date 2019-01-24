@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
 using Entia.Queryables;
@@ -24,6 +25,7 @@ namespace Entia.Queriers
         bool IQuerier.TryQuery(Segment segment, World world) => TryQuery(segment, world, out _);
     }
 
+    [ThreadSafe]
     public sealed class Default<T> : Querier<T> where T : struct, Queryables.IQueryable
     {
         public override bool TryQuery(Segment segment, World world, out Query<T> query)
@@ -33,6 +35,7 @@ namespace Entia.Queriers
         }
     }
 
+    [ThreadSafe]
     public static class Querier
     {
         sealed class Try : IQuerier

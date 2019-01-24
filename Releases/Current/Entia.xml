@@ -157,7 +157,7 @@
             </summary>
       <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
-      <returns>The component reference or a dummy reference if the component is missing.</returns>
+      <returns>The component reference or <see cref="F:Entia.Core.Dummy`1.Value" /> if the component is missing.</returns>
     </member>
     <member name="M:Entia.Modules.Components.GetOrDummy``1(Entia.Entity,System.Boolean@)">
       <summary>
@@ -167,7 +167,7 @@
       <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
       <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
-      <returns>The component reference or a dummy reference.</returns>
+      <returns>The component reference or <see cref="F:Entia.Core.Dummy`1.Value" /> if the component is missing.</returns>
     </member>
     <member name="M:Entia.Modules.Components.GetOrAdd``1(Entia.Entity,System.Func{``0})">
       <summary>
@@ -204,7 +204,7 @@
             </summary>
       <param name="entity">The entity associated with the component.</param>
       <param name="type">The concrete component type.</param>
-      <returns>The component or null reference if the component is missing.</returns>
+      <returns>The component or null if the component is missing.</returns>
     </member>
     <member name="M:Entia.Modules.Components.Get(Entia.Entity)">
       <summary>
@@ -245,7 +245,7 @@
     </member>
     <member name="M:Entia.Modules.Components.Count(Entia.Entity)">
       <summary>
-            Counts the components associated with the entity.
+            Counts the components associated with the <paramref name="entity" />.
             </summary>
       <param name="entity">The entity.</param>
       <returns>The number of components.</returns>
@@ -464,6 +464,8 @@
     <member name="M:Entia.Modules.Component.Segment.Store``1">
       <summary>
             Gets the component store of type <typeparamref name="T" />.
+            If the store doesn't exist, an <see cref="T:System.IndexOutOfRangeException" /> may be thrown or a <c>null</c> will be returned.
+            Use <see cref="M:Entia.Modules.Component.Segment.TryStore``1(``0[]@)" /> if you are unsure if the store exists.
             </summary>
       <typeparam name="T">The component type.</typeparam>
       <returns>The component store.</returns>
@@ -471,6 +473,8 @@
     <member name="M:Entia.Modules.Component.Segment.Store(System.Int32)">
       <summary>
             Gets the component store of provided component type <paramref name="index" />.
+            If the store doesn't exist, an <see cref="T:System.IndexOutOfRangeException" /> may be thrown or a <c>null</c> will be returned.
+            Use <see cref="M:Entia.Modules.Component.Segment.TryStore(System.Int32,System.Array@)" /> if you are unsure if the store exists.
             </summary>
       <param name="index">The component type index.</param>
       <returns>The component store.</returns>
@@ -841,6 +845,8 @@
     <member>
       <summary>
             Gets the component store of type <typeparamref name="T" />.
+            If the store doesn't exist, an <see cref="T:System.IndexOutOfRangeException" /> may be thrown or a <c>null</c> will be returned.
+            Use <see cref="M:Entia.Modules.Component.Segment.TryStore``1(``0[]@)" /> if you are unsure if the store exists.
             </summary>
       <typeparam name="T">The component type.</typeparam>
       <returns>The component store.</returns>
@@ -1148,7 +1154,7 @@
             </summary>
       <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
-      <returns>The component reference or a dummy reference if the component is missing.</returns>
+      <returns>The component reference or <see cref="F:Entia.Core.Dummy`1.Value" /> if the component is missing.</returns>
     </member>
     <member>
       <summary>
@@ -1166,7 +1172,7 @@
             </summary>
       <typeparam name="T">The concrete component type.</typeparam>
       <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
-      <returns>The component reference or a dummy reference.</returns>
+      <returns>The component reference or <see cref="F:Entia.Core.Dummy`1.Value" /> if the component is missing.</returns>
     </member>
     <member>
       <summary>
@@ -1306,7 +1312,7 @@
             </summary>
       <typeparam name="T">The concrete component type.</typeparam>
       <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
-      <returns>The component reference or a dummy reference.</returns>
+      <returns>The component reference or <see cref="F:Entia.Core.Dummy`1.Value" /> if the component is missing.</returns>
     </member>
     <member>
       <summary>
@@ -1323,7 +1329,7 @@
             </summary>
       <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
-      <returns>The component reference or a dummy reference if the component is missing.</returns>
+      <returns>The component reference or <see cref="F:Entia.Core.Dummy`1.Value" /> if the component is missing.</returns>
     </member>
     <member>
       <summary>
@@ -1355,7 +1361,7 @@
             </summary>
       <typeparam name="T">The concrete component type.</typeparam>
       <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
-      <returns>The component reference or a dummy reference.</returns>
+      <returns>The component reference or <see cref="F:Entia.Core.Dummy`1.Value" /> if the component is missing.</returns>
     </member>
     <member>
       <summary>
@@ -1372,7 +1378,7 @@
             </summary>
       <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
-      <returns>The component reference or a dummy reference if the component is missing.</returns>
+      <returns>The component reference or <see cref="F:Entia.Core.Dummy`1.Value" /> if the component is missing.</returns>
     </member>
     <member>
       <summary>
@@ -1408,7 +1414,7 @@
             </summary>
       <typeparam name="T">The concrete component type.</typeparam>
       <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
-      <returns>The component reference or a dummy reference.</returns>
+      <returns>The component reference or <see cref="F:Entia.Core.Dummy`1.Value" /> if the component is missing.</returns>
     </member>
     <member>
       <summary>
@@ -1425,7 +1431,7 @@
             </summary>
       <typeparam name="T">The concrete component type.</typeparam>
       <param name="entity">The entity associated with the component.</param>
-      <returns>The component reference or a dummy reference if the component is missing.</returns>
+      <returns>The component reference or <see cref="F:Entia.Core.Dummy`1.Value" /> if the component is missing.</returns>
     </member>
     <member>
       <summary>

@@ -1,4 +1,5 @@
 using Entia.Core;
+using Entia.Core.Documentation;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -8,6 +9,7 @@ namespace Entia.Modules.Component
     /// <summary>
     /// Holds some metadata about a component type.
     /// </summary>
+    [ThreadSafe]
     public readonly struct Metadata : IEquatable<Metadata>
     {
         /// <summary>
@@ -42,7 +44,6 @@ namespace Entia.Modules.Component
             Type = type;
             Index = index;
         }
-
 
         /// <inheritdoc cref="IEquatable{T}.Equals(T)"/>
         public bool Equals(Metadata other) => (Type, Index) == (other.Type, other.Index);

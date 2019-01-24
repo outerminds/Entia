@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Dependencies;
 using Entia.Dependers;
 using Entia.Modules;
@@ -21,6 +22,7 @@ namespace Entia.Queryables
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
+    [ThreadSafe]
     public sealed class AllAttribute : Attribute, IQuerier
     {
         public readonly Type[] Components;
@@ -40,6 +42,7 @@ namespace Entia.Queryables
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
+    [ThreadSafe]
     public sealed class AnyAttribute : Attribute, IQuerier
     {
         public readonly Type[] Components;
@@ -59,6 +62,7 @@ namespace Entia.Queryables
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
+    [ThreadSafe]
     public sealed class NoneAttribute : Attribute, IQuerier
     {
         public readonly Type[] Components;

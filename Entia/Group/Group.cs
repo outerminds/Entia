@@ -1,4 +1,5 @@
 using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Messages.Segment;
 using Entia.Modules.Query;
 using Entia.Queriers;
@@ -129,6 +130,7 @@ namespace Entia.Modules.Group
         /// <summary>
         /// An enumerable that enumerates over the group entities.
         /// </summary>
+        [ThreadSafe]
         public readonly struct EntityEnumerable : IEnumerable<Entity>
         {
             readonly Segment<T>[] _segments;
@@ -214,6 +216,7 @@ namespace Entia.Modules.Group
         /// <summary>
         /// An enumerable that enumerates over splits of a given size.
         /// </summary>
+        [ThreadSafe]
         public readonly struct SplitEnumerable : IEnumerable<Split<T>>
         {
             readonly Segment<T>[] _segments;
@@ -304,6 +307,7 @@ namespace Entia.Modules.Group
         }
 
         /// <inheritdoc cref="IGroup.Count"/>
+        [ThreadSafe]
         public int Count { get; private set; }
         /// <summary>
         /// Gets the segments that fit the group query.
@@ -311,8 +315,10 @@ namespace Entia.Modules.Group
         /// <value>
         /// The segments.
         /// </value>
+        [ThreadSafe]
         public Segment<T>[] Segments => _segments;
         /// <inheritdoc cref="IGroup.Entities"/>
+        [ThreadSafe]
         public EntityEnumerable Entities => new EntityEnumerable(_segments);
         /// <inheritdoc cref="IGroup.Querier"/>
         public readonly Querier<T> Querier;
@@ -346,6 +352,7 @@ namespace Entia.Modules.Group
         }
 
         /// <inheritdoc cref="IGroup.Has(Entity)"/>
+        [ThreadSafe]
         public bool Has(Entity entity) => _components.TrySegment(entity, out var pair) && Has(pair.segment);
 
         /// <summary>
@@ -354,6 +361,7 @@ namespace Entia.Modules.Group
         /// <param name="entity">The entity.</param>
         /// <param name="item">The item.</param>
         /// <returns>Returns <c>true</c> if an <paramref name="item"/> was found; otherwise, <c>false</c>.</returns>
+        [ThreadSafe]
         public bool TryGet(Entity entity, out T item)
         {
             if (_components.TrySegment(entity, out var pair) && Has(pair.segment))
@@ -371,6 +379,7 @@ namespace Entia.Modules.Group
         /// </summary>
         /// <param name="count">The amount of splits.</param>
         /// <returns>The split enumerable.</returns>
+        [ThreadSafe]
         public SplitEnumerable Split(int count)
         {
             count = Math.Min(Count, count);
@@ -380,10 +389,12 @@ namespace Entia.Modules.Group
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
+        [ThreadSafe]
         public Enumerator GetEnumerator() => new Enumerator(_segments);
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
+        [ThreadSafe]
         bool Has(Component.Segment segment) => segment.Index < _indexToComponentSegment.Length && _indexToComponentSegment[segment.Index] == segment;
 
         bool TryAdd(Component.Segment segment)

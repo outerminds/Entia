@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Entia.Core.Documentation;
 
 namespace Entia.Core
 {
+    [ThreadSafe]
     public static class ConcurrentExtensions
     {
         public static int ReadCount<T>(this Concurrent<T> concurrent) where T : ICollection
@@ -121,6 +123,24 @@ namespace Entia.Core
                     if (write.Value.TryGet(index, out value)) return value;
                     value = provide(state);
                     write.Value.Set(index, value);
+                }
+            }
+
+            onWrite?.Invoke(state);
+            return value;
+        }
+
+        public static TValue ReadValueOrWrite<TBase, TValue, TState>(this Concurrent<TypeMap<TBase, TValue>> concurrent, Type type, TState state, Func<TState, TValue> provide, Action<TState> onWrite = null)
+        {
+            TValue value;
+            using (var read = concurrent.Read(true))
+            {
+                if (read.Value.TryGet(type, out value)) return value;
+                using (var write = concurrent.Write())
+                {
+                    if (write.Value.TryGet(type, out value)) return value;
+                    value = provide(state);
+                    write.Value.Set(type, value);
                 }
             }
 

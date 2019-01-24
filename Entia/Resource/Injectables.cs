@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependers;
@@ -9,8 +10,10 @@ using System.Reflection;
 
 namespace Entia.Injectables
 {
+    [ThreadSafe]
     public readonly struct Resource<T> : IInjectable where T : struct, IResource
     {
+        [ThreadSafe]
         public readonly struct Read : IInjectable
         {
             sealed class Injector : Injector<Read>

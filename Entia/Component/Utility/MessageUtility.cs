@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Messages;
 using System;
 using System.Linq;
@@ -6,7 +7,8 @@ using System.Reflection;
 
 namespace Entia.Modules.Component
 {
-    static class MessageUtility
+    [ThreadSafe]
+    public static class MessageUtility
     {
         static class Cache<TMessage, TBase> where TMessage : struct, IMessage
         {
