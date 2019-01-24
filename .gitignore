@@ -1,5 +1,6 @@
-**/bin/
-**/obj/
-**/.vs/
-*.user
+bin/
+obj/
+.vs/
+Releases/
 .vscode/solution-explorer
+*.user
