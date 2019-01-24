@@ -143,7 +143,7 @@ namespace Entia.Modules
         /// </summary>
         /// <param name="entity">The entity associated with the component.</param>
         /// <param name="type">The concrete component type.</param>
-        /// <returns>The component or null reference if the component is missing.</returns>
+        /// <returns>The component or null if the component is missing.</returns>
         public IComponent Get(Entity entity, Type type)
         {
             if (TryGet(entity, type, out var component)) return component;
@@ -216,7 +216,7 @@ namespace Entia.Modules
             ComponentUtility.TryGetConcrete(type, out var mask) && Has(entity, mask);
 
         /// <summary>
-        /// Counts the components associated with the entity.
+        /// Counts the components associated with the <paramref name="entity"/>.
         /// </summary>
         /// <param name="entity">The entity.</param>
         /// <returns>The number of components.</returns>
@@ -297,6 +297,8 @@ namespace Entia.Modules
         /// <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
         public bool Set(Entity entity, IComponent component)
         {
+            if (component == null) return false;
+
             ref var data = ref GetData(entity, out var success);
             if (success && ComponentUtility.TryGetMetadata(component.GetType(), out var metadata))
             {

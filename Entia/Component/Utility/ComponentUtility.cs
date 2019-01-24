@@ -88,7 +88,7 @@ namespace Entia.Modules.Component
         public static Kinds GetKind(Type type)
         {
             if (type.Is<IComponent>())
-                return type.IsSealed && !type.IsGenericTypeDefinition && !type.IsAbstract ? Kinds.Concrete : Kinds.Abstract;
+                return type.IsValueType && type.IsSealed && !type.IsGenericTypeDefinition && !type.IsAbstract ? Kinds.Concrete : Kinds.Abstract;
             return Kinds.Invalid;
         }
 
