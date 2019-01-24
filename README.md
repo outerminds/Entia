@@ -1,4 +1,5 @@
 ﻿[unity]:https://github.com/outerminds/Entia.Unity
+[logo]:https://github.com/outerminds/Entia/blob/master/Resources/Logo.png
 [releases]:https://github.com/outerminds/Entia/releases
 [manual]:./
 [documentation]:./
@@ -12,7 +13,7 @@
 [manual/node]:./
 [manual/controller]:./
 [manual/phase]:./
-# ![Entia](./Resources/Logo.png)
+# ![Entia][logo]
 
 **Entia** is a free, open-source, data-oriented, highly performant, parallelized and extensible **ECS** framework writtten in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous _structs_. No indirection, no boxing, no garbage collection and no cache misses.
 
@@ -21,7 +22,7 @@ For the full Unity game engine integration of the framework, click [**Entia.Unit
 ___
 ### Table of contents
 <!--ts-->
-   * [Dowload][releases]
+   * [Download][releases]
    * [Getting Started](#getting-started)
    * [The Basics](#the-basics)
    * [More Concepts](#more-concepts)
