@@ -1,5 +1,5 @@
 ﻿[unity]:https://github.com/outerminds/Entia.Unity
-[releases]:./releases
+[releases]:https://github.com/outerminds/Entia/releases
 [manual]:./
 [documentation]:./
 [manual/entity]:./
