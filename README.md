@@ -16,7 +16,7 @@ ___
 <!--te-->
 
 # Getting Started
-- Download the most recent stable version of Entia in the [Releases](https://github.com/outerminds/Entia.Unity/tree/master/Releases/Stable) folder.
+- Download the most recent stable version of Entia in the [Releases](./Releases/Stable) folder.
 - Add _Entia.dll_ and _Entia.Core.dll_ as dependencies in your _csproj_ file.
 - Optionally install the Visual Studio extension _Entia.Analyze.vsix_ to get _Entia_ specific code analysis.
 - Here is a snippet of code to get you up and running:
