@@ -1,5 +1,5 @@
-﻿# Entia
-Entia is a data-oriented, highly performant, parallelized and extensible **ECS** framework writtten in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous _structs_. No indirection, no boxing, no garbage collection and no cache misses.
+﻿![Entia](https://github.com/outerminds/Entia/blob/master/Resources/Logo.png)
+**Entia** is a data-oriented, highly performant, parallelized and extensible **ECS** framework writtten in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous _structs_. No indirection, no boxing, no garbage collection and no cache misses.
 
 For the full Unity game engine integration of the framework, click [here](https://github.com/outerminds/Entia.Unity).
 
@@ -75,7 +75,7 @@ Since **E**ntities are just identifiers and **C**omponents are just inert chunks
 -   [Group](): a list of all the **E**ntities in a given World that conform to a query.
 -   [Node](): a data wrapper around **S**ystems that allow to define execution behaviour and order.
 -   [Controller](): a wrapper around **S**ystems that executes them based on the behaviour defined in nodes and that controls their state.
--   [Phase](): a data type that is associated with a phase of execution. It allows to run systems at different times such as initialization time, run time, dispose time or any other 'time' that you want to define.
+-   [Phase](): a data type that is associated with a phase of execution. It allows to run systems at different times such as initialization time, run time, dispose time or any other time that you care to define.
 
 # Recurrent Usage Patterns
 I will specify here recurrent usage patterns that are used in the framework.
