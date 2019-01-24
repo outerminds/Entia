@@ -10,9 +10,14 @@ ___
    * [The Basics](#the-basics)
    * [More Concepts](#more-concepts)
    * [Recurrent Usage Patterns](#recurrent-patterns)
+   * [Manual]()
+   * [Documentation]()
 <!--te-->
 
 # Getting Started
+- Download the most recent stable version of Entia in the [Release](https://github.com/outerminds/Entia.Unity/tree/master/Releases/Stable) folder.
+- Add _Entia.dll_ and _Entia.Core.dll_ as dependencies in your _csproj_ file.
+- Here is a snippet of code to get you up and running:
 ```csharp
 using Entia;
 using Entia.Core;
@@ -20,48 +25,55 @@ using Entia.Modules;
 using static Entia.Nodes.Node;
 
 var world = new World();
-var systems = Sequence(
-	// Insert systems here using System<T>() where 'T' is your system type.
+var controllers = world.Controllers();
+var resources = world.Resources();
+
+// As the name suggest, this execution node will execute its children in sequential order.
+var node = Sequence(
+	// Insert systems here using 'System<T>()' where 'T' is your system type.
 	System<Systems.Motion>(),
 	System<Systems.ControllerInput>(),
 	System<Systems.Health>());
 	
-if (world.Controllers().Control(node).TryValue(out var controller))
+// A controller is built from the node to allow the execution of your systems.
+if (controllers.Control(node).TryValue(out var controller))
 {
-	// This resource will allow the application to close
-	ref var game = ref world.Resources().Get<Game>();
+	// This resource will allow the application to close.
+	ref var game = ref resources.Get<Game>();
 	
+	// A typical execution routine.
 	controller.Initialize();
 	while (!game.Quit) controller.Run();
 	controller.Dispose();
 }
 ```
+- For more details, please consult the [manual]().
 
 # The Basics
 **ECS** stands for **E**ntity, **C**omponent, **S**ystem. I will go into details about what each of those are, but they are going to be the elements that allow you to program efficiently and pleasantly in a data-oriented style. But what does 'data-oriented' mean, you ask? Well, data-oriented programming (DOP) is another paradigm just like object-oriented programming (OOP). It is just a different way to solve the same problems that OOP can already solve but in a different style and (hopefully) with less hassle. An essential difference between the two is that DOP separates _data_ and _logic_ rather than unifying them within the same container. Now I won't go into details about what DOP is or why it is a good idea since many more knowledgeable articles already exist on the subject, but it has some important implications for performance and for the design of programs. Unfortunately for us, C# is much more of a OOP language than a DOP language, so we have to build tooling to make it possible and easy to do, thus the framework.
 
-Ok, back to **ECS**. Most programmers have heard at some point that it is better to use composition over inheritance. That is because inheritance, even when well designed, is rigid and hard to change after the fact and in game development, things change all the time in unexpected ways. **ECS** takes the idea of composition to the extreme by removing inheritance completely. This effectively flattens the structure of programs and makes them much more granular and easy to assemble. So here's a brief definition the elements of **ECS**:
+Ok, back to **ECS**. Most programmers have heard at some point that it is better to use composition over inheritance. That is because inheritance, even when well designed, is more rigid and harder to change after the fact compared to composed equivalent and in game development, things tend to change all the time in unexpected ways. **ECS** takes the idea of composition to the extreme by removing inheritance completely. This effectively flattens the structure of programs and makes them much more granular and easier to assemble. So here's a brief definition the essential elements of **ECS**:
 
--   **E**ntity: an identifier (sometimes implemented as an integer).
--   **C**omponent: a chunk of data associated with an **E**ntity.
--   **S**ystem: a piece of logic that processes a subset of all **E**ntities and their associated **C**omponents.
+-   [**E**ntity](): an unique identifier (implemented as a simple integer).
+-   [**C**omponent](): a chunk of data associated with an **E**ntity.
+-   [**S**ystem](): a piece of logic that processes a subset of all **E**ntities and their associated **C**omponents.
 
-So an **E**ntity can be conceptually thought of as a container for **C**omponents, but this could be misleading since an **E**ntity does not contain anything as it is only an identifier. All it does is to group **C**omponents together such that they can be queried by systems and as such it relates more to a key in a database table where the columns would be the **C**omponents.
+So an **E**ntity can be conceptually thought of as a container for **C**omponents, but this could be misleading since an **E**ntity does not contain anything as it is only an identifier. All it does is group **C**omponents together such that they can be queried by systems and as such it relates more to a key in a database table where the columns would be the **C**omponents than it does to a bag of **C**omponents.
 
-As for **C**omponents, they must remain inert, meaning that they do not hold any logic whatsoever. No methods, no constructors, no destructors, no properties, no events, no nothing except plain and simple public fields. This ensures that **C**omponents are easy to understand, predictable, easy to serialize and have a good memory layout. This might be surprising and/or worrying for a mind that is used to control the access to their object's data with properties and/or methods but I'm telling you that as soon as you let go of the idea of protecting/hiding data you will realize that it was not strictly necessary and that everything is actually alright.
+As for **C**omponents, they must remain inert, meaning that they do not hold any logic whatsoever. No methods, no constructors, no destructors, no properties, no events, no nothing except plain and simple _public_ fields. This ensures that **C**omponents are easy to understand, predictable, easy to serialize and have a good memory layout. This might be surprising and/or worrying for a mind that is used to control the access to their object's data with properties and/or methods but I'm telling you that as soon as you let go of the idea of protecting/hiding data you eventually realize that it was not strictly necessary and that everything is actually alright.
 
-Since **E**ntities are just identifiers and **C**omponents are just inert chunks of data, we need something to actually does something in this program. **S**ystems are the last missing piece. They are conceptually the equivalent to a function that take all the existing **E**ntities and **C**omponents and processes them in some way. This means that ideally, **S**ystems do not hold any state since all the game state exists exclusively within **C**omponents. I say ideally because when optimizing, we programmers gladly throw idealistic patterns in the thrash to save a few CPU cycles and it is to be expected.
+Since **E**ntities are just identifiers and **C**omponents are just inert chunks of data, we need something to actually does something in this program. **S**ystems are the last missing piece. They are conceptually the equivalent to a function that take all the existing **E**ntities and **C**omponents, filters the ones it is interested in and processes them in some way. This means that ideally, **S**ystems do not hold any state since all the game state exists exclusively within **C**omponents. I say ideally because for optimization purposes, some **S**ystem local state may be needed.
 
 # More Concepts
-**E**ntities, **C**omponents and **S**ystems are the minimal set of concepts that the framework needs to be useful, but additional ones have been added for convenience and performance. I will very briefly expose them here, but each of these will be described in much more details later.
+**E**ntities, **C**omponents and **S**ystems are the minimal set of concepts that the framework needs to be useful, but additional ones have been added for convenience and performance. I will very briefly expose them here, but each of these will be described in much more details in the [manual]().
 
--   **World**: the collection of all existing **E**ntities and **C**omponents. It is the giant block of data that manages all the other blocks of data. The World is also the basis for extensibility because it holds the framework's modules and allows anyone to add one. This makes the framework extremely adaptable to any game development setup.
--   **Message**: a temporary **C**omponent that is not attached to an **E**ntity and that simplifies **S**ystem communication.
--   **Resource**: a World-wide **C**omponent that is not attached to an **E**ntity that holds global data.
--   **Group**: a list of all the **E**ntities in a given World that conform to a query.
--   **Node**: a data wrapper around **S**ystems that allow to define execution behaviour and order.
--   **Controller**: a wrapper around **S**ystems that executes them based on the behaviour defined in nodes and that controls their state.
--   **Phase**: ???
+-   [World](): the collection of all existing **E**ntities and **C**omponents. It is the giant block of data that manages all the other blocks of data. The World is also the basis for extensibility because it holds the framework's modules and allows anyone to add one. This makes the framework extremely adaptable to any game development setup.
+-   [Message](): a temporary **C**omponent that is not attached to an **E**ntity and that simplifies **S**ystem communication.
+-   [Resource](): a World-wide **C**omponent that is not attached to an **E**ntity that holds global data.
+-   [Group](): a list of all the **E**ntities in a given World that conform to a query.
+-   [Node](): a data wrapper around **S**ystems that allow to define execution behaviour and order.
+-   [Controller](): a wrapper around **S**ystems that executes them based on the behaviour defined in nodes and that controls their state.
+-   [Phase](): a data type that is associated with a phase of execution. It allows to run systems at different times such as initialization time, run time, dispose time or any other 'time' that you want to define.
 
 # Recurrent Usage Patterns
 I will specify here recurrent usage patterns that are used in the framework.
