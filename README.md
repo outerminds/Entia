@@ -14,7 +14,7 @@
 [manual/phase]:./
 # ![Entia](./Resources/Logo.png)
 
-**Entia** is a data-oriented, highly performant, parallelized and extensible **ECS** framework writtten in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous _structs_. No indirection, no boxing, no garbage collection and no cache misses.
+**Entia** is a free, open-source, data-oriented, highly performant, parallelized and extensible **ECS** framework writtten in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous _structs_. No indirection, no boxing, no garbage collection and no cache misses.
 
 For the full Unity game engine integration of the framework, click [here][unity].
 
