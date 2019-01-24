@@ -8,7 +8,6 @@ namespace Entia.Core
         public static bool Ensure<T>(ref T[] array, int size)
         {
             if (size <= array.Length) return false;
-
             Array.Resize(ref array, MathUtility.NextPowerOfTwo(size));
             return true;
         }

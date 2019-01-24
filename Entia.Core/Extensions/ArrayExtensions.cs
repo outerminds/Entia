@@ -107,6 +107,15 @@ namespace Entia.Core
 
         public static bool Contains<T>(in this (T[] items, int count) pair, in T item) => Array.IndexOf(pair.items, item, 0, pair.count) >= 0;
 
+        public static bool Remove<T>(ref this (T[] items, int count) pair, in T item)
+        {
+            var index = Array.IndexOf(pair.items, item, 0, pair.count);
+            if (index < 0) return false;
+            pair.count--;
+            if (index < pair.count) Array.Copy(pair.items, index + 1, pair.items, index, pair.count - index);
+            return true;
+        }
+
         public static bool Clear<T>(ref this (T[] items, int count) pair)
         {
             Array.Clear(pair.items, 0, pair.count);

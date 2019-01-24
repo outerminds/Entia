@@ -39,6 +39,7 @@ namespace Entia.Modules.Message
             return cleared;
         }
 
+        [ThreadSafe]
         public void Receive(in T message)
         {
             if (_capacity == 0) return;
@@ -48,7 +49,9 @@ namespace Entia.Modules.Message
 
         void Trim(int count)
         {
-            while (count >= 0 && _messages.Count > count) _messages.TryDequeue(out _);
+            if (count < 0) return;
+            // NOTE: a lock is needed in case multiple threads pass the while condition even though only 1 item remains to be dequeued
+            lock (_messages) { while (_messages.Count > count) _messages.TryDequeue(out _); }
         }
     }
 }

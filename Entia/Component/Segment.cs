@@ -52,12 +52,13 @@ namespace Entia.Modules.Component
         /// <typeparam name="T">The component type.</typeparam>
         /// <param name="store">The store.</param>
         /// <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
+        [ThreadSafe]
         public bool TryStore<T>(out T[] store) where T : struct, IComponent
         {
             var index = GetStoreIndex<T>();
-            if (index >= 0 && index < Stores.Length && Stores[index] is T[] casted)
+            if (index >= 0 && index < Stores.Length && Stores[index] is T[] array)
             {
-                store = casted;
+                store = array;
                 return true;
             }
 
@@ -71,12 +72,13 @@ namespace Entia.Modules.Component
         /// <param name="index">The component type index.</param>
         /// <param name="store">The component store.</param>
         /// <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
+        [ThreadSafe]
         public bool TryStore(int index, out Array store)
         {
             var storeIndex = GetStoreIndex(index);
-            if (storeIndex >= 0 && storeIndex < Stores.Length && Stores[storeIndex] is Array casted)
+            if (storeIndex >= 0 && storeIndex < Stores.Length && Stores[storeIndex] is Array array)
             {
-                store = casted;
+                store = array;
                 return true;
             }
 
@@ -90,6 +92,7 @@ namespace Entia.Modules.Component
         /// <typeparam name="T">The component type.</typeparam>
         /// <returns>The component store.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ThreadSafe]
         public T[] Store<T>() where T : struct, IComponent => (T[])Stores[GetStoreIndex<T>()];
         /// <summary>
         /// Gets the component store of provided component type <paramref name="index"/>.
@@ -97,11 +100,14 @@ namespace Entia.Modules.Component
         /// <param name="index">The component type index.</param>
         /// <returns>The component store.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ThreadSafe]
         public ref Array Store(int index) => ref Stores[GetStoreIndex(index)];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ThreadSafe]
         int GetStoreIndex(int component) => component - Types.minimum;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [ThreadSafe]
         int GetStoreIndex<T>() where T : struct, IComponent => GetStoreIndex(ComponentUtility.Concrete<T>.Data.Index);
     }
 }

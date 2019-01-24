@@ -26,6 +26,7 @@ namespace Entia.Modules
             return emitter;
         }
 
+        [ThreadSafe]
         public bool Emit<T>(in T message) where T : struct, IMessage
         {
             if (_emitters.TryGet<T>(out var value) && value is Emitter<T> emitter)
@@ -37,6 +38,7 @@ namespace Entia.Modules
             return false;
         }
 
+        [ThreadSafe]
         public bool Emit(IMessage message) => _emitters.TryGet(message.GetType(), out var emitter) && emitter.Emit(message);
 
         public Receiver<T> Receiver<T>(int capacity = -1) where T : struct, IMessage
@@ -84,13 +86,21 @@ namespace Entia.Modules
             return value.Add(reaction);
         }
 
+        [ThreadSafe]
         public bool Has<T>() where T : struct, IMessage => _emitters.Has<T>();
+        [ThreadSafe]
         public bool Has(Type message) => _emitters.Has(message);
+        [ThreadSafe]
         public bool Has(IEmitter emitter) => _emitters.TryGet(emitter.Type, out var value) && value == emitter;
+        [ThreadSafe]
         public bool Has<T>(Emitter<T> emitter) where T : struct, IMessage => _emitters.TryGet<T>(out var value) && value == emitter;
+        [ThreadSafe]
         public bool Has(IReceiver receiver) => _emitters.TryGet(receiver.Type, out var emitter) && emitter.Has(receiver);
+        [ThreadSafe]
         public bool Has<T>(Receiver<T> receiver) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Has(receiver);
+        [ThreadSafe]
         public bool Has(IReaction reaction) => _emitters.TryGet(reaction.Type, out var emitter) && emitter.Has(reaction);
+        [ThreadSafe]
         public bool Has<T>(Reaction<T> reaction) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Has(reaction);
 
         public bool Remove<T>(Emitter<T> emitter) where T : struct, IMessage
@@ -136,6 +146,7 @@ namespace Entia.Modules
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
+        [ThreadSafe]
         public TypeMap<IMessage, IEmitter>.ValueEnumerator GetEnumerator() => _emitters.Values.GetEnumerator();
         IEnumerator<IEmitter> IEnumerable<IEmitter>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

@@ -1,5 +1,6 @@
 using Entia.Core;
 using System;
+using System.Threading;
 
 namespace Entia.Modules.Component
 {
@@ -36,20 +37,44 @@ namespace Entia.Modules.Component
             return index;
         }
 
-        public bool TryStore<T>(int index, out T[] store) where T : struct, IComponent
+        [ThreadSafe]
+        public bool TryStore<T>(int index, out T[] store, out int adjusted) where T : struct, IComponent
         {
-            var component = ComponentUtility.Concrete<T>.Data.Index;
-            if (TryGetChunk(index / ChunkSize, out var chunk) && component < chunk.Length)
+            if (TryStore(index, ComponentUtility.Concrete<T>.Data, out var array, out adjusted) && array is T[] casted)
             {
-                store = chunk[component] as T[];
-                return store != null;
+                store = casted;
+                return true;
             }
 
             store = default;
             return false;
         }
 
-        public T[] Store<T>(int index, out int adjusted) where T : struct, IComponent => Store(index, ComponentUtility.Concrete<T>.Data, out adjusted) as T[];
+        [ThreadSafe]
+        public bool TryStore(int index, in Metadata metadata, out Array store, out int adjusted)
+        {
+            if (TryGetChunk(index, out var chunk) && metadata.Index < chunk.Length && chunk[metadata.Index] is Array array)
+            {
+                store = array;
+                adjusted = index % ChunkSize;
+                return true;
+            }
+
+            store = default;
+            adjusted = default;
+            return false;
+        }
+
+        public T[] Store<T>(int index, out int adjusted) where T : struct, IComponent
+        {
+            ref readonly var metadata = ref ComponentUtility.Concrete<T>.Data;
+            var chunk = GetChunk(index, metadata.Index + 1);
+            adjusted = index % ChunkSize;
+
+            if (chunk[metadata.Index] is T[] store) return store;
+            chunk[metadata.Index] = store = new T[ChunkSize];
+            return store;
+        }
 
         public Array Store(int index, in Metadata metadata, out int adjusted)
         {
@@ -57,10 +82,10 @@ namespace Entia.Modules.Component
             adjusted = index % ChunkSize;
 
             if (chunk[metadata.Index] is Array store) return store;
-            chunk[metadata.Index] = store = Array.CreateInstance(metadata.Type, ChunkSize);
-            return store;
+            return chunk[metadata.Index] = Array.CreateInstance(metadata.Type, ChunkSize);
         }
 
+        [ThreadSafe]
         bool TryGetChunk(int index, out Array[] chunk)
         {
             index /= ChunkSize;
@@ -80,8 +105,7 @@ namespace Entia.Modules.Component
             ArrayUtility.Ensure(ref Chunks, index + 1);
 
             ref var chunk = ref Chunks[index];
-            if (chunk == null) return Chunks[index] = new Array[count];
-
+            if (chunk == null) return chunk = new Array[count];
             ArrayUtility.Ensure(ref chunk, count);
             return chunk;
         }

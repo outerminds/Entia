@@ -47,28 +47,36 @@ namespace Entia.Injectables
         public AllComponents(Components components) { _components = components; }
 
         /// <inheritdoc cref="Components.Get{T}(Entity)"/>
+        [ThreadSafe]
         public ref T Get<T>(Entity entity) where T : struct, IComponent => ref _components.Get<T>(entity);
         /// <inheritdoc cref="Components.GetOrAdd{T}(Entity, Func{T})"/>
         public ref T GetOrAdd<T>(Entity entity, Func<T> create = null) where T : struct, IComponent => ref _components.GetOrAdd(entity, create);
         /// <inheritdoc cref="Components.GetOrDummy{T}(Entity, out bool)"/>
+        [ThreadSafe]
         public ref T GetOrDummy<T>(Entity entity, out bool success) where T : struct, IComponent => ref _components.GetOrDummy<T>(entity, out success);
         /// <inheritdoc cref="Components.TryGet{T}(Entity, out T)"/>
+        [ThreadSafe]
         public bool TryGet<T>(Entity entity, out T component) where T : struct, IComponent => _components.TryGet(entity, out component);
         /// <inheritdoc cref="Components.TryGet(Entity, Type, out IComponent)"/>
+        [ThreadSafe]
         public bool TryGet(Entity entity, Type type, out IComponent component) => _components.TryGet(entity, type, out component);
         /// <inheritdoc cref="Components.Get(Entity)"/>
         public IEnumerable<IComponent> Get(Entity entity) => _components.Get(entity);
         /// <inheritdoc cref="Components.Get{T}()"/>
+        [ThreadSafe]
         public IEnumerable<(Entity entity, T component)> Get<T>() where T : struct, IComponent => _components.Get<T>();
         /// <inheritdoc cref="Components.Get(Type)"/>
+        [ThreadSafe]
         public IEnumerable<(Entity entity, IComponent component)> Get(Type type) => _components.Get(type);
         /// <inheritdoc cref="Components.Set{T}(Entity, in T)"/>
         public bool Set<T>(Entity entity, in T component) where T : struct, IComponent => _components.Set(entity, component);
         /// <inheritdoc cref="Components.Set(Entity, IComponent)"/>
         public bool Set(Entity entity, IComponent component) => _components.Set(entity, component);
         /// <inheritdoc cref="Components.Has{T}(Entity)"/>
+        [ThreadSafe]
         public bool Has<T>(Entity entity) where T : struct, IComponent => _components.Has<T>(entity);
         /// <inheritdoc cref="Components.Has(Entity, Type)"/>
+        [ThreadSafe]
         public bool Has(Entity entity, Type type) => _components.Has(entity, type);
         /// <inheritdoc cref="Components.Remove{T}(Entity)"/>
         public bool Remove<T>(Entity entity) where T : struct, IComponent => _components.Remove<T>(entity);
@@ -93,6 +101,7 @@ namespace Entia.Injectables
     public readonly struct Components<T> : IInjectable, IEnumerable<(Entity entity, T component)> where T : struct, IComponent
     {
         /// <inheritdoc cref="Components{T}"/>
+        [ThreadSafe]
         public readonly struct Write : IInjectable, IEnumerable<(Entity entity, T component)>
         {
             sealed class Injector : Injector<Write>
@@ -137,6 +146,7 @@ namespace Entia.Injectables
         }
 
         /// <inheritdoc cref="Components{T}"/>
+        [ThreadSafe]
         public readonly struct Read : IInjectable, IEnumerable<(Entity entity, T component)>
         {
             sealed class Injector : Injector<Read>
@@ -215,20 +225,25 @@ namespace Entia.Injectables
         /// <inheritdoc cref="Components.GetOrAdd{T}(Entity, Func{T})"/>
         public ref T GetOrAdd(Entity entity, Func<T> create = null) => ref _components.GetOrAdd(entity, create);
         /// <inheritdoc cref="Components.GetOrDummy{T}(Entity, out bool)"/>
+        [ThreadSafe]
         public ref T GetOrDummy(Entity entity, out bool success) => ref _components.GetOrDummy<T>(entity, out success);
         /// <inheritdoc cref="Components.TryGet{T}(Entity, out T)"/>
+        [ThreadSafe]
         public bool TryGet(Entity entity, out T component) => _components.TryGet(entity, out component);
         /// <inheritdoc cref="Components.Get{T}(Entity)"/>
+        [ThreadSafe]
         public ref T Get(Entity entity) => ref _components.Get<T>(entity);
         /// <inheritdoc cref="Components.Set{T}(Entity, in T)"/>
         public bool Set(Entity entity, in T component) => _components.Set(entity, component);
         /// <inheritdoc cref="Components.Has{T}(Entity)"/>
+        [ThreadSafe]
         public bool Has(Entity entity) => _components.Has<T>(entity);
         /// <inheritdoc cref="Components.Remove{T}(Entity)"/>
         public bool Remove(Entity entity) => _components.Remove<T>(entity);
         /// <inheritdoc cref="Components.Clear{T}()"/>
         public bool Clear() => _components.Clear<T>();
         /// <inheritdoc cref="Components.GetEnumerator()"/>
+        [ThreadSafe]
         public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

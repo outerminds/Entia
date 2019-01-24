@@ -134,6 +134,7 @@ namespace Entia.Core
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
+        [ThreadSafe]
         public static class Cache<T> where T : TBase
         {
             public static readonly int Index = GetIndex(typeof(T));
@@ -154,6 +155,7 @@ namespace Entia.Core
             TypeToIndices = new Dictionary<Type, int[]>()
         };
 
+        [ThreadSafe]
         public static bool TryGetType(int index, out Type type)
         {
             using (var read = _state.Read())
@@ -162,11 +164,13 @@ namespace Entia.Core
                 return type != null;
             }
         }
+        [ThreadSafe]
         public static bool TryGetIndex(Type type, out int index)
         {
             using (var read = _state.Read()) return read.Value.TypeToIndex.TryGetValue(type, out index);
         }
 
+        [ThreadSafe]
         public static int GetIndex(Type type)
         {
             using (var read = _state.Read(true))
@@ -182,6 +186,7 @@ namespace Entia.Core
             }
         }
 
+        [ThreadSafe]
         public static int[] GetIndices(Type type)
         {
             using (var read = _state.Read(true))
@@ -201,13 +206,17 @@ namespace Entia.Core
             }
         }
 
+        [ThreadSafe]
         public static bool TryGetIndices(Type type, out int[] indices)
         {
             using (var read = _state.Read()) return read.Value.TypeToIndices.TryGetValue(type, out indices);
         }
 
+        [ThreadSafe]
         public KeyEnumerable Keys => new KeyEnumerable(this);
+        [ThreadSafe]
         public ValueEnumerable Values => new ValueEnumerable(this);
+        [ThreadSafe]
         public ref TValue this[int index]
         {
             get
@@ -221,7 +230,6 @@ namespace Entia.Core
             get => TryGet(type, out var value) ? value : throw new IndexOutOfRangeException();
             set => Set(type, value);
         }
-        // public int Count { get; private set; }
 
         (TValue[] items, int count) _values;
         bool[] _allocated;
@@ -237,27 +245,32 @@ namespace Entia.Core
             foreach (var pair in pairs) Set(pair.type, pair.value);
         }
 
+        [ThreadSafe]
         public ref TValue Get<T>(out bool success, bool inherit = false) where T : TBase
         {
             if (inherit) return ref Get(Cache<T>.Indices, out success);
             else return ref Get(Cache<T>.Index, out success);
         }
 
+        [ThreadSafe]
         public ref TValue Get(Type type, out bool success, bool inherit = false)
         {
             if (inherit) return ref Get(GetIndices(type), out success);
             else return ref Get(GetIndex(type), out success);
         }
 
+        [ThreadSafe]
         public ref TValue Get(int index, out bool success)
         {
             if (success = Has(index)) return ref _values.items[index];
             return ref Dummy<TValue>.Value;
         }
 
+        [ThreadSafe]
         public bool TryGet<T>(out TValue value, bool inherit = false) where T : TBase =>
             inherit ? TryGet(Cache<T>.Indices, out value) : TryGet(Cache<T>.Index, out value);
 
+        [ThreadSafe]
         public bool TryGet(Type type, out TValue value, bool inherit = false)
         {
             if (inherit ? TryGet(GetIndices(type), out value) : TryGet(GetIndex(type), out value)) return true;
@@ -265,6 +278,7 @@ namespace Entia.Core
             return false;
         }
 
+        [ThreadSafe]
         public bool TryGet(int index, out TValue value)
         {
             if (Has(index))
@@ -295,8 +309,11 @@ namespace Entia.Core
             return false;
         }
 
+        [ThreadSafe]
         public bool Has(Type type, bool inherit = false) => inherit ? Has(GetIndices(type)) : Has(GetIndex(type));
+        [ThreadSafe]
         public bool Has<T>(bool inherit = false) where T : TBase => inherit ? Has(Cache<T>.Indices) : Has(Cache<T>.Index);
+        [ThreadSafe]
         public bool Has(int index) => index < _allocated.Length && _allocated[index];
 
         public bool Remove<T>() where T : TBase => Remove(Cache<T>.Index);
@@ -321,6 +338,7 @@ namespace Entia.Core
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
+        [ThreadSafe]
         public Enumerator GetEnumerator() => new Enumerator(this);
         IEnumerator<(Type type, TValue value)> IEnumerable<(Type type, TValue value)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

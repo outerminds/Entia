@@ -6,10 +6,12 @@ using Entia.Core;
 
 namespace Entia.Modules.Component
 {
+    [ThreadSafe]
     public static class ComponentUtility
     {
         public enum Kinds { Invalid, Abstract, Concrete }
 
+        [ThreadSafe]
         public static class Concrete<T> where T : struct, IComponent
         {
             public static readonly Metadata Data;
@@ -26,6 +28,7 @@ namespace Entia.Modules.Component
             }
         }
 
+        [ThreadSafe]
         public static class Abstract<T> where T : IComponent
         {
             public static bool IsConcrete => Kind == Kinds.Concrete;

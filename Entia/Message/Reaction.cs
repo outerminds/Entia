@@ -58,6 +58,7 @@ namespace Entia.Modules.Message
             return cleared;
         }
 
+        [ThreadSafe]
         public void React(in T message) => _reaction(message);
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
