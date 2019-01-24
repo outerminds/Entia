@@ -23,9 +23,15 @@ namespace Entia.Queryables
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
     public sealed class AllAttribute : Attribute, IQuerier
     {
+        public readonly Type[] Components;
         readonly BitMask[] _masks;
 
-        public AllAttribute(params Type[] components) { _masks = components.Select(ComponentUtility.GetConcrete).ToArray(); }
+        public AllAttribute(params Type[] components)
+        {
+            Components = components.Where(ComponentUtility.IsValid).ToArray();
+            _masks = Components.Select(ComponentUtility.GetConcrete).ToArray();
+        }
+
         public bool TryQuery(Segment segment, World world)
         {
             for (int i = 0; i < _masks.Length; i++) if (segment.Mask.HasNone(_masks[i])) return false;
@@ -36,9 +42,15 @@ namespace Entia.Queryables
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
     public sealed class AnyAttribute : Attribute, IQuerier
     {
+        public readonly Type[] Components;
         readonly BitMask[] _masks;
 
-        public AnyAttribute(params Type[] components) { _masks = components.Select(ComponentUtility.GetConcrete).ToArray(); }
+        public AnyAttribute(params Type[] components)
+        {
+            Components = components.Where(ComponentUtility.IsValid).ToArray();
+            _masks = Components.Select(ComponentUtility.GetConcrete).ToArray();
+        }
+
         public bool TryQuery(Segment segment, World world)
         {
             for (int i = 0; i < _masks.Length; i++) if (segment.Mask.HasAny(_masks[i])) return true;
@@ -49,9 +61,15 @@ namespace Entia.Queryables
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
     public sealed class NoneAttribute : Attribute, IQuerier
     {
+        public readonly Type[] Components;
         readonly BitMask[] _masks;
 
-        public NoneAttribute(params Type[] components) { _masks = components.Select(ComponentUtility.GetConcrete).ToArray(); }
+        public NoneAttribute(params Type[] components)
+        {
+            Components = components.Where(ComponentUtility.IsValid).ToArray();
+            _masks = Components.Select(ComponentUtility.GetConcrete).ToArray();
+        }
+
         public bool TryQuery(Segment segment, World world)
         {
             for (int i = 0; i < _masks.Length; i++) if (segment.Mask.HasAny(_masks[i])) return false;

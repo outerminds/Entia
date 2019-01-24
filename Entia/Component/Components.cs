@@ -159,8 +159,7 @@ namespace Entia.Modules
         public IEnumerable<IComponent> Get(Entity entity)
         {
             ref var data = ref GetData(entity, out var success);
-            if (success) return Get(data);
-            return Array.Empty<IComponent>();
+            return success ? Get(data) : Array.Empty<IComponent>();
         }
 
         /// <summary>
@@ -224,13 +223,7 @@ namespace Entia.Modules
         public int Count(Entity entity)
         {
             ref var data = ref GetData(entity, out var success);
-            if (success)
-            {
-                var segment = GetTargetSegment(data);
-                return segment.Types.data.Length;
-            }
-
-            return 0;
+            return success ? GetTargetSegment(data).Types.data.Length : 0;
         }
 
         /// <summary>
@@ -345,9 +338,10 @@ namespace Entia.Modules
         public bool Remove<T>(Entity entity) where T : IComponent
         {
             ref var data = ref GetData(entity, out var success);
-            return success && ComponentUtility.Abstract<T>.IsConcrete ?
+            if (success) return ComponentUtility.Abstract<T>.IsConcrete ?
                 Remove(entity, ref data, ComponentUtility.Abstract<T>.Data, ComponentUtility.Abstract<T>.OnRemove) :
                 Remove(entity, ref data, ComponentUtility.Abstract<T>.Mask);
+            return false;
         }
 
         /// <summary>
@@ -359,9 +353,10 @@ namespace Entia.Modules
         public bool Remove(Entity entity, Type type)
         {
             ref var data = ref GetData(entity, out var success);
-            return success &&
+            if (success) return
                 ComponentUtility.TryGetMetadata(type, out var metadata) ? Remove(entity, ref data, metadata, MessageUtility.OnRemove(metadata)) :
                 ComponentUtility.TryGetConcrete(type, out var mask) && Remove(entity, ref data, mask);
+            return false;
         }
 
         /// <summary>
@@ -482,7 +477,6 @@ namespace Entia.Modules
             foreach (ref var slot in _transient.Slots.Slice())
             {
                 ref var data = ref GetData(slot.Entity, out var success);
-
                 if (success)
                 {
                     switch (slot.Resolution)
@@ -612,7 +606,7 @@ namespace Entia.Modules
                 ref var data = ref _data.items[entity.Index];
                 if (data.Segment is Segment segment)
                 {
-                    ref var entities = ref data.Segment.Entities;
+                    ref var entities = ref segment.Entities;
                     success = data.Index < entities.count && entities.items[data.Index] == entity;
                     return ref data;
                 }

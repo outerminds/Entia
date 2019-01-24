@@ -92,6 +92,8 @@ namespace Entia.Modules.Component
             return Kinds.Invalid;
         }
 
+        public static bool IsInvalid(Type type) => GetKind(type) == Kinds.Invalid;
+        public static bool IsValid(Type type) => !IsInvalid(type);
         public static bool IsConcrete(Type type) => GetKind(type) == Kinds.Concrete;
         public static bool IsAbstract(Type type) => GetKind(type) == Kinds.Abstract;
 
@@ -119,7 +121,7 @@ namespace Entia.Modules.Component
 
         static Metadata CreateMetadata(Type type)
         {
-            if (GetKind(type) == Kinds.Concrete)
+            if (IsConcrete(type))
             {
                 var abstracts = type.Hierarchy()
                     .SelectMany(child => child.IsGenericType ? new[] { child, child.GetGenericTypeDefinition() } : new[] { child })

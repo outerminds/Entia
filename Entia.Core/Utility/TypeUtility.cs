@@ -97,6 +97,8 @@ namespace Entia.Core
         public static string Format(this Type type)
         {
             var name = type.Name;
+            if (type.IsGenericParameter) return name;
+
             if (type.IsGenericType)
             {
                 var arguments = string.Join(", ", type.GetGenericArguments().Select(Format));
