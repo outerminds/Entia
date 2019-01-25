@@ -5,23 +5,9 @@ namespace Entia.Core
 {
     public unsafe static class UnsafeUtility
     {
-        public delegate ref T Return<T>(void* input);
-        public delegate IntPtr Return(IntPtr input);
-
         public static class Cache<T> where T : unmanaged
         {
             public static readonly int Size = sizeof(T);
-        }
-
-        public static class Cache2<T>
-        {
-            public static readonly Return<T> Return = new Return<T>(_ => ref Dummy<T>.Value);
-
-            static Cache2()
-            {
-                var @return = new Return(_ => _);
-                Reinterpret(ref @Return, ref Return);
-            }
         }
 
         public static class Cast<TFrom, TTo>

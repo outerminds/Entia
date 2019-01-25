@@ -11,8 +11,22 @@ using System.Runtime.InteropServices;
 
 namespace Entia.Experiment
 {
-    public static class QuerierTest
+    public unsafe static class QuerierTest
     {
+        public delegate ref T Return<T>(void* input);
+        public delegate IntPtr Return(IntPtr input);
+
+        public static class Cache<T>
+        {
+            public static readonly Return<T> Return;
+
+            static Cache()
+            {
+                var @return = new Return(_ => _);
+                UnsafeUtility.Reinterpret(ref @return, ref Return);
+            }
+        }
+
         struct Query : Queryables.IQueryable
         {
             public Write<Position> Position;
@@ -39,7 +53,7 @@ namespace Entia.Experiment
             UnsafeUtility.Reinterpret(p + 4, ref value5);
             UnsafeUtility.Reinterpret(p + 8, ref value6);
 
-            ref var value7 = ref UnsafeUtility.Cache2<float>.Return(pointer3);
+            ref var value7 = ref Cache<float>.Return(pointer3);
 
             var world = new World();
             var entities = world.Entities();
