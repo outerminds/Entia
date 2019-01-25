@@ -21,9 +21,31 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- support for custom, system-specific queryable structs
+	- ex:
+		public struct Motion : ISystem
+		{
+			struct Query : IQueryable
+			{
+				public Entity Entity;
+				public Write<Position> Position;
+				public Read<Velocity> Velocity;
+			}
+			
+			public Group<Query> Group;
+		}
+	- addresses the issue of 'item.Value1.Value.Has ? item.Value1.Value.Value : default'
+	- this issue is fixed in Entia.Unity since extensions are generated
+	- this issue is already mitigated with Deconstructors, but still cumbersome
+		- ex:
+			var (a, b) = item; // item is All<Write<Position>, Write<Velocity>>
+			ref var position = ref a.Value;
+			ref var velocity = ref b.Value;
+	- a queryable can only contain other queryables
+	- might require a reinterpret cast from 'All<Write<Position>, Read<Velocity>>' to 'Query'
 - support for component operations over interfaces and generic definitions
 	- ex:
-		interface IFreezeSource : IComponent {}
+		interface IFreezeSource : IComponent { }
 		struct TimedFreeze : IFreezeSource { public float Remaining; }
 		struct InputFreeze : IFreezeSource { public KeyCode[] Keys; public int Remaining; }
 		struct RegionFreeze : IFreezeSource { }
@@ -76,6 +98,7 @@ Features:
 	- run tests on device with IL2CPP build
 
 Bugs:
+- Generated component do not show when searching in the hierarchy window
 - error in Unity when renaming a component/resource.
 	- the error prevents to go in play mode while it is there
 	- the error disapears on the next compilation

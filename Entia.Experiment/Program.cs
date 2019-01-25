@@ -245,6 +245,46 @@ namespace Entia.Experiment
             b.Index++;
         }
 
+        unsafe static void PleaseStopThisMadness()
+        {
+            TTarget Cast1<TSource, TTarget>(ref TSource source)
+            {
+                var sourceReference = __makeref(source);
+                var target = default(TTarget);
+                var targetReference = __makeref(target);
+                *(IntPtr*)&targetReference = *(IntPtr*)&sourceReference;
+                return __refvalue(targetReference, TTarget);
+            }
+
+            T Cast2<T>(ref byte source)
+            {
+                var sourceReference = __makeref(source);
+                var target = default(T);
+                var targetReference = __makeref(target);
+                *(IntPtr*)&targetReference = *(IntPtr*)&sourceReference;
+                return __refvalue(targetReference, T);
+            }
+
+            void Cast3<TSource, TTarget>(ref TSource source, ref TTarget target)
+            {
+                var sourceReference = __makeref(source);
+                var targetReference = __makeref(target);
+                *(IntPtr*)&targetReference = *(IntPtr*)&sourceReference;
+                target = __refvalue(targetReference, TTarget);
+            }
+
+            var position1 = new Position { X = 1, Y = 2, Z = 3 };
+            var velocity1 = Cast1<Position, Velocity>(ref position1);
+            velocity1.X++;
+
+            var data2 = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
+            var velocity2 = Cast2<Velocity>(ref data2[0]);
+
+            var position3 = new Position { X = 1, Y = 2, Z = 3 };
+            var velocity3 = new Velocity();
+            Cast3(ref position3, ref velocity3);
+        }
+
         static unsafe void* AsPointer<T>(ref T value)
         {
             var reference = __makeref(value);
@@ -277,6 +317,7 @@ namespace Entia.Experiment
 
         static void Main()
         {
+            QuerierTest.Run();
             // Group3Test.Benchmark(1_000);
             // Group3Test.Benchmark(10_000);
             // Group3Test.Benchmark(100_000);

@@ -24,13 +24,11 @@ namespace Entia.Modules.Component
         /// </summary>
         public readonly (Metadata[] data, int minimum, int maximum) Types;
         /// <summary>
-        /// The component stores.
-        /// </summary>
-        public Array[] Stores;
-        /// <summary>
         /// The entities.
         /// </summary>
         public (Entity[] items, int count) Entities;
+
+        Pin<Array>[] _stores;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Segment"/> class.
@@ -43,8 +41,8 @@ namespace Entia.Modules.Component
             var metadata = ComponentUtility.ToMetadata(mask);
             Types = (metadata, metadata.Select(data => data.Index).FirstOrDefault(), metadata.Select(data => data.Index + 1).LastOrDefault());
             Entities = (new Entity[capacity], 0);
-            Stores = new Array[Types.maximum - Types.minimum];
-            foreach (var datum in Types.data) Stores[GetStoreIndex(datum.Index)] = Array.CreateInstance(datum.Type, capacity);
+            _stores = new Pin<Array>[Types.maximum - Types.minimum];
+            foreach (var datum in Types.data) _stores[GetStoreIndex(datum.Index)] = Array.CreateInstance(datum.Type, capacity);
         }
 
         /// <summary>
@@ -57,7 +55,7 @@ namespace Entia.Modules.Component
         public bool TryStore<T>(out T[] store) where T : struct, IComponent
         {
             var index = GetStoreIndex<T>();
-            if (index >= 0 && index < Stores.Length && Stores[index] is T[] array)
+            if (index >= 0 && index < _stores.Length && _stores[index] is T[] array)
             {
                 store = array;
                 return true;
@@ -77,7 +75,7 @@ namespace Entia.Modules.Component
         public bool TryStore(int index, out Array store)
         {
             var storeIndex = GetStoreIndex(index);
-            if (storeIndex >= 0 && storeIndex < Stores.Length && Stores[storeIndex] is Array array)
+            if (storeIndex >= 0 && storeIndex < _stores.Length && _stores[storeIndex].Value is Array array)
             {
                 store = array;
                 return true;
@@ -96,7 +94,7 @@ namespace Entia.Modules.Component
         /// <returns>The component store.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [ThreadSafe]
-        public T[] Store<T>() where T : struct, IComponent => (T[])Stores[GetStoreIndex<T>()];
+        public T[] Store<T>() where T : struct, IComponent => (T[])_stores[GetStoreIndex<T>()].Value;
         /// <summary>
         /// Gets the component store of provided component type <paramref name="index"/>.
         /// If the store doesn't exist, an <see cref="IndexOutOfRangeException"/> may be thrown or a <c>null</c> will be returned.
@@ -106,7 +104,30 @@ namespace Entia.Modules.Component
         /// <returns>The component store.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [ThreadSafe]
-        public ref Array Store(int index) => ref Stores[GetStoreIndex(index)];
+        public Array Store(int index) => _stores[GetStoreIndex(index)].Value;
+        /// <summary>
+        /// Ensures that all component stores are at least of the same size as the <see cref="Entities"> array.
+        /// If a component store not large enough, it is resized.
+        /// </summary>
+        /// <returns>Returns <c>true</c> if a component store was resized; otherwise, <c>false</c>.</returns>
+        public bool Ensure()
+        {
+            var resized = false;
+            for (int i = 0; i < Types.data.Length; i++)
+            {
+                ref readonly var metadata = ref Types.data[i];
+                var index = GetStoreIndex(metadata.Index);
+                ref var pin = ref _stores[index];
+                var store = pin.Value;
+                if (ArrayUtility.Ensure(ref store, metadata.Type, Entities.count))
+                {
+                    resized = true;
+                    pin.Dispose();
+                    pin = store;
+                }
+            }
+            return resized;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [ThreadSafe]

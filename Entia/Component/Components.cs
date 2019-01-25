@@ -695,14 +695,13 @@ namespace Entia.Modules
             if (entity == Entity.Zero) return false;
 
             ref var data = ref _data.items[entity.Index];
-            target.segment.Entities.Set(target.index, entity);
+            if (target.segment.Entities.Set(target.index, entity)) target.segment.Ensure();
 
             var types = target.segment.Types.data;
             for (var i = 0; i < types.Length; i++)
             {
                 ref readonly var metadata = ref types[i];
-                ref var targetStore = ref target.segment.Store(metadata.Index);
-                ArrayUtility.Ensure(ref targetStore, metadata.Type, target.segment.Entities.items.Length);
+                var targetStore = target.segment.Store(metadata.Index);
 
                 if (TryGetStore(data, metadata, out var sourceStore, out var sourceIndex))
                     Array.Copy(sourceStore, sourceIndex, targetStore, target.index, 1);

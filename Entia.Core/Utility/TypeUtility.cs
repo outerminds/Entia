@@ -8,28 +8,6 @@ namespace Entia.Core
 {
     public static class TypeUtility
     {
-        public static class Cast<TFrom, TTo>
-        {
-            public static readonly Func<TFrom, TTo> To;
-            public static readonly TryFunc<TFrom, TTo> TryTo;
-
-            static Cast()
-            {
-                if (typeof(TFrom) == typeof(TTo))
-                {
-                    Func<TFrom, TFrom> caster = _ => _;
-                    To = caster as Func<TFrom, TTo>;
-
-                    TryFunc<TFrom, TFrom> tryCaster = (TFrom from, out TFrom to) => { to = from; return true; };
-                    TryTo = tryCaster as TryFunc<TFrom, TTo>;
-                }
-                else
-                {
-                    To = _ => default;
-                    TryTo = (TFrom _, out TTo to) => { to = default; return false; };
-                }
-            }
-        }
 
         public const BindingFlags Members = BindingFlags.Public | BindingFlags.NonPublic;
         public const BindingFlags PublicInstance = BindingFlags.Instance | BindingFlags.Public;

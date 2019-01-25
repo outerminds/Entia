@@ -21,7 +21,6 @@ namespace Entia.Queriers
     public abstract class Querier<T> : IQuerier where T : struct, Queryables.IQueryable
     {
         public abstract bool TryQuery(Segment segment, World world, out Query<T> query);
-
         bool IQuerier.TryQuery(Segment segment, World world) => TryQuery(segment, world, out _);
     }
 
