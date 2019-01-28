@@ -24,12 +24,12 @@ For the full Unity game engine integration of the framework, see [**Entia.Unity*
 ___
 ### Table of contents
 <!--ts-->
-   * [Download](releases)
+   * [Download][releases]
    * [Installation](#installation)
    * [The Basics](#the-basics)
    * [More Concepts](#more-concepts)
    * [Recurrent Usage Patterns](#recurrent-patterns)
-   * [Wiki](Home)
+   * [Wiki][wiki]
 <!--te-->
 
 # Installation
