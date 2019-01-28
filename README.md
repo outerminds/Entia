@@ -25,14 +25,14 @@ ___
 ### Table of contents
 <!--ts-->
    * [Download][releases]
-   * [Getting Started](#getting-started)
+   * [Installation](#installation)
    * [The Basics](#the-basics)
    * [More Concepts](#more-concepts)
    * [Recurrent Usage Patterns](#recurrent-patterns)
    * [Wiki][wiki]
 <!--te-->
 
-# Getting Started
+# Installation
 - [Download][releases] the most recent stable version of Entia.
 - Add _Entia.dll_ and _Entia.Core.dll_ as dependencies in your _csproj_ file.
 - Optionally install the Visual Studio extension _Entia.Analyze.vsix_ to get _Entia_ specific code analysis.
