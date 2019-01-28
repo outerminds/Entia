@@ -40,7 +40,7 @@ namespace Entia.Queriers
     {
         static readonly FieldInfo[] _fields = typeof(T).GetFields(TypeUtility.Instance);
 
-        public unsafe override bool TryQuery(Segment segment, World world, out Query<T> query)
+        public override bool TryQuery(Segment segment, World world, out Query<T> query)
         {
             var attribute = Querier.All(typeof(T).GetCustomAttributes(true).OfType<IQuerier>().ToArray());
             var querier = Querier.All(_fields.Select(field => world.Queriers().Get(field.FieldType)).ToArray());
@@ -49,7 +49,7 @@ namespace Entia.Queriers
                 query = new Query<T>(index =>
                 {
                     var queryable = default(T);
-                    var pointer = UnsafeUtility.ToPointer(ref queryable);
+                    var pointer = UnsafeUtility.Cast<T>.ToPointer(ref queryable);
                     inner.Fill((IntPtr)pointer, index);
                     return queryable;
                 });

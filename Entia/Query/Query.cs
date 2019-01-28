@@ -28,8 +28,8 @@ namespace Entia.Modules.Query
         public static implicit operator Query(Query<T> query) => new Query(
             (pointer, index) =>
             {
-                UnsafeUtility.ToReference<T>(pointer) = query.Get(index);
-                return pointer + UnsafeUtility.Cache<T>.Size;
+                UnsafeUtility.Cast<T>.ToReference(pointer) = query.Get(index);
+                return pointer + UnsafeUtility.Size<T>.Value;
             },
             query.Types);
 

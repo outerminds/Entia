@@ -5,68 +5,61 @@ using System.Runtime.InteropServices;
 
 namespace Entia.Core
 {
-    public unsafe static class UnsafeUtility
+    public static class UnsafeUtility
     {
-        struct Container<T> { public T Value; }
+        public delegate IntPtr Return(IntPtr pointer);
+        public delegate ref TTarget Return<TSource, TTarget>(ref TSource reference);
+        public delegate ref T ReferenceReturn<T>(IntPtr pointer);
+        public delegate IntPtr PointerReturn<T>(ref T reference);
 
-        public delegate ref T Return<T>(IntPtr input);
-        delegate IntPtr Return(IntPtr input);
-
-        public static class Cache<T>
+        public static class Size<T>
         {
-            public static readonly int Size = IntPtr.Size;
-            public static readonly Return<T> Return = Reinterpret.Reference<Return<T>>(new Return(_ => _));
+            public static readonly int Value = IntPtr.Size;
 
-            static Cache()
+            static Size()
             {
                 if (typeof(T).IsValueType)
                 {
                     var array = new T[2];
-                    var head = ToPointer(ref array[0]);
-                    var tail = ToPointer(ref array[1]);
+                    var head = Cast<T>.ToPointer(ref array[0]);
+                    var tail = Cast<T>.ToPointer(ref array[1]);
                     var size = tail.ToInt64() - head.ToInt64();
-                    Size = (int)size;
+                    Value = (int)size;
                 }
             }
         }
 
-        public static class Reinterpret
+        public static class Cast<T>
         {
-            public static void Value<TSource, TTarget>(ref TSource source, ref TTarget target) where TSource : struct where TTarget : struct =>
-                Value(ToPointer(ref source), ref target);
-            public static void Value<T>(IntPtr source, ref T target) where T : struct
+            public static readonly ReferenceReturn<T> ToReference = _ => throw null;
+            public static readonly PointerReturn<T> ToPointer = (ref T _) => throw null;
+
+            static Cast()
             {
-                var reference = __makeref(target);
-                var pointer = (IntPtr*)&reference;
-                pointer[_index] = source;
-                target = __refvalue(reference, T);
-            }
-            public static T Reference<T>(IntPtr reference) where T : class
-            {
-                var source = new Container<IntPtr> { Value = reference };
-                var target = new Container<T>();
-                Value(ref source, ref target);
-                return target.Value;
-            }
-            public static T Reference<T>(object reference) where T : class
-            {
-                var source = new Container<object> { Value = reference };
-                var target = new Container<T>();
-                Value(ref source, ref target);
-                return target.Value;
+                foreach (var field in _fields)
+                {
+                    var value = field.GetValue(_return);
+                    field.SetValue(ToReference, value);
+                    field.SetValue(ToPointer, value);
+                }
             }
         }
 
-        static readonly FieldInfo[] _fields = typeof(TypedReference).GetFields(TypeUtility.Instance);
-        static readonly int _index = Array.FindIndex(_fields, field => field.Name == "Value");
-
-        public static IntPtr ToPointer<T>(ref T value)
+        public static class Cast<TSource, TTarget>
         {
-            var reference = __makeref(value);
-            var pointer = (IntPtr*)&reference;
-            return pointer[_index];
+            public static readonly Return<TSource, TTarget> To = (ref TSource _) => throw null;
+
+            static Cast()
+            {
+                foreach (var field in _fields)
+                {
+                    var value = field.GetValue(_return);
+                    field.SetValue(To, value);
+                }
+            }
         }
 
-        public static ref T ToReference<T>(IntPtr pointer) => ref Cache<T>.Return(pointer);
+        static readonly Return _return = _ => _;
+        static readonly FieldInfo[] _fields = typeof(Delegate).GetFields(TypeUtility.Instance);
     }
 }
