@@ -9,7 +9,7 @@
 
   <Target Name="Copy" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">
     <!-- <Exec Command="dotnet &quot;$(SolutionDir)Tools\Documentor\Documentor.dll&quot; &quot;$(PublishDir)$(ProjectName).xml&quot;" /> -->
-    <Exec Command="xcopy /y /q &quot;$(PublishDir)*&quot; &quot;$(SolutionDir)Releases\Current\&quot;" />
+    <Exec Command="xcopy /y /q &quot;$(PublishDir)*&quot; &quot;$(SolutionDir)Release\&quot;" />
   </Target>
 
   <ItemGroup>

@@ -78,10 +78,18 @@ namespace Entia.Analyze.Analyzers
                 DiagnosticSeverity.Warning,
                 true);
 
+            public static readonly DiagnosticDescriptor FieldMustBeQueryable = new DiagnosticDescriptor(
+                "Entia_" + nameof(FieldMustBeQueryable),
+                nameof(FieldMustBeQueryable),
+                $"Field '{{1}}' in type '{{0}}' must store a value that implements '{typeof(Queryables.IQueryable).FullFormat()}'.",
+                nameof(Entia),
+                DiagnosticSeverity.Warning,
+                true);
+
             public static readonly DiagnosticDescriptor MustImplementOnlyOneEntiaInterface = new DiagnosticDescriptor(
                 "Entia_" + nameof(MustImplementOnlyOneEntiaInterface),
                 nameof(MustImplementOnlyOneEntiaInterface),
-                $"Type '{{0}}' can implement at most one of '{typeof(ISystem).FullFormat()}, {typeof(IComponent).FullFormat()}, {typeof(IMessage).FullFormat()}, {typeof(IResource).FullFormat()}, {typeof(IPhase).FullFormat()}'.",
+                $"Type '{{0}}' can implement at most one of '{typeof(ISystem).FullFormat()}, {typeof(IComponent).FullFormat()}, {typeof(IMessage).FullFormat()}, {typeof(IResource).FullFormat()}, {typeof(IPhase).FullFormat()}, {typeof(Queryables.IQueryable).FullFormat()}'.",
                 nameof(Entia),
                 DiagnosticSeverity.Warning,
                 true);
@@ -111,6 +119,7 @@ namespace Entia.Analyze.Analyzers
             Rules.FieldMustNotBeResource,
             Rules.FieldMustNotBeSystem,
             Rules.FieldMustNotBePhase,
+            Rules.FieldMustBeQueryable,
             Rules.MustBeInstancePublicField,
             Rules.MustImplementOnlyOneEntiaInterface,
             Rules.SystemPublicFieldMustBeInjectable,
@@ -128,6 +137,7 @@ namespace Entia.Analyze.Analyzers
 
                 var members = symbol.Members().ToArray();
                 var fields = symbol.Fields().ToArray();
+                var instanceFields = symbol.InstanceFields().ToArray();
                 var global = context.Compilation.GlobalNamespace;
                 var symbols = new Symbols(global);
 
@@ -136,25 +146,34 @@ namespace Entia.Analyze.Analyzers
                 var isComponent = symbol.Implements(symbols.Component);
                 var isResource = symbol.Implements(symbols.Resource);
                 var isMessage = symbol.Implements(symbols.Message);
+                var isQueryable = symbol.Implements(symbols.Queryable);
 
                 if (isSystem.GetHashCode() +
                     isComponent.GetHashCode() +
                     isMessage.GetHashCode() +
                     isResource.GetHashCode() +
+                    isQueryable.GetHashCode() +
                     isPhase.GetHashCode() > 1)
                     context.ReportDiagnostic(Diagnostic.Create(Rules.MustImplementOnlyOneEntiaInterface, symbol.Locations[0], symbol.Name));
 
-                if (isSystem || isComponent || isResource || isMessage || isPhase)
+                if (isSystem || isComponent || isResource || isMessage || isPhase || isQueryable)
                 {
                     if (symbol.TypeKind == TypeKind.Class) ReportType(Rules.MustBeStruct);
                     foreach (var field in fields)
                     {
-                        if (field.Type != symbols.Entity && field.Type.Implements(symbols.Queryable)) ReportMember(Rules.FieldMustNotBeQueryable, field);
                         if (field.Type.Implements(symbols.System)) ReportMember(Rules.FieldMustNotBeSystem, field);
                     }
                 }
 
-                if (isComponent || isResource || isMessage || isPhase)
+                if (isSystem || isComponent || isResource || isMessage || isPhase)
+                {
+                    foreach (var field in fields)
+                    {
+                        if (field.Type != symbols.Entity && field.Type.Implements(symbols.Queryable)) ReportMember(Rules.FieldMustNotBeQueryable, field);
+                    }
+                }
+
+                if (isComponent || isResource || isMessage || isPhase || isQueryable)
                 {
                     foreach (var member in members.Where(member => !member.Is<INamedTypeSymbol>()))
                     {
@@ -185,6 +204,14 @@ namespace Entia.Analyze.Analyzers
 
                         if (field.DeclaredAccessibility != Accessibility.Public && isInjectable)
                             ReportMember(Rules.SystemNotPublicFieldWillNotBeInjected, field);
+                    }
+                }
+
+                if (isQueryable)
+                {
+                    foreach (var field in instanceFields)
+                    {
+                        if (!field.Type.Implements(symbols.Queryable)) ReportMember(Rules.FieldMustBeQueryable, field);
                     }
                 }
             }

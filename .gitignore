@@ -2,5 +2,6 @@ bin/
 obj/
 .vs/
 Releases/
+Release/
 .vscode/solution-explorer
 *.user
