@@ -1,7 +1,6 @@
 [unity]:https://github.com/outerminds/Entia.Unity
 [logo]:https://github.com/outerminds/Entia/blob/master/Resources/Logo.png
 [releases]:https://github.com/outerminds/Entia/releases
-[documentation]:./
 [wiki]:https://github.com/outerminds/Entia/wiki/Home
 [wiki/entity]:https://github.com/outerminds/Entia/wiki/Entity
 [wiki/component]:https://github.com/outerminds/Entia/wiki/Component
@@ -31,7 +30,6 @@ ___
    * [More Concepts](#more-concepts)
    * [Recurrent Usage Patterns](#recurrent-patterns)
    * [Wiki][wiki]
-   * [Documentation][documentation]
 <!--te-->
 
 # Getting Started
