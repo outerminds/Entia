@@ -1,18 +1,21 @@
-﻿[unity]:https://github.com/outerminds/Entia.Unity
+[unity]:https://github.com/outerminds/Entia.Unity
 [logo]:https://github.com/outerminds/Entia/blob/master/Resources/Logo.png
 [releases]:https://github.com/outerminds/Entia/releases
-[manual]:./
 [documentation]:./
-[manual/entity]:./
-[manual/component]:./
-[manual/system]:./
-[manual/world]:./
-[manual/resource]:./
-[manual/group]:./
-[manual/message]:./
-[manual/node]:./
-[manual/controller]:./
-[manual/phase]:./
+[wiki]:https://github.com/outerminds/Entia/wiki/Home
+[wiki/entity]:https://github.com/outerminds/Entia/wiki/Entity
+[wiki/component]:https://github.com/outerminds/Entia/wiki/Component
+[wiki/system]:https://github.com/outerminds/Entia/wiki/System
+[wiki/world]:https://github.com/outerminds/Entia/wiki/World
+[wiki/resource]:https://github.com/outerminds/Entia/wiki/Resource
+[wiki/group]:https://github.com/outerminds/Entia/wiki/Group
+[wiki/message]:https://github.com/outerminds/Entia/wiki/Message
+[wiki/node]:https://github.com/outerminds/Entia/wiki/Node
+[wiki/controller]:https://github.com/outerminds/Entia/wiki/Controller
+[wiki/phase]:https://github.com/outerminds/Entia/wiki/Phase
+[wiki/queryable]:https://github.com/outerminds/Entia/wiki/Queryable
+[wiki/injectable]:https://github.com/outerminds/Entia/wiki/Injectable
+
 # ![Entia][logo]
 
 **Entia** is a free, open-source, data-oriented, highly performant, parallelized and extensible **ECS** framework writtten in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous _structs_. No indirection, no boxing, no garbage collection and no cache misses.
@@ -27,7 +30,7 @@ ___
    * [The Basics](#the-basics)
    * [More Concepts](#more-concepts)
    * [Recurrent Usage Patterns](#recurrent-patterns)
-   * [Manual][manual]
+   * [Wiki][wiki]
    * [Documentation][documentation]
 <!--te-->
 
@@ -65,16 +68,16 @@ if (controllers.Control(node).TryValue(out var controller))
 	controller.Dispose();
 }
 ```
-- For more details, please consult the [manual][manual].
+- For more details, please consult the [wiki][wiki].
 
 # The Basics
 **ECS** stands for **E**ntity, **C**omponent, **S**ystem. I will go into details about what each of those are, but they are going to be the elements that allow you to program efficiently and pleasantly in a data-oriented style. But what does 'data-oriented' mean, you ask? Well, data-oriented programming (DOP) is another paradigm just like object-oriented programming (OOP). It is just a different way to solve the same problems that OOP can already solve but in a different style and (hopefully) with less hassle. An essential difference between the two is that DOP separates _data_ and _logic_ rather than unifying them within the same container. Now I won't go into details about what DOP is or why it is a good idea since many more knowledgeable articles already exist on the subject, but it has some important implications for performance and for the design of programs. Unfortunately for us, C# is much more of a OOP language than a DOP language, so we have to build tooling to make it possible and easy to do, thus the framework.
 
 Ok, back to **ECS**. Most programmers have heard at some point that it is better to use composition over inheritance. That is because inheritance, even when well designed, is more rigid and harder to change after the fact compared to composed equivalent and in game development, things tend to change all the time in unexpected ways. **ECS** takes the idea of composition to the extreme by removing inheritance completely. This effectively flattens the structure of programs and makes them much more granular and easier to assemble. So here's a brief definition the essential elements of **ECS**:
 
--   [**E**ntity][manual/entity]: an unique identifier (implemented as a simple integer).
--   [**C**omponent][manual/component]: a chunk of data associated with an **E**ntity.
--   [**S**ystem][manual/system]: a piece of logic that processes a subset of all **E**ntities and their associated **C**omponents.
+-   [**E**ntity][wiki/entity]: an unique identifier (implemented as a simple integer).
+-   [**C**omponent][wiki/component]: a chunk of data associated with an **E**ntity.
+-   [**S**ystem][wiki/system]: a piece of logic that processes a subset of all **E**ntities and their associated **C**omponents.
 
 So an **E**ntity can be conceptually thought of as a container for **C**omponents, but this could be misleading since an **E**ntity does not contain anything as it is only an identifier. All it does is group **C**omponents together such that they can be queried by systems and as such it relates more to a key in a database table where the columns would be the **C**omponents than it does to a bag of **C**omponents.
 
@@ -83,15 +86,15 @@ As for **C**omponents, they must remain inert, meaning that they do not hold any
 Since **E**ntities are just identifiers and **C**omponents are just inert chunks of data, we need something to actually does something in this program. **S**ystems are the last missing piece. They are conceptually the equivalent to a function that take all the existing **E**ntities and **C**omponents, filters the ones it is interested in and processes them in some way. This means that ideally, **S**ystems do not hold any state since all the game state exists exclusively within **C**omponents. I say ideally because for optimization purposes, some **S**ystem local state may be needed.
 
 # More Concepts
-**E**ntities, **C**omponents and **S**ystems are the minimal set of concepts that the framework needs to be useful, but additional ones have been added for convenience and performance. I will very briefly expose them here, but each of these will be described in much more details in the [manual][manual].
+**E**ntities, **C**omponents and **S**ystems are the minimal set of concepts that the framework needs to be useful, but additional ones have been added for convenience and performance. I will very briefly expose them here, but each of these will be described in much more details in the [wiki][wiki].
 
--   [World][manual/world]: the collection of all existing **E**ntities and **C**omponents. It is the giant block of data that manages all the other blocks of data. The World is also the basis for extensibility because it holds the framework's modules and allows anyone to add one. This makes the framework extremely adaptable to any game development setup.
--   [Message][manual/message]: a temporary **C**omponent that is not attached to an **E**ntity and that simplifies **S**ystem communication.
--   [Resource][manual/resource]: a World-wide **C**omponent that is not attached to an **E**ntity that holds global data.
--   [Group][manual/group]: a list of all the **E**ntities in a given World that conform to a query.
--   [Node][manual/node]: a data wrapper around **S**ystems that allow to define execution behaviour and order.
--   [Controller][manual/controller]: a wrapper around **S**ystems that executes them based on the behaviour defined in nodes and that controls their state.
--   [Phase][manual/phase]: a data type that is associated with a phase of execution. It allows to run systems at different times such as initialization time, run time, dispose time or any other time that you care to define.
+-   [World][wiki/world]: the collection of all existing **E**ntities and **C**omponents. It is the giant block of data that manages all the other blocks of data. The World is also the basis for extensibility because it holds the framework's modules and allows anyone to add one. This makes the framework extremely adaptable to any game development setup.
+-   [Message][wiki/message]: a temporary **C**omponent that is not attached to an **E**ntity and that simplifies **S**ystem communication.
+-   [Resource][wiki/resource]: a World-wide **C**omponent that is not attached to an **E**ntity that holds global data.
+-   [Group][wiki/group]: a list of all the **E**ntities in a given World that conform to a query.
+-   [Node][wiki/node]: a data wrapper around **S**ystems that allow to define execution behaviour and order.
+-   [Controller][wiki/controller]: a wrapper around **S**ystems that executes them based on the behaviour defined in nodes and that controls their state.
+-   [Phase][wiki/phase]: a data type that is associated with a phase of execution. It allows to run systems at different times such as initialization time, run time, dispose time or any other time that you care to define.
 
 # Recurrent Usage Patterns
 I will specify here recurrent usage patterns that are used in the framework.
