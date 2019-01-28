@@ -21,12 +21,10 @@ namespace Entia.Dependers
         public IEnumerable<IDependency> Depend(MemberInfo member, World world) => Array.Empty<IDependency>();
     }
 
-    public sealed class React<T> : IDepender
+    public sealed class Fields : IDepender
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-        {
-            yield return new React(typeof(T));
-            foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
-        }
+        public IEnumerable<IDependency> Depend(MemberInfo member, World world) => member is IReflect reflect ?
+            reflect.GetFields(TypeUtility.Instance).SelectMany(world.Dependers().Dependencies) :
+            Array.Empty<IDependency>();
     }
 }

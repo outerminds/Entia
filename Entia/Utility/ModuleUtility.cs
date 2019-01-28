@@ -29,14 +29,6 @@ namespace Entia.Modules
         {
             var result = Result.Failure().AsResult<T>();
 
-            if (definition != null && result.IsFailure())
-            {
-                result = type.Hierarchy()
-                    .Where(child => child.IsGenericType && child.GetGenericTypeDefinition() == definition)
-                    .SelectMany(child => child.GetGenericArguments().Select(argument => Result.Try(Activator.CreateInstance, argument).Cast<T>()))
-                    .Any();
-            }
-
             if (attribute != null && result.IsFailure())
             {
                 result = TypeUtility.GetFields(type, TypeUtility.Static)
@@ -50,6 +42,14 @@ namespace Entia.Modules
                 result = type.GetProperties(TypeUtility.Static)
                     .Where(property => property.PropertyType.Is<T>() && property.GetCustomAttributes(true).Any(current => current.GetType().Is(attribute)))
                     .Select(property => Result.Try(property.GetValue, default(object)).Cast<T>())
+                    .Any();
+            }
+
+            if (definition != null && result.IsFailure())
+            {
+                result = type.Hierarchy()
+                    .Where(child => child.IsGenericType && child.GetGenericTypeDefinition() == definition)
+                    .SelectMany(child => child.GetGenericArguments().Select(argument => Result.Try(Activator.CreateInstance, argument).Cast<T>()))
                     .Any();
             }
 

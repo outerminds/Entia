@@ -116,6 +116,12 @@ Bugs:
 	- would require adding namespace elements to the extensions until they are no longer ambiguous; item.BobaA(); item.FettA();
 
 Optimization:
+- Shrink component segment stores by half when the count < capacity / 4
+	- This will free up some memory
+	- Because the stores are pinned, this might worsen defragmentation
+	- This behaviour might cause allocations is lots of entities are moved around causing some segment to grow alot and shrink soon after
+	- Shrink could only happen after a given number of frames (ex: 100) where the count < capacity / 4
+	- Note that shrinking will force all groups to refresh all their pointers, so it should not be done frequently
 - Components.HasAll<T1, T2, ...>, Components.HasAny<T1, T2, ...>, Components.HasNone<T1, T2, ...>
 	- would retrieve a statically cached mask that represents all generic types
 	- would resolve in a single BitMask comparison rather than multiple separate ones

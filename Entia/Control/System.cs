@@ -5,7 +5,7 @@ using Entia.Schedulers;
 
 namespace Entia.Systems
 {
-    public interface ISystem : ISchedulable, IInjectable<Injectors.System>, IDependable<Dependers.System> { }
+    public interface ISystem : ISchedulable, IInjectable<Injectors.System>, IDependable<Dependers.Fields> { }
     public interface IPreInitialize : ISystem, ISchedulable<PreInitialize> { void PreInitialize(); }
     public interface IPostInitialize : ISystem, ISchedulable<PostInitialize> { void PostInitialize(); }
     public interface IInitialize : ISystem, ISchedulable<Initialize> { void Initialize(); }

@@ -28,7 +28,7 @@ namespace Entia.Modules.Component
         /// </summary>
         public (Entity[] items, int count) Entities;
 
-        Pin<Array>[] _stores;
+        Array[] _stores;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Segment"/> class.
@@ -41,7 +41,7 @@ namespace Entia.Modules.Component
             var metadata = ComponentUtility.ToMetadata(mask);
             Types = (metadata, metadata.Select(data => data.Index).FirstOrDefault(), metadata.Select(data => data.Index + 1).LastOrDefault());
             Entities = (new Entity[capacity], 0);
-            _stores = new Pin<Array>[Types.maximum - Types.minimum];
+            _stores = new Array[Types.maximum - Types.minimum];
             foreach (var datum in Types.data) _stores[GetStoreIndex(datum.Index)] = Array.CreateInstance(datum.Type, capacity);
         }
 
@@ -75,7 +75,7 @@ namespace Entia.Modules.Component
         public bool TryStore(int index, out Array store)
         {
             var storeIndex = GetStoreIndex(index);
-            if (storeIndex >= 0 && storeIndex < _stores.Length && _stores[storeIndex].Value is Array array)
+            if (storeIndex >= 0 && storeIndex < _stores.Length && _stores[storeIndex] is Array array)
             {
                 store = array;
                 return true;
@@ -92,9 +92,9 @@ namespace Entia.Modules.Component
         /// </summary>
         /// <typeparam name="T">The component type.</typeparam>
         /// <returns>The component store.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [ThreadSafe]
-        public T[] Store<T>() where T : struct, IComponent => (T[])_stores[GetStoreIndex<T>()].Value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T[] Store<T>() where T : struct, IComponent => (T[])_stores[GetStoreIndex<T>()];
         /// <summary>
         /// Gets the component store of provided component type <paramref name="index"/>.
         /// If the store doesn't exist, an <see cref="IndexOutOfRangeException"/> may be thrown or a <c>null</c> will be returned.
@@ -102,9 +102,9 @@ namespace Entia.Modules.Component
         /// </summary>
         /// <param name="index">The component type index.</param>
         /// <returns>The component store.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [ThreadSafe]
-        public Array Store(int index) => _stores[GetStoreIndex(index)].Value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Array Store(int index) => _stores[GetStoreIndex(index)];
         /// <summary>
         /// Ensures that all component stores are at least of the same size as the <see cref="Entities"> array.
         /// If a component store not large enough, it is resized.
@@ -117,14 +117,8 @@ namespace Entia.Modules.Component
             {
                 ref readonly var metadata = ref Types.data[i];
                 var index = GetStoreIndex(metadata.Index);
-                ref var pin = ref _stores[index];
-                var store = pin.Value;
-                if (ArrayUtility.Ensure(ref store, metadata.Type, Entities.count))
-                {
-                    resized = true;
-                    pin.Dispose();
-                    pin = store;
-                }
+                ref var store = ref _stores[index];
+                resized |= ArrayUtility.Ensure(ref store, metadata.Type, Entities.count);
             }
             return resized;
         }

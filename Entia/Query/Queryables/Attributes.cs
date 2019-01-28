@@ -13,16 +13,16 @@ using System.Reflection;
 
 namespace Entia.Queryables
 {
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field)]
     public sealed class QueryAttribute : Attribute, IQuerier
     {
         public readonly Type Queryable;
         public QueryAttribute(Type queryable) { Queryable = queryable; }
-        public bool TryQuery(Segment segment, World world) => world.Queriers().Get(Queryable).TryQuery(segment, world);
+        public bool TryQuery(Segment segment, World world, out Query query) => world.Queriers().Get(Queryable).TryQuery(segment, world, out query);
     }
 
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
     [ThreadSafe]
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field)]
     public sealed class AllAttribute : Attribute, IQuerier
     {
         public readonly Type[] Components;
@@ -34,15 +34,16 @@ namespace Entia.Queryables
             _masks = Components.Select(ComponentUtility.GetConcrete).ToArray();
         }
 
-        public bool TryQuery(Segment segment, World world)
+        public bool TryQuery(Segment segment, World world, out Query query)
         {
+            query = Query.Empty;
             for (int i = 0; i < _masks.Length; i++) if (segment.Mask.HasNone(_masks[i])) return false;
             return true;
         }
     }
 
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
     [ThreadSafe]
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field)]
     public sealed class AnyAttribute : Attribute, IQuerier
     {
         public readonly Type[] Components;
@@ -54,15 +55,16 @@ namespace Entia.Queryables
             _masks = Components.Select(ComponentUtility.GetConcrete).ToArray();
         }
 
-        public bool TryQuery(Segment segment, World world)
+        public bool TryQuery(Segment segment, World world, out Query query)
         {
+            query = Query.Empty;
             for (int i = 0; i < _masks.Length; i++) if (segment.Mask.HasAny(_masks[i])) return true;
             return false;
         }
     }
 
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method)]
     [ThreadSafe]
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field)]
     public sealed class NoneAttribute : Attribute, IQuerier
     {
         public readonly Type[] Components;
@@ -74,8 +76,9 @@ namespace Entia.Queryables
             _masks = Components.Select(ComponentUtility.GetConcrete).ToArray();
         }
 
-        public bool TryQuery(Segment segment, World world)
+        public bool TryQuery(Segment segment, World world, out Query query)
         {
+            query = Query.Empty;
             for (int i = 0; i < _masks.Length; i++) if (segment.Mask.HasAny(_masks[i])) return false;
             return true;
         }

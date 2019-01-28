@@ -11,7 +11,7 @@ IEnumerable<string> Generate(int depth)
         var generics = GenericParameters(i).ToArray();
         var parameters = string.Join(", ", generics);
         var type = $"Any<{parameters}>";
-        var constraints = string.Join(" ", generics.Select(generic => $"where {generic} : struct, {nameof(IQueryable)}"));
+        var constraints = string.Join(" ", generics.Select(generic => $"where {generic} : struct, IQueryable"));
         var fields = string.Join(Environment.NewLine, generics.Select((generic, index) =>
 $@"        /// <summary>
         /// The value{index + 1}.
@@ -30,9 +30,6 @@ $@"        /// <summary>
         var queryDeclarations = string.Join(
             Environment.NewLine,
             generics.Select((generic, index) => $"var query{index + 1} = world.Queriers().Query<{generic}>();"));
-        var dependencies = string.Join(
-            Environment.NewLine + "                ",
-            generics.Select(generic => $"foreach (var dependency in world.Dependers().Dependencies<{generic}>()) yield return dependency;"));
 
         yield return
 $@"    /// <summary>
@@ -52,18 +49,8 @@ $@"    /// <summary>
             }}
         }}
 
-        sealed class Depender : IDepender
-        {{
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {{
-                {dependencies}
-            }}
-        }}
-
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
 {fields}
 {constructors}

@@ -1,17 +1,16 @@
-using Entia.Core;
+using System.Collections.Generic;
+using System.Reflection;
 using Entia.Dependencies;
 using Entia.Modules;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 
 namespace Entia.Dependers
 {
-    public sealed class System : IDepender
+    public sealed class React<T> : IDepender
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world) => member is IReflect reflect ?
-            reflect.GetMembers(TypeUtility.Instance).SelectMany(world.Dependers().Dependencies) :
-            Array.Empty<IDependency>();
+        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+        {
+            yield return new React(typeof(T));
+            foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
+        }
     }
 }

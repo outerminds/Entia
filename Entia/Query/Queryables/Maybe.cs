@@ -26,15 +26,8 @@ namespace Entia.Queryables
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world) => world.Dependers().Dependencies<T>();
-        }
-
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
         public static implicit operator Maybe<T>(in T value) => new Maybe<T>(value);
 

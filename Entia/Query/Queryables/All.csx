@@ -29,9 +29,6 @@ $@"        /// <summary>
         var queryTypes = string.Join(
             $", ",
             generics.Select((_, index) => $"query{index + 1}.Types"));
-        var dependencies = string.Join(
-            Environment.NewLine + "                ",
-            generics.Select(generic => $"foreach (var dependency in world.Dependers().Dependencies<{generic}>()) yield return dependency;"));
 
         yield return
 $@"    /// <summary>
@@ -55,18 +52,8 @@ $@"    /// <summary>
             }}
         }}
 
-        sealed class Depender : IDepender
-        {{
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {{
-                {dependencies}
-            }}
-        }}
-
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
 {fields}
 

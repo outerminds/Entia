@@ -36,19 +36,8 @@ namespace Entia.Queryables
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                foreach (var dependency in world.Dependers().Dependencies<T1>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T2>()) yield return dependency;
-            }
-        }
-
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
         /// <summary>
         /// The value1.
@@ -86,20 +75,8 @@ namespace Entia.Queryables
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                foreach (var dependency in world.Dependers().Dependencies<T1>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T2>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T3>()) yield return dependency;
-            }
-        }
-
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
         /// <summary>
         /// The value1.
@@ -141,21 +118,8 @@ namespace Entia.Queryables
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                foreach (var dependency in world.Dependers().Dependencies<T1>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T2>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T3>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T4>()) yield return dependency;
-            }
-        }
-
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
         /// <summary>
         /// The value1.
@@ -201,22 +165,8 @@ namespace Entia.Queryables
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                foreach (var dependency in world.Dependers().Dependencies<T1>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T2>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T3>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T4>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T5>()) yield return dependency;
-            }
-        }
-
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
         /// <summary>
         /// The value1.
@@ -266,23 +216,8 @@ namespace Entia.Queryables
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                foreach (var dependency in world.Dependers().Dependencies<T1>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T2>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T3>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T4>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T5>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T6>()) yield return dependency;
-            }
-        }
-
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
         /// <summary>
         /// The value1.
@@ -336,24 +271,8 @@ namespace Entia.Queryables
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                foreach (var dependency in world.Dependers().Dependencies<T1>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T2>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T3>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T4>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T5>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T6>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T7>()) yield return dependency;
-            }
-        }
-
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
         /// <summary>
         /// The value1.
@@ -411,25 +330,8 @@ namespace Entia.Queryables
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                foreach (var dependency in world.Dependers().Dependencies<T1>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T2>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T3>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T4>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T5>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T6>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T7>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T8>()) yield return dependency;
-            }
-        }
-
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
         /// <summary>
         /// The value1.
@@ -491,26 +393,8 @@ namespace Entia.Queryables
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                foreach (var dependency in world.Dependers().Dependencies<T1>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T2>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T3>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T4>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T5>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T6>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T7>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T8>()) yield return dependency;
-                foreach (var dependency in world.Dependers().Dependencies<T9>()) yield return dependency;
-            }
-        }
-
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
         /// <summary>
         /// The value1.

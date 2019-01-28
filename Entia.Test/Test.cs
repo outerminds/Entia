@@ -20,19 +20,27 @@ namespace Entia.Test
         public struct ComponentC<T> : IComponentB { public ulong A, B, C; }
         public struct MessageA : IMessage { }
         public struct MessageB : IMessage { }
-        public static class Providers
+        [All(typeof(ComponentC<>))]
+        public struct ProviderA { }
+        [None(typeof(ComponentA), typeof(ComponentB))]
+        public struct ProviderB { }
+        [All(typeof(IComponentA))]
+        [None(typeof(ComponentB))]
+        public struct ProviderC { }
+        public struct QueryA : Queryables.IQueryable
         {
-            public static ICustomAttributeProvider A = new System.Action(MethodA).Method;
-            public static ICustomAttributeProvider B = new System.Action(MethodB).Method;
-            public static ICustomAttributeProvider C = new System.Action(MethodC).Method;
-
-            [All(typeof(ComponentC<>))]
-            static void MethodA() { }
-            [None(typeof(ComponentA), typeof(ComponentB))]
-            static void MethodB() { }
-            [All(typeof(IComponentA))]
-            [None(typeof(ComponentB))]
-            static void MethodC() { }
+            public Entity Entity;
+            public Read<ComponentB> A;
+        }
+        public struct QueryB : Queryables.IQueryable
+        {
+            public All<Read<ComponentB>, Write<ComponentA>> A;
+            public Maybe<Write<ComponentC<Unit>>> B;
+        }
+        public struct QueryC : Queryables.IQueryable
+        {
+            public QueryA A;
+            public Any<Read<ComponentB>, Write<ComponentA>> B;
         }
 
         public static void Run(int count = 1600, int size = 1600)
@@ -63,13 +71,16 @@ namespace Entia.Test
                 (2, Gen.Fresh(() => new ClearComponent(typeof(IComponentB)).ToAction())),
 
                 // Group
-                (5, Gen.Fresh(() => new GetGroup<Read<ComponentA>>().ToAction())),
-                (5, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<ComponentC<Unit>>>>().ToAction())),
-                (5, Gen.Fresh(() => new GetGroup<Maybe<Read<ComponentA>>>().ToAction())),
-                (5, Gen.Fresh(() => new GetGroup<Read<ComponentC<Unit>>>(Providers.A).ToAction())),
-                (5, Gen.Fresh(() => new GetEntityGroup(Providers.B).ToAction())),
-                (5, Gen.Fresh(() => new GetEntityGroup(Providers.C).ToAction())),
-                (5, Gen.Fresh(() => new GetGroup<Any<Write<ComponentC<Unit>>, Read<ComponentB>>>().ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<Read<ComponentA>>().ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<ComponentC<Unit>>>>().ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<Maybe<Read<ComponentA>>>().ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<Read<ComponentC<Unit>>>(typeof(ProviderA)).ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<QueryA>().ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<QueryB>().ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<QueryC>().ToAction())),
+                (3, Gen.Fresh(() => new GetEntityGroup(typeof(ProviderB)).ToAction())),
+                (3, Gen.Fresh(() => new GetEntityGroup(typeof(ProviderC)).ToAction())),
+                (3, Gen.Fresh(() => new GetGroup<Any<Write<ComponentC<Unit>>, Read<ComponentB>>>().ToAction())),
 
                 // Message
                 (5, Gen.Fresh(() => new EmitMessage<MessageA>().ToAction())),
@@ -97,7 +108,7 @@ namespace Entia.Test
 
                     .And((world.Groups().Count == model.Groups.Count).Label("Groups.Count"))
                     .And((world.Groups().Count() == model.Groups.Count).Label("Groups.Count()"))
-                    .And((world.Groups().Count <= 7).Label("world.Groups().Count <= 7")));
+                    .And((world.Groups().Count <= 10).Label("world.Groups().Count <= 10")));
 
             var parallel =
 #if DEBUG

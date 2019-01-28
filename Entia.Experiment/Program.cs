@@ -318,6 +318,7 @@ namespace Entia.Experiment
         static void Main()
         {
             QuerierTest.Run();
+
             // Group3Test.Benchmark(1_000);
             // Group3Test.Benchmark(10_000);
             // Group3Test.Benchmark(100_000);
