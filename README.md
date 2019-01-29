@@ -28,7 +28,7 @@ ___
    * [Installation](#installation)
    * [The Basics](#the-basics)
    * [More Concepts](#more-concepts)
-   * [Recurrent Usage Patterns](#recurrent-patterns)
+   * [Recurrent Usage Patterns](#recurrent-usage-patterns)
    * [Wiki][wiki]
 <!--te-->
 
