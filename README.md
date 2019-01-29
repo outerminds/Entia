@@ -47,7 +47,8 @@ var world = new World();
 var controllers = world.Controllers();
 var resources = world.Resources();
 
-// As the name suggest, this execution node will execute its children in sequential order.
+// As the name suggest, this execution node will execute its children 
+// in sequential order.
 var node = Sequence(
 	// Insert systems here using 'System<T>()' where 'T' is your system type.
 	System<Systems.Motion>(),
