@@ -116,7 +116,7 @@ I will specify here recurrent usage patterns that are used in the framework.
 -   The whole framework is implemented as extensions to the World which means that it is so extensible that you could, in principle, implement another **ECS** within **Entia**.
 -   Most extensions use interfaces and/or attributes to allow efficient, flexible and AOT (ahead of time compilation) friendly extensions.
     -   For example, to implement a new kind of query, you would have to define an `struct` that implements the `IQueryable<T>` (an empty _interface_) where T is an `IQuerier` and define a type that implements `IQuerier` (a non-empty _interface_ that builds queries).
-    -   This _interface_-linking pattern (an _interface_ that has for main purpose to link a type 'T') is used a lot in the framework. It makes it explicit what the default implementation for concepts are and ensures that those linked types are properly AOT compiled even when using generic types.
+    -   This _interface_-linking pattern (an _interface_ that has for main purpose to link a type `T`) is used a lot in the framework. It makes it explicit what the default implementation for concepts are and ensures that those linked types are properly AOT compiled even when using generic types.
     - AOT support is essential since some target platforms (such as iOS) require it.
 -   Most existing implementations can be replaced with your own.
     -   If you don't like how the framework parallelizes your **S**ystems, you can replace the threading model by your own.
