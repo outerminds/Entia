@@ -17,7 +17,7 @@
 
 # ![Entia][logo]
 
-**Entia** is a free, open-source, data-oriented, highly performant, parallelized and extensible **ECS** framework writtten in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous _structs_. No indirection, no boxing, no garbage collection and no cache misses.
+**Entia** is a free, open-source, data-oriented, highly performant, parallelized and extensible **ECS** framework writtten in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous `struct`s. No indirection, no boxing, no garbage collection and no cache misses.
 
 For the full Unity game engine integration of the framework, see [**Entia.Unity**][unity].
 
@@ -97,17 +97,17 @@ Since **E**ntities are just identifiers and **C**omponents are just inert chunks
 # Recurrent Usage Patterns
 I will specify here recurrent usage patterns that are used in the framework.
 
-### When in doubt, use a _struct_.
--   Almost everything you will implement when using the framework will be a _struct_. **E**ntities are _struct_, **C**omponents are _struct_, **S**ystems are _struct_ and other concepts such as Messages, Resources, Queryables and Injectables are all _structs_.
--   The framework will enforce the usage of _structs_.
--   This (almost abusive) usage of _structs_ is deliberate.
-    -   It prevents any kind of OOP-inheritance-impulses that one could have since _structs_ cannot inherit from anything.
-    -   _Structs_ correspond much more appropriately to plain and inert data.
-    - _Structs_ don't require useless indirection and null checking when accessing members.
-    -   The cost of passing (copying) _structs_ around is nullified by C#7's _ref returns_.
+### When in doubt, use a `struct`.
+-   Almost everything you will implement when using the framework will be a `struct`. **E**ntities are `struct`, **C**omponents are `struct`, **S**ystems are `struct` and other concepts such as Messages, Resources, Queryables and Injectables are all `struct`s.
+-   The framework will enforce the usage of `struct`s.
+-   This (almost abusive) usage of `struct`s is deliberate.
+    -   It prevents any kind of OOP-inheritance-impulses that one could have since `struct`s cannot inherit from anything.
+    -   `struct`s correspond much more appropriately to plain and inert data.
+    - `struct`s don't require useless indirection and null checking when accessing members.
+    -   The cost of passing (copying) `struct`s around is nullified by C#7's `ref` returns.
 
 ### Most concepts have an empty associated _interface._
--   **C**omponents must implement _IComponent_, **S**ystems must implement _ISystem_, Messages must implement _IMessage_ and so on.
+-   **C**omponents must implement `IComponent`, **S**ystems must implement `ISystem`, Messages must implement `IMessage` and so on.
 -   These interfaces are all empty but they enforce users to be explicit about what the type is and how it should be used.
 -   The framework will enforce that you use the correct _interface_ with the appropriate functionality.
 
@@ -115,7 +115,7 @@ I will specify here recurrent usage patterns that are used in the framework.
 -   Whether you want to add a new way to query **E**ntities or add you custom serialization module, there is a way to extend the framework to accommodate you.
 -   The whole framework is implemented as extensions to the World which means that it is so extensible that you could, in principle, implement another **ECS** within **Entia**.
 -   Most extensions use interfaces and/or attributes to allow efficient, flexible and AOT (ahead of time compilation) friendly extensions.
-    -   For example, to implement a new kind of query, you would have to define an _struct_ that implements the IQueryable<T> (an empty _interface_) where T is an IQuerier and define a type that implements IQuerier (a non-empty _interface_ that builds queries).
+    -   For example, to implement a new kind of query, you would have to define an `struct` that implements the `IQueryable<T>` (an empty _interface_) where T is an `IQuerier` and define a type that implements `IQuerier` (a non-empty _interface_ that builds queries).
     -   This _interface_-linking pattern (an _interface_ that has for main purpose to link a type 'T') is used a lot in the framework. It makes it explicit what the default implementation for concepts are and ensures that those linked types are properly AOT compiled even when using generic types.
     - AOT support is essential since some target platforms (such as iOS) require it.
 -   Most existing implementations can be replaced with your own.
