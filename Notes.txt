@@ -1,5 +1,5 @@
 Gotchas:
-- structural operations are deferred (Add/Remove/Create/Destroy)
+- structural operations are deferred (Add/Remove/Create/Destroy) for groups
 - trying to query a component type directly rather than using 'Read<T>' or 'Write<T>'
 - forgetting to put a 'ref' on a parameter that mutates a component or resource
 	: enforced by the Visual Studio extension
@@ -10,66 +10,22 @@ Gotchas:
 - users need to have dotnet core 2.1 installed for the generator to work
 	: added error message
 
-Conventions:
-- reactions should not be used when an equivalent solution exists
-- use 'On' or 'Do' prefix when defining a message
-- use 'Is', 'Has', 'Will' or 'Was' prefix when defining a tag
-
 Frictions:
 - no default values (for components, messages, resources, systems)
 	: components and resources can now use the 'DefaultAttribute'
 - can not add a component/resource by dragging the file on a gameObject
 
+Documentation:
+- CONTRIBUTING.md
+- specify that Entia is a dotnet standard library 2.0
+	- it is compatible with .Net Framework 4.7+ and .Net Core 2.1+ and any other dotnet standard implementation
+- add more comments in the getting started in README.md
+- initial code snippet should be executable and self-contained; if it is too large, move it to a separate file
+- mention: In almost all cases, there is a Unity template that will prevent you from forgetting the _interface_.
+- make a 'Entia' game jam
+- make a 'Entia.Unity' game jam
+
 Features:
-- support for custom, system-specific queryable structs
-	- ex:
-		public struct Motion : ISystem
-		{
-			struct Query : IQueryable
-			{
-				public Entity Entity;
-				public Write<Position> Position;
-				public Read<Velocity> Velocity;
-			}
-			
-			public Group<Query> Group;
-		}
-	- addresses the issue of 'item.Value1.Value.Has ? item.Value1.Value.Value : default'
-	- this issue is fixed in Entia.Unity since extensions are generated
-	- this issue is already mitigated with Deconstructors, but still cumbersome
-		- ex:
-			var (a, b) = item; // item is All<Write<Position>, Write<Velocity>>
-			ref var position = ref a.Value;
-			ref var velocity = ref b.Value;
-	- a queryable can only contain other queryables
-	- might require a reinterpret cast from 'All<Write<Position>, Read<Velocity>>' to 'Query'
-- support for component operations over interfaces and generic definitions
-	- ex:
-		interface IFreezeSource : IComponent { }
-		struct TimedFreeze : IFreezeSource { public float Remaining; }
-		struct InputFreeze : IFreezeSource { public KeyCode[] Keys; public int Remaining; }
-		struct RegionFreeze : IFreezeSource { }
-		if (Components.Has<IFreezeSource>()) // Do not update motion, or take double damage, etc.
-	- ex:
-		[None(typeof(Unity<>))] // Filters out entities that have any concretisation of the generic definition
-		Group<Entity> Group;
-	- compatible operations include:
-		- Components.Has
-		- Components.Count
-		- Components.Remove
-		- Components.Clear
-		- [All], [Any], [None]
-	- incompatible operations include:
-		- Components.Set
-		- Components.Get // and other getters
-		- Group<T>
-		- Segment.Store
-	- for generic API calls, the compiler will be able to ensure a concrete vs abstract generic argument
-	- concrete types will have to be registered with all their related abstract types
-		- struct Unity<T> : IUnity { }
-		- ComponentUtility.Cache<T>.Data will need an indirection to allow the metadata to be changed
-		- ComponentUtility.Cache<T> could get an 'Index' field since it is usually what is used and the index will never change
-			- the index will actually be required for the indirection to work
 - interpret generic definition dependencies correctly
 	- ex: new Dependencies.Emit(typeof(Messages.OnAdd<>))
 	- this should mean that there is an emit dependency on every type 'T' that fits in 'Messages.OnAdd<>'
@@ -98,6 +54,7 @@ Features:
 	- run tests on device with IL2CPP build
 
 Bugs:
+- Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
 - Generated component do not show when searching in the hierarchy window
 - error in Unity when renaming a component/resource.
 	- the error prevents to go in play mode while it is there

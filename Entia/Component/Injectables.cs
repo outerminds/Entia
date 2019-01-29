@@ -16,6 +16,126 @@ namespace Entia.Injectables
     /// </summary>
     public readonly struct AllComponents : IInjectable, IEnumerable<IComponent>
     {
+        public readonly struct Write : IInjectable, IEnumerable<IComponent>
+        {
+            sealed class Injector : Injector<Write>
+            {
+                public override Result<Write> Inject(MemberInfo member, World world) => new Write(world.Components());
+            }
+
+            sealed class Depender : IDepender
+            {
+                public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+                {
+                    yield return new Dependencies.Read(typeof(Entity));
+                    yield return new Dependencies.Write(typeof(IComponent));
+                }
+            }
+
+            [Injector]
+            static readonly Injector _injector = new Injector();
+            [Depender]
+            static readonly Depender _depender = new Depender();
+
+            readonly Components _components;
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="AllComponents"/> struct.
+            /// </summary>
+            /// <param name="components"></param>
+            public Write(Components components) { _components = components; }
+
+            /// <inheritdoc cref="Components.Get{T}(Entity)"/>
+            [ThreadSafe]
+            public ref T Get<T>(Entity entity) where T : struct, IComponent => ref _components.Get<T>(entity);
+            /// <inheritdoc cref="Components.GetOrDummy{T}(Entity, out bool)"/>
+            [ThreadSafe]
+            public ref T GetOrDummy<T>(Entity entity, out bool success) where T : struct, IComponent => ref _components.GetOrDummy<T>(entity, out success);
+            /// <inheritdoc cref="Components.TryGet{T}(Entity, out T)"/>
+            [ThreadSafe]
+            public bool TryGet<T>(Entity entity, out T component) where T : struct, IComponent => _components.TryGet(entity, out component);
+            /// <inheritdoc cref="Components.TryGet(Entity, Type, out IComponent)"/>
+            [ThreadSafe]
+            public bool TryGet(Entity entity, Type type, out IComponent component) => _components.TryGet(entity, type, out component);
+            /// <inheritdoc cref="Components.Get(Entity)"/>
+            public IEnumerable<IComponent> Get(Entity entity) => _components.Get(entity);
+            /// <inheritdoc cref="Components.Get{T}()"/>
+            [ThreadSafe]
+            public IEnumerable<(Entity entity, T component)> Get<T>() where T : struct, IComponent => _components.Get<T>();
+            /// <inheritdoc cref="Components.Get(Type)"/>
+            [ThreadSafe]
+            public IEnumerable<(Entity entity, IComponent component)> Get(Type type) => _components.Get(type);
+            /// <inheritdoc cref="Components.Has{T}(Entity)"/>
+            [ThreadSafe]
+            public bool Has<T>(Entity entity) where T : struct, IComponent => _components.Has<T>(entity);
+            /// <inheritdoc cref="Components.Has(Entity, Type)"/>
+            [ThreadSafe]
+            public bool Has(Entity entity, Type type) => _components.Has(entity, type);
+            /// <inheritdoc cref="Components.GetEnumerator()"/>
+            public IEnumerator<IComponent> GetEnumerator() => _components.GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => _components.GetEnumerator();
+        }
+
+        public readonly struct Read : IInjectable, IEnumerable<IComponent>
+        {
+            sealed class Injector : Injector<Read>
+            {
+                public override Result<Read> Inject(MemberInfo member, World world) => new Read(world.Components());
+            }
+
+            sealed class Depender : IDepender
+            {
+                public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+                {
+                    yield return new Dependencies.Read(typeof(Entity));
+                    yield return new Dependencies.Read(typeof(IComponent));
+                }
+            }
+
+            [Injector]
+            static readonly Injector _injector = new Injector();
+            [Depender]
+            static readonly Depender _depender = new Depender();
+
+            readonly Components _components;
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="AllComponents"/> struct.
+            /// </summary>
+            /// <param name="components"></param>
+            public Read(Components components) { _components = components; }
+
+            /// <inheritdoc cref="Components.Get{T}(Entity)"/>
+            [ThreadSafe]
+            public ref readonly T Get<T>(Entity entity) where T : struct, IComponent => ref _components.Get<T>(entity);
+            /// <inheritdoc cref="Components.GetOrDummy{T}(Entity, out bool)"/>
+            [ThreadSafe]
+            public ref readonly T GetOrDummy<T>(Entity entity, out bool success) where T : struct, IComponent => ref _components.GetOrDummy<T>(entity, out success);
+            /// <inheritdoc cref="Components.TryGet{T}(Entity, out T)"/>
+            [ThreadSafe]
+            public bool TryGet<T>(Entity entity, out T component) where T : struct, IComponent => _components.TryGet(entity, out component);
+            /// <inheritdoc cref="Components.TryGet(Entity, Type, out IComponent)"/>
+            [ThreadSafe]
+            public bool TryGet(Entity entity, Type type, out IComponent component) => _components.TryGet(entity, type, out component);
+            /// <inheritdoc cref="Components.Get(Entity)"/>
+            public IEnumerable<IComponent> Get(Entity entity) => _components.Get(entity);
+            /// <inheritdoc cref="Components.Get{T}()"/>
+            [ThreadSafe]
+            public IEnumerable<(Entity entity, T component)> Get<T>() where T : struct, IComponent => _components.Get<T>();
+            /// <inheritdoc cref="Components.Get(Type)"/>
+            [ThreadSafe]
+            public IEnumerable<(Entity entity, IComponent component)> Get(Type type) => _components.Get(type);
+            /// <inheritdoc cref="Components.Has{T}(Entity)"/>
+            [ThreadSafe]
+            public bool Has<T>(Entity entity) where T : struct, IComponent => _components.Has<T>(entity);
+            /// <inheritdoc cref="Components.Has(Entity, Type)"/>
+            [ThreadSafe]
+            public bool Has(Entity entity, Type type) => _components.Has(entity, type);
+            /// <inheritdoc cref="Components.GetEnumerator()"/>
+            public IEnumerator<IComponent> GetEnumerator() => _components.GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => _components.GetEnumerator();
+        }
+
         sealed class Injector : Injector<AllComponents>
         {
             public override Result<AllComponents> Inject(MemberInfo member, World world) => new AllComponents(world.Components());
