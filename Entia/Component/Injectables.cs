@@ -67,7 +67,7 @@ namespace Entia.Injectables
             public IEnumerable<(Entity entity, IComponent component)> Get(Type type) => _components.Get(type);
             /// <inheritdoc cref="Components.Has{T}(Entity)"/>
             [ThreadSafe]
-            public bool Has<T>(Entity entity) where T : struct, IComponent => _components.Has<T>(entity);
+            public bool Has<T>(Entity entity) where T : IComponent => _components.Has<T>(entity);
             /// <inheritdoc cref="Components.Has(Entity, Type)"/>
             [ThreadSafe]
             public bool Has(Entity entity, Type type) => _components.Has(entity, type);
@@ -127,7 +127,7 @@ namespace Entia.Injectables
             public IEnumerable<(Entity entity, IComponent component)> Get(Type type) => _components.Get(type);
             /// <inheritdoc cref="Components.Has{T}(Entity)"/>
             [ThreadSafe]
-            public bool Has<T>(Entity entity) where T : struct, IComponent => _components.Has<T>(entity);
+            public bool Has<T>(Entity entity) where T : IComponent => _components.Has<T>(entity);
             /// <inheritdoc cref="Components.Has(Entity, Type)"/>
             [ThreadSafe]
             public bool Has(Entity entity, Type type) => _components.Has(entity, type);
@@ -195,16 +195,16 @@ namespace Entia.Injectables
         public bool Set(Entity entity, IComponent component) => _components.Set(entity, component);
         /// <inheritdoc cref="Components.Has{T}(Entity)"/>
         [ThreadSafe]
-        public bool Has<T>(Entity entity) where T : struct, IComponent => _components.Has<T>(entity);
+        public bool Has<T>(Entity entity) where T : IComponent => _components.Has<T>(entity);
         /// <inheritdoc cref="Components.Has(Entity, Type)"/>
         [ThreadSafe]
         public bool Has(Entity entity, Type type) => _components.Has(entity, type);
         /// <inheritdoc cref="Components.Remove{T}(Entity)"/>
-        public bool Remove<T>(Entity entity) where T : struct, IComponent => _components.Remove<T>(entity);
+        public bool Remove<T>(Entity entity) where T : IComponent => _components.Remove<T>(entity);
         /// <inheritdoc cref="Components.Remove(Entity, Type)"/>
         public bool Remove(Entity entity, Type type) => _components.Remove(entity, type);
         /// <inheritdoc cref="Components.Clear{T}()"/>
-        public bool Clear<T>() where T : struct, IComponent => _components.Clear<T>();
+        public bool Clear<T>() where T : IComponent => _components.Clear<T>();
         /// <inheritdoc cref="Components.Clear(Type)"/>
         public bool Clear(Type type) => _components.Clear(type);
         /// <inheritdoc cref="Components.Clear(Entity)"/>
