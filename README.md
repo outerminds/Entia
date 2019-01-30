@@ -24,7 +24,6 @@
 ---
 ### Table of contents
 <!--ts-->
-   * [Download][releases]
    * [Installation](#installation)
    * [The Basics](#the-basics)
    * [More Concepts](#more-concepts)
