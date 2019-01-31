@@ -35,7 +35,7 @@ namespace Entia.Modules.Control
         public IEnumerable<IRunner> Runners(Node node) => _nodeToRunners.TryGetValue(node, out var map) ? map.Values : Enumerable.Empty<IRunner>();
         public bool TryRunner(Node node, Type phase, out IRunner runner)
         {
-            if (_nodeToRunners.TryGetValue(node, out var map) && map.TryGet(phase, out runner)) return true;
+            if (_nodeToRunners.TryGetValue(node, out var map) && map.TryGet(phase, out runner, true)) return true;
             runner = default;
             return false;
         }

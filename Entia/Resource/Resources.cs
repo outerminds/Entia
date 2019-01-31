@@ -40,7 +40,7 @@ namespace Entia.Modules
             return false;
         }
 
-        public bool TryGetBox(Type resource, out IBox box) => _boxes.TryGet(resource, out box);
+        public bool TryGetBox(Type resource, out IBox box) => _boxes.TryGet(resource, out box, true);
 
         public bool TryGetBox<T>(out Box<T> box) where T : struct, IResource
         {

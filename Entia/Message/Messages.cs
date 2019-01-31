@@ -21,7 +21,7 @@ namespace Entia.Modules
 
         public IEmitter Emitter(Type message)
         {
-            if (_emitters.TryGet(message, out var emitter)) return emitter;
+            if (_emitters.TryGet(message, out var emitter, true)) return emitter;
             var type = typeof(Emitter<>).MakeGenericType(message);
             _emitters.Set(message, emitter = Activator.CreateInstance(type) as IEmitter);
             return emitter;
@@ -40,7 +40,7 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
-        public bool Emit(IMessage message) => _emitters.TryGet(message.GetType(), out var emitter) && emitter.Emit(message);
+        public bool Emit(IMessage message) => _emitters.TryGet(message.GetType(), out var emitter, true) && emitter.Emit(message);
 
         public Receiver<T> Receiver<T>(int capacity = -1) where T : struct, IMessage
         {
@@ -81,7 +81,7 @@ namespace Entia.Modules
 
         public bool React(Type message, Delegate reaction)
         {
-            if (_reactions.TryGet(message, out var value)) return value.Add(reaction);
+            if (_reactions.TryGet(message, out var value, true)) return value.Add(reaction);
             var type = typeof(Reaction<>).MakeGenericType(message);
             _reactions.Set(message, value = Reaction(message));
             return value.Add(reaction);
@@ -92,15 +92,15 @@ namespace Entia.Modules
         [ThreadSafe]
         public bool Has(Type message) => _emitters.Has(message);
         [ThreadSafe]
-        public bool Has(IEmitter emitter) => _emitters.TryGet(emitter.Type, out var value) && value == emitter;
+        public bool Has(IEmitter emitter) => _emitters.TryGet(emitter.Type, out var value, true) && value == emitter;
         [ThreadSafe]
         public bool Has<T>(Emitter<T> emitter) where T : struct, IMessage => _emitters.TryGet<T>(out var value) && value == emitter;
         [ThreadSafe]
-        public bool Has(IReceiver receiver) => _emitters.TryGet(receiver.Type, out var emitter) && emitter.Has(receiver);
+        public bool Has(IReceiver receiver) => _emitters.TryGet(receiver.Type, out var emitter, true) && emitter.Has(receiver);
         [ThreadSafe]
         public bool Has<T>(Receiver<T> receiver) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Has(receiver);
         [ThreadSafe]
-        public bool Has(IReaction reaction) => _emitters.TryGet(reaction.Type, out var emitter) && emitter.Has(reaction);
+        public bool Has(IReaction reaction) => _emitters.TryGet(reaction.Type, out var emitter, true) && emitter.Has(reaction);
         [ThreadSafe]
         public bool Has<T>(Reaction<T> reaction) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Has(reaction);
 
@@ -127,13 +127,13 @@ namespace Entia.Modules
             return false;
         }
         public bool Remove<T>(Receiver<T> receiver) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Remove(receiver);
-        public bool Remove(IReceiver receiver) => _emitters.TryGet(receiver.Type, out var emitter) && emitter.Remove(receiver);
+        public bool Remove(IReceiver receiver) => _emitters.TryGet(receiver.Type, out var emitter, true) && emitter.Remove(receiver);
         public bool Remove<T>(Reaction<T> reaction) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Remove(reaction);
-        public bool Remove(IReaction reaction) => _emitters.TryGet(reaction.Type, out var emitter) && emitter.Remove(reaction);
+        public bool Remove(IReaction reaction) => _emitters.TryGet(reaction.Type, out var emitter, true) && emitter.Remove(reaction);
         public bool Remove<T>(InAction<T> reaction) where T : struct, IMessage => _reactions.TryGet<T>(out var value) && value.Remove(reaction);
-        public bool Remove(Type message, Delegate reaction) => _reactions.TryGet(message, out var value) && value.Remove(reaction);
+        public bool Remove(Type message, Delegate reaction) => _reactions.TryGet(message, out var value, true) && value.Remove(reaction);
         public bool Remove<T>() where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && Remove(emitter);
-        public bool Remove(Type message) => _emitters.TryGet(message, out var emitter) && Remove(emitter);
+        public bool Remove(Type message) => _emitters.TryGet(message, out var emitter, true) && Remove(emitter);
 
         public bool Clear()
         {

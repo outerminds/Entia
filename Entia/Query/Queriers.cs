@@ -74,7 +74,7 @@ namespace Entia.Modules
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         Dictionary<ICustomAttributeProvider, IQuerier> Cache(Type queryable) =>
-            _queriers.TryGet(queryable, out var value) ? value :
+            _queriers.TryGet(queryable, out var value, true) ? value :
             _queriers[queryable] = new Dictionary<ICustomAttributeProvider, IQuerier>();
 
         Dictionary<ICustomAttributeProvider, IQuerier> Cache<T>() where T : struct, Queryables.IQueryable =>

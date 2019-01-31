@@ -85,7 +85,7 @@ namespace Entia.Modules
         public bool Has<T>() where T : struct, Resolvables.IResolvable => _resolvers.Has<T>();
         public bool Has(Type resolvable) => _resolvers.Has(resolvable);
         public Resolver<T> Get<T>() where T : struct, Resolvables.IResolvable => _resolvers.TryGet<T>(out var resolver) && resolver is Resolver<T> casted ? casted : Default<T>();
-        public IResolver Get(Type resolvable) => _resolvers.TryGet(resolvable, out var resolver) ? resolver : Default(resolvable);
+        public IResolver Get(Type resolvable) => _resolvers.TryGet(resolvable, out var resolver, true) ? resolver : Default(resolvable);
         public bool Set<T>(Resolver<T> resolver) where T : struct, Resolvables.IResolvable => _resolvers.Set<T>(resolver);
         public bool Set(Type resolvable, IResolver resolver) => _resolvers.Set(resolvable, resolver);
         public bool Remove<T>() where T : struct, Resolvables.IResolvable => _resolvers.Remove<T>();
