@@ -23,7 +23,6 @@
 #### _For the full Unity game engine integration of the framework, see [**Entia.Unity**][unity]._
 
 ---
-### Table of contents
 <!--ts-->
    * [Installation](#installation)
    * [The Basics](#the-basics)
