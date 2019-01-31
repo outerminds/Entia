@@ -131,7 +131,6 @@ namespace Entia.Modules.Component
                     .SelectMany(child => child.IsGenericType ? new[] { child, child.GetGenericTypeDefinition() } : new[] { child })
                     .Where(child => child.Is<IComponent>())
                     .ToArray();
-
                 using (var write = _state.Write())
                 {
                     if (write.Value.ConcreteToMetadata.TryGetValue(type, out var data)) return data;

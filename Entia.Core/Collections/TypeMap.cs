@@ -157,34 +157,27 @@ namespace Entia.Core
         };
 
         [ThreadSafe]
-        static bool TryGetType(int index, out Type type)
-        {
-            using (var read = _state.Read())
-            {
-                type = index < read.Value.Types.Count ? read.Value.Types[index] : default;
-                return type != null;
-            }
-        }
-        [ThreadSafe]
-        static bool TryGetIndex(Type type, out int index)
-        {
-            using (var read = _state.Read()) return read.Value.TypeToIndex.TryGetValue(type, out index);
-        }
-
-        [ThreadSafe]
         static int GetIndex(Type type)
         {
             using (var read = _state.Read(true))
             {
                 if (read.Value.TypeToIndex.TryGetValue(type, out var index)) return index;
+                return ReserveIndex(type);
+            }
+        }
 
+        [ThreadSafe]
+        static int ReserveIndex(Type type)
+        {
+            if (!type.IsGenericTypeDefinition && !type.IsAbstract && type.Is<TBase>())
+            {
                 var children = type.Hierarchy()
                     .SelectMany(child => child.IsGenericType ? new[] { child, child.GetGenericTypeDefinition() } : new[] { child })
                     .Where(TypeUtility.Is<TBase>)
                     .ToArray();
                 using (var write = _state.Write())
                 {
-                    if (write.Value.TypeToIndex.TryGetValue(type, out index)) return index;
+                    if (write.Value.TypeToIndex.TryGetValue(type, out var index)) return index;
                     index = write.Value.Types.Count;
                     write.Value.Types.Add(type);
                     write.Value.TypeToIndex[type] = index;
@@ -192,6 +185,8 @@ namespace Entia.Core
                     return index;
                 }
             }
+
+            return -1;
         }
 
         [ThreadSafe]
@@ -229,6 +224,7 @@ namespace Entia.Core
         }
         public TValue this[Type type]
         {
+            [ThreadSafe]
             get => TryGet(type, out var value) ? value : throw new IndexOutOfRangeException();
             set => Set(type, value);
         }
@@ -247,8 +243,10 @@ namespace Entia.Core
             foreach (var pair in pairs) Set(pair.type, pair.value);
         }
 
+        [ThreadSafe]
         public int Index<T>() where T : TBase => Cache<T>.Index;
-        public bool TryIndex(Type type, out int index) => TryGetIndex(type, out index);
+        [ThreadSafe]
+        public bool TryIndex(Type concrete, out int index) => (index = GetIndex(concrete)) >= 0;
 
         [ThreadSafe]
         public ref TValue Get<T>(out bool success, bool inherit = false) where T : TBase
@@ -267,7 +265,7 @@ namespace Entia.Core
             }
             else
             {
-                if (TryGetIndex(type, out var index))
+                if (TryIndex(type, out var index))
                     return ref Get(index, out success);
             }
 
@@ -296,7 +294,7 @@ namespace Entia.Core
             }
             else
             {
-                if (TryGetIndex(type, out var index))
+                if (TryIndex(type, out var index))
                     return TryGet(index, out value);
             }
 
@@ -319,8 +317,8 @@ namespace Entia.Core
 
         public bool Set<T>(in TValue value) where T : TBase => Set(Cache<T>.Index, value);
         public bool Set<T>(in TValue value, out int index) where T : TBase => Set(index = Cache<T>.Index, value);
-        public bool Set(Type type, in TValue value) => Set(GetIndex(type), value);
-        public bool Set(Type type, in TValue value, out int index) => Set(index = GetIndex(type), value);
+        public bool Set(Type type, in TValue value) => TryIndex(type, out var index) && Set(index, value);
+        public bool Set(Type type, in TValue value, out int index) => TryIndex(type, out index) && Set(index, value);
         public bool Set(int index, in TValue value)
         {
             ArrayUtility.Ensure(ref _values.items, index + 1);
@@ -338,14 +336,14 @@ namespace Entia.Core
         [ThreadSafe]
         public bool Has(Type type, bool inherit = false) => inherit ?
             TryGetIndices(type, out var indices) && Has(indices) :
-            TryGetIndex(type, out var index) && Has(index);
+            TryIndex(type, out var index) && Has(index);
         [ThreadSafe]
         public bool Has<T>(bool inherit = false) where T : TBase => inherit ? Has(Cache<T>.Indices) : Has(Cache<T>.Index);
         [ThreadSafe]
         public bool Has(int index) => index < _allocated.Length && _allocated[index];
 
         public bool Remove<T>() where T : TBase => Remove(Cache<T>.Index);
-        public bool Remove(Type type) => TryGetIndex(type, out var index) && Remove(index);
+        public bool Remove(Type type) => TryIndex(type, out var index) && Remove(index);
         public bool Remove(int index)
         {
             if (Has(index))
