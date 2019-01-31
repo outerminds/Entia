@@ -21,15 +21,15 @@
 
 #### [:inbox_tray: Download][releases]
 #### _For the full Unity game engine integration of the framework, see [**Entia.Unity**][unity]._
+___
 
----
 # Content
 - [Installation](#installation)
 - [The Basics](#the-basics)
 - [More Concepts](#more-concepts)
 - [Recurrent Usage Patterns](#recurrent-patterns)
 - [Wiki][wiki]
----
+___
 
 # Installation
 - [Download][releases] the most recent stable version of Entia.
@@ -67,7 +67,7 @@ if (controllers.Control(node).TryValue(out var controller))
 }
 ```
 - For more details, please consult the [wiki][wiki].
----
+___
 
 # The Basics
 **ECS** stands for **E**ntity, **C**omponent, **S**ystem. I will go into details about what each of those are, but they are going to be the elements that allow you to program efficiently and pleasantly in a data-oriented style. But what does 'data-oriented' mean, you ask? Well, data-oriented programming (DOP) is another paradigm just like object-oriented programming (OOP). It is just a different way to solve the same problems that OOP can already solve but in a different style and (hopefully) with less hassle. An essential difference between the two is that DOP separates _data_ and _logic_ rather than unifying them within the same container. Now I won't go into details about what DOP is or why it is a good idea since many more knowledgeable articles already exist on the subject, but it has some important implications for performance and for the design of programs. Unfortunately for us, C# is much more of a OOP language than a DOP language, so we have to build tooling to make it possible and easy to do, thus the framework.
@@ -83,7 +83,7 @@ So an **E**ntity can be conceptually thought of as a container for **C**omponent
 As for **C**omponents, they must remain inert, meaning that they do not hold any logic whatsoever. No methods, no constructors, no destructors, no properties, no events, no nothing except plain and simple _public_ fields. This ensures that **C**omponents are easy to understand, predictable, easy to serialize and have a good memory layout. This might be surprising and/or worrying for a mind that is used to control the access to their object's data with properties and/or methods but I'm telling you that as soon as you let go of the idea of protecting/hiding data you eventually realize that it was not strictly necessary and that everything is actually alright.
 
 Since **E**ntities are just identifiers and **C**omponents are just inert chunks of data, we need something to actually does something in this program. **S**ystems are the last missing piece. They are conceptually the equivalent to a function that take all the existing **E**ntities and **C**omponents, filters the ones it is interested in and processes them in some way. This means that ideally, **S**ystems do not hold any state since all the game state exists exclusively within **C**omponents. I say ideally because for optimization purposes, some **S**ystem local state may be needed.
----
+___
 
 # More Concepts
 **E**ntities, **C**omponents and **S**ystems are the minimal set of concepts that the framework needs to be useful, but additional ones have been added for convenience and performance. I will very briefly expose them here, but each of these will be described in much more details in the [wiki][wiki].
@@ -95,7 +95,7 @@ Since **E**ntities are just identifiers and **C**omponents are just inert chunks
 -   [Node][wiki/node]: a data wrapper around **S**ystems that allow to define execution behaviour and order.
 -   [Controller][wiki/controller]: a wrapper around **S**ystems that executes them based on the behaviour defined in nodes and that controls their state.
 -   [Phase][wiki/phase]: a data type that is associated with a phase of execution. It allows to run systems at different times such as initialization time, run time, dispose time or any other time that you care to define.
----
+___
 
 # Recurrent Usage Patterns
 I will specify here recurrent usage patterns that are used in the framework.
