@@ -174,6 +174,9 @@ namespace Entia.Experiment
             var value5 = map.Get(typeof(List<string>), out var success5, true);
             var value6 = map.Get(typeof(IList<string>), out var success6, true);
             var value7 = map.Get<IList<string>>(out var success7, true);
+            map.Remove<List<int>>();
+            var value8 = map.Get(typeof(IList), out var success8, true);
+            var value9 = map.Get<IList>(out var success9, true);
         }
 
         class Shiatsi { public ulong A; }

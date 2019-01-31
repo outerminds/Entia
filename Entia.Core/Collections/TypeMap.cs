@@ -340,7 +340,7 @@ namespace Entia.Core
         [ThreadSafe]
         public bool Has<T>(bool inherit = false) where T : TBase => inherit ? Has(Cache<T>.Indices) : Has(Cache<T>.Index);
         [ThreadSafe]
-        public bool Has(int index) => index < _allocated.Length && _allocated[index];
+        public bool Has(int index) => index >= 0 && index < _allocated.Length && _allocated[index];
 
         public bool Remove<T>() where T : TBase => Remove(Cache<T>.Index);
         public bool Remove(Type type) => TryIndex(type, out var index) && Remove(index);
