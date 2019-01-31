@@ -22,8 +22,12 @@ Documentation:
 - add more comments in the getting started in README.md
 - initial code snippet should be executable and self-contained; if it is too large, move it to a separate file
 - mention: In almost all cases, there is a Unity template that will prevent you from forgetting the _interface_.
+- make a wiki page about 'Thread Safety' analysis
+- make a wiki page about the 'Extensibility' of the framework and modules
 - make a 'Entia' game jam
 - make a 'Entia.Unity' game jam
+- extensibility of Node.md (IBuilder)
+- extensibility of System.md (IScheduler)
 
 Features:
 - query attributes on a Group<T> field should combine to query attributes on the queryable rather than overriding it

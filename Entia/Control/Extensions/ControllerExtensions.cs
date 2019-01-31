@@ -1,47 +1,27 @@
-﻿using Entia.Core;
-using Entia.Modules.Build;
-using Entia.Modules.Control;
-using Entia.Nodes;
 using System;
+using Entia.Modules.Control;
+using Entia.Phases;
 
 namespace Entia.Modules
 {
     public static class ControllerExtensions
     {
-        public static void Initialize(this Controller controller)
+        public static void Run(this Controller controller, Func<bool> quit)
         {
-            controller.Run<Phases.PreInitialize>();
-            controller.Run<Phases.Initialize>();
-            controller.Run<Phases.React.Initialize>();
-            controller.Run<Phases.PostInitialize>();
+            controller.Run<Initialize>();
+            controller.Run<React.Initialize>();
+            while (!quit()) controller.Run<Run>();
+            controller.Run<React.Dispose>();
+            controller.Run<Dispose>();
         }
 
-        public static void Dispose(this Controller controller)
+        public static void Run(this Controller controller, in bool quit)
         {
-            controller.Run<Phases.PreDispose>();
-            controller.Run<Phases.React.Dispose>();
-            controller.Run<Phases.Dispose>();
-            controller.Run<Phases.PostDispose>();
-        }
-
-        public static void Run(this Controller controller)
-        {
-            controller.Run<Phases.PreRun>();
-            controller.Run<Phases.Run>();
-            controller.Run<Phases.PostRun>();
-        }
-
-        public static Result<Controller> Run(this Controllers controllers, Node node, Func<bool> condition)
-        {
-            var result = controllers.Control(node);
-            if (result.TryValue(out var controller))
-            {
-                controller.Initialize();
-                while (condition()) controller.Run();
-                controller.Dispose();
-            }
-
-            return result;
+            controller.Run<Initialize>();
+            controller.Run<React.Initialize>();
+            while (!quit) controller.Run<Run>();
+            controller.Run<React.Dispose>();
+            controller.Run<Dispose>();
         }
     }
 }

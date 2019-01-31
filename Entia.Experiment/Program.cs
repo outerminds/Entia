@@ -140,7 +140,7 @@ namespace Entia.Experiment
                 System<Systems.C>()
             );
             var game = world.Resources().GetBox<Game>();
-            var result = world.Controllers().Run(node, () => !game.Value.Quit);
+            // var result = world.Controllers().Run(node, () => !game.Value.Quit);
         }
 
         static void Simple2()
@@ -152,13 +152,13 @@ namespace Entia.Experiment
                 System<Systems.C>()
             );
 
-            if (world.Controllers().Control(node).TryValue(out var controller))
-            {
-                ref var game = ref world.Resources().Get<Game>();
-                controller.Initialize();
-                while (!game.Quit) controller.Run();
-                controller.Dispose();
-            }
+            // if (world.Controllers().Control(node).TryValue(out var controller))
+            // {
+            //     ref var game = ref world.Resources().Get<Game>();
+            //     controller.Initialize();
+            //     while (!game.Quit) controller.Run();
+            //     controller.Dispose();
+            // }
         }
 
         class Shiatsi { public ulong A; }
