@@ -23,13 +23,12 @@
 #### _For the full Unity game engine integration of the framework, see [**Entia.Unity**][unity]._
 
 ---
-<!--ts-->
-   * [Installation](#installation)
-   * [The Basics](#the-basics)
-   * [More Concepts](#more-concepts)
-   * [Recurrent Usage Patterns](#recurrent-patterns)
-   * [Wiki][wiki]
-<!--te-->
+# Content
+- [Installation](#installation)
+- [The Basics](#the-basics)
+- [More Concepts](#more-concepts)
+- [Recurrent Usage Patterns](#recurrent-patterns)
+- [Wiki][wiki]
 
 # Installation
 - [Download][releases] the most recent stable version of Entia.
