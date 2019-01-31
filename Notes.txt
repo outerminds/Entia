@@ -1,48 +1,38 @@
-Gotchas:
-- structural operations are deferred (Add/Remove/Create/Destroy) for groups
-- trying to query a component type directly rather than using 'Read<T>' or 'Write<T>'
-- forgetting to put a 'ref' on a parameter that mutates a component or resource
-	: enforced by the Visual Studio extension
-- forgetting 'ref' when declaring a variable that unwraps a 'Write<T>'
-	: enforced by the Visual Studio extension
-- forgetting to add Nodes.Default in the controller sequence
-- nesting generics deeper than 6 (limit is 7 but 1 nesting depth is needed internally)
-- users need to have dotnet core 2.1 installed for the generator to work
-	: added error message
+Documentation:
+- add: CONTRIBUTING.md
+- make a 'Entia' game jam
+- make a 'Entia.Unity' game jam
+
+- ENTIA WIKI
+	- specify that Entia is a dotnet standard library 2.0
+		- it is compatible with .Net Framework 4.7+ and .Net Core 2.1+ and any other dotnet standard implementation
+	- make a wiki page about 'Thread Safety' analysis
+	- make a wiki page about the 'Extensibility' of the framework and modules
+	- extensibility of Node.md (IBuilder)
+	- extensibility of System.md (IScheduler)
+- ENTIA.UNITY WIKI
+	- add: tested on {list of platforms}
+	- add to Home: Optionally install script templates using menu 'Entia/Install/Templates'
+	- mention: In almost all cases, there is a Unity template that will prevent you from forgetting the _interface_.
+	
+- Gotchas:
+	- structural operations are deferred (Add/Remove/Create/Destroy) for groups
+	- trying to query a component type directly rather than using 'Read<T>' or 'Write<T>'
+	- forgetting to put a 'ref' on a parameter that mutates a component or resource
+		: enforced by the Visual Studio extension
+	- forgetting 'ref' when declaring a variable that unwraps a 'Write<T>'
+		: enforced by the Visual Studio extension
+	- forgetting to add Nodes.Default in the controller sequence
+	- nesting generics deeper than 6 (limit is 7 but 1 nesting depth is needed internally)
+	- users need to have dotnet core 2.1 installed for the generator to work
+		: added error message
 
 Frictions:
 - no default values (for components, messages, resources, systems)
 	: components and resources can now use the 'DefaultAttribute'
 - can not add a component/resource by dragging the file on a gameObject
 
-Documentation:
-- CONTRIBUTING.md
-- specify that Entia is a dotnet standard library 2.0
-	- it is compatible with .Net Framework 4.7+ and .Net Core 2.1+ and any other dotnet standard implementation
-- add more comments in the getting started in README.md
-- initial code snippet should be executable and self-contained; if it is too large, move it to a separate file
-- mention: In almost all cases, there is a Unity template that will prevent you from forgetting the _interface_.
-- make a wiki page about 'Thread Safety' analysis
-- make a wiki page about the 'Extensibility' of the framework and modules
-- make a 'Entia' game jam
-- make a 'Entia.Unity' game jam
-- extensibility of Node.md (IBuilder)
-- extensibility of System.md (IScheduler)
-
 Features:
-- query attributes on a Group<T> field should combine to query attributes on the queryable rather than overriding it
-- interpret generic definition dependencies correctly
-	- ex: new Dependencies.Emit(typeof(Messages.OnAdd<>))
-	- this should mean that there is an emit dependency on every type 'T' that fits in 'Messages.OnAdd<>'
-- interpret interface dependencies correctly
-	- new Dependencies.Write(typeof(IComponent))
-	- this should mean that there is a write dependency on every type that implements 'IComponent'
-- allow exclusive queries to run in parallel
-	- ex: 
-		[All(typeof(B))] Group<Write<A>> GroupA; // defined in 'SystemA'
-		[None(typeof(B))] Group<Write<A>> GroupB; // defined in 'SystemB'
-	- 'SystemA' and 'SystemB' should be allowed to run in parallel
-	- they are safe because they will have no common segments even though they both have a write dependency on 'A'
 - add tests for 'Resolvers' module
 - make Components.Set / Components.Remove / Entities.Create / Entities.Destroy thread safe?
 	- this might be very hard or impossible to accomplish without locking
@@ -78,22 +68,20 @@ Bugs:
 	- would require adding namespace elements to the extensions until they are no longer ambiguous; item.BobaA(); item.FettA();
 
 Optimization:
-- Shrink component segment stores by half when the count < capacity / 4
+- Shrink component segment stores by half when the 'count < capacity / 4'
 	- This will free up some memory
-	- Because the stores are pinned, this might worsen defragmentation
 	- This behaviour might cause allocations is lots of entities are moved around causing some segment to grow alot and shrink soon after
-	- Shrink could only happen after a given number of frames (ex: 100) where the count < capacity / 4
+	- Shrink could only happen after a given number of frames (ex: 100) where the 'count < capacity / 4'
 	- Note that shrinking will force all groups to refresh all their pointers, so it should not be done frequently
+	- Shrink threshold could be set to 'count < capactity / 8'
 - Components.HasAll<T1, T2, ...>, Components.HasAny<T1, T2, ...>, Components.HasNone<T1, T2, ...>
 	- would retrieve a statically cached mask that represents all generic types
 	- would resolve in a single BitMask comparison rather than multiple separate ones
 	- could be done using a tuple type rather than a bagillion overloads
 		- ex: Components.HasAll<(Boba, Fett)>()
-		- I need the 'ITuple' interface to appropriately constrain the generic argument, but it exists only in .Net Standard 2.1
+		- I need the 'ITuple' interface to appropriately constrain the generic argument, but it exists only in .Net Standard 2.1 which is not yet supported by Unity
 - do not reserve a store for empty components
 - WorldReferenceEditor is very slow. Can try to cache stuff.
-- make sure every 'Enumerable<T>' is implemented in such a way that it doesn't allocate 
-	- especially check stores
 
 Questions:
 - should system methods be implemented explicitly by convention?

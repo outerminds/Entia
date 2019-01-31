@@ -136,28 +136,28 @@ namespace Entia.Core
         }
 
         [ThreadSafe]
-        public static class Cache<T> where T : TBase
+        static class Cache<T> where T : TBase
         {
             public static readonly int Index = GetIndex(typeof(T));
-            public static readonly int[] Indices = GetIndices(typeof(T));
+            public static readonly List<int> Indices = GetIndices(typeof(T));
         }
 
         struct State
         {
             public List<Type> Types;
             public Dictionary<Type, int> TypeToIndex;
-            public Dictionary<Type, int[]> TypeToIndices;
+            public Dictionary<Type, List<int>> TypeToIndices;
         }
 
         static readonly Concurrent<State> _state = new State
         {
             Types = new List<Type>(),
             TypeToIndex = new Dictionary<Type, int>(),
-            TypeToIndices = new Dictionary<Type, int[]>()
+            TypeToIndices = new Dictionary<Type, List<int>>()
         };
 
         [ThreadSafe]
-        public static bool TryGetType(int index, out Type type)
+        static bool TryGetType(int index, out Type type)
         {
             using (var read = _state.Read())
             {
@@ -166,29 +166,36 @@ namespace Entia.Core
             }
         }
         [ThreadSafe]
-        public static bool TryGetIndex(Type type, out int index)
+        static bool TryGetIndex(Type type, out int index)
         {
             using (var read = _state.Read()) return read.Value.TypeToIndex.TryGetValue(type, out index);
         }
 
         [ThreadSafe]
-        public static int GetIndex(Type type)
+        static int GetIndex(Type type)
         {
             using (var read = _state.Read(true))
             {
                 if (read.Value.TypeToIndex.TryGetValue(type, out var index)) return index;
+
+                var children = type.Hierarchy()
+                    .SelectMany(child => child.IsGenericType ? new[] { child, child.GetGenericTypeDefinition() } : new[] { child })
+                    .Where(TypeUtility.Is<TBase>)
+                    .ToArray();
                 using (var write = _state.Write())
                 {
                     if (write.Value.TypeToIndex.TryGetValue(type, out index)) return index;
                     index = write.Value.Types.Count;
                     write.Value.Types.Add(type);
-                    return write.Value.TypeToIndex[type] = index;
+                    write.Value.TypeToIndex[type] = index;
+                    foreach (var child in children) GetIndices(child).Add(index);
+                    return index;
                 }
             }
         }
 
         [ThreadSafe]
-        public static int[] GetIndices(Type type)
+        static List<int> GetIndices(Type type)
         {
             using (var read = _state.Read(true))
             {
@@ -196,19 +203,13 @@ namespace Entia.Core
                 using (var write = _state.Write())
                 {
                     if (write.Value.TypeToIndices.TryGetValue(type, out indices)) return indices;
-                    indices = type.GetInterfaces()
-                        .Prepend(type)
-                        .Concat(type.Bases())
-                        .Where(TypeUtility.Is<TBase>)
-                        .Select(GetIndex)
-                        .ToArray();
-                    return write.Value.TypeToIndices[type] = indices;
+                    return write.Value.TypeToIndices[type] = new List<int>();
                 }
             }
         }
 
         [ThreadSafe]
-        public static bool TryGetIndices(Type type, out int[] indices)
+        static bool TryGetIndices(Type type, out List<int> indices)
         {
             using (var read = _state.Read()) return read.Value.TypeToIndices.TryGetValue(type, out indices);
         }
@@ -246,6 +247,9 @@ namespace Entia.Core
             foreach (var pair in pairs) Set(pair.type, pair.value);
         }
 
+        public int Index<T>() where T : TBase => Cache<T>.Index;
+        public bool TryIndex(Type type, out int index) => TryGetIndex(type, out index);
+
         [ThreadSafe]
         public ref TValue Get<T>(out bool success, bool inherit = false) where T : TBase
         {
@@ -256,8 +260,19 @@ namespace Entia.Core
         [ThreadSafe]
         public ref TValue Get(Type type, out bool success, bool inherit = false)
         {
-            if (inherit) return ref Get(GetIndices(type), out success);
-            else return ref Get(GetIndex(type), out success);
+            if (inherit)
+            {
+                if (TryGetIndices(type, out var indices))
+                    return ref Get(indices, out success);
+            }
+            else
+            {
+                if (TryGetIndex(type, out var index))
+                    return ref Get(index, out success);
+            }
+
+            success = false;
+            return ref Dummy<TValue>.Value;
         }
 
         [ThreadSafe]
@@ -274,7 +289,17 @@ namespace Entia.Core
         [ThreadSafe]
         public bool TryGet(Type type, out TValue value, bool inherit = false)
         {
-            if (inherit ? TryGet(GetIndices(type), out value) : TryGet(GetIndex(type), out value)) return true;
+            if (inherit)
+            {
+                if (TryGetIndices(type, out var indices))
+                    return TryGet(indices, out value);
+            }
+            else
+            {
+                if (TryGetIndex(type, out var index))
+                    return TryGet(index, out value);
+            }
+
             value = default;
             return false;
         }
@@ -311,7 +336,9 @@ namespace Entia.Core
         }
 
         [ThreadSafe]
-        public bool Has(Type type, bool inherit = false) => inherit ? Has(GetIndices(type)) : Has(GetIndex(type));
+        public bool Has(Type type, bool inherit = false) => inherit ?
+            TryGetIndices(type, out var indices) && Has(indices) :
+            TryGetIndex(type, out var index) && Has(index);
         [ThreadSafe]
         public bool Has<T>(bool inherit = false) where T : TBase => inherit ? Has(Cache<T>.Indices) : Has(Cache<T>.Index);
         [ThreadSafe]
@@ -344,11 +371,11 @@ namespace Entia.Core
         IEnumerator<(Type type, TValue value)> IEnumerable<(Type type, TValue value)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        ref TValue Get(int[] indices, out bool success)
+        ref TValue Get(List<int> indices, out bool success)
         {
-            foreach (var index in indices)
+            for (int i = 0; i < indices.Count; i++)
             {
-                ref var value = ref Get(index, out success);
+                ref var value = ref Get(indices[i], out success);
                 if (success) return ref value;
             }
 
@@ -356,15 +383,15 @@ namespace Entia.Core
             return ref Dummy<TValue>.Value;
         }
 
-        bool TryGet(int[] indices, out TValue value)
+        bool TryGet(List<int> indices, out TValue value)
         {
             value = Get(indices, out var success);
             return success;
         }
 
-        bool Has(int[] indices)
+        bool Has(List<int> indices)
         {
-            foreach (var index in indices) if (Has(index)) return true;
+            for (int i = 0; i < indices.Count; i++) if (Has(indices[i])) return true;
             return false;
         }
     }

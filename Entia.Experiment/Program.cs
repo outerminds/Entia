@@ -6,6 +6,7 @@ using Entia.Nodes;
 using Entia.Queryables;
 using Entia.Systems;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -159,6 +160,20 @@ namespace Entia.Experiment
             //     while (!game.Quit) controller.Run();
             //     controller.Dispose();
             // }
+        }
+
+        static void TypeMap()
+        {
+            var map = new TypeMap<IEnumerable, string>();
+            map.Set<List<int>>("Poulah");
+            map.Set<List<string>>("Viarge");
+            var value1 = map.Get(typeof(List<>), out var success1, true);
+            var value2 = map.Get(typeof(IList), out var success2, true);
+            var value3 = map.Get(typeof(List<>), out var success3, true);
+            var value4 = map.Get<IList>(out var success4, true);
+            var value5 = map.Get(typeof(List<string>), out var success5, true);
+            var value6 = map.Get(typeof(IList<string>), out var success6, true);
+            var value7 = map.Get<IList<string>>(out var success7, true);
         }
 
         class Shiatsi { public ulong A; }
@@ -317,7 +332,7 @@ namespace Entia.Experiment
 
         static void Main()
         {
-            QuerierTest.Run();
+            TypeMap();
 
             // Group3Test.Benchmark(1_000);
             // Group3Test.Benchmark(10_000);

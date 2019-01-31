@@ -58,7 +58,7 @@ namespace Entia.Modules
 
         public void Defer<T>(in T resolvable) where T : struct, Resolvables.IResolvable
         {
-            var dataIndex = TypeMap<Resolvables.IResolvable, Data>.Cache<T>.Index;
+            var dataIndex = _data.Index<T>();
             ref var data = ref _data.Get(dataIndex, out var success);
             if (success && data.Resolvables is T[] resolvables)
             {
