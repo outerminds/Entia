@@ -40,30 +40,60 @@ ___
 using Entia;
 using Entia.Core;
 using Entia.Modules;
+using Entia.Systems;
 using static Entia.Nodes.Node;
 
-var world = new World();
-var controllers = world.Controllers();
-var resources = world.Resources();
-
-// As the name suggest, this execution node will execute its children 
-// in sequential order.
-var node = Sequence(
-	// Insert systems here using 'System<T>()' where 'T' is your system type.
-	System<Systems.Motion>(),
-	System<Systems.ControllerInput>(),
-	System<Systems.Health>());
-	
-// A controller is built from the node to allow the execution of your systems.
-if (controllers.Control(node).TryValue(out var controller))
+public static class Game
 {
-	// This resource will allow the application to close.
-	ref var game = ref resources.Get<Game>();
-	
-	// A typical execution routine.
-	controller.Initialize();
-	while (!game.Quit) controller.Run();
-	controller.Dispose();
+    public static void Run()
+    {
+        var world = new World();
+        var controllers = world.Controllers();
+        var resources = world.Resources();
+
+        // As the name suggest, this execution node will execute its children 
+        // in sequential order.
+        var node = Sequence(
+            // Insert systems here using 'System<T>()' where 'T' is your system type.
+            System<Systems.Motion>(),
+            System<Systems.ControllerInput>(),
+            System<Systems.Health>());
+
+        // A controller is built from the node to allow the execution of your systems.
+        if (controllers.Control(node).TryValue(out var controller))
+        {
+            // This resource will allow the application to close.
+            ref var game = ref resources.Get<Resources.Game>();
+
+            // A typical execution routine.
+            controller.Initialize();
+            while (!game.Quit) controller.Run();
+            controller.Dispose();
+        }
+    }
+}
+
+namespace Resources
+{
+    public struct Game : IResource { public bool Quit; }
+}
+
+namespace Systems
+{
+    public struct Motion : IRun
+    {
+        public void Run() { /* TODO */ }
+    }
+
+    public struct ControllerInput : IRun
+    {
+        public void Run() { /* TODO */ }
+    }
+
+    public struct Health : IRun
+    {
+        public void Run() { /* TODO */ }
+    }
 }
 ```
 - For more details, please consult the [wiki][wiki].
