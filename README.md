@@ -40,6 +40,7 @@ ___
 using Entia;
 using Entia.Core;
 using Entia.Modules;
+using Entia.Phases;
 using Entia.Systems;
 using static Entia.Nodes.Node;
 
@@ -66,9 +67,11 @@ public static class Game
             ref var game = ref resources.Get<Resources.Game>();
 
             // A typical execution routine.
-            controller.Initialize();
-            while (!game.Quit) controller.Run();
-            controller.Dispose();
+            controller.Run<Initialize>();
+            controller.Run<React.Initialize>();
+            while (!game.Quit) controller.Run<Run>();
+            controller.Run<React.Dispose>();
+            controller.Run<Dispose>();
         }
     }
 }
