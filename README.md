@@ -65,13 +65,8 @@ public static class Game
         {
             // This resource will allow the application to close.
             ref var game = ref resources.Get<Resources.Game>();
-
-            // A typical execution routine.
-            controller.Run<Initialize>();
-            controller.Run<React.Initialize>();
-            while (!game.Quit) controller.Run<Run>();
-            controller.Run<React.Dispose>();
-            controller.Run<Dispose>();
+            // Executes a typical execution routine.
+            controller.Run(in game.Quit);
         }
     }
 }
