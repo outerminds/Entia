@@ -1,5 +1,9 @@
 Documentation:
 - add: CONTRIBUTING.md
+	- clone repository
+	- make sure you have .Net Core SDK 2.0+
+	- CTRL+SHIFT+P, 'Run Test Task' -> should run tests without failure
+	- CTRL+SHIFT+B, 'publish release' -> should create the 'Release' folder in root
 - make a 'Entia' game jam
 - make a 'Entia.Unity' game jam
 
