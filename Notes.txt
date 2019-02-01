@@ -4,6 +4,7 @@ Documentation:
 	- make sure you have .Net Core SDK 2.0+
 	- CTRL+SHIFT+P, 'Run Test Task' -> should run tests without failure
 	- CTRL+SHIFT+B, 'publish release' -> should create the 'Release' folder in root
+- mention in the description of 'Injectable' and of 'World' that using the world in a system will make thread safety analysis fail
 - make a 'Entia' game jam
 - make a 'Entia.Unity' game jam
 
