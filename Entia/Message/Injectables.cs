@@ -89,13 +89,9 @@ namespace Entia.Injectables
         readonly Modules.Message.Reaction<T> _reaction;
         public Reaction(Modules.Message.Reaction<T> reaction) { _reaction = reaction; }
         [ThreadSafe]
-        public bool Has(Action reaction) => _reaction.Has(reaction);
+        public void Add(InAction<T> reaction) => _reaction.Add(reaction);
         [ThreadSafe]
-        public bool Has(InAction<T> reaction) => _reaction.Has(reaction);
-        public bool Add(Action reaction) => _reaction.Add(reaction);
-        public bool Add(InAction<T> reaction) => _reaction.Add(reaction);
-        public bool Remove(Action reaction) => _reaction.Remove(reaction);
-        public bool Remove(InAction<T> reaction) => _reaction.Remove(reaction);
+        public void Remove(InAction<T> reaction) => _reaction.Remove(reaction);
         public bool Clear() => _reaction.Clear();
     }
 }

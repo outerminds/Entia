@@ -1,3 +1,13 @@
+DOING:
+- IL2CPP bug
+- Reaction bug
+- World wiki: weird logic
+- Controller wiki: log errors when 'Control' fails
+- Controller wiki: mettre des systèmes dans la node
+- Message wiki: name emitters more explicitly (DoSwipe -> DoSwipeEmitter) to avoir confusion between the emitter and the message
+- Extensibility sections are hard to understand
+	- The page on extensibility should include a graph that links all concepts together
+
 Documentation:
 - add: CONTRIBUTING.md
 	- clone repository
@@ -54,6 +64,8 @@ Features:
 	- run tests on device with IL2CPP build
 
 Bugs:
+- Getting an Emitter<T>(), Receiver<T>(), Reaction<T>() is not thread safe.
+	- since they can be called in parallel in the IReact<T> scheduler, it must be fixed
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
 - Generated component do not show when searching in the hierarchy window
 - error in Unity when renaming a component/resource.

@@ -10,7 +10,6 @@ namespace Entia.Modules
     public sealed class Messages : IModule, IEnumerable<IEmitter>
     {
         readonly TypeMap<IMessage, IEmitter> _emitters = new TypeMap<IMessage, IEmitter>();
-        readonly TypeMap<IMessage, IReaction> _reactions = new TypeMap<IMessage, IReaction>();
 
         public Emitter<T> Emitter<T>() where T : struct, IMessage
         {
@@ -57,35 +56,10 @@ namespace Entia.Modules
             return receiver;
         }
 
-        public Reaction<T> Reaction<T>() where T : struct, IMessage
-        {
-            var reaction = new Reaction<T>();
-            Emitter<T>().Add(reaction);
-            return reaction;
-        }
-
-        public IReaction Reaction(Type message)
-        {
-            var type = typeof(Reaction<>).MakeGenericType(message);
-            var reaction = Activator.CreateInstance(type) as IReaction;
-            Emitter(message).Add(reaction);
-            return reaction;
-        }
-
-        public bool React<T>(InAction<T> reaction) where T : struct, IMessage
-        {
-            if (_reactions.TryGet<T>(out var value) && value is Reaction<T> casted) return casted.Add(reaction);
-            _reactions.Set<T>(casted = Reaction<T>());
-            return casted.Add(reaction);
-        }
-
-        public bool React(Type message, Delegate reaction)
-        {
-            if (_reactions.TryGet(message, out var value, true)) return value.Add(reaction);
-            var type = typeof(Reaction<>).MakeGenericType(message);
-            _reactions.Set(message, value = Reaction(message));
-            return value.Add(reaction);
-        }
+        public Reaction<T> Reaction<T>() where T : struct, IMessage => Emitter<T>().Reaction;
+        public IReaction Reaction(Type message) => Emitter(message).Reaction;
+        public void React<T>(InAction<T> reaction) where T : struct, IMessage => Reaction<T>().Add(reaction);
+        public bool React(Type message, Delegate reaction) => Reaction(message).Add(reaction);
 
         [ThreadSafe]
         public bool Has<T>() where T : struct, IMessage => _emitters.Has<T>();
@@ -99,16 +73,11 @@ namespace Entia.Modules
         public bool Has(IReceiver receiver) => _emitters.TryGet(receiver.Type, out var emitter, true) && emitter.Has(receiver);
         [ThreadSafe]
         public bool Has<T>(Receiver<T> receiver) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Has(receiver);
-        [ThreadSafe]
-        public bool Has(IReaction reaction) => _emitters.TryGet(reaction.Type, out var emitter, true) && emitter.Has(reaction);
-        [ThreadSafe]
-        public bool Has<T>(Reaction<T> reaction) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Has(reaction);
 
         public bool Remove<T>(Emitter<T> emitter) where T : struct, IMessage
         {
             if (Has(emitter) && _emitters.Remove<T>())
             {
-                _reactions.Remove<T>();
                 emitter.Clear();
                 return true;
             }
@@ -119,7 +88,6 @@ namespace Entia.Modules
         {
             if (Has(emitter) && _emitters.Remove(emitter.Type))
             {
-                _reactions.Remove(emitter.Type);
                 emitter.Clear();
                 return true;
             }
@@ -128,22 +96,15 @@ namespace Entia.Modules
         }
         public bool Remove<T>(Receiver<T> receiver) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Remove(receiver);
         public bool Remove(IReceiver receiver) => _emitters.TryGet(receiver.Type, out var emitter, true) && emitter.Remove(receiver);
-        public bool Remove<T>(Reaction<T> reaction) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Remove(reaction);
-        public bool Remove(IReaction reaction) => _emitters.TryGet(reaction.Type, out var emitter, true) && emitter.Remove(reaction);
-        public bool Remove<T>(InAction<T> reaction) where T : struct, IMessage => _reactions.TryGet<T>(out var value) && value.Remove(reaction);
-        public bool Remove(Type message, Delegate reaction) => _reactions.TryGet(message, out var value, true) && value.Remove(reaction);
+        public bool Remove<T>(InAction<T> reaction) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Reaction.Remove(reaction);
+        public bool Remove(Type message, Delegate reaction) => _emitters.TryGet(message, out var emitter, true) && emitter.Reaction.Remove(reaction);
         public bool Remove<T>() where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && Remove(emitter);
         public bool Remove(Type message) => _emitters.TryGet(message, out var emitter, true) && Remove(emitter);
 
         public bool Clear()
         {
-            foreach (var (_, emitter) in _emitters)
-            {
-                foreach (var reaction in emitter.Reactions) reaction.Clear();
-                foreach (var receiver in emitter.Receivers) receiver.Clear();
-                emitter.Clear();
-            }
-            return _emitters.Clear() | _reactions.Clear();
+            foreach (var (_, emitter) in _emitters) emitter.Clear();
+            return _emitters.Clear();
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
