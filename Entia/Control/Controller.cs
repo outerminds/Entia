@@ -16,7 +16,8 @@ namespace Entia.Modules.Control
         public readonly Node Node;
         public readonly World World;
 
-        readonly TypeMap<IPhase, IRunner> _phaseToRunner = new TypeMap<IPhase, IRunner>();
+        readonly TypeMap<IPhase, IBox> _phaseToRunner = new TypeMap<IPhase, IBox>();
+        // readonly TypeMap<IPhase, IRunner> _phaseToRunner = new TypeMap<IPhase, IRunner>();
         readonly Dictionary<Node, int> _nodeToIndex;
         readonly Dictionary<Node, TypeMap<IPhase, IRunner>> _nodeToRunners = new Dictionary<Node, TypeMap<IPhase, IRunner>>();
         readonly States[] _states;
@@ -51,15 +52,17 @@ namespace Entia.Modules.Control
         }
         public bool TryRunner<T>(out Runner<T> runner) where T : struct, IPhase
         {
-            if (_phaseToRunner.TryGet<T>(out var value) && value is Runner<T> casted)
+            if (_phaseToRunner.TryGet<T>(out var box) && box is Box<Runner<T>> casted)
             {
-                runner = casted;
+                runner = casted.Value;
                 return true;
             }
 
             runner = default;
             return false;
         }
+        public bool Has<T>() where T : struct, IPhase => _phaseToRunner.Has<T>();
+        public bool Has(Type phase) => _phaseToRunner.Has(phase);
 
         public bool TryState(Node node, out States state) => TryIndex(node, out var index) & TryState(index, out state);
         public bool TryState(int index, out States state)
@@ -82,15 +85,16 @@ namespace Entia.Modules.Control
         public bool Disable(Node node) => TryIndex(node, out var index) && Disable(index);
         public bool Disable(int index) => _states[index].Change(States.Disabled);
 
-        public void Run<T>() where T : struct, IPhase => Run(default(T));
+        public void Run<T>() where T : struct, IPhase => Runner<T>().Run(default);
         public void Run<T>(in T phase) where T : struct, IPhase => Runner<T>().Run(phase);
+        public Runner<T> Runner<T>() where T : struct, IPhase => Box<T>().Value;
 
-        public Runner<T> Runner<T>() where T : struct, IPhase
+        public Box<Runner<T>>.Read Box<T>() where T : struct, IPhase
         {
-            if (TryRunner<T>(out var runner)) return runner;
-            runner = World.Builders().Build<T>(Node, this).Or(Build.Runner<T>.Empty);
-            _phaseToRunner.Set<T>(runner);
-            return runner;
+            if (_phaseToRunner.TryGet<T>(out var box) && box is Box<Runner<T>> casted) return casted;
+            _phaseToRunner.Set<T>(casted = new Box<Runner<T>>());
+            casted.Value = World.Builders().Build<T>(Node, this).Or(Build.Runner<T>.Empty);
+            return casted;
         }
     }
 }

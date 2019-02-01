@@ -14,8 +14,11 @@ namespace Entia.Phases
 namespace Entia.Modules.Schedule
 {
     [ThreadSafe]
-    public readonly struct Phase
+    public readonly struct Phase : IEquatable<Phase>
     {
+        public static Phase From<T>(InAction<T> action) where T : struct, IPhase => new Phase(action, typeof(T), PhaseUtility.Cache<T>.Index);
+        public static Phase From<T>(Action action) where T : struct, IPhase => From((in T _) => action());
+
         public readonly Delegate Delegate;
         public readonly Type Type;
         public readonly int Index;
@@ -27,7 +30,8 @@ namespace Entia.Modules.Schedule
             Index = index;
         }
 
-        public static Phase From<T>(InAction<T> action) where T : struct, IPhase => new Phase(action, typeof(T), PhaseUtility.Cache<T>.Index);
-        public static Phase From<T>(Action action) where T : struct, IPhase => From((in T _) => action());
+        public bool Equals(Phase other) => (Delegate, Type, Index) == (other.Delegate, other.Type, other.Index);
+        public override bool Equals(object obj) => obj is Phase phase && Equals(phase);
+        public override int GetHashCode() => (Delegate, Type, Index).GetHashCode();
     }
 }

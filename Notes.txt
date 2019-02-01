@@ -1,6 +1,5 @@
 DOING:
 - IL2CPP bug
-- Reaction bug
 - World wiki: weird logic
 - Controller wiki: log errors when 'Control' fails
 - Controller wiki: mettre des systèmes dans la node

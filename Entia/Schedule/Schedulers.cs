@@ -22,20 +22,13 @@ namespace Entia.Modules
         readonly World _world;
         readonly TypeMap<ISchedulable, IScheduler> _schedulers = new TypeMap<ISchedulable, IScheduler>();
         readonly TypeMap<ISchedulable, IScheduler> _defaults = new TypeMap<ISchedulable, IScheduler>();
-        readonly Dictionary<(ISchedulable, Controller), Phase[]> _phases = new Dictionary<(ISchedulable, Controller), Phase[]>(new Comparer());
 
         public Schedulers(World world) { _world = world; }
 
-        public Phase[] Schedule(ISchedulable instance, Controller controller)
-        {
-            var key = (instance, controller);
-            if (_phases.TryGetValue(key, out var phases)) return phases;
-
-            var types = instance.GetType().Hierarchy().Where(type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ISchedulable<>)).ToArray();
-            var schedulers = types.Select(Get).ToArray();
-            phases = schedulers.SelectMany(scheduler => scheduler.Schedule(instance, controller, _world)).ToArray();
-            return _phases[key] = phases;
-        }
+        public Phase[] Schedule(ISchedulable instance, Controller controller) => instance.GetType().Hierarchy()
+            .Where(type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ISchedulable<>))
+            .SelectMany(type => Get(type).Schedule(instance, controller, _world))
+            .ToArray();
 
         public IScheduler Default<T>() where T : ISchedulable => _defaults.TryGet<T>(out var scheduler) ? scheduler : Default(typeof(T));
         public IScheduler Default(Type schedulable) => _defaults.Default(schedulable, typeof(ISchedulable<>), null, () => new Default());

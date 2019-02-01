@@ -13,6 +13,15 @@ namespace Entia.Core
 
     public sealed class Box<T> : IBox
     {
+        public readonly struct Read
+        {
+            public ref readonly T Value => ref _box.Value;
+            readonly Box<T> _box;
+            public Read(Box<T> box) { _box = box; }
+        }
+
+        public static implicit operator Read(Box<T> box) => new Read(box);
+
         public T Value;
 
         object IBox.Value

@@ -11,6 +11,43 @@ using System.Reflection;
 
 namespace Entia.Injectables
 {
+    public readonly struct AllEmitters : IInjectable
+    {
+        sealed class Injector : Injector<AllEmitters>
+        {
+            public override Result<AllEmitters> Inject(MemberInfo member, World world) => new AllEmitters(world.Messages());
+        }
+
+        sealed class Depender : IDepender
+        {
+            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
+            {
+                yield return new Emit(typeof(IMessage));
+                yield return new Write(typeof(IMessage));
+            }
+        }
+
+        [Injector]
+        static readonly Injector _injector = new Injector();
+        [Depender]
+        static readonly Depender _depender = new Depender();
+
+        readonly Modules.Messages _messages;
+        public AllEmitters(Modules.Messages messages) { _messages = messages; }
+
+        [ThreadSafe]
+        public bool Has<T>() where T : struct, IMessage => _messages.Has<T>();
+        [ThreadSafe]
+        public bool Has(Type type) => _messages.Has(type);
+        [ThreadSafe]
+        public bool Emit<T>(in T message) where T : struct, IMessage => _messages.Emit(message);
+        [ThreadSafe]
+        public bool Emit(IMessage message) => _messages.Emit(message);
+        public bool Remove<T>() where T : struct, IMessage => _messages.Remove<T>();
+        public bool Remove(Type type) => _messages.Remove(type);
+        public bool Clear() => _messages.Clear();
+    }
+
     [ThreadSafe]
     public readonly struct Emitter<T> : IInjectable where T : struct, IMessage
     {
