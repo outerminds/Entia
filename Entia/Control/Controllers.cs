@@ -1,8 +1,10 @@
-﻿using Entia.Core;
+﻿using Entia.Builders;
+using Entia.Core;
 using Entia.Modules.Build;
 using Entia.Modules.Control;
 using Entia.Nodes;
 using Entia.Phases;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -20,30 +22,31 @@ namespace Entia.Modules
             if (_controllers.TryGetValue(node, out var controller)) return controller;
 
             var count = 0;
-            var nodes = new Dictionary<Node, int>();
-            var runners = new Dictionary<Node, TypeMap<IPhase, IRunner>>();
-            var states = default(Controller.States[]);
-            var descend = node
+            var nodes = new Dictionary<Node, IRunner>();
+            var runners = new Dictionary<IRunner, int>();
+            var states = Array.Empty<Controller.States>();
+            var root = node
+                .Wrap(new Root())
                 .Descend(current =>
                 {
                     var index = count++;
-                    var wrapped = current
-                        .Map(runner =>
-                        {
-                            runners.GetOrAdd(current, () => new TypeMap<IPhase, IRunner>()).Set(runner.Phase, runner);
-                            if (runner.Run == null) return Option.None();
-                            return Option.Some(runner);
-                        })
-                        .State(() => states[index]);
-                    nodes[current] = index;
-                    nodes[wrapped] = index;
-                    return wrapped;
+                    var mapped = current.Wrap(new Map(runner =>
+                    {
+                        runners[runner] = index;
+                        return nodes[current] = runner;
+                    }));
+                    var wrapped = mapped.Wrap(new State(() => states[index]));
+                    return wrapped.Wrap(new Map(runner =>
+                    {
+                        runners[runner] = index;
+                        return nodes[wrapped] = nodes[mapped] = runner;
+                    }));
                 });
             states = new Controller.States[count];
 
-            var result = _world.Analyzers().Analyze(descend, descend);
-            if (result.TryValue(out _)) return _controllers[node] = new Controller(descend, _world, nodes, runners, states);
-            return result.AsFailure();
+            return Result
+                .And(_world.Analyzers().Analyze(root, root), _world.Builders().Build(root, root))
+                .Map(pair => _controllers[node] = new Controller((root, pair.right), _world, nodes, runners, states));
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>

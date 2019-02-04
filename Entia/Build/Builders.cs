@@ -19,7 +19,7 @@ namespace Entia.Modules
 
         public Builders(World world) { _world = world; }
 
-        public Option<Runner<T>> Build<T>(Node node, Controller controller) where T : struct, IPhase => Get(node.Value.GetType()).Build<T>(node, controller, _world);
+        public Result<IRunner> Build(Node node, Node root) => Get(node.Value.GetType()).Build(node, root, _world);
         public IBuilder Default<T>() where T : struct, IBuildable => _defaults.TryGet<T>(out var builder) ? builder : Default(typeof(T));
         public IBuilder Default(Type buildable) => _defaults.Default(buildable, typeof(IBuildable<>), typeof(BuilderAttribute), () => new Default());
         public bool Has<T>() where T : struct, IBuildable => _builders.Has<T>(true);

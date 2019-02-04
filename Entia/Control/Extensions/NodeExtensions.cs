@@ -16,10 +16,7 @@ namespace Entia.Nodes
 
         public static Node Profile(this Node node, bool recursive = true) => recursive ?
             node.Descend(child => child.Value is IWrapper ? child : child.Profile(false)) :
-            Node.Of<Profile>(node.Name, node);
-
-        public static Node Do(this Node node, Action<IRunner> @do) =>
-            Node.Of(node.Name, new Map(runner => { @do(runner); return Result.Success(runner); }), node);
+            node.Wrap(new Profile());
 
         public static Node Flatten(this Node node, bool recursive = true)
         {
@@ -30,8 +27,7 @@ namespace Entia.Nodes
                 .ToArray());
         }
 
-        public static Node State(this Node node, Func<Controller.States> get) => Node.Of(node.Name, new State(get), node);
-        public static Node Map(this Node node, Func<IRunner, Option<IRunner>> map) => Node.Of(node.Name, new Map(map), node);
+        public static Node Wrap<T>(this Node node, in T data) where T : IWrapper => Node.Of(node.Name, data, node);
         public static Node Repeat(this Node node, int count) => Node.Of(node.Name, node.Value, node.Children.Repeat(count).ToArray());
         public static Node Distinct(this Node node) => Node.Of(node.Name, node.Value, node.Children.Distinct().ToArray());
         public static Node Separate(this Node node, Node separator, bool recursive = true) => node.Separate(() => separator, recursive);

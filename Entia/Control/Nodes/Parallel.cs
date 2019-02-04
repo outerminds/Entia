@@ -5,7 +5,9 @@ using Entia.Dependencies;
 using Entia.Modules;
 using Entia.Modules.Build;
 using Entia.Modules.Control;
+using Entia.Modules.Schedule;
 using Entia.Phases;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,30 +15,41 @@ namespace Entia.Nodes
 {
     public readonly struct Parallel : IAtomic
     {
-        sealed class Builder : IBuilder
+        sealed class Runner : IRunner
         {
-            public Option<Runner<T>> Build<T>(Node node, Controller controller, World world) where T : struct, IPhase
-            {
-                var children = new List<Runner<T>>(node.Children.Length);
-                foreach (var child in node.Children)
-                {
-                    if (world.Builders().Build<T>(child, controller).TryValue(out var current))
-                        children.Add(current);
-                }
+            public object Instance => Children;
+            public readonly IRunner[] Children;
+            public Runner(params IRunner[] children) { Children = children; }
 
-                var runners = children.ToArray();
-                switch (runners.Length)
+            public IEnumerable<Type> Phases() => Children.SelectMany(child => child.Phases());
+            public IEnumerable<Phase> Phases(Controller controller) => Children.SelectMany(child => child.Phases(controller));
+            public Option<Runner<T>> Specialize<T>(Controller controller) where T : struct, IPhase
+            {
+                var children = Children
+                    .TrySelect((IRunner child, out Runner<T> special) => child.Specialize<T>(controller).TryValue(out special))
+                    .ToArray();
+                switch (children.Length)
                 {
                     case 0: return Option.None();
-                    case 1: return runners[0];
+                    case 1: return children[0];
                     default:
-                        return new Runner<T>(runners, (in T phase) =>
+                        return new Runner<T>((in T phase) =>
                         {
                             var local = phase;
-                            global::System.Threading.Tasks.Parallel.For(0, runners.Length, index => runners[index].Run(local));
+                            global::System.Threading.Tasks.Parallel.For(0, children.Length, index => children[index].Run(local));
                         });
                 }
             }
+        }
+
+        sealed class Builder : IBuilder
+        {
+            public Result<IRunner> Build(Node node, Node root, World world) => node.Children.Length == 1 ?
+                Result.Cast<Parallel>(node.Value).Bind(_ => world.Builders().Build(node.Children[0], root)) :
+                Result.Cast<Parallel>(node.Value)
+                    .Bind(_ => node.Children.Select(child => world.Builders().Build(child, root)).All())
+                    .Map(children => new Runner(children))
+                    .Cast<IRunner>();
         }
 
         sealed class Analyzer : Analyzer<Nodes.Parallel>

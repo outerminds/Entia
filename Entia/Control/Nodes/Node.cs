@@ -9,15 +9,17 @@ using System.Reflection;
 
 namespace Entia.Nodes
 {
+    /// <summary>
+    /// Tag interface that all nodes must implement.
+    /// </summary>
+    public interface INode : IAnalyzable, IBuildable { }
+    public interface IWrapper : INode { }
+    public interface IAtomic : INode { }
+
     public sealed class Node : IEquatable<Node>
     {
-        /// <summary>
-        /// Tag interface that all node data must implement.
-        /// </summary>
-        public interface IData : IAnalyzable, IBuildable { }
-
-        public static Node Of(string name, IData value, params Node[] nodes) => new Node(name, value, nodes);
-        public static Node Of<T>(string name, params Node[] nodes) where T : struct, IData => Of(name, default(T), nodes);
+        public static Node Of(string name, INode value, params Node[] nodes) => new Node(name, value, nodes);
+        public static Node Of<T>(string name, params Node[] nodes) where T : struct, INode => Of(name, default(T), nodes);
         public static Node Sequence(params Node[] nodes) => Sequence("", nodes);
         public static Node Sequence(string name, params Node[] nodes) => Of<Sequence>(name, nodes);
         public static Node Parallel(params Node[] nodes) => Parallel("", nodes);
@@ -30,12 +32,12 @@ namespace Entia.Nodes
         public static Node Resolve(Node node) => Of<Resolve>(nameof(Nodes.Resolve), node);
 
         public readonly string Name;
-        public readonly IData Value;
+        public readonly INode Value;
         public readonly Node[] Children;
 
         int? _hash;
 
-        Node(string name, IData value, params Node[] children)
+        Node(string name, INode value, params Node[] children)
         {
             Name = name;
             Value = value;
@@ -47,16 +49,16 @@ namespace Entia.Nodes
             if (ReferenceEquals(this, other)) return true;
             return
                 GetHashCode() == other.GetHashCode() &&
-                Name == other.Name &&
-                EqualityComparer<IData>.Default.Equals(Value, other.Value) &&
+                (Name, Value) == (other.Name, other.Value) &&
                 Children.SequenceEqual(other.Children);
         }
         public override bool Equals(object obj) => obj is Node node && Equals(node);
         public override int GetHashCode()
         {
-            if (_hash.HasValue) return _hash.Value;
-            _hash = Children.Aggregate(Name.GetHashCode() ^ EqualityComparer<IData>.Default.GetHashCode(Value), (hash, child) => hash ^ child.GetHashCode());
-            return _hash.Value;
+            if (_hash is int hash) return hash;
+            hash = (Name, Value).GetHashCode() ^ ArrayUtility.GetHashCode(Children);
+            _hash = hash;
+            return hash;
         }
         public override string ToString() => string.IsNullOrWhiteSpace(Name) ? $"[{string.Join(", ", Children.AsEnumerable())}]" : Name;
     }

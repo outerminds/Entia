@@ -27,7 +27,7 @@ namespace Entia.Modules
 
         public Phase[] Schedule(ISchedulable instance, Controller controller) => instance.GetType().Hierarchy()
             .Where(type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ISchedulable<>))
-            .SelectMany(type => Get(type).Schedule(instance, controller, _world))
+            .SelectMany(type => Get(type).Schedule(instance, controller))
             .ToArray();
 
         public IScheduler Default<T>() where T : ISchedulable => _defaults.TryGet<T>(out var scheduler) ? scheduler : Default(typeof(T));

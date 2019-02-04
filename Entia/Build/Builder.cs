@@ -1,15 +1,24 @@
 ﻿using Entia.Core;
 using Entia.Modules.Build;
 using Entia.Modules.Control;
+using Entia.Modules.Schedule;
 using Entia.Nodes;
+using Entia.Dependencies;
 using Entia.Phases;
 using System;
+using System.Collections.Generic;
 
 namespace Entia.Builders
 {
     public interface IBuilder
     {
-        Option<Runner<T>> Build<T>(Node node, Controller controller, World world) where T : struct, IPhase;
+        Result<IRunner> Build(Node node, Node root, World world);
+    }
+
+    public abstract class Builder<T> : IBuilder where T : IRunner
+    {
+        public abstract Result<T> Build(Node node, Node root, World world);
+        Result<IRunner> IBuilder.Build(Node node, Node root, World world) => Build(node, root, world).Cast<IRunner>();
     }
 
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
@@ -17,6 +26,6 @@ namespace Entia.Builders
 
     public sealed class Default : IBuilder
     {
-        public Option<Runner<T>> Build<T>(Node node, Controller controller, World world) where T : struct, IPhase => Option.None();
+        public Result<IRunner> Build(Node node, Node root, World world) => Result.Exception(new NotImplementedException());
     }
 }

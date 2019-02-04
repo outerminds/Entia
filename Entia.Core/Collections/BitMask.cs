@@ -146,10 +146,7 @@ namespace Entia.Core
         public override int GetHashCode()
         {
             if (_hash is int hash) return hash;
-
-            hash = _buckets.count;
-            for (int i = 0; i < _buckets.count; i++) hash ^= _buckets.items[i].GetHashCode();
-            _hash = hash;
+            hash = ArrayUtility.GetHashCode(_buckets);
             return hash;
         }
 

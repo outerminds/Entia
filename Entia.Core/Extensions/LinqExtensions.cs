@@ -208,6 +208,11 @@ namespace Entia.Core
             return (@true.ToArray(), @false.ToArray());
         }
 
+        public static IEnumerable<TResult> TrySelect<TSource, TResult>(this IEnumerable<TSource> source, TryFunc<TSource, TResult> selector)
+        {
+            foreach (var item in source) if (selector(item, out var value)) yield return value;
+        }
+
         public static HashSet<T> ToSet<T>(this IEnumerable<T> source) => new HashSet<T>(source);
 
         public static IEnumerable<T> Some<T>(this IEnumerable<T> source) where T : class => source.Where(value => value != null);

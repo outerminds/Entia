@@ -9,18 +9,21 @@ namespace Entia.Schedulers
     public interface ISchedulable<T> : ISchedulable where T : IScheduler, new() { }
     public interface IScheduler
     {
-        IEnumerable<Phase> Schedule(object instance, Controller controller, World world);
+        IEnumerable<Type> Phases { get; }
+        IEnumerable<Phase> Schedule(object instance, Controller controller);
     }
 
     public abstract class Scheduler<T> : IScheduler where T : ISchedulable
     {
-        public abstract IEnumerable<Phase> Schedule(T instance, Controller controller, World world);
-        IEnumerable<Phase> IScheduler.Schedule(object instance, Controller controller, World world) =>
-            instance is T casted ? Schedule(casted, controller, world) : Array.Empty<Phase>();
+        public abstract IEnumerable<Type> Phases { get; }
+        public abstract IEnumerable<Phase> Schedule(T instance, Controller controller);
+        IEnumerable<Phase> IScheduler.Schedule(object instance, Controller controller) =>
+            instance is T casted ? Schedule(casted, controller) : Array.Empty<Phase>();
     }
 
     public sealed class Default : IScheduler
     {
-        public IEnumerable<Phase> Schedule(object instance, Controller controller, World world) => Array.Empty<Phase>();
+        public IEnumerable<Type> Phases => Array.Empty<Type>();
+        public IEnumerable<Phase> Schedule(object instance, Controller controller) => Array.Empty<Phase>();
     }
 }

@@ -3,7 +3,9 @@ using Entia.Core;
 using Entia.Modules;
 using Entia.Modules.Build;
 using Entia.Modules.Control;
+using Entia.Modules.Schedule;
 using Entia.Phases;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,13 +15,9 @@ namespace Entia.Nodes
     {
         sealed class Builder : IBuilder
         {
-            public Option<Runner<T>> Build<T>(Node node, Controller controller, World world) where T : struct, IPhase
+            public Result<IRunner> Build(Node node, Node root, World world)
             {
-                switch (node.Children.Length)
-                {
-                    case 0: return Option.None();
-                    case 1: return world.Builders().Build<T>(node.Children[0], controller);
-                }
+                if (node.Children.Length <= 1) return world.Builders().Build(Node.Sequence(node.Children), root);
 
                 var sets = new[] { node.Children, node.Children.Reverse() }
                     .SelectMany(runners => runners
@@ -31,7 +29,7 @@ namespace Entia.Nodes
                                 {
                                     var nodes = group.Append(current).ToArray();
                                     var parallel = Node.Parallel(nodes);
-                                    var result = world.Analyzers().Analyze(parallel, controller.Node);
+                                    var result = world.Analyzers().Analyze(parallel, root);
                                     return result.IsSuccess() ? nodes : group;
                                 })
                             .ToSet()))
@@ -45,15 +43,14 @@ namespace Entia.Nodes
                         .Where(group => group.Count > 0)
                         .OrderByDescending(group => group.Count)
                         .Select(group => group.ToArray())
-                        .FirstOrDefault();
-                    if (set == null) return Option.None();
+                        .FirstOrDefault() ?? Array.Empty<Node>();
 
                     sets.Iterate(group => group.ExceptWith(set));
                     remaining.ExceptWith(set);
                     groups.Add(Node.Parallel(set));
                 }
 
-                return world.Builders().Build<T>(Node.Sequence(node.Name, groups.ToArray()), controller);
+                return world.Builders().Build(Node.Sequence(node.Name, groups.ToArray()), root);
             }
         }
 

@@ -13,43 +13,45 @@ namespace Entia.Modules.Control
     {
         public enum States : byte { Enabled, Disabled }
 
-        public readonly Node Node;
+        public readonly (Node node, IRunner runner) Root;
         public readonly World World;
 
-        readonly TypeMap<IPhase, IBox> _phaseToRunner = new TypeMap<IPhase, IBox>();
-        // readonly TypeMap<IPhase, IRunner> _phaseToRunner = new TypeMap<IPhase, IRunner>();
-        readonly Dictionary<Node, int> _nodeToIndex;
-        readonly Dictionary<Node, TypeMap<IPhase, IRunner>> _nodeToRunners = new Dictionary<Node, TypeMap<IPhase, IRunner>>();
+        public IEnumerable<Node> Nodes => _nodeToRunner.Keys;
+        public IEnumerable<IRunner> Runners => _runnerToIndex.Keys;
+
+        readonly TypeMap<IPhase, object> _phaseToRunner = new TypeMap<IPhase, object>();
+        readonly Dictionary<Node, IRunner> _nodeToRunner;
+        readonly Dictionary<IRunner, int> _runnerToIndex;
         readonly States[] _states;
 
-        public Controller(Node node, World world, Dictionary<Node, int> nodes, Dictionary<Node, TypeMap<IPhase, IRunner>> runners, States[] states)
+        public Controller((Node node, IRunner runner) root, World world, Dictionary<Node, IRunner> nodes, Dictionary<IRunner, int> runners, States[] states)
         {
-            Node = node;
+            Root = root;
             World = world;
-            _nodeToIndex = nodes;
-            _nodeToRunners = runners;
+            _nodeToRunner = nodes;
+            _runnerToIndex = runners;
             _states = states;
         }
 
-        public bool TryIndex(Node node, out int index) => _nodeToIndex.TryGetValue(node, out index);
+        public bool TryIndex(IRunner runner, out int index) => _runnerToIndex.TryGetValue(runner, out index);
 
-        public IEnumerable<IRunner> Runners(Node node) => _nodeToRunners.TryGetValue(node, out var map) ? map.Values : Enumerable.Empty<IRunner>();
-        public bool TryRunner(Node node, Type phase, out IRunner runner)
+        public bool TryIndex(Node node, out int index)
         {
-            if (_nodeToRunners.TryGetValue(node, out var map) && map.TryGet(phase, out runner, true)) return true;
-            runner = default;
+            if (TryRunner(node, out var runner)) return TryIndex(runner, out index);
+            index = default;
             return false;
         }
-        public bool TryRunner<T>(Node node, out Runner<T> runner) where T : struct, IPhase
+
+        public bool TryRunner(Node node, out IRunner runner)
         {
-            if (_nodeToRunners.TryGetValue(node, out var map) && map.TryGet<T>(out var value) && value is Runner<T> casted)
+            if (node == Root.node)
             {
-                runner = casted;
+                runner = Root.runner;
                 return true;
             }
-            runner = default;
-            return false;
+            return _nodeToRunner.TryGetValue(node, out runner);
         }
+
         public bool TryRunner<T>(out Runner<T> runner) where T : struct, IPhase
         {
             if (_phaseToRunner.TryGet<T>(out var box) && box is Box<Runner<T>> casted)
@@ -65,6 +67,7 @@ namespace Entia.Modules.Control
         public bool Has(Type phase) => _phaseToRunner.Has(phase);
 
         public bool TryState(Node node, out States state) => TryIndex(node, out var index) & TryState(index, out state);
+        public bool TryState(IRunner runner, out States state) => TryIndex(runner, out var index) & TryState(index, out state);
         public bool TryState(int index, out States state)
         {
             if (index < _states.Length)
@@ -77,23 +80,24 @@ namespace Entia.Modules.Control
             return false;
         }
 
-        public bool Enable() => Enable(Node);
+        public bool Enable() => Enable(Root.runner);
         public bool Enable(Node node) => TryIndex(node, out var index) && Enable(index);
+        public bool Enable(IRunner runner) => TryIndex(runner, out var index) && Enable(index);
         public bool Enable(int index) => _states[index].Change(States.Enabled);
 
-        public bool Disable() => Disable(Node);
+        public bool Disable() => Disable(Root.runner);
         public bool Disable(Node node) => TryIndex(node, out var index) && Disable(index);
+        public bool Disable(IRunner runner) => TryIndex(runner, out var index) && Disable(index);
         public bool Disable(int index) => _states[index].Change(States.Disabled);
 
         public void Run<T>() where T : struct, IPhase => Runner<T>().Run(default);
         public void Run<T>(in T phase) where T : struct, IPhase => Runner<T>().Run(phase);
-        public Runner<T> Runner<T>() where T : struct, IPhase => Box<T>().Value;
 
-        public Box<Runner<T>>.Read Box<T>() where T : struct, IPhase
+        public Runner<T> Runner<T>() where T : struct, IPhase
         {
-            if (_phaseToRunner.TryGet<T>(out var box) && box is Box<Runner<T>> casted) return casted;
-            _phaseToRunner.Set<T>(casted = new Box<Runner<T>>());
-            casted.Value = World.Builders().Build<T>(Node, this).Or(Build.Runner<T>.Empty);
+            if (_phaseToRunner.TryGet<T>(out var runner) && runner is Runner<T> casted) return casted;
+            casted = Root.runner.Specialize<T>(this).Or(Build.Runner<T>.Empty);
+            _phaseToRunner.Set<T>(casted);
             return casted;
         }
     }
