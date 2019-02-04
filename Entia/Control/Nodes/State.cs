@@ -21,8 +21,12 @@ namespace Entia.Nodes
 
             public IEnumerable<Type> Phases() => Child.Phases();
             public IEnumerable<Phase> Phases(Controller controller) => Child.Phases(controller);
-            public Option<Runner<T>> Specialize<T>(Controller controller) where T : struct, IPhase => Child.Specialize<T>(controller)
-                .Map(child => new Runner<T>((in T phase) => { if (Get() == Controller.States.Enabled) child.Run(phase); }));
+            public Option<Runner<T>> Specialize<T>(Controller controller) where T : struct, IPhase
+            {
+                if (Child.Specialize<T>(controller).TryValue(out var child))
+                    return new Runner<T>((in T phase) => { if (Get() == Controller.States.Enabled) child.Run(phase); });
+                return Option.None();
+            }
         }
 
         sealed class Builder : Builder<Runner>

@@ -32,12 +32,13 @@ namespace Entia.Nodes
             public IEnumerable<Phase> Phases(Controller controller) => Schedulers.SelectMany(scheduler => scheduler.Schedule(System, controller));
             public Option<Runner<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
-                var run = Phases(controller)
-                    .Where(phase => phase.Target == Phase.Targets.System && phase.Type == typeof(T))
-                    .DistinctBy(phase => phase.Distinct)
-                    .Select(phase => phase.Delegate)
-                    .OfType<InAction<T>>()
-                    .Aggregate(default(InAction<T>), (sum, current) => sum + current);
+                var run = default(InAction<T>);
+                var set = new HashSet<object>();
+                foreach (var phase in Phases(controller))
+                {
+                    if (phase.Target == Phase.Targets.System && phase.Type == typeof(T) && set.Add(phase.Distinct) && phase.Delegate is InAction<T> @delegate)
+                        run += @delegate;
+                }
                 if (run == null) return Option.None();
                 return new Runner<T>(run);
             }

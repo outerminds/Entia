@@ -25,18 +25,20 @@ namespace Entia.Nodes
             public IEnumerable<Phase> Phases(Controller controller) => Children.SelectMany(child => child.Phases(controller));
             public Option<Runner<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
-                var children = Children
-                    .TrySelect((IRunner child, out Runner<T> special) => child.Specialize<T>(controller).TryValue(out special))
-                    .ToArray();
-                switch (children.Length)
+                var children = (items: new Runner<T>[Children.Length], count: 0);
+                foreach (var child in Children)
+                    if (child.Specialize<T>(controller).TryValue(out var special)) children.Push(special);
+
+                switch (children.count)
                 {
                     case 0: return Option.None();
-                    case 1: return children[0];
+                    case 1: return children.items[0];
                     default:
+                        var runners = children.ToArray();
                         return new Runner<T>((in T phase) =>
                         {
                             var local = phase;
-                            global::System.Threading.Tasks.Parallel.For(0, children.Length, index => children[index].Run(local));
+                            global::System.Threading.Tasks.Parallel.For(0, runners.Length, index => runners[index].Run(local));
                         });
                 }
             }
