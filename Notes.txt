@@ -1,9 +1,5 @@
 DOING:
 - IL2CPP bug
-- World wiki: weird logic
-- Controller wiki: log errors when 'Control' fails
-- Controller wiki: mettre des systèmes dans la node
-- Message wiki: name emitters more explicitly (DoSwipe -> DoSwipeEmitter) to avoir confusion between the emitter and the message
 - Extensibility sections are hard to understand
 	- The page on extensibility should include a graph that links all concepts together
 
