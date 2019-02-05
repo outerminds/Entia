@@ -7,6 +7,7 @@ using Entia.Dependencies;
 using Entia.Phases;
 using System;
 using System.Collections.Generic;
+using Entia.Modules;
 
 namespace Entia.Builders
 {
@@ -21,7 +22,7 @@ namespace Entia.Builders
         Result<IRunner> IBuilder.Build(Node node, Node root, World world) => Build(node, root, world).Cast<IRunner>();
     }
 
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(ModuleUtility.AttributeUsage)]
     public sealed class BuilderAttribute : PreserveAttribute { }
 
     public sealed class Default : IBuilder

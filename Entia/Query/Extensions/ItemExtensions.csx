@@ -62,7 +62,7 @@ namespace Entia.Queryables
         public static void Deconstruct<T>(in this Read<T> item, out T value) where T : struct, IComponent => value = item.Value;
         public static void Deconstruct<T>(in this Write<T> item, out T value) where T : struct, IComponent => value = item.Value;
 
-        {string.Join(Environment.NewLine, Generate(9))}
+        {string.Join(Environment.NewLine, Generate(7))}
     }}
 }}";
 

@@ -16,7 +16,7 @@ namespace Entia.Queriers
         bool TryQuery(Segment segment, World world, out Query query);
     }
 
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(ModuleUtility.AttributeUsage)]
     public sealed class QuerierAttribute : PreserveAttribute { }
 
     public abstract class Querier<T> : IQuerier where T : struct, Queryables.IQueryable

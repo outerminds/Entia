@@ -14,11 +14,13 @@ namespace Entia
 {
     public sealed class World : IInjectable, IEnumerable<IModule>
     {
+        [Injector]
         sealed class Injector : Injector<World>
         {
             public override Result<World> Inject(MemberInfo member, World world) => world;
         }
 
+        [Depender]
         sealed class Depender : IDepender
         {
             public IEnumerable<IDependency> Depend(MemberInfo member, World world)
@@ -26,11 +28,6 @@ namespace Entia
                 yield return new Dependencies.Unknown();
             }
         }
-
-        [Injector]
-        static readonly Injector _injector = new Injector();
-        [Depender]
-        static readonly Depender _depender = new Depender();
 
         readonly TypeMap<IModule, IModule> _modules = new TypeMap<IModule, IModule>();
         IResolvable[] _resolvables = Array.Empty<IResolvable>();

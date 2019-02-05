@@ -84,7 +84,7 @@ using System.Reflection;
 
 namespace Entia.Queryables
 {{
-{string.Join(Environment.NewLine + Environment.NewLine, Generate(9))}
+{string.Join(Environment.NewLine + Environment.NewLine, Generate(7))}
 }}";
 
 File.WriteAllText($"./{file}.cs", code);

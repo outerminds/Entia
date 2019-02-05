@@ -19,7 +19,7 @@ namespace Entia.Resolvers
         }
     }
 
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(Modules.ModuleUtility.AttributeUsage)]
     public sealed class ResolverAttribute : PreserveAttribute { }
 
     public sealed class Default<T> : Resolver<T> where T : struct, IResolvable

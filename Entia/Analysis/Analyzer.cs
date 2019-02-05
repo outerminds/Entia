@@ -21,7 +21,7 @@ namespace Entia.Analyzers
             Result.Cast<T>(node.Value).Bind(data => Analyze(data, node, root, world));
     }
 
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(ModuleUtility.AttributeUsage)]
     public sealed class AnalyzerAttribute : PreserveAttribute { }
 
     public sealed class Default : IAnalyzer

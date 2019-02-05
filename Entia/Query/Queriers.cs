@@ -13,7 +13,7 @@ namespace Entia.Modules
 {
     public sealed class Queriers : IModule, IEnumerable<IQuerier>
     {
-        readonly struct Provider : Queryables.IQueryable
+        sealed class Provider : Queryables.IQueryable
         {
             [Querier]
             static readonly IQuerier _querier = Querier.All();

@@ -1,11 +1,14 @@
 ﻿using Entia.Core;
 using System;
 using System.Linq;
+using System.Reflection;
 
 namespace Entia.Modules
 {
     public static class ModuleUtility
     {
+        public const AttributeTargets AttributeUsage = AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method;
+
         public static TValue Default<TKey, TValue>(this Concurrent<TypeMap<TKey, TValue>> map, Type type, Type definition = null, Type attribute = null, Func<TValue> @default = null)
             where TKey : class where TValue : class =>
             map.ReadValueOrWrite(type,
@@ -31,17 +34,17 @@ namespace Entia.Modules
 
             if (attribute != null && result.IsFailure())
             {
-                result = TypeUtility.GetFields(type, TypeUtility.Static)
-                    .Where(field => field.FieldType.Is<T>() && field.GetCustomAttributes(true).Any(current => current.GetType().Is(attribute)))
-                    .Select(field => Result.Try(field.GetValue, default(object)).Cast<T>())
-                    .Any();
-            }
-
-            if (attribute != null && result.IsFailure())
-            {
-                result = type.GetProperties(TypeUtility.Static)
-                    .Where(property => property.PropertyType.Is<T>() && property.GetCustomAttributes(true).Any(current => current.GetType().Is(attribute)))
-                    .Select(property => Result.Try(property.GetValue, default(object)).Cast<T>())
+                var generic = type.GetGenericArguments();
+                result = type.GetMembers(TypeUtility.Static)
+                    .Where(member => member.GetCustomAttributes(true).Any(current => current.GetType().Is(attribute)))
+                    .Select(member =>
+                        member is Type nested ? Result.Try(() =>
+                            Activator.CreateInstance(nested.IsGenericTypeDefinition ? nested.MakeGenericType(type.GetGenericArguments()) : nested)) :
+                        member is FieldInfo field ? Result.Try(() => field.GetValue(null)) :
+                        member is PropertyInfo property ? Result.Try(() => property.GetValue(null)) :
+                        member is MethodInfo method ? Result.Try(() => method.Invoke(null, Array.Empty<object>())) :
+                        Result.Failure().AsResult<object>())
+                    .Select(value => value.Cast<T>())
                     .Any();
             }
 
