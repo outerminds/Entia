@@ -76,6 +76,7 @@ namespace Entia.Injectables
         public void Emit(in T message) => _emitter.Emit(message);
     }
 
+    [ThreadSafe]
     public readonly struct Receiver<T> : IInjectable where T : struct, IMessage
     {
         sealed class Injector : Injector<Receiver<T>>
@@ -97,9 +98,13 @@ namespace Entia.Injectables
         [Depender]
         static readonly Depender _depender = new Depender();
 
+        public int Count => _receiver.Count;
+        public int Capacity { get => _receiver.Capacity; set => _receiver.Capacity = value; }
+
         readonly Modules.Message.Receiver<T> _receiver;
         public Receiver(Modules.Message.Receiver<T> receiver) { _receiver = receiver; }
         public bool TryPop(out T message) => _receiver.TryPop(out message);
+        public bool Clear() => _receiver.Clear();
     }
 
     public readonly struct Reaction<T> : IInjectable where T : struct, IMessage

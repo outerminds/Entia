@@ -18,7 +18,6 @@ namespace Entia
     /// </summary>
     /// <seealso cref="IQueryable" />
     [ThreadSafe]
-    [StructLayout(LayoutKind.Explicit)]
     public readonly struct Entity : IQueryable, IEquatable<Entity>, IComparable<Entity>
     {
         sealed class Querier : Querier<Entity>
@@ -62,39 +61,47 @@ namespace Entia
         /// <summary>
         /// The world-unique identifier.
         /// </summary>
-        [FieldOffset(0)]
-        public readonly ulong Identifier;
+        public long Identifier
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (long)Index | ((long)Generation << 32);
+        }
+
         /// <summary>
         /// The index where the entity is stored within its world.
         /// </summary>
-        [FieldOffset(0)]
         public readonly int Index;
         /// <summary>
         /// The generation of the index.
         /// </summary>
-        [FieldOffset(sizeof(int))]
         public readonly uint Generation;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal Entity(int index, uint generation)
         {
-            Identifier = default;
             Index = index;
             Generation = generation;
         }
 
         /// <inheritdoc cref="IComparable{T}.CompareTo(T)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int CompareTo(Entity other) => Identifier.CompareTo(other.Identifier);
+        public int CompareTo(Entity other)
+        {
+            if (Index < other.Index) return -1;
+            else if (Index > other.Index) return 1;
+            else if (Generation < other.Generation) return -1;
+            else if (Generation > other.Generation) return 1;
+            else return 0;
+        }
         /// <inheritdoc cref="IEquatable{T}.Equals(T)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(Entity other) => Identifier == other.Identifier;
+        public bool Equals(Entity other) => Index == other.Index && Generation == other.Generation;
         /// <inheritdoc cref="ValueType.Equals(object)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj) => obj is Entity entity && Equals(entity);
         /// <inheritdoc cref="ValueType.GetHashCode"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() => Identifier.GetHashCode();
+        public override int GetHashCode() => Index ^ (int)Generation;
         /// <inheritdoc cref="ValueType.ToString()"/>
         public override string ToString() => $"{{ Index: {Index}, Generation: {Generation} }}";
     }
