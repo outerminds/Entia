@@ -23,16 +23,15 @@ namespace Entia.Nodes
             public IEnumerable<Phase> Phases(Controller controller) => Child.Phases(controller);
             public Option<Runner<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
-                var run = default(InAction<T>);
+                var run = Child.Specialize<T>(controller).TryValue(out var child) ? child.Run : default;
                 var set = new HashSet<object>();
                 foreach (var phase in Phases(controller))
                 {
                     if (phase.Target == Phase.Targets.Root && phase.Type == typeof(T) && set.Add(phase.Distinct) && phase.Delegate is InAction<T> @delegate)
                         run += @delegate;
                 }
-                if (Child.Specialize<T>(controller).TryValue(out var child)) return new Runner<T>(child.Run + run);
-                else if (run == null) return Option.None();
-                else return new Runner<T>(run);
+                if (run == null) return Option.None();
+                return new Runner<T>(run);
             }
         }
 

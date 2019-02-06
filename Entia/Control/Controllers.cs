@@ -35,11 +35,11 @@ namespace Entia.Modules
                         runners[runner] = index;
                         return nodes[current] = runner;
                     }));
-                    var wrapped = mapped.Wrap(new State(() => states[index]));
-                    return wrapped.Wrap(new Map(runner =>
+                    var stated = mapped.Wrap(new State(() => states[index]));
+                    return stated.Wrap(new Map(runner =>
                     {
                         runners[runner] = index;
-                        return nodes[wrapped] = nodes[mapped] = runner;
+                        return nodes[stated] = nodes[mapped] = runner;
                     }));
                 });
             states = new Controller.States[count];
