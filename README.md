@@ -21,7 +21,7 @@
 
 **Entia** is a free, open-source, data-oriented, highly performant, parallelizable and extensible **ECS** framework writtten in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous structs. No indirection, no boxing, no garbage collection and no cache misses.
 
-**Entia** is built using _[.Net Standard 2.0][net-standard]_ which means that it is compatible with _.Net Core 2.0+_, _.Net Framework 4.6+_, _Mono 5.4+_, _Xamarin_ and any other implementation of _.Net_ that follows the standard (see the [Microsoft page][net-standard] for more details). Therefore it is compatible with any game engine that has proper C# support.
+Since **Entia** is built using _[.Net Standard 2.0][net-standard]_, it is compatible with _.Net Core 2.0+_, _.Net Framework 4.6+_, _Mono 5.4+_, _Xamarin_ and any other implementation of _.Net_ that follows the standard (see the [Microsoft page][net-standard] for more details). Therefore it is compatible with any game engine that has proper C# support.
 
 #### [:inbox_tray: Download][releases]
 #### _For the full [Unity][unity] game engine integration of the framework, see [**Entia.Unity**][entia.unity]._
