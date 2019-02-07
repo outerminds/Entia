@@ -33,7 +33,8 @@ namespace Entia.Nodes
                     case 1: return children.items[0];
                     default:
                         var runners = children.ToArray();
-                        return new Runner<T>((in T phase) => { for (int i = 0; i < runners.Length; i++) runners[i].Run(phase); });
+                        void Run(in T phase) { for (int i = 0; i < runners.Length; i++) runners[i].Run(phase); }
+                        return new Runner<T>(Run);
                 }
             }
         }

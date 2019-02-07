@@ -25,7 +25,10 @@ namespace Entia.Nodes
                 if (Child.Specialize<T>(controller).TryValue(out var child))
                 {
                     if (typeof(T).Is<IResolve>())
-                        return new Runner<T>((in T phase) => { child.Run(phase); controller.World.Resolve(); });
+                    {
+                        void Run(in T phase) { child.Run(phase); controller.World.Resolve(); }
+                        return new Runner<T>(Run);
+                    }
                     return child;
                 }
                 return Option.None();

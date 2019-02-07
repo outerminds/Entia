@@ -35,11 +35,12 @@ namespace Entia.Nodes
                     case 1: return children.items[0];
                     default:
                         var runners = children.ToArray();
-                        return new Runner<T>((in T phase) =>
+                        void Run(in T phase)
                         {
                             var local = phase;
                             global::System.Threading.Tasks.Parallel.For(0, runners.Length, index => runners[index].Run(local));
-                        });
+                        }
+                        return new Runner<T>(Run);
                 }
             }
         }

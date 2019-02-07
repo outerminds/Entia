@@ -24,7 +24,10 @@ namespace Entia.Nodes
             public Option<Runner<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
                 if (Child.Specialize<T>(controller).TryValue(out var child))
-                    return new Runner<T>((in T phase) => { if (Get() == Controller.States.Enabled) child.Run(phase); });
+                {
+                    void Run(in T phase) { if (Get() == Controller.States.Enabled) child.Run(phase); }
+                    return new Runner<T>(Run);
+                }
                 return Option.None();
             }
         }

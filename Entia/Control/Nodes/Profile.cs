@@ -28,13 +28,14 @@ namespace Entia.Nodes
                 {
                     var messages = controller.World.Messages();
                     var watch = new Stopwatch();
-                    return new Runner<T>((in T phase) =>
+                    void Run(in T phase)
                     {
                         watch.Restart();
                         child.Run(phase);
                         watch.Stop();
                         messages.Emit(new OnProfile { Runner = this, Phase = typeof(T), Elapsed = watch.Elapsed });
-                    });
+                    }
+                    return new Runner<T>(Run);
                 }
                 return Option.None();
             }
