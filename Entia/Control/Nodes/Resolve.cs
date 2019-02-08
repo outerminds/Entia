@@ -20,14 +20,14 @@ namespace Entia.Nodes
 
             public IEnumerable<Type> Phases() => Child.Phases();
             public IEnumerable<Phase> Phases(Controller controller) => Child.Phases(controller);
-            public Option<Runner<T>> Specialize<T>(Controller controller) where T : struct, IPhase
+            public Option<Run<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
                 if (Child.Specialize<T>(controller).TryValue(out var child))
                 {
                     if (typeof(T).Is<IResolve>())
                     {
-                        void Run(in T phase) { child.Run(phase); controller.World.Resolve(); }
-                        return new Runner<T>(Run);
+                        void Run(in T phase) { child(phase); controller.World.Resolve(); }
+                        return new Run<T>(Run);
                     }
                     return child;
                 }

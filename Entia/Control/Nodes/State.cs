@@ -21,12 +21,12 @@ namespace Entia.Nodes
 
             public IEnumerable<Type> Phases() => Child.Phases();
             public IEnumerable<Phase> Phases(Controller controller) => Child.Phases(controller);
-            public Option<Runner<T>> Specialize<T>(Controller controller) where T : struct, IPhase
+            public Option<Run<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
                 if (Child.Specialize<T>(controller).TryValue(out var child))
                 {
-                    void Run(in T phase) { if (Get() == Controller.States.Enabled) child.Run(phase); }
-                    return new Runner<T>(Run);
+                    void Run(in T phase) { if (Get() == Controller.States.Enabled) child(phase); }
+                    return new Run<T>(Run);
                 }
                 return Option.None();
             }

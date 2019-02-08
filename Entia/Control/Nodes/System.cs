@@ -22,6 +22,9 @@ namespace Entia.Nodes
             public object Instance => System;
             public readonly ISystem System;
             public readonly IScheduler[] Schedulers;
+
+            readonly Dictionary<Controller, Phase[]> _phases = new Dictionary<Controller, Phase[]>();
+
             public Runner(ISystem system, params IScheduler[] schedulers)
             {
                 System = system;
@@ -29,18 +32,20 @@ namespace Entia.Nodes
             }
 
             public IEnumerable<Type> Phases() => Schedulers.SelectMany(scheduler => scheduler.Phases);
-            public IEnumerable<Phase> Phases(Controller controller) => Schedulers.SelectMany(scheduler => scheduler.Schedule(System, controller));
-            public Option<Runner<T>> Specialize<T>(Controller controller) where T : struct, IPhase
+            public IEnumerable<Phase> Phases(Controller controller) =>
+                _phases.TryGetValue(controller, out var phases) ? phases :
+                _phases[controller] = Schedulers.SelectMany(scheduler => scheduler.Schedule(System, controller)).ToArray();
+            public Option<Run<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
-                var run = default(InAction<T>);
+                var run = default(Run<T>);
                 var set = new HashSet<object>();
                 foreach (var phase in Phases(controller))
                 {
-                    if (phase.Target == Phase.Targets.System && phase.Type == typeof(T) && set.Add(phase.Distinct) && phase.Delegate is InAction<T> @delegate)
+                    if (phase.Target == Phase.Targets.System && phase.Type == typeof(T) && set.Add(phase.Distinct) && phase.Delegate is Run<T> @delegate)
                         run += @delegate;
                 }
                 if (run == null) return Option.None();
-                return new Runner<T>(run);
+                return run;
             }
         }
 

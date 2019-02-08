@@ -19,7 +19,7 @@ namespace Entia.Modules.Control
         public IEnumerable<Node> Nodes => _nodeToRunner.Keys;
         public IEnumerable<IRunner> Runners => _runnerToIndex.Keys;
 
-        readonly TypeMap<IPhase, object> _phaseToRunner = new TypeMap<IPhase, object>();
+        readonly TypeMap<IPhase, Delegate> _phaseToRun = new TypeMap<IPhase, Delegate>();
         readonly Dictionary<Node, IRunner> _nodeToRunner;
         readonly Dictionary<IRunner, int> _runnerToIndex;
         readonly States[] _states;
@@ -52,19 +52,8 @@ namespace Entia.Modules.Control
             return _nodeToRunner.TryGetValue(node, out runner);
         }
 
-        public bool TryRunner<T>(out Runner<T> runner) where T : struct, IPhase
-        {
-            if (_phaseToRunner.TryGet<T>(out var box) && box is Box<Runner<T>> casted)
-            {
-                runner = casted.Value;
-                return true;
-            }
-
-            runner = default;
-            return false;
-        }
-        public bool Has<T>() where T : struct, IPhase => _phaseToRunner.Has<T>();
-        public bool Has(Type phase) => _phaseToRunner.Has(phase);
+        public bool Has<T>() where T : struct, IPhase => _phaseToRun.Has<T>();
+        public bool Has(Type phase) => _phaseToRun.Has(phase);
 
         public bool TryState(Node node, out States state) => TryIndex(node, out var index) & TryState(index, out state);
         public bool TryState(IRunner runner, out States state) => TryIndex(runner, out var index) & TryState(index, out state);
@@ -90,15 +79,13 @@ namespace Entia.Modules.Control
         public bool Disable(IRunner runner) => TryIndex(runner, out var index) && Disable(index);
         public bool Disable(int index) => _states[index].Change(States.Disabled);
 
-        public void Run<T>() where T : struct, IPhase => Runner<T>().Run(default);
-        public void Run<T>(in T phase) where T : struct, IPhase => Runner<T>().Run(phase);
-
-        public Runner<T> Runner<T>() where T : struct, IPhase
+        public void Run<T>() where T : struct, IPhase => Run<T>(default);
+        public void Run<T>(in T phase) where T : struct, IPhase
         {
-            if (_phaseToRunner.TryGet<T>(out var runner) && runner is Runner<T> casted) return casted;
-            casted = Root.runner.Specialize<T>(this).Or(Build.Runner<T>.Empty);
-            _phaseToRunner.Set<T>(casted);
-            return casted;
+            var run =
+                _phaseToRun.TryGet<T>(out var value) ? value :
+                _phaseToRun[typeof(T)] = Root.runner.Specialize<T>(this).Or(default(Run<T>));
+            (run as Run<T>)?.Invoke(phase);
         }
     }
 }

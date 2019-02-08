@@ -1,5 +1,6 @@
 ﻿using Entia.Core;
 using Entia.Core.Documentation;
+using Entia.Modules.Build;
 using Entia.Phases;
 using System;
 
@@ -18,7 +19,7 @@ namespace Entia.Modules.Schedule
     {
         public enum Targets { System, Root }
 
-        public static Phase From<T>(InAction<T> action, Targets target = Targets.System, object distinct = null) where T : struct, IPhase =>
+        public static Phase From<T>(Run<T> action, Targets target = Targets.System, object distinct = null) where T : struct, IPhase =>
             new Phase(action, typeof(T), PhaseUtility.Cache<T>.Index, target, distinct);
         public static Phase From<T>(Action action, Targets target = Targets.System, object distinct = null) where T : struct, IPhase =>
             From((in T _) => action(), target, distinct);

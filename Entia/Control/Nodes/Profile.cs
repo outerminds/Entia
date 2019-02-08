@@ -22,7 +22,7 @@ namespace Entia.Nodes
 
             public IEnumerable<Type> Phases() => Child.Phases();
             public IEnumerable<Phase> Phases(Controller controller) => Child.Phases(controller);
-            public Option<Runner<T>> Specialize<T>(Controller controller) where T : struct, IPhase
+            public Option<Run<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
                 if (Child.Specialize<T>(controller).TryValue(out var child))
                 {
@@ -31,11 +31,11 @@ namespace Entia.Nodes
                     void Run(in T phase)
                     {
                         watch.Restart();
-                        child.Run(phase);
+                        child(phase);
                         watch.Stop();
                         messages.Emit(new OnProfile { Runner = this, Phase = typeof(T), Elapsed = watch.Elapsed });
                     }
-                    return new Runner<T>(Run);
+                    return new Run<T>(Run);
                 }
                 return Option.None();
             }

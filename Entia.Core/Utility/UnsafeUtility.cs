@@ -14,31 +14,23 @@ namespace Entia.Core
 
         public static class Size<T>
         {
+            [StructLayout(LayoutKind.Sequential)]
+            struct Layout
+            {
+                public T Value;
+                public Unit End;
+            }
+
             public static readonly int Value = IntPtr.Size;
 
             static Size()
             {
                 if (typeof(T).IsValueType)
                 {
-                    // NOTE: since the array cannot be pinned because type 'T' cannot be ensured to be blittable, precautions are taken for the unlikely
-                    // case where the garbage collector moves the array between 2 pointer get.
-                    while (true)
-                    {
-                        var array = new T[3];
-                        var a = Cast<T>.ToPointer(ref array[0]).ToInt64();
-                        var b = Cast<T>.ToPointer(ref array[1]).ToInt64();
-                        var c = Cast<T>.ToPointer(ref array[2]).ToInt64();
-                        if (a > b || a > c || b > c) continue;
-
-                        var sizeAB = b - a;
-                        var sizeBC = c - b;
-                        var sizeAC = c - a;
-                        if (sizeAB == sizeBC && sizeAC == sizeAB + sizeBC)
-                        {
-                            Value = (int)sizeAB;
-                            break;
-                        }
-                    }
+                    var pair = default(Layout);
+                    var head = Cast<T>.ToPointer(ref pair.Value);
+                    var tail = Cast<Unit>.ToPointer(ref pair.End);
+                    Value = (int)(tail.ToInt64() - head.ToInt64());
                 }
             }
         }

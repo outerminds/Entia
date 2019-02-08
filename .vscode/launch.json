@@ -14,7 +14,7 @@
 			"internalConsoleOptions": "openOnSessionStart"
 		},
 		{
-			"name": "Entia.Bechmark",
+			"name": "Entia.Benchmark",
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "build release",
