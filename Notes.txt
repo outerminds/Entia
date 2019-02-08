@@ -43,6 +43,8 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- find a way to not assume that 'GetFields' returns fields in layout order
+	- Marshal.OffsetOf doesn't seem to work on WebGL
 - add tests for 'Resolvers' module
 - make Components.Set / Components.Remove / Entities.Create / Entities.Destroy thread safe?
 	- this might be very hard or impossible to accomplish without locking
