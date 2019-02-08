@@ -35,6 +35,10 @@ namespace Entia.Modules.Component
         /// The component index.
         /// </summary>
         public readonly int Index;
+        /// <summary>
+        /// Is <c>true</c> if the component type has recusively no references to managed types; otherwise, <c>false</c>.
+        /// </summary>
+        public readonly bool IsPlain;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Metadata"/> struct.
@@ -43,6 +47,7 @@ namespace Entia.Modules.Component
         {
             Type = type;
             Index = index;
+            IsPlain = TypeUtility.IsPlain(type);
         }
 
         /// <inheritdoc cref="IEquatable{T}.Equals(T)"/>

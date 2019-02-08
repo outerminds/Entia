@@ -212,6 +212,8 @@ namespace Entia.Core
 
         public static bool IsDefault(object value) => value is null || value.Equals(GetDefault(value.GetType()));
 
+        public static bool IsPlain(Type type) => type.IsPrimitive || (type.IsValueType && type.GetFields(Instance).All(field => IsPlain(field.FieldType)));
+
         public static bool IsPlain(object value) =>
             Validate(value,
                 current => IsValue(current) ? true : current.GetType().IsValueType ? Nullable.Null<bool>() : false,

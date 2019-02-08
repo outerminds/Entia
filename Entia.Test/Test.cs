@@ -4,6 +4,7 @@ using Entia.Modules.Query;
 using Entia.Queryables;
 using FsCheck;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -17,7 +18,7 @@ namespace Entia.Test
         public interface IComponentC : IComponent { }
         public struct ComponentA : IComponentA { }
         public struct ComponentB : IComponentA { public float Value; }
-        public struct ComponentC<T> : IComponentB { public ulong A, B, C; }
+        public struct ComponentC<T> : IComponentB { public List<T> A, B, C; }
         public struct MessageA : IMessage { }
         public struct MessageB : IMessage { }
         [All(typeof(ComponentC<>))]

@@ -704,7 +704,12 @@ namespace Entia.Modules
                 var targetStore = target.segment.Store(metadata.Index);
 
                 if (TryGetStore(data, metadata, out var sourceStore, out var sourceIndex))
+                {
                     Array.Copy(sourceStore, sourceIndex, targetStore, target.index, 1);
+                    // NOTE: clearing is not strictly needed, but is done when the component type contains managed references in order to allow
+                    // them to be collected by the garbage collector
+                    if (!metadata.IsPlain) Array.Clear(sourceStore, sourceIndex, 1);
+                }
             }
 
             var message = new Entia.Messages.Segment.OnMove { Entity = entity, Source = source, Target = target };
