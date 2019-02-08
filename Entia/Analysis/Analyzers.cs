@@ -15,14 +15,10 @@ namespace Entia.Modules
         readonly World _world;
         readonly TypeMap<IAnalyzable, IAnalyzer> _defaults = new TypeMap<IAnalyzable, IAnalyzer>();
         readonly TypeMap<IAnalyzable, IAnalyzer> _analyzers = new TypeMap<IAnalyzable, IAnalyzer>();
-        readonly Dictionary<(Node node, Node root), Result<IDependency[]>> _analyses = new Dictionary<(Node node, Node root), Result<IDependency[]>>();
 
         public Analyzers(World world) { _world = world; }
 
-        public Result<IDependency[]> Analyze(Node node, Node root) =>
-            _analyses.TryGetValue((node, root), out var result) ? result :
-            _analyses[(node, root)] = Get(node.Value.GetType()).Analyze(node, root, _world);
-
+        public Result<IDependency[]> Analyze(Node node, Node root) => Get(node.Value.GetType()).Analyze(node, root, _world);
         public IAnalyzer Default<T>() where T : struct, IAnalyzable => _defaults.TryGet<T>(out var analyzer) ? analyzer : Default(typeof(T));
         public IAnalyzer Default(Type analyzable) => _defaults.Default(analyzable, typeof(IAnalyzable<>), typeof(AnalyzerAttribute), () => new Default());
         public IAnalyzer Get<T>() where T : struct, IAnalyzable => _analyzers.TryGet<T>(out var analyzer, true) ? analyzer : Default<T>();
@@ -33,12 +29,7 @@ namespace Entia.Modules
         public bool Set(Type analyzable, IAnalyzer analyzer) => _analyzers.Set(analyzable, analyzer);
         public bool Remove<T>() where T : struct, IAnalyzable => _analyzers.Remove<T>();
         public bool Remove(Type analyzable) => _analyzers.Remove(analyzable);
-        public bool Clear()
-        {
-            var cleared = _defaults.Clear() | _analyzers.Clear() | _analyses.Count > 0;
-            _analyses.Clear();
-            return cleared;
-        }
+        public bool Clear() => _defaults.Clear() | _analyzers.Clear();
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IAnalyzer> GetEnumerator() => _analyzers.Values.Concat(_defaults.Values).GetEnumerator();
