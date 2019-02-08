@@ -26,24 +26,18 @@ namespace Entia.Modules
             var runners = new Dictionary<IRunner, int>();
             var states = Array.Empty<Controller.States>();
             var root = node
-                .Wrap(new Root())
-                .Descend(current =>
+                .Descend(child =>
                 {
+                    if (child.Value is IWrapper) return child;
                     var index = count++;
-                    var mapped = current.Wrap(new Map(runner =>
-                    {
-                        runners[runner] = index;
-                        return nodes[current] = runner;
-                    }));
-
-                    Controller.States Get() => states[index];
-                    var stated = mapped.Wrap(new State(Get));
-                    return stated.Wrap(new Map(runner =>
-                    {
-                        runners[runner] = index;
-                        return nodes[stated] = nodes[mapped] = runner;
-                    }));
-                });
+                    return child
+                        .Wrap(new Map(runner => { runners[runner] = index; return runner; }))
+                        .Wrap(new State(() => states[index]))
+                        .Wrap(new Map(runner => { runners[runner] = index; return runner; }));
+                })
+                .Resolve()
+                .Wrap(new Root())
+                .Descend(child => child.Wrap(new Map(runner => nodes[child] = runner)));
             states = new Controller.States[count];
 
             return Result
