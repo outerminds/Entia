@@ -134,7 +134,10 @@ namespace Entia.Core
         [ThreadSafe]
         public bool Equals(BitMask other)
         {
-            if (_buckets.count != other._buckets.count) return false;
+            if (this == other) return true;
+            else if (other == null) return false;
+            else if (_buckets.count != other._buckets.count) return false;
+
             for (var i = 0; i < _buckets.count; i++) if (_buckets.items[i] != other._buckets.items[i]) return false;
             return true;
         }
