@@ -27,4 +27,19 @@ namespace Entia.Dependers
             reflect.GetFields(TypeUtility.Instance).SelectMany(world.Dependers().Dependencies) :
             Array.Empty<IDependency>();
     }
+
+    public sealed class Provider : IDepender
+    {
+        readonly Func<World, IEnumerable<IDependency>> _provider;
+        public Provider(Func<World, IEnumerable<IDependency>> provider) { _provider = provider; }
+        public IEnumerable<IDependency> Depend(MemberInfo member, World world) => _provider(world);
+    }
+
+    public static class Depender
+    {
+        public static IDepender From(Func<World, IEnumerable<IDependency>> dependencies) => new Provider(dependencies);
+        public static IDepender From(Func<IEnumerable<IDependency>> dependencies) => new Provider(_ => dependencies());
+        public static IDepender From(params IDependency[] dependencies) => new Provider(_ => dependencies);
+        public static IDepender From<T>(params IDependency[] dependencies) => new Provider(world => dependencies.Concat(world.Dependers().Dependencies<T>()));
+    }
 }

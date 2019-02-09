@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using Entia.Modules.Control;
 using Entia.Modules.Schedule;
+using Entia.Schedulables;
 
 namespace Entia.Schedulers
 {
-    public interface ISchedulable { }
-    public interface ISchedulable<T> : ISchedulable where T : IScheduler, new() { }
     public interface IScheduler
     {
         Type[] Phases { get; }

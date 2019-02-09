@@ -18,24 +18,12 @@ namespace Entia.Injectables
     {
         public readonly struct Write : IInjectable, IEnumerable<IComponent>
         {
-            sealed class Injector : Injector<Write>
-            {
-                public override Result<Write> Inject(MemberInfo member, World world) => new Write(world.Components());
-            }
-
-            sealed class Depender : IDepender
-            {
-                public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-                {
-                    yield return new Dependencies.Read(typeof(Entity));
-                    yield return new Dependencies.Write(typeof(IComponent));
-                }
-            }
-
             [Injector]
-            static readonly Injector _injector = new Injector();
+            static readonly Injector<Write> _injector = Injector.From(world => new Write(world.Components()));
             [Depender]
-            static readonly Depender _depender = new Depender();
+            static readonly IDepender _depender = Depender.From(
+                new Dependencies.Read(typeof(Entity)),
+                new Dependencies.Write(typeof(IComponent)));
 
             readonly Components _components;
 
@@ -78,24 +66,12 @@ namespace Entia.Injectables
 
         public readonly struct Read : IInjectable, IEnumerable<IComponent>
         {
-            sealed class Injector : Injector<Read>
-            {
-                public override Result<Read> Inject(MemberInfo member, World world) => new Read(world.Components());
-            }
-
-            sealed class Depender : IDepender
-            {
-                public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-                {
-                    yield return new Dependencies.Read(typeof(Entity));
-                    yield return new Dependencies.Read(typeof(IComponent));
-                }
-            }
-
             [Injector]
-            static readonly Injector _injector = new Injector();
+            static readonly Injector<Read> _injector = Injector.From(world => new Read(world.Components()));
             [Depender]
-            static readonly Depender _depender = new Depender();
+            static readonly IDepender _depender = Depender.From(
+                new Dependencies.Read(typeof(Entity)),
+                new Dependencies.Read(typeof(IComponent)));
 
             readonly Components _components;
 
@@ -136,28 +112,16 @@ namespace Entia.Injectables
             IEnumerator IEnumerable.GetEnumerator() => _components.GetEnumerator();
         }
 
-        sealed class Injector : Injector<AllComponents>
-        {
-            public override Result<AllComponents> Inject(MemberInfo member, World world) => new AllComponents(world.Components());
-        }
-
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                yield return new Dependencies.Read(typeof(Entity));
-                yield return new Dependencies.Write(typeof(IComponent));
-                yield return new Dependencies.Emit(typeof(Messages.OnAdd));
-                yield return new Dependencies.Emit(typeof(Messages.OnAdd<>));
-                yield return new Dependencies.Emit(typeof(Messages.OnRemove));
-                yield return new Dependencies.Emit(typeof(Messages.OnRemove<>));
-            }
-        }
-
         [Injector]
-        static readonly Injector _injector = new Injector();
+        static readonly Injector<AllComponents> _injector = Injector.From(world => new AllComponents(world.Components()));
         [Depender]
-        static readonly Depender _depender = new Depender();
+        static readonly IDepender _depender = Depender.From(
+            new Dependencies.Read(typeof(Entity)),
+            new Dependencies.Write(typeof(IComponent)),
+            new Dependencies.Emit(typeof(Messages.OnAdd)),
+            new Dependencies.Emit(typeof(Messages.OnAdd<>)),
+            new Dependencies.Emit(typeof(Messages.OnRemove)),
+            new Dependencies.Emit(typeof(Messages.OnRemove<>)));
 
         readonly Components _components;
 
@@ -225,25 +189,12 @@ namespace Entia.Injectables
         [ThreadSafe]
         public readonly struct Write : IInjectable, IEnumerable<(Entity entity, T component)>
         {
-            sealed class Injector : Injector<Write>
-            {
-                public override Result<Write> Inject(MemberInfo member, World world) => new Write(world.Components());
-            }
-
-            sealed class Depender : IDepender
-            {
-                public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-                {
-                    yield return new Dependencies.Read(typeof(Entity));
-                    yield return new Dependencies.Write(typeof(T));
-                    foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
-                }
-            }
-
             [Injector]
-            static readonly Injector _injector = new Injector();
+            static readonly Injector<Write> _injector = Injector.From(world => new Write(world.Components()));
             [Depender]
-            static readonly Depender _depender = new Depender();
+            static readonly IDepender _depender = Depender.From<T>(
+                new Dependencies.Read(typeof(Entity)),
+                new Dependencies.Write(typeof(T)));
 
             readonly Components _components;
 
@@ -270,25 +221,12 @@ namespace Entia.Injectables
         [ThreadSafe]
         public readonly struct Read : IInjectable, IEnumerable<(Entity entity, T component)>
         {
-            sealed class Injector : Injector<Read>
-            {
-                public override Result<Read> Inject(MemberInfo member, World world) => new Read(world.Components());
-            }
-
-            sealed class Depender : IDepender
-            {
-                public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-                {
-                    yield return new Dependencies.Read(typeof(Entity));
-                    yield return new Dependencies.Read(typeof(T));
-                    foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
-                }
-            }
-
             [Injector]
-            static readonly Injector _injector = new Injector();
+            static readonly Injector<Read> _injector = Injector.From(world => new Read(world.Components()));
             [Depender]
-            static readonly Depender _depender = new Depender();
+            static readonly IDepender _depender = Depender.From<T>(
+                new Dependencies.Read(typeof(Entity)),
+                new Dependencies.Read(typeof(T)));
 
             readonly Components _components;
 
@@ -311,29 +249,16 @@ namespace Entia.Injectables
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
-        sealed class Injector : Injector<Components<T>>
-        {
-            public override Result<Components<T>> Inject(MemberInfo member, World world) => new Components<T>(world.Components());
-        }
-
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                yield return new Dependencies.Read(typeof(Entity));
-                yield return new Dependencies.Write(typeof(T));
-                yield return new Dependencies.Emit(typeof(Messages.OnAdd));
-                yield return new Dependencies.Emit(typeof(Messages.OnAdd<T>));
-                yield return new Dependencies.Emit(typeof(Messages.OnRemove));
-                yield return new Dependencies.Emit(typeof(Messages.OnRemove<T>));
-                foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
-            }
-        }
-
         [Injector]
-        static readonly Injector _injector = new Injector();
+        static readonly Injector<Components<T>> _injector = Injector.From(world => new Components<T>(world.Components()));
         [Depender]
-        static readonly Depender _depender = new Depender();
+        static readonly IDepender _depender = Depender.From<T>(
+            new Dependencies.Read(typeof(Entity)),
+            new Dependencies.Write(typeof(T)),
+            new Dependencies.Emit(typeof(Messages.OnAdd)),
+            new Dependencies.Emit(typeof(Messages.OnAdd<T>)),
+            new Dependencies.Emit(typeof(Messages.OnRemove)),
+            new Dependencies.Emit(typeof(Messages.OnRemove<T>)));
 
         readonly Components _components;
 

@@ -15,9 +15,9 @@ namespace Entia.Nodes
             replace(node.With(children: node.Children.Select(child => child.Descend(replace)).ToArray()));
 
         public static Node With(this Node node, string name = null, INode value = null, Node[] children = null) =>
-            Node.Of(name ?? node.Name, value ?? node.Value, children ?? node.Children);
+            Node.From(name ?? node.Name, value ?? node.Value, children ?? node.Children);
 
-        public static Node Wrap<T>(this Node node, in T data) where T : IWrapper => Node.Of(node.Name, data, node);
+        public static Node Wrap<T>(this Node node, in T data) where T : IWrapper => Node.From(node.Name, data, node);
 
         public static Node Profile(this Node node, bool recursive = true) => recursive ?
             node.Descend(child => child.Value is IWrapper ? child : child.Wrap(new Profile())) :
@@ -25,7 +25,7 @@ namespace Entia.Nodes
 
         public static Node Resolve(this Node node, bool recursive = true)
         {
-            if (node.Value is IAtomic) return Node.Of<Resolve>(nameof(Nodes.Resolve), node);
+            if (node.Value is IAtomic) return Node.From<Resolve>(nameof(Nodes.Resolve), node);
             var children = recursive ? node.Children.Select(child => child.Resolve(recursive)).ToArray() : node.Children;
             return node.With(children: children);
         }

@@ -15,19 +15,9 @@ namespace Entia
     public sealed class World : IInjectable, IEnumerable<IModule>
     {
         [Injector]
-        sealed class Injector : Injector<World>
-        {
-            public override Result<World> Inject(MemberInfo member, World world) => world;
-        }
-
+        static readonly Injector<World> _injector = Injector.From(world => world);
         [Depender]
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                yield return new Dependencies.Unknown();
-            }
-        }
+        static readonly IDepender _depender = Depender.From(new Dependencies.Unknown());
 
         readonly TypeMap<IModule, IModule> _modules = new TypeMap<IModule, IModule>();
         IResolvable[] _resolvables = Array.Empty<IResolvable>();

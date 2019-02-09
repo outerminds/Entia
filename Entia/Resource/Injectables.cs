@@ -16,24 +16,10 @@ namespace Entia.Injectables
         [ThreadSafe]
         public readonly struct Read : IInjectable
         {
-            sealed class Injector : Injector<Read>
-            {
-                public override Result<Read> Inject(MemberInfo member, World world) => new Read(world.Resources().GetBox<T>());
-            }
-
-            sealed class Depender : IDepender
-            {
-                public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-                {
-                    yield return new Dependencies.Read(typeof(T));
-                    foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
-                }
-            }
-
             [Injector]
-            static readonly Injector _injector = new Injector();
+            static readonly Injector<Read> _injector = Injector.From(world => new Read(world.Resources().GetBox<T>()));
             [Depender]
-            static readonly Depender _depender = new Depender();
+            static readonly IDepender _depender = Depender.From(world => world.Dependers().Dependencies<T>().Prepend(new Dependencies.Read(typeof(T))));
 
             public ref readonly T Value => ref _box.Value;
 
@@ -42,24 +28,10 @@ namespace Entia.Injectables
             public Read(Box<T> box) { _box = box; }
         }
 
-        sealed class Injector : Injector<Resource<T>>
-        {
-            public override Result<Resource<T>> Inject(MemberInfo member, World world) => new Resource<T>(world.Resources().GetBox<T>());
-        }
-
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                yield return new Dependencies.Write(typeof(T));
-                foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
-            }
-        }
-
         [Injector]
-        static readonly Injector _injector = new Injector();
+        static readonly Injector<Resource<T>> _injector = Injector.From(world => new Resource<T>(world.Resources().GetBox<T>()));
         [Depender]
-        static readonly Depender _depender = new Depender();
+        static readonly IDepender _depender = Depender.From(world => world.Dependers().Dependencies<T>().Prepend(new Dependencies.Write(typeof(T))));
 
         public ref T Value => ref _box.Value;
 

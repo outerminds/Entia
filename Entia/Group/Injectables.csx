@@ -24,24 +24,10 @@ $@"    /// <summary>
     [ThreadSafe]
     public readonly struct Group<{parameters}> : IInjectable, IEnumerable<{itemType}> {constraints}
     {{
-        sealed class Injector : IInjector
-        {{
-            public Result<object> Inject(MemberInfo member, World world) => new Group<{parameters}>(world.Groups().Get(world.Queriers().Get<{itemType}>(member)));
-        }}
-
-        sealed class Depender : IDepender
-        {{
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {{
-                yield return new Dependencies.Read(typeof(Entity));
-                foreach (var dependency in world.Dependers().Dependencies<{itemType}>()) yield return dependency;
-            }}
-        }}
-
         [Injector]
-        static readonly Injector _injector = new Injector();
+        static readonly Injector<object> _injector = Injector.From<object>((member, world) => new Group<{parameters}>(world.Groups().Get(world.Queriers().Get<{itemType}>(member))));
         [Depender]
-        static readonly Depender _depender = new Depender();
+        static readonly IDepender _depender = Depender.From<{itemType}>(new Dependencies.Read(typeof(Entity)));
 
         /// <inheritdoc cref=""Modules.Group.Group{{T}}.Count""/>
         public int Count => _group.Count;

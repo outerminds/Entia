@@ -7,6 +7,7 @@ using Entia.Modules.Build;
 using Entia.Modules.Control;
 using Entia.Modules.Schedule;
 using Entia.Phases;
+using Entia.Schedulables;
 using Entia.Schedulers;
 using Entia.Systems;
 using System;
@@ -57,7 +58,7 @@ namespace Entia.Nodes
                 {
                     var schedulers = system.GetType().Hierarchy()
                         .Where(type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ISchedulable<>))
-                        .Select(type => world.Schedulers().Get(type))
+                        .Select(world.Schedulers().Get)
                         .ToArray();
                     return new Runner(system, schedulers);
                 });

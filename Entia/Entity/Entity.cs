@@ -29,14 +29,6 @@ namespace Entia
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                yield return new Read(typeof(Entity));
-            }
-        }
-
         /// <summary>
         /// A zero initialized entity that will always be invalid.
         /// </summary>
@@ -45,7 +37,7 @@ namespace Entia
         [Querier]
         static readonly Querier _querier = new Querier();
         [Depender]
-        static readonly Depender _depender = new Depender();
+        static readonly IDepender _depender = Depender.From(new Read(typeof(Entity)));
 
         /// <summary>
         /// Implements the operator ==.

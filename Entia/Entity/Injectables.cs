@@ -21,23 +21,10 @@ namespace Entia.Injectables
         [ThreadSafe]
         public readonly struct Read : IInjectable, IEnumerable<Entity>
         {
-            sealed class Injector : Injector<Read>
-            {
-                public override Result<Read> Inject(MemberInfo member, World world) => new Read(world.Entities());
-            }
-
-            sealed class Depender : IDepender
-            {
-                public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-                {
-                    yield return new Dependencies.Read(typeof(Entity));
-                }
-            }
-
             [Injector]
-            static readonly Injector _injector = new Injector();
+            static readonly Injector<Read> _injector = Injector.From(world => new Read(world.Entities()));
             [Depender]
-            static readonly Depender _depender = new Depender();
+            static readonly IDepender _depender = Depender.From(new Dependencies.Read(typeof(Entity)));
 
             /// <inheritdoc cref="Entities.Count"/>
             public int Count => _entities.Count;
@@ -59,26 +46,14 @@ namespace Entia.Injectables
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
-        sealed class Injector : Injector<AllEntities>
-        {
-            public override Result<AllEntities> Inject(MemberInfo member, World world) => new AllEntities(world.Entities());
-        }
-
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                yield return new Dependencies.Write(typeof(Entity));
-                yield return new Dependencies.Emit(typeof(Messages.OnCreate));
-                yield return new Dependencies.Emit(typeof(Messages.OnPreDestroy));
-                yield return new Dependencies.Emit(typeof(Messages.OnPostDestroy));
-            }
-        }
-
         [Injector]
-        static readonly Injector _injector = new Injector();
+        static readonly Injector<AllEntities> _injector = Injector.From(world => new AllEntities(world.Entities()));
         [Depender]
-        static readonly Depender _depender = new Depender();
+        static readonly IDepender _depender = Depender.From(
+            new Dependencies.Write(typeof(Entity)),
+            new Dependencies.Emit(typeof(Messages.OnCreate)),
+            new Dependencies.Emit(typeof(Messages.OnPreDestroy)),
+            new Dependencies.Emit(typeof(Messages.OnPostDestroy)));
 
         /// <inheritdoc cref="Entities.Count"/>
         public int Count => _entities.Count;

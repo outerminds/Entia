@@ -18,15 +18,15 @@ namespace Entia.Nodes
 
     public sealed class Node : IEquatable<Node>
     {
-        public static Node Of(string name, INode value, params Node[] nodes) => new Node(name, value, nodes);
-        public static Node Of<T>(string name, params Node[] nodes) where T : struct, INode => Of(name, default(T), nodes);
+        public static Node From(string name, INode value, params Node[] nodes) => new Node(name, value, nodes);
+        public static Node From<T>(string name, params Node[] nodes) where T : struct, INode => From(name, default(T), nodes);
         public static Node Sequence(params Node[] nodes) => Sequence("", nodes);
-        public static Node Sequence(string name, params Node[] nodes) => Of<Sequence>(name, nodes);
+        public static Node Sequence(string name, params Node[] nodes) => From<Sequence>(name, nodes);
         public static Node Parallel(params Node[] nodes) => Parallel("", nodes);
-        public static Node Parallel(string name, params Node[] nodes) => Of<Parallel>(name, nodes);
+        public static Node Parallel(string name, params Node[] nodes) => From<Parallel>(name, nodes);
         public static Node Automatic(params Node[] nodes) => Automatic("", nodes);
-        public static Node Automatic(string name, params Node[] nodes) => Of<Automatic>(name, nodes);
-        public static Node System(Type system) => Of(system.Format(), new System(system));
+        public static Node Automatic(string name, params Node[] nodes) => From<Automatic>(name, nodes);
+        public static Node System(Type system) => From(system.Format(), new System(system));
         public static Node System<T>() where T : struct, ISystem => System(typeof(T));
         public static Node[] Systems(Assembly assembly) => assembly.GetTypes().Where(type => type.IsValueType && type.Is<ISystem>()).Select(System).ToArray();
 
