@@ -10,13 +10,15 @@ namespace Entia.Modules.Query
     [ThreadSafe]
     public readonly struct Query
     {
-        public static readonly Query Empty = new Query((pointer, _) => pointer);
+        public static readonly Query Empty = new Query(0, (_, __) => { });
 
-        public readonly Func<IntPtr, int, IntPtr> Fill;
+        public readonly int Size;
+        public readonly Action<IntPtr, int> Fill;
         public readonly Metadata[] Types;
 
-        public Query(Func<IntPtr, int, IntPtr> fill, params Metadata[] types)
+        public Query(int size, Action<IntPtr, int> fill, params Metadata[] types)
         {
+            Size = size;
             Fill = fill;
             Types = types;
         }
@@ -26,11 +28,8 @@ namespace Entia.Modules.Query
     public readonly struct Query<T> where T : struct, Queryables.IQueryable
     {
         public static implicit operator Query(Query<T> query) => new Query(
-            (pointer, index) =>
-            {
-                UnsafeUtility.Cast<T>.ToReference(pointer) = query.Get(index);
-                return pointer + UnsafeUtility.Size<T>.Value;
-            },
+            UnsafeUtility.Size<T>.Value,
+            (pointer, index) => UnsafeUtility.Cast<T>.ToReference(pointer) = query.Get(index),
             query.Types);
 
         public readonly Func<int, T> Get;

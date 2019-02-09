@@ -30,8 +30,8 @@ namespace Entia.Queryables
 
         public AllAttribute(params Type[] components)
         {
-            Components = components.Where(ComponentUtility.IsValid).ToArray();
-            _masks = Components.Select(ComponentUtility.GetConcrete).ToArray();
+            Components = components;
+            _masks = ComponentUtility.GetMasks(components);
         }
 
         public bool TryQuery(Segment segment, World world, out Query query)
@@ -51,8 +51,8 @@ namespace Entia.Queryables
 
         public AnyAttribute(params Type[] components)
         {
-            Components = components.Where(ComponentUtility.IsValid).ToArray();
-            _masks = Components.Select(ComponentUtility.GetConcrete).ToArray();
+            Components = components;
+            _masks = ComponentUtility.GetMasks(components);
         }
 
         public bool TryQuery(Segment segment, World world, out Query query)
@@ -72,8 +72,8 @@ namespace Entia.Queryables
 
         public NoneAttribute(params Type[] components)
         {
-            Components = components.Where(ComponentUtility.IsValid).ToArray();
-            _masks = Components.Select(ComponentUtility.GetConcrete).ToArray();
+            Components = components;
+            _masks = ComponentUtility.GetMasks(components);
         }
 
         public bool TryQuery(Segment segment, World world, out Query query)

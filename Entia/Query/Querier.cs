@@ -38,21 +38,42 @@ namespace Entia.Queriers
     [ThreadSafe]
     public sealed class Default<T> : Querier<T> where T : struct, Queryables.IQueryable
     {
-        static readonly FieldInfo[] _fields = typeof(T).GetFields(TypeUtility.Instance);
+        static readonly FieldInfo[] _fields = typeof(T).GetFields(TypeUtility.Instance)
+            .OrderBy(field => field.MetadataToken)
+            .ToArray();
 
         public override bool TryQuery(Segment segment, World world, out Query<T> query)
         {
             var attribute = Querier.All(typeof(T).GetCustomAttributes(true).OfType<IQuerier>().ToArray());
-            var querier = Querier.All(_fields.Select(field => world.Queriers().Get(field.FieldType)).ToArray());
-            if (attribute.TryQuery(segment, world, out _) && querier.TryQuery(segment, world, out var inner))
+            if (attribute.TryQuery(segment, world, out var query1))
             {
-                query = new Query<T>(index =>
+                var queries = new Query[_fields.Length];
+                for (int i = 0; i < _fields.Length; i++)
                 {
-                    var queryable = default(T);
-                    var pointer = UnsafeUtility.Cast<T>.ToPointer(ref queryable);
-                    inner.Fill((IntPtr)pointer, index);
-                    return queryable;
-                });
+                    var field = _fields[i];
+                    var querier = world.Queriers().Get(field.FieldType);
+                    if (querier.TryQuery(segment, world, out var query2)) queries[i] = query2;
+                    else
+                    {
+                        query = default;
+                        return false;
+                    }
+                }
+
+                query = new Query<T>(
+                    index =>
+                    {
+                        var queryable = default(T);
+                        var pointer = UnsafeUtility.Cast<T>.ToPointer(ref queryable);
+                        for (int i = 0; i < queries.Length; i++)
+                        {
+                            var current = queries[i];
+                            current.Fill(pointer, index);
+                            pointer += current.Size;
+                        }
+                        return queryable;
+                    },
+                    queries.Append(query1).SelectMany(current => current.Types));
                 return true;
             }
 
@@ -92,11 +113,8 @@ namespace Entia.Queriers
                 }
 
                 query = new Query(
-                    (pointer, index) =>
-                    {
-                        for (int i = 0; i < queries.Length; i++) pointer = queries[i].Fill(pointer, index);
-                        return pointer;
-                    },
+                    queries.Sum(current => current.Size),
+                    (pointer, index) => { for (int i = 0; i < queries.Length; i++) queries[i].Fill(pointer, index); },
                     queries.SelectMany(current => current.Types).ToArray());
                 return true;
             });

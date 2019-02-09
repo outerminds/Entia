@@ -123,6 +123,14 @@ namespace Entia.Modules.Component
             }
         }
 
+        public static BitMask[] GetMasks(params Type[] types)
+        {
+            var (concrete, @abstract) = types.Where(ComponentUtility.IsValid).Split(ComponentUtility.IsConcrete);
+            var masks = @abstract.Select(ComponentUtility.GetConcrete);
+            if (concrete.Length > 0) masks = masks.Prepend(new BitMask(concrete.Select(component => ComponentUtility.GetMetadata(component).Index).ToArray()));
+            return masks.ToArray();
+        }
+
         static Metadata CreateMetadata(Type type)
         {
             if (IsConcrete(type))
