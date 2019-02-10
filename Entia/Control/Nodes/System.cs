@@ -66,21 +66,20 @@ namespace Entia.Nodes
 
         sealed class Analyzer : Analyzer<System>
         {
-            static IDependency[] Dependencies(Type type, World world) => world.Dependers().Dependencies(type);
-
             public override Result<IDependency[]> Analyze(System data, Node node, Node root, World world)
             {
-                var dependencies = Dependencies(data.Type, world);
+                var dependers = world.Dependers();
+                var dependencies = dependers.Dependencies(data.Type);
                 var emits = dependencies.Emits().ToArray();
                 if (emits.Length > 0)
                 {
                     var direct = root.Family()
                         .Select(child => Option.Cast<Nodes.System>(child.Value).Map(system => (child, system)))
                         .Choose()
-                        .Select(pair => (pair.child, dependencies: Dependencies(pair.system.Type, world)))
+                        .Select(pair => (pair.child, dependencies: dependers.Dependencies(pair.system.Type)))
                         .ToArray();
                     dependencies = direct
-                        .Where(pair => pair.dependencies.Reacts().Intersect(emits).Any())
+                        .Where(pair => pair.dependencies.Reacts().Any(react => emits.Any(emit => react.Is(emit, true, true))))
                         .SelectMany(pair => pair.dependencies)
                         .Prepend(dependencies)
                         .Distinct()

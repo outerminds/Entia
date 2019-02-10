@@ -59,29 +59,35 @@ namespace Entia.Nodes
             Result<Unit> Unknown(Node node, IDependency[] dependencies) =>
                 dependencies.OfType<Unknown>().Select(_ => Result.Failure($"'{node}' has unknown dependencies.")).All();
 
-            Result<Unit> WriteWrite((Node node, IDependency[] dependencies) left, (Node node, IDependency[] dependencies) right) =>
-                left.dependencies.Writes()
-                    .Intersect(right.dependencies.Writes())
+            Result<Unit> WriteWrite((Node node, IDependency[] dependencies) left, (Node node, IDependency[] dependencies) right)
+            {
+                var writes = right.dependencies.Writes().ToArray();
+                return left.dependencies.Writes()
+                    .Where(type => writes.Any(write => type.Is(write, true, true)))
                     .Select(type => Result.Failure($"'{left.node}' and '{right.node}' both have a write dependency on type '{type.FullFormat()}'."))
                     .All();
+            }
 
-            Result<Unit> WriteRead((Node node, IDependency[] dependencies) left, (Node node, IDependency[] dependencies) right) =>
-                left.dependencies.Writes()
-                    .Intersect(right.dependencies.Reads())
+            Result<Unit> WriteRead((Node node, IDependency[] dependencies) left, (Node node, IDependency[] dependencies) right)
+            {
+                var reads = right.dependencies.Reads().ToArray();
+                return left.dependencies.Writes()
+                    .Where(type => reads.Any(read => type.Is(read, true, true)))
                     .Select(type => Result.Failure($"'{left.node}' has a write dependency on type '{type.FullFormat()}' and '{right.node}' reads from it."))
                     .All();
+            }
 
             public override Result<IDependency[]> Analyze(Nodes.Parallel data, Node node, Node root, World world) =>
                 node.Children.Select(child => world.Analyzers().Analyze(child, root).Map(dependencies => (child, dependencies))).All().Bind(children =>
                 {
                     var combinations = children.Combinations(2).ToArray();
                     var unknown = children.Select(pair => Unknown(pair.child, pair.dependencies)).All();
-                    var writeWrite = combinations.Select(pairs => WriteWrite(pairs[0], pairs[1])).All();
+                    var writeWrite1 = combinations.Select(pairs => WriteWrite(pairs[0], pairs[1])).All();
+                    var writeWrite2 = combinations.Select(pairs => WriteWrite(pairs[1], pairs[0])).All();
                     var writeRead = combinations.Select(pairs => WriteRead(pairs[0], pairs[1])).All();
                     var readWrite = combinations.Select(pairs => WriteRead(pairs[1], pairs[0])).All();
-
-                    return Result.All(unknown, writeWrite, writeRead, readWrite)
-                        .Map(__ => children.SelectMany(pair => pair.dependencies)
+                    return Result.All(unknown, writeWrite1, writeWrite2, writeRead, readWrite)
+                        .Map(_ => children.SelectMany(pair => pair.dependencies)
                         .ToArray());
                 });
 

@@ -33,7 +33,8 @@ namespace Entia.Modules
                     switch (current)
                     {
                         case Type type:
-                            foreach (var dependency in Get(type).Depend(type, _world)) yield return dependency;
+                            foreach (var dependency in type.Hierarchy().SelectMany(child => Get(child).Depend(type, _world)))
+                                yield return dependency;
                             break;
                         case FieldInfo field:
                             foreach (var dependency in Next(field.FieldType)) yield return dependency;
