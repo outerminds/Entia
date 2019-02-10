@@ -20,7 +20,7 @@
 
 # ![Entia][logo]
 
-**Entia** is a free, open-source, data-oriented, highly performant, parallelizable and extensible [**E**ntity-**C**omponent-**S**ystem (**ECS**)][ecs] framework writtten in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous structs. No indirection, no boxing, no garbage collection and no cache misses.
+**Entia** is a free, open-source, data-oriented, highly performant, parallelizable and extensible [**E**ntity-**C**omponent-**S**ystem (**ECS**)][ecs] framework written in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous structs. No indirection, no boxing, no garbage collection and no cache misses.
 
 Since **Entia** is built using _[.Net Standard 2.0][net-standard]_, it is compatible with _.Net Core 2.0+_, _.Net Framework 4.6+_, _Mono 5.4+_, _Xamarin_ and any other implementation of _.Net_ that follows the standard (see [this page][net-standard] for more details). Therefore it is compatible with any game engine that has proper C# support.
 
@@ -125,8 +125,8 @@ ___
 -   [Message][wiki/message]: a temporary **C**omponent that is not attached to an **E**ntity and that simplifies **S**ystem communication.
 -   [Resource][wiki/resource]: a World-wide **C**omponent that is not attached to an **E**ntity that holds global data.
 -   [Group][wiki/group]: a list of all the **E**ntities in a given World that conform to a query.
--   [Node][wiki/node]: a data wrapper around **S**ystems that allow to define execution behaviour and order.
--   [Controller][wiki/controller]: a wrapper around **S**ystems that executes them based on the behaviour defined in nodes and that controls their state.
+-   [Node][wiki/node]: a data wrapper around **S**ystems that allow to define execution behavior and order.
+-   [Controller][wiki/controller]: a wrapper around **S**ystems that executes them based on the behavior defined in nodes and that controls their state.
 -   [Phase][wiki/phase]: a data type that is associated with a phase of execution. It allows to run systems at different times such as initialization time, run time, dispose time or any other time that you care to define.
 ___
 
@@ -137,7 +137,7 @@ I will specify here recurrent usage patterns that are used in the framework.
 -   Almost everything you will implement when using the framework will be a `struct`. **E**ntities are structs, **C**omponents are structs, **S**ystems are structs and other concepts such as Messages, Resources, Queryables and Injectables are all structs.
 -   The framework will enforce the usage of structs.
 -   This (almost abusive) usage of structs is deliberate.
-    -   It prevents any kind of OOP-inheritance-impulses that one could have since structs cannot inherit from anything.
+    -   It prevents any kind of OOP inheritance impulses that one could have since structs cannot inherit from anything.
     -   structs correspond much more appropriately to plain and inert data.
     - structs don't require useless indirection and null checking when accessing members.
     -   The cost of passing (copying) structs around is nullified by C#7's `ref` returns.
