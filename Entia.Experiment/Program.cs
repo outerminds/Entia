@@ -335,7 +335,8 @@ namespace Entia.Experiment
 
         static void Main()
         {
-            TypeMap();
+            // ParallelTest.Run();
+            // TypeMap();
 
             // Group3Test.Benchmark(1_000);
             // Group3Test.Benchmark(10_000);
