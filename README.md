@@ -30,6 +30,7 @@ ___
 
 # Content
 - [Installation](#installation)
+- [Tutorial](#tutorial)
 - [The Basics](#the-basics)
 - [More Concepts](#more-concepts)
 - [Recurrent Usage Patterns](#recurrent-patterns)
@@ -40,6 +41,9 @@ ___
 - [Download][releases] the most recent stable version of Entia.
 - Add _Entia.dll_ and _Entia.Core.dll_ as dependencies in your project.
 - Optionally install the Visual Studio extension _Entia.Analyze.vsix_ to get _Entia_ specific code analysis.
+___
+
+# Tutorial
 - Here is a snippet of code to get you up and running:
 ```csharp
 using Entia;
