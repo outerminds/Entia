@@ -44,6 +44,7 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- add an option to disable 'Watch' behavior of the generator
 - find a way to not assume that 'GetFields' returns fields in layout order
 	- Marshal.OffsetOf doesn't seem to work on WebGL
 - add tests for 'Resolvers' module
