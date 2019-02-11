@@ -68,6 +68,16 @@ namespace Entia.Core
             return ref slot;
         }
 
+        public static bool Add<T>(ref T[] array, params T[] items)
+        {
+            if (items.Length == 0) return false;
+
+            var index = array.Length;
+            Array.Resize(ref array, index + items.Length);
+            Array.Copy(items, 0, array, index, items.Length);
+            return true;
+        }
+
         public static bool Remove<T>(ref T[] array, T item)
         {
             var index = Array.IndexOf(array, item);
