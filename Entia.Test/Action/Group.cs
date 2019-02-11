@@ -12,7 +12,7 @@ namespace Entia.Test
 {
     public sealed class GetEntityGroup : GetGroup<Entity>
     {
-        public GetEntityGroup(ICustomAttributeProvider provider = null) : base(provider) { }
+        public GetEntityGroup(MemberInfo member = null) : base(member) { }
 
         public override Property Check(World value, Model model) => base.Check(value, model)
             .And(_group.SequenceEqual(_group.Entities).Label("Group.SequenceEqual(Group.Entities)"));
@@ -20,17 +20,17 @@ namespace Entia.Test
 
     public class GetGroup<T> : Action<World, Model> where T : struct, Queryables.IQueryable
     {
-        protected ICustomAttributeProvider _provider;
+        protected MemberInfo _member;
         protected Querier<T> _querier;
         protected Segment[] _segments;
         protected Entity[] _entities;
         protected Group<T> _group;
 
-        public GetGroup(ICustomAttributeProvider provider = null) { _provider = provider; }
+        public GetGroup(MemberInfo member = null) { _member = member; }
 
         public override bool Pre(World value, Model model)
         {
-            _querier = _provider == null ? value.Queriers().Get<T>() : value.Queriers().Get<T>(_provider);
+            _querier = _member == null ? value.Queriers().Get<T>() : value.Queriers().Get<T>(_member);
             _segments = value.Components().Segments.Where(segment => _querier.TryQuery(segment, value, out _)).ToArray();
             _entities = _segments.SelectMany(segment => segment.Entities.Slice()).ToArray();
             return true;

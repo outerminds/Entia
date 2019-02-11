@@ -61,6 +61,8 @@ Features:
 	- run tests on device with IL2CPP build
 
 Bugs:
+- An emitter system will not inherit the 2nd degree dependencies of corresponding reactive systems
+	- if the reactive system also emits a message, the first emitter system should also inherit the dependencies of the 2nd reactive system
 - Getting an Emitter<T>(), Receiver<T>(), Reaction<T>() is not thread safe.
 	- since they can be called in parallel in the IReact<T> scheduler, it must be fixed
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.

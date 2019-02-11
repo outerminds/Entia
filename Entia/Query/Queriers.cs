@@ -1,12 +1,12 @@
+using Entia.Core;
+using Entia.Modules.Component;
+using Entia.Modules.Query;
+using Entia.Queriers;
+using Entia.Queryables;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Entia.Core;
-using Entia.Modules.Component;
-using Entia.Modules.Query;
-using Entia.Queryables;
-using Entia.Queriers;
 using System.Reflection;
 
 namespace Entia.Modules
@@ -21,7 +21,7 @@ namespace Entia.Modules
 
         readonly World _world;
         readonly TypeMap<Queryables.IQueryable, IQuerier> _defaults = new TypeMap<Queryables.IQueryable, IQuerier>();
-        readonly TypeMap<Queryables.IQueryable, Dictionary<ICustomAttributeProvider, IQuerier>> _queriers = new TypeMap<Queryables.IQueryable, Dictionary<ICustomAttributeProvider, IQuerier>>();
+        readonly Dictionary<MemberInfo, IQuerier> _queriers = new Dictionary<MemberInfo, IQuerier>();
 
         public Queriers(World world) { _world = world; }
 
@@ -34,51 +34,49 @@ namespace Entia.Modules
         public IQuerier Default(Type queryable) =>
             _defaults.Default(queryable, typeof(Queryables.IQueryable<>), typeof(QuerierAttribute), typeof(Default<>));
 
-        public bool Has<T>(ICustomAttributeProvider provider = null) where T : struct, Queryables.IQueryable => Cache<T>().ContainsKey(provider ?? typeof(T));
-        public bool Has(ICustomAttributeProvider provider = null) => Has(typeof(Provider), provider);
-        public bool Has(Type queryable, ICustomAttributeProvider provider = null) => Cache(queryable).ContainsKey(provider ?? queryable);
+        public bool Has<T>() where T : struct, Queryables.IQueryable => Has(typeof(T));
+        public bool Has(Type queryable) => _queriers.ContainsKey(queryable);
 
-        public Querier<T> Get<T>(ICustomAttributeProvider provider = null) where T : struct, Queryables.IQueryable
+        public Querier<T> Get<T>() where T : struct, Queryables.IQueryable
         {
-            var cache = Cache<T>();
-            provider = provider ?? typeof(T);
-            if (cache.TryGetValue(provider, out var querier) && querier is Querier<T> casted) return casted;
-            cache[provider] = casted = Querier.All(Default<T>(), Querier.From(provider));
+            if (_queriers.TryGetValue(typeof(T), out var querier) && querier is Querier<T> casted) return casted;
+            _queriers[typeof(T)] = casted = Querier.All(Default<T>(), Querier.From(typeof(T)));
             return casted;
         }
 
-        public IQuerier Get(ICustomAttributeProvider provider = null) => Get(typeof(Provider), provider);
-        public IQuerier Get(Type queryable, ICustomAttributeProvider provider = null)
+        public Querier<T> Get<T>(MemberInfo member) where T : struct, Queryables.IQueryable
         {
-            var cache = Cache(queryable);
-            provider = provider ?? queryable;
-            return
-                cache.TryGetValue(provider, out var querier) ? querier :
-                cache[provider] = Querier.All(Default(queryable), Querier.From(provider));
+            if (_queriers.TryGetValue(member, out var querier) && querier is Querier<T> casted) return casted;
+            _queriers[member] = casted = Querier.All(Default<T>(), Querier.From(typeof(T)), Querier.From(member));
+            return casted;
         }
 
-        public bool Set<T>(ICustomAttributeProvider provider, Querier<T> querier) where T : struct, Queryables.IQueryable => Cache<T>().Set(provider, querier);
-        public bool Set<T>(Querier<T> querier) where T : struct, Queryables.IQueryable => Set<T>(typeof(T), querier);
-        public bool Set(Type queryable, ICustomAttributeProvider provider, IQuerier querier) => Cache(queryable).Set(provider, querier);
-        public bool Set(ICustomAttributeProvider provider, IQuerier querier) => Set(typeof(Provider), provider, querier);
-        public bool Set(Type queryable, IQuerier querier) => Set(queryable, queryable, querier);
-        public bool Remove<T>(ICustomAttributeProvider provider) where T : struct, Queryables.IQueryable => Cache<T>().Remove(provider);
-        public bool Remove<T>() where T : struct, Queryables.IQueryable => _queriers.Remove<T>();
-        public bool Remove(Type queryable, ICustomAttributeProvider provider) => Cache(queryable).Remove(provider);
-        public bool Remove(ICustomAttributeProvider provider) => Remove(typeof(Provider), provider);
+        public IQuerier Get(Type queryable)
+        {
+            if (_queriers.TryGetValue(queryable, out var querier)) return querier;
+            return _queriers[queryable] = Querier.All(Default(queryable), Querier.From(queryable));
+        }
+
+        public IQuerier Get(MemberInfo member)
+        {
+            if (_queriers.TryGetValue(member, out var querier)) return querier;
+            var queryable =
+                member is Type type ? type :
+                member is FieldInfo field ? field.FieldType :
+                member is PropertyInfo property ? property.PropertyType :
+                member is MethodInfo method ? method.ReturnType :
+                typeof(Provider);
+            return _queriers[member] = Querier.All(Default(queryable), Querier.From(queryable), Querier.From(member));
+        }
+
+        public bool Set<T>(Querier<T> querier) where T : struct, Queryables.IQueryable => _queriers.Set(typeof(T), querier);
+        public bool Set(Type queryable, IQuerier querier) => _queriers.Set(queryable, querier);
+        public bool Remove<T>() where T : struct, Queryables.IQueryable => _queriers.Remove(typeof(T));
         public bool Remove(Type queryable) => _queriers.Remove(queryable);
-        public bool Clear() => _defaults.Clear() | _queriers.Clear() | _queriers.Clear();
+        public bool Clear() => _defaults.Clear() | _queriers.TryClear();
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
-        public IEnumerator<IQuerier> GetEnumerator() => _queriers.Values.SelectMany(cache => cache.Values).Concat(_defaults.Values).GetEnumerator();
+        public IEnumerator<IQuerier> GetEnumerator() => _queriers.Values.Concat(_defaults.Values).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        Dictionary<ICustomAttributeProvider, IQuerier> Cache(Type queryable) =>
-            _queriers.TryGet(queryable, out var value, true) ? value :
-            _queriers[queryable] = new Dictionary<ICustomAttributeProvider, IQuerier>();
-
-        Dictionary<ICustomAttributeProvider, IQuerier> Cache<T>() where T : struct, Queryables.IQueryable =>
-            _queriers.TryGet<T>(out var value) ? value :
-            _queriers[typeof(T)] = new Dictionary<ICustomAttributeProvider, IQuerier>();
     }
 }

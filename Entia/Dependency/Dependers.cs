@@ -72,12 +72,7 @@ namespace Entia.Modules
         public bool Set(Type dependable, IDepender depender) => _dependers.Set(dependable, depender);
         public bool Remove<T>() where T : struct, IDependable => _dependers.Remove<T>();
         public bool Remove(Type dependable) => _dependers.Remove(dependable);
-        public bool Clear()
-        {
-            var cleared = _defaults.Clear() | _dependers.Clear() | _dependencies.Count > 0;
-            _dependencies.Clear();
-            return cleared;
-        }
+        public bool Clear() => _defaults.Clear() | _dependers.Clear() | _dependencies.TryClear();
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IDepender> GetEnumerator() => _dependers.Values.Concat(_defaults.Values).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

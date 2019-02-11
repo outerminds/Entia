@@ -1,3 +1,4 @@
+using Entia.Core;
 using Entia.Modules.Group;
 using Entia.Queriers;
 using Entia.Queryables;
@@ -54,12 +55,7 @@ namespace Entia.Modules
         /// Clears all existing groups.
         /// </summary>
         /// <returns></returns>
-        public bool Clear()
-        {
-            var cleared = _groups.Count > 0;
-            _groups.Clear();
-            return cleared;
-        }
+        public bool Clear() => _groups.TryClear();
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public Dictionary<IQuerier, IGroup>.ValueCollection.Enumerator GetEnumerator() => _groups.Values.GetEnumerator();
