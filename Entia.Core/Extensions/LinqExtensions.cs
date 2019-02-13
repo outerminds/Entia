@@ -78,15 +78,85 @@ namespace Entia.Core
 
         public static IEnumerable<T> SkipAt<T>(this IEnumerable<T> source, int index) => source.Where((_, current) => current != index);
 
-        public static bool TryFirst<T>(this IEnumerable<T> source, out T first)
+        public static bool TryFirst<T>(this IEnumerable<T> source, out T item)
         {
-            foreach (var item in source)
+            foreach (var current in source)
             {
-                first = item;
+                item = current;
                 return true;
             }
 
-            first = default;
+            item = default;
+            return false;
+        }
+
+        public static bool TryFirst<TEnumerable, TItem>(this TEnumerable source, out TItem item) where TEnumerable : IEnumerable<TItem>
+        {
+            foreach (var current in source)
+            {
+                item = current;
+                return true;
+            }
+
+            item = default;
+            return false;
+        }
+
+        public static bool TryLast<T>(this IEnumerable<T> source, out T item)
+        {
+            var has = false;
+            item = default;
+
+            foreach (var current in source)
+            {
+                item = current;
+                has = true;
+            }
+
+            return has;
+        }
+
+        public static bool TryLast<TEnumerable, TItem>(this TEnumerable source, out TItem item) where TEnumerable : IEnumerable<TItem>
+        {
+            var has = false;
+            item = default;
+
+            foreach (var current in source)
+            {
+                item = current;
+                has = true;
+            }
+
+            return has;
+        }
+
+        public static bool TryAt<T>(this IEnumerable<T> source, int index, out T item)
+        {
+            foreach (var current in source)
+            {
+                if (index-- <= 0)
+                {
+                    item = current;
+                    return true;
+                }
+            }
+
+            item = default;
+            return false;
+        }
+
+        public static bool TryAt<TEnumerable, TItem>(this TEnumerable source, int index, out TItem item) where TEnumerable : IEnumerable<TItem>
+        {
+            foreach (var current in source)
+            {
+                if (index-- <= 0)
+                {
+                    item = current;
+                    return true;
+                }
+            }
+
+            item = default;
             return false;
         }
 
@@ -113,10 +183,10 @@ namespace Entia.Core
             foreach (var value in values) yield return value;
         }
 
-        public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> source, Func<T, TKey> by)
+        public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> source, Func<T, TKey> selector)
         {
             var set = new HashSet<TKey>();
-            foreach (var item in source) if (set.Add(by(item))) yield return item;
+            foreach (var item in source) if (set.Add(selector(item))) yield return item;
         }
 
         public static IEnumerable<T> Prepend<T>(this IEnumerable<T> source, params T[] values)

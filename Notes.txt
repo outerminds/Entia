@@ -21,7 +21,8 @@ Documentation:
 	- extensibility of Node.md (IBuilder)
 	- extensibility of System.md (IScheduler)
 - ENTIA.UNITY WIKI
-	- in the readme tutorial, mention that the generator must be run manually the first time
+	- replace screenshots with light skin versions
+	- mention: Entity is converted to EntityReference and back by the generator
 	- add: tested on {list of platforms}
 	- add to Home: Optionally install script templates using menu 'Entia/Install/Templates'
 	- mention: In almost all cases, there is a Unity template that will prevent you from forgetting the _interface_.
