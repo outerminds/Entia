@@ -1,4 +1,3 @@
-[unity]:https://unity3d.com/
 [ecs]:https://en.wikipedia.org/wiki/Entity%E2%80%93component%E2%80%93system
 [oop]:https://en.wikipedia.org/wiki/Object-oriented_programming
 [dod]:https://en.wikipedia.org/wiki/Data-oriented_design
@@ -28,7 +27,7 @@
 Since **Entia** is built using _[.Net Standard 2.0][net-standard]_, it is compatible with _.Net Core 2.0+_, _.Net Framework 4.6+_, _Mono 5.4+_, _Xamarin_ and any other implementation of _.Net_ that follows the standard (see [this page][net-standard] for more details). Therefore it is compatible with any game engine that has proper C# support.
 
 #### [:inbox_tray: Download][releases]
-#### _For the full [Unity][unity] game engine integration of the framework, see [**Entia.Unity**][entia.unity]._
+#### _For the full Unity game engine integration of the framework, see [**Entia.Unity**][entia.unity]._
 ___
 
 # Content
