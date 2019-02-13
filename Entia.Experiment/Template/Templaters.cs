@@ -34,13 +34,8 @@ namespace Entia.Modules
             context.Pairs.Add(default);
 
             var templater = Get(value?.GetType() ?? typeof(object));
-            var result1 = templater.Instantiator(value, context, _world)
-                .Do(instantiator => context.Pairs[reference] = (context.Pairs[reference].initializer, instantiator));
-            var result2 = templater.Initializer(value, context, _world)
-                .Do(initializer => context.Pairs[reference] = (initializer, context.Pairs[reference].instantiator));
-
-            if (Result.All(result1, result2).TryFailure(out var failure)) return failure;
-            return new Element(reference, context.Pairs[reference]);
+            return Result.All(templater.Initializer(value, context, _world), templater.Instantiator(value, context, _world))
+                .Map(pair => new Element(reference, context.Pairs[reference] = pair));
         }
 
         public ITemplater Default<T>() => _defaults.TryGet<T>(out var templater) ? templater : Default(typeof(T));
