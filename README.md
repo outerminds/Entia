@@ -1,5 +1,8 @@
 [unity]:https://unity3d.com/
 [ecs]:https://en.wikipedia.org/wiki/Entity%E2%80%93component%E2%80%93system
+[oop]:https://en.wikipedia.org/wiki/Object-oriented_programming
+[dod]:https://en.wikipedia.org/wiki/Data-oriented_design
+[aot]:https://en.wikipedia.org/wiki/Ahead-of-time_compilation
 [entia.unity]:https://github.com/outerminds/Entia.Unity
 [net-standard]:https://docs.microsoft.com/en-us/dotnet/standard/net-standard
 [logo]:https://github.com/outerminds/Entia/blob/master/Resources/Logo.png
@@ -20,7 +23,7 @@
 
 # ![Entia][logo]
 
-**Entia** is a free, open-source, data-oriented, highly performant, parallelizable and extensible [**E**ntity-**C**omponent-**S**ystem (**ECS**)][ecs] framework written in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous structs. No indirection, no boxing, no garbage collection and no cache misses.
+**Entia** is a free, open-source, data-oriented, highly performant, parallelizable and extensible [**E**ntity-**C**omponent-**S**ystem][ecs] (_ECS_) framework written in C# especially for game development. It takes advantage of the latest C#7+ features to represent state exclusively with contiguous structs. No indirection, no boxing, no garbage collection and no cache misses.
 
 Since **Entia** is built using _[.Net Standard 2.0][net-standard]_, it is compatible with _.Net Core 2.0+_, _.Net Framework 4.6+_, _Mono 5.4+_, _Xamarin_ and any other implementation of _.Net_ that follows the standard (see [this page][net-standard] for more details). Therefore it is compatible with any game engine that has proper C# support.
 
@@ -38,9 +41,9 @@ ___
 ___
 
 # Installation
-- [Download][releases] the most recent stable version of Entia.
-- Add _Entia.dll_ and _Entia.Core.dll_ as dependencies in your project.
-- Optionally install the Visual Studio extension _Entia.Analyze.vsix_ to get _Entia_ specific code analysis.
+- [Download][releases] the most recent stable version of **Entia**.
+- Add _'Entia.dll'_ and _'Entia.Core.dll'_ as dependencies in your project.
+- Optionally install the Visual Studio extension _'Entia.Analyze.vsix'_ to get **Entia** specific code analysis.
 ___
 
 # Tutorial
@@ -107,9 +110,9 @@ namespace Systems
 ___
 
 # The Basics
-**ECS** stands for **E**ntity, **C**omponent, **S**ystem. I will go into details about what each of those are, but they are going to be the elements that allow you to program efficiently and pleasantly in a data-oriented style. But what does 'data-oriented' mean, you ask? Well, data-oriented programming (DOP) is another paradigm just like object-oriented programming (OOP). It is just a different way to solve the same problems that OOP can already solve but in a different style and (hopefully) with less hassle. An essential difference between the two is that DOP separates _data_ and _logic_ rather than unifying them within the same container. Now I won't go into details about what DOP is or why it is a good idea since many more knowledgeable articles already exist on the subject, but it has some important implications for performance and for the design of programs. Unfortunately for us, C# is much more of a OOP language than a DOP language, so we have to build tooling to make it possible and easy to do, thus the framework.
+_ECS_ stands for [**E**ntity, **C**omponent, **S**ystem][ecs]. I will go into details about what each of those are, but they are going to be the elements that allow you to program efficiently and pleasantly in a data-oriented style. But what does 'data-oriented' mean, you ask? Well, [data-oriented design][dod] (_DOD_) is a way of solving programming problems just like [object-oriented programming][oop] (_OOP_). It differs mainly by its focus on memory layout which has some important ramifications such as separating data from logic. This separation makes programs more performant and more composable. Without going into details about _DOD_ since many more knowledgeable articles already exist on the subject, it is to be known that **Entia** puts _DOD_ at its core and that will translate in certain practices that require a certain amount of getting used to.
 
-Ok, back to **ECS**. Most programmers have heard at some point that it is better to use composition over inheritance. That is because inheritance, even when well designed, is more rigid and harder to change after the fact compared to its composed equivalent and in game development, things tend to change all the time in unexpected ways. **ECS** takes the idea of composition to the extreme by removing inheritance completely. This effectively flattens the structure of programs and makes them much more granular and easier to assemble. So here's a brief definition of the essential elements of **ECS**:
+Ok, back to _ECS_. Most programmers have heard at some point that it is better to use composition over inheritance. That is because inheritance, even when well designed, is more rigid and harder to change after the fact compared to its composed equivalent and in game development, things tend to change all the time in unexpected ways. _ECS_ takes the idea of composition to the extreme by removing inheritance and, as mentioned above, by separating data and logic. This effectively flattens the structure of programs and makes them much more granular and easier to assemble. So here's a brief definition of the essential elements of _ECS_:
 
 -   [**E**ntity][wiki/entity]: an unique identifier (often implemented as a simple integer).
 -   [**C**omponent][wiki/component]: a chunk of data associated with an **E**ntity.
@@ -146,19 +149,19 @@ I will specify here recurrent usage patterns that are used in the framework.
     - structs don't require useless indirection and null checking when accessing members.
     -   The cost of passing (copying) structs around is nullified by C#7's `ref` returns.
 
-### Most concepts have an empty associated _interface._
+### Most concepts have an empty associated `interface`.
 -   **C**omponents must implement `IComponent`, **S**ystems must implement `ISystem`, Messages must implement `IMessage` and so on.
--   These interfaces are all empty but they enforce users to be explicit about what the type is and how it should be used.
--   The framework will enforce that you use the correct _interface_ with the appropriate functionality.
+-   These interfaces are all empty but they enforce users to be explicit about their intent since all data would otherwise look alike.
+-   The framework will enforce that you use the correct `interface` with the appropriate functionality.
 
 ### Most things are extensible.
 -   Whether you want to add a new way to query **E**ntities or add you custom serialization module, there is a way to extend the framework to accommodate you.
--   The whole framework is implemented as extensions to the World which means that it is so extensible that you could, in principle, implement another **ECS** within **Entia**.
--   Most extensions use interfaces and/or attributes to allow efficient, flexible and AOT (ahead of time compilation) friendly extensions.
-    -   For example, to implement a new kind of query, you would have to define a `struct` that implements the `IQueryable<T>` (an empty _interface_) where T is an `IQuerier` and define a type that implements `IQuerier` (a non-empty _interface_ that builds queries).
-    -   This _interface_-linking pattern (an _interface_ that has for main purpose to link a type `T`) is used a lot in the framework. It makes it explicit what the default implementation for concepts are and ensures that those linked types are properly AOT compiled even when using generic types.
-    - AOT support is essential since some target platforms (such as iOS) require it.
+-   The whole framework is implemented as extensions to the [World][wiki/world] which means that it is so extensible that you could, in principle, implement another _ECS_ within **Entia**.
+-   Most extensions use interfaces and/or attributes to allow efficient, flexible and _AOT_ ([ahead of time compilation][aot]) friendly extensions.
+    -   For example, to implement a new kind of query, you would have to define a `struct` that implements the `IQueryable<T>` (an empty `interface`) where `T` is an `IQuerier` and define a type that implements `IQuerier` (a non-empty `interface` that builds queries).
+    -   This `interface`-linking pattern (an `interface` that has for main purpose to link a type `T`) is used a lot in the framework. It makes it explicit what the default implementation for concepts is and ensures that those linked types are properly _AOT_ compiled even when using generic types.
+    - _AOT_ support is essential since some target platforms (such as iOS) require it.
 -   Most existing implementations can be replaced with your own.
     -   If you don't like how the framework parallelizes your **S**ystems, you can replace the threading model by your own.
-    -   Most modules are implemented as a map between a type and an _interface_ and expose a 'Set' method such that implementations can be replaced.
+    -   Most modules are implemented as a map between a type and an `interface` and expose a 'Set' method such that implementations can be replaced.
 -   It is to be noted that extensions require a fair amount of knowledge of how the framework works to make them work properly. I have tried to make relatively small modules such that extending one doesn't require too much knowledge, but still consider this as an advanced feature.
