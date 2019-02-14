@@ -41,8 +41,9 @@ ___
 
 # Installation
 - [Download][releases] the most recent stable version of **Entia**.
+- Extract the _'Entia.zip'_ package in a relevant directory.
 - Add _'Entia.dll'_ and _'Entia.Core.dll'_ as dependencies in your project.
-- Optionally install the Visual Studio extension _'Entia.Analyze.vsix'_ to get **Entia** specific code analysis.
+- Optionally install the packaged Visual Studio 2017 extension _'Entia.Analyze.vsix'_ to get **Entia** specific code analysis.
 ___
 
 # Tutorial
