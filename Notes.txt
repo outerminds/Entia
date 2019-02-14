@@ -1,8 +1,3 @@
-DOING:
-- IL2CPP bug
-- Extensibility sections are hard to understand
-	- The page on extensibility should include a graph that links all concepts together
-
 Documentation:
 - add: CONTRIBUTING.md
 	- clone repository
@@ -14,17 +9,14 @@ Documentation:
 - make a 'Entia.Unity' game jam
 
 - ENTIA WIKI
-	- specify that Entia is a dotnet standard library 2.0
-		- it is compatible with .Net Framework 4.7+ and .Net Core 2.1+ and any other dotnet standard implementation
-	- make a wiki page about 'Thread Safety' analysis
-	- make a wiki page about the 'Extensibility' of the framework and modules
+	- Extensibility sections are hard to understand
+		- The page on extensibility should include a graph that links all concepts together
 	- extensibility of Node.md (IBuilder)
 	- extensibility of System.md (IScheduler)
 - ENTIA.UNITY WIKI
 	- replace screenshots with light skin versions
 	- mention: Entity is converted to EntityReference and back by the generator
 	- add: tested on {list of platforms}
-	- add to Home: Optionally install script templates using menu 'Entia/Install/Templates'
 	- mention: In almost all cases, there is a Unity template that will prevent you from forgetting the _interface_.
 	
 - Gotchas:
@@ -45,6 +37,7 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- Consider using Travis CI https://travis-ci.org/ for automated testing.
 - 'Unity<T>' should work for all Unity component
 	- will most likely require to generate code to ensure proper AOT of the 'Unity<T>' types
 	- is there some IL2CPP magic that can be exploited (like for Specialize<T>)?
