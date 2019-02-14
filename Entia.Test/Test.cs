@@ -89,6 +89,7 @@ namespace Entia.Test
 
             // Add non generic component actions
             // Add injector tests
+            // Add resolver tests
             // Check if world.Injectors.Inject can inject all injectable types: 
             // AllEntities, AllComponents, Components<T>, Emitter<T>, Receiver<T>, Reaction<T>, Group<T>, Query<T>, Resource<T>, ISystem
             );

@@ -45,6 +45,7 @@ namespace Entia.Test
             .And((value.Messages().Emitter(typeof(T)) == _emitter).Label("Messages.Emitter()"))
 
             .And(_emitter.Has(_receiver).Label("emitter.Has(Receiver<T>)"))
+            .And((_emitter.Reaction == _reaction).Label("emitter.Reaction == reaction"))
             .And(_emitter.Receivers.Contains(_receiver).Label("emitter.Receivers.Contains()"))
             .And(_emitter.Add(_receiver).Not().Label("emitter.Has(Receiver<T>)"))
 
@@ -59,6 +60,7 @@ namespace Entia.Test
             .And(_receiver.TryPop(out _).Not().Label("receiver.TryPop(0)"))
 
             .And(value.Messages().Remove<T>(GlobalAdd).Label("Messages.Remove<T>(GlobalAdd)"))
+            .And(_reaction.Remove(LocalAdd).Label("reaction.Remove(LocalAdd)"))
             .And(_reaction.Clear().Not().Label("reaction.Clear()"))
             .And(_emitter.Remove(_receiver).Label("emitter.Remove(Receiver<T>)"));
 

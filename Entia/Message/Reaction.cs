@@ -7,6 +7,7 @@ using System.Threading;
 
 namespace Entia.Modules.Message
 {
+    [ThreadSafe]
     public interface IReaction : IEnumerable<Delegate>
     {
         Type Type { get; }
@@ -24,46 +25,15 @@ namespace Entia.Modules.Message
 
         Type IReaction.Type => typeof(T);
 
-        event InAction<T> _reaction = _empty;
+        InAction<T> _reaction = _empty;
 
-        public void Add(InAction<T> reaction) => _reaction += reaction;
-        public void Remove(InAction<T> reaction) => _reaction -= reaction;
-        public bool Clear()
-        {
-            var initial = _reaction;
-            var current = initial;
-            var comparand = current;
-            do
-            {
-                comparand = current;
-                current = Interlocked.CompareExchange(ref _reaction, _empty, comparand);
-            }
-            while (current != comparand);
-            return initial != current;
-        }
-
-        bool IReaction.Add(Delegate reaction)
-        {
-            if (reaction is InAction<T> action)
-            {
-                Add(action);
-                return true;
-            }
-
-            return false;
-        }
-
-        bool IReaction.Remove(Delegate reaction)
-        {
-            if (reaction is InAction<T> action)
-            {
-                Remove(action);
-                return true;
-            }
-            return false;
-        }
+        public bool Add(InAction<T> reaction) => _reaction != Concurrent.Mutate(ref _reaction, reaction, (current, state) => current + state);
+        public bool Remove(InAction<T> reaction) => _reaction != Concurrent.Mutate(ref _reaction, reaction, (current, state) => current - state);
+        public bool Clear() => _reaction != Concurrent.Mutate(ref _reaction, _ => _empty);
 
         public IEnumerator<Delegate> GetEnumerator() => _reaction.GetInvocationList().Slice().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        bool IReaction.Add(Delegate reaction) => reaction is InAction<T> action && Add(action);
+        bool IReaction.Remove(Delegate reaction) => reaction is InAction<T> action && Remove(action);
     }
 }

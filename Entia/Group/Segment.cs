@@ -71,7 +71,7 @@ namespace Entia.Modules.Group
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Slice<T>.Read.Enumerator GetEnumerator() => new Slice<T>.Read(Items, 0, Count).GetEnumerator();
+        public Slice<T>.Read.Enumerator GetEnumerator() => Items.Slice(Count).GetEnumerator();
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

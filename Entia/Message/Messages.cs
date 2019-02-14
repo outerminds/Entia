@@ -4,32 +4,47 @@ using Entia.Modules.Message;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Entia.Modules
 {
+    [ThreadSafe]
     public sealed class Messages : IModule, IEnumerable<IEmitter>
     {
-        readonly TypeMap<IMessage, IEmitter> _emitters = new TypeMap<IMessage, IEmitter>();
+        readonly Concurrent<TypeMap<IMessage, IEmitter>> _emitters = new TypeMap<IMessage, IEmitter>();
 
         public Emitter<T> Emitter<T>() where T : struct, IMessage
         {
-            if (_emitters.TryGet<T>(out var value) && value is Emitter<T> emitter) return emitter;
-            _emitters.Set<T>(emitter = new Emitter<T>());
-            return emitter;
+            using (var read = _emitters.Read(true))
+            {
+                if (read.Value.TryGet<T>(out var emitter) && emitter is Emitter<T> casted1) return casted1;
+                using (var write = _emitters.Write())
+                {
+                    if (write.Value.TryGet<T>(out emitter) && emitter is Emitter<T> casted2) return casted2;
+                    write.Value.Set<T>(casted2 = new Emitter<T>());
+                    return casted2;
+                }
+            }
         }
 
         public IEmitter Emitter(Type message)
         {
-            if (_emitters.TryGet(message, out var emitter, true)) return emitter;
-            var type = typeof(Emitter<>).MakeGenericType(message);
-            _emitters.Set(message, emitter = Activator.CreateInstance(type) as IEmitter);
-            return emitter;
+            using (var read = _emitters.Read(true))
+            {
+                if (read.Value.TryGet(message, out var emitter, true)) return emitter;
+                using (var write = _emitters.Write())
+                {
+                    if (write.Value.TryGet(message, out emitter, true)) return emitter;
+                    var type = typeof(Emitter<>).MakeGenericType(message);
+                    write.Value.Set(message, emitter = Activator.CreateInstance(type) as IEmitter);
+                    return emitter;
+                }
+            }
         }
 
-        [ThreadSafe]
         public bool Emit<T>(in T message) where T : struct, IMessage
         {
-            if (_emitters.TryGet<T>(out var value) && value is Emitter<T> emitter)
+            if (TryEmitter<T>(out var emitter))
             {
                 emitter.Emit(message);
                 return true;
@@ -38,8 +53,7 @@ namespace Entia.Modules
             return false;
         }
 
-        [ThreadSafe]
-        public bool Emit(IMessage message) => _emitters.TryGet(message.GetType(), out var emitter, true) && emitter.Emit(message);
+        public bool Emit(IMessage message) => TryEmitter(message.GetType(), out var emitter) && emitter.Emit(message);
 
         public Receiver<T> Receiver<T>(int capacity = -1) where T : struct, IMessage
         {
@@ -61,56 +75,105 @@ namespace Entia.Modules
         public void React<T>(InAction<T> reaction) where T : struct, IMessage => Reaction<T>().Add(reaction);
         public bool React(Type message, Delegate reaction) => Reaction(message).Add(reaction);
 
-        [ThreadSafe]
-        public bool Has<T>() where T : struct, IMessage => _emitters.Has<T>();
-        [ThreadSafe]
-        public bool Has(Type message) => _emitters.Has(message);
-        [ThreadSafe]
-        public bool Has(IEmitter emitter) => _emitters.TryGet(emitter.Type, out var value, true) && value == emitter;
-        [ThreadSafe]
-        public bool Has<T>(Emitter<T> emitter) where T : struct, IMessage => _emitters.TryGet<T>(out var value) && value == emitter;
-        [ThreadSafe]
-        public bool Has(IReceiver receiver) => _emitters.TryGet(receiver.Type, out var emitter, true) && emitter.Has(receiver);
-        [ThreadSafe]
-        public bool Has<T>(Receiver<T> receiver) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Has(receiver);
+        public bool Has<T>() where T : struct, IMessage
+        {
+            using (var read = _emitters.Read()) return read.Value.Has<T>();
+        }
+
+        public bool Has(Type message)
+        {
+            using (var read = _emitters.Read()) return read.Value.Has(message);
+        }
+
+        public bool Has(IEmitter emitter)
+        {
+            using (var read = _emitters.Read()) return read.Value.TryGet(emitter.Type, out var value, true) && value == emitter;
+        }
+
+        public bool Has<T>(Emitter<T> emitter) where T : struct, IMessage
+        {
+            using (var read = _emitters.Read()) return read.Value.TryGet<T>(out var value) && value == emitter;
+        }
+
+        public bool Has(IReceiver receiver)
+        {
+            using (var read = _emitters.Read()) return read.Value.TryGet(receiver.Type, out var emitter, true) && emitter.Has(receiver);
+        }
+
+        public bool Has<T>(Receiver<T> receiver) where T : struct, IMessage
+        {
+            using (var read = _emitters.Read()) return read.Value.TryGet<T>(out var emitter) && emitter.Has(receiver);
+        }
 
         public bool Remove<T>(Emitter<T> emitter) where T : struct, IMessage
         {
-            if (Has(emitter) && _emitters.Remove<T>())
+            using (var write = _emitters.Write())
             {
-                emitter.Clear();
-                return true;
-            }
+                if (Has(emitter) && write.Value.Remove<T>())
+                {
+                    emitter.Clear();
+                    return true;
+                }
 
-            return false;
+                return false;
+            }
         }
+
         public bool Remove(IEmitter emitter)
         {
-            if (Has(emitter) && _emitters.Remove(emitter.Type))
+            using (var write = _emitters.Write())
             {
-                emitter.Clear();
-                return true;
-            }
+                if (Has(emitter) && write.Value.Remove(emitter.Type))
+                {
+                    emitter.Clear();
+                    return true;
+                }
 
-            return false;
+                return false;
+            }
         }
-        public bool Remove<T>(Receiver<T> receiver) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Remove(receiver);
-        public bool Remove(IReceiver receiver) => _emitters.TryGet(receiver.Type, out var emitter, true) && emitter.Remove(receiver);
-        public bool Remove<T>(InAction<T> reaction) where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && emitter.Reaction.Remove(reaction);
-        public bool Remove(Type message, Delegate reaction) => _emitters.TryGet(message, out var emitter, true) && emitter.Reaction.Remove(reaction);
-        public bool Remove<T>() where T : struct, IMessage => _emitters.TryGet<T>(out var emitter) && Remove(emitter);
-        public bool Remove(Type message) => _emitters.TryGet(message, out var emitter, true) && Remove(emitter);
+
+        public bool Remove<T>(Receiver<T> receiver) where T : struct, IMessage => TryEmitter<T>(out var emitter) && emitter.Remove(receiver);
+        public bool Remove(IReceiver receiver) => TryEmitter(receiver.Type, out var emitter) && emitter.Remove(receiver);
+        public bool Remove<T>(InAction<T> reaction) where T : struct, IMessage => TryEmitter<T>(out var emitter) && emitter.Reaction.Remove(reaction);
+        public bool Remove(Type message, Delegate reaction) => TryEmitter(message, out var emitter) && emitter.Reaction.Remove(reaction);
+        public bool Remove<T>() where T : struct, IMessage => TryEmitter<T>(out var emitter) && Remove(emitter);
+        public bool Remove(Type message) => TryEmitter(message, out var emitter) && Remove(emitter);
 
         public bool Clear()
         {
-            foreach (var (_, emitter) in _emitters) emitter.Clear();
-            return _emitters.Clear();
+            var cleared = false;
+            using (var write = _emitters.Write())
+            {
+                foreach (var emitter in write.Value.Values) cleared |= emitter.Clear();
+                cleared |= write.Value.Clear();
+                return cleared;
+            }
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
-        [ThreadSafe]
-        public TypeMap<IMessage, IEmitter>.ValueEnumerator GetEnumerator() => _emitters.Values.GetEnumerator();
+        public Slice<IEmitter>.Read.Enumerator GetEnumerator() => _emitters.Read(emitters => emitters.Values.ToArray()).Slice().GetEnumerator();
         IEnumerator<IEmitter> IEnumerable<IEmitter>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        bool TryEmitter<T>(out Emitter<T> emitter) where T : struct, IMessage
+        {
+            using (var read = _emitters.Read())
+            {
+                if (read.Value.TryGet<T>(out var value) && value is Emitter<T> casted)
+                {
+                    emitter = casted;
+                    return true;
+                }
+
+                emitter = default;
+                return false;
+            }
+        }
+
+        bool TryEmitter(Type message, out IEmitter emitter)
+        {
+            using (var read = _emitters.Read()) return read.Value.TryGet(message, out emitter, true);
+        }
     }
 }

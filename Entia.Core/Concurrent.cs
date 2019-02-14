@@ -3,6 +3,35 @@ using System.Threading;
 
 namespace Entia.Core
 {
+    public static class Concurrent
+    {
+        public static T Mutate<T>(ref T location, Func<T, T> mutate) where T : class
+        {
+            T initial, comparand, mutated;
+            do
+            {
+                comparand = location;
+                mutated = mutate(comparand);
+                initial = Interlocked.CompareExchange(ref location, mutated, comparand);
+            }
+            while (initial != comparand);
+            return mutated;
+        }
+
+        public static T Mutate<T, TState>(ref T location, in TState state, Func<T, TState, T> mutate) where T : class
+        {
+            T initial, comparand, mutated;
+            do
+            {
+                comparand = location;
+                mutated = mutate(comparand, state);
+                initial = Interlocked.CompareExchange(ref location, mutated, comparand);
+            }
+            while (initial != comparand);
+            return mutated;
+        }
+    }
+
     public sealed class Concurrent<T>
     {
         public readonly struct ReadDisposable : IDisposable
@@ -71,7 +100,17 @@ namespace Entia.Core
             using (var value = Read()) return read(value.Value);
         }
 
+        public TValue Read<TValue>(Func<T, TValue> read)
+        {
+            using (var value = Read()) return read(value.Value);
+        }
+
         public TValue Read<TValue, TState>(in TState state, InFunc<T, TState, TValue> read)
+        {
+            using (var value = Read()) return read(value.Value, state);
+        }
+
+        public TValue Read<TValue, TState>(in TState state, Func<T, TState, TValue> read)
         {
             using (var value = Read()) return read(value.Value, state);
         }

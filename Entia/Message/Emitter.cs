@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using Entia.Core;
 using Entia.Core.Documentation;
 
 namespace Entia.Modules.Message
 {
+    [ThreadSafe]
     public interface IEmitter
     {
         IReaction Reaction { get; }
-        IEnumerable<IReceiver> Receivers { get; }
+        IReceiver[] Receivers { get; }
         Type Type { get; }
 
         bool Emit(IMessage message);
@@ -18,40 +20,53 @@ namespace Entia.Modules.Message
         bool Clear();
     }
 
+    [ThreadSafe]
     public sealed class Emitter<T> : IEmitter where T : struct, IMessage
     {
-        [ThreadSafe]
         public Reaction<T> Reaction { get; } = new Reaction<T>();
-        [ThreadSafe]
-        public Slice<Receiver<T>>.Read Receivers => _receivers.Slice();
+        public Receiver<T>[] Receivers => _receivers.Read(receivers => receivers.ToArray());
 
         IReaction IEmitter.Reaction => Reaction;
-        IEnumerable<IReceiver> IEmitter.Receivers => Receivers;
+        IReceiver[] IEmitter.Receivers => Receivers;
         Type IEmitter.Type => typeof(T);
 
-        (Receiver<T>[] items, int count) _receivers = (new Receiver<T>[2], 0);
+        Concurrent<(Receiver<T>[] items, int count)> _receivers = (new Receiver<T>[2], 0);
 
-        [ThreadSafe]
         public void Emit(in T message)
         {
             Reaction.React(message);
-            for (var i = 0; i < _receivers.count; i++) _receivers.items[i].Receive(message);
+            using (var read = _receivers.Read())
+                for (var i = 0; i < read.Value.count; i++) read.Value.items[i].Receive(message);
         }
 
         public bool Add(Receiver<T> receiver)
         {
-            if (Has(receiver)) return false;
-            _receivers.Push(receiver);
-            return true;
+            using (var write = _receivers.Write())
+            {
+                if (write.Value.Contains(receiver)) return false;
+                write.Value.Push(receiver);
+                return true;
+            }
         }
 
-        [ThreadSafe]
-        public bool Has(Receiver<T> receiver) => _receivers.Contains(receiver);
-        public bool Remove(Receiver<T> receiver) => _receivers.Remove(receiver);
+        public bool Has(Receiver<T> receiver)
+        {
+            using (var read = _receivers.Read()) return read.Value.Contains(receiver);
+        }
+
+        public bool Remove(Receiver<T> receiver)
+        {
+            using (var write = _receivers.Write()) return write.Value.Remove(receiver);
+        }
+
         public bool Clear()
         {
             var cleared = Reaction.Clear();
-            foreach (var receiver in _receivers.Slice()) cleared |= receiver.Clear();
+            using (var write = _receivers.Write())
+            {
+                foreach (var receiver in write.Value.Slice()) cleared |= receiver.Clear();
+                cleared |= write.Value.Clear();
+            }
             return cleared;
         }
 
@@ -64,6 +79,7 @@ namespace Entia.Modules.Message
             }
             return false;
         }
+
         bool IEmitter.Add(IReceiver receiver) => receiver is Receiver<T> casted && Add(casted);
         bool IEmitter.Has(IReceiver receiver) => receiver is Receiver<T> casted && Has(casted);
         bool IEmitter.Remove(IReceiver receiver) => receiver is Receiver<T> casted && Remove(casted);

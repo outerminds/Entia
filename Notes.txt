@@ -42,26 +42,16 @@ Features:
 	- will most likely require to generate code to ensure proper AOT of the 'Unity<T>' types
 	- is there some IL2CPP magic that can be exploited (like for Specialize<T>)?
 - add an option to disable 'Watch' behavior of the generator
-- find a way to not assume that 'GetFields' returns fields in layout order
-	- Marshal.OffsetOf doesn't seem to work on WebGL
 - add tests for 'Resolvers' module
 - make Components.Set / Components.Remove / Entities.Create / Entities.Destroy thread safe?
 	- this might be very hard or impossible to accomplish without locking
-
 - improve better removal actions in tests by querying all removable entities from the world and choosing from that query
 	- currently, a random entity is chosen from the world and if it is not removable, the action is considered invalid
 	- this makes removal actions much less often successful, thus it reduces the overall effectiveness of the sequences
 	- it also skews the chosen probabilities in favor of add actions
-- built-in Hierarchy component
-	- should use an 'IndexStore' since it needs to be fast for entity queries and will most likely be very common
-	: should not be a component, but a module since changes to one hierarchy must echo throughout the other related hierarchies
-- write property and performance tests
-	- C# QuickCheck implementation: https://github.com/fscheck/FsCheck/
-	- run tests on device with IL2CPP build
+- run tests on device with IL2CPP build
 
 Bugs:
-- An emitter system will not inherit the 2nd degree dependencies of corresponding reactive systems
-	- if the reactive system also emits a message, the first emitter system should also inherit the dependencies of the 2nd reactive system
 - Getting an Emitter<T>(), Receiver<T>(), Reaction<T>() is not thread safe.
 	- since they can be called in parallel in the IReact<T> scheduler, it must be fixed
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
@@ -179,6 +169,9 @@ Rejected:
 		- measure it in case of compiler optimizations
 	- requires a way
 	: wouldn't work properly with '?' types since delegates are not structs; it would mean that nullability would be hidden
+- built-in Hierarchy component
+	- should use an 'IndexStore' since it needs to be fast for entity queries and will most likely be very common
+	: should not be a component, but a module since changes to one hierarchy must echo throughout the other related hierarchies
 	
 Answers:
 - should I keep 'ISystem' mandatory or system interfaces should derive from it?

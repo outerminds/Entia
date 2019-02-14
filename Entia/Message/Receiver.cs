@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Entia.Core;
 using Entia.Core.Documentation;
@@ -9,6 +11,7 @@ namespace Entia.Modules.Message
 {
     public interface IReceiver
     {
+        IMessage[] Messages { get; }
         Type Type { get; }
         int Count { get; }
         int Capacity { get; set; }
@@ -19,6 +22,7 @@ namespace Entia.Modules.Message
     [ThreadSafe]
     public sealed class Receiver<T> : IReceiver where T : struct, IMessage
     {
+        public T[] Messages => _messages.ToArray();
         public int Count => _messages.Count;
         public int Capacity
         {
@@ -26,6 +30,7 @@ namespace Entia.Modules.Message
             set => Trim(_capacity = value);
         }
 
+        IMessage[] IReceiver.Messages => Messages.Cast<IMessage>().ToArray();
         Type IReceiver.Type => typeof(T);
 
         readonly ConcurrentQueue<T> _messages = new ConcurrentQueue<T>();

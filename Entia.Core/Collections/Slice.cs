@@ -26,10 +26,10 @@ namespace Entia.Core
                 Read _slice;
                 int _index;
 
-                public Enumerator(Read slice)
+                public Enumerator(Read slice, int index = -1)
                 {
                     _slice = slice;
-                    _index = -1;
+                    _index = index;
                 }
 
                 /// <inheritdoc cref="IEnumerator.MoveNext"/>
@@ -73,6 +73,8 @@ namespace Entia.Core
 
         public struct Enumerator : IEnumerator<T>
         {
+            public static implicit operator Read.Enumerator(in Enumerator enumerator) => new Read.Enumerator(enumerator._slice, enumerator._index);
+
             /// <inheritdoc cref="IEnumerator{T}.Current"/>
             public ref T Current
             {
@@ -85,10 +87,10 @@ namespace Entia.Core
             Slice<T> _slice;
             int _index;
 
-            public Enumerator(Slice<T> slice)
+            public Enumerator(Slice<T> slice, int index = -1)
             {
                 _slice = slice;
-                _index = -1;
+                _index = index;
             }
 
             /// <inheritdoc cref="IEnumerator.MoveNext"/>
@@ -100,7 +102,7 @@ namespace Entia.Core
             public void Reset() => _index = -1;
         }
 
-        public static implicit operator Read(Slice<T> slice) => new Read(slice._array, slice._offset, slice.Count);
+        public static implicit operator Read(in Slice<T> slice) => new Read(slice._array, slice._offset, slice.Count);
 
         public ref T this[int index]
         {

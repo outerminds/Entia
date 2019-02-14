@@ -14,7 +14,8 @@ namespace Entia.Core.Documentation
         AttributeTargets.Property |
         AttributeTargets.Event |
         AttributeTargets.Class |
-        AttributeTargets.Struct,
+        AttributeTargets.Struct |
+        AttributeTargets.Interface,
         AllowMultiple = false)]
     public sealed class ThreadSafeAttribute : Attribute { }
 }
