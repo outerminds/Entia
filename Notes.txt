@@ -44,6 +44,15 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- Support for default value provider on components/resources:
+	- ex:
+		public struct Position : IComponent
+		{
+			[Default]
+			public static Position Default => new Position { X = 1, Y = 2 };
+			public float X, Y;
+		}
+	- could support fields/properties/no parameter methods
 - Consider using Travis CI https://travis-ci.org/ for automated testing.
 - 'Unity<T>' should work for all Unity component
 	- will most likely require to generate code to ensure proper AOT of the 'Unity<T>' types
@@ -59,19 +68,10 @@ Features:
 - run tests on device with IL2CPP build
 
 Bugs:
-- Support for default value provider on components/resources:
-	- ex:
-		public struct Position : IComponent
-		{
-			[Default]
-			public static Position Default => new Position { X = 1, Y = 2 };
-			public float X, Y;
-		}
-	- could support fields/properties/no parameter methods
-- Getting an Emitter<T>(), Receiver<T>(), Reaction<T>() is not thread safe.
-	- since they can be called in parallel in the IReact<T> scheduler, it must be fixed
+- Rename is not reliable when used with FileSystemWatcher...
+	- VSCode may not have saved all files modified by a rename
+	- Visual Studio may not to a proper rename if a newly generated file is not present in the .csproj
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
-- Generated component do not show when searching in the hierarchy window
 - error in Unity when renaming a component/resource.
 	- the error prevents to go in play mode while it is there
 	- the error disapears on the next compilation
