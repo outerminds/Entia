@@ -14,6 +14,13 @@ Documentation:
 	- extensibility of Node.md (IBuilder)
 	- extensibility of System.md (IScheduler)
 - ENTIA.UNITY WIKI
+	- feedback:
+		// Run() mais en fixed update pour gérer la physique de unity?
+		// Time: manque accès au unscaled, fixed, etc
+		// Field default values: cannot have in struct. Other way?
+		// Aimerait pouvoir mettre [Header("Boba")] sur component fields comme sur des monobehaviors
+		// Aimerait pouvoir mettre [Hide] en plus de [Disable] sur les component fields pour pouvoir cacher les variables internes inutiles à exposer à l'editeur
+		// Il y a t-il une façon d'utiliser les méthodes de Unity comme OnCollisionEnter, OnTriggerEnter sans passer par un MonoBehaviour?
 	- replace screenshots with light skin versions
 	- mention: Entity is converted to EntityReference and back by the generator
 	- add: tested on {list of platforms}
@@ -52,6 +59,15 @@ Features:
 - run tests on device with IL2CPP build
 
 Bugs:
+- Support for default value provider on components/resources:
+	- ex:
+		public struct Position : IComponent
+		{
+			[Default]
+			public static Position Default => new Position { X = 1, Y = 2 };
+			public float X, Y;
+		}
+	- could support fields/properties/no parameter methods
 - Getting an Emitter<T>(), Receiver<T>(), Reaction<T>() is not thread safe.
 	- since they can be called in parallel in the IReact<T> scheduler, it must be fixed
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
