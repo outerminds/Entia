@@ -45,6 +45,9 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- 'Unity<T>' should work for all Unity component
+	- will most likely require to generate code to ensure proper AOT of the 'Unity<T>' types
+	- is there some IL2CPP magic that can be exploited (like for Specialize<T>)?
 - add an option to disable 'Watch' behavior of the generator
 - find a way to not assume that 'GetFields' returns fields in layout order
 	- Marshal.OffsetOf doesn't seem to work on WebGL
