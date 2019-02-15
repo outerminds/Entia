@@ -62,6 +62,7 @@ Features:
 - 'Unity<T>' should work for all Unity component
 	- will most likely require to generate code to ensure proper AOT of the 'Unity<T>' types
 	- is there some IL2CPP magic that can be exploited (like for Specialize<T>)?
+	- ensure that all 'Unity<T>' are AOT compiled via a generated file, then use 'MakeGenericType'
 - add an option to disable 'Watch' behavior of the generator
 - add tests for 'Resolvers' module
 - make Components.Set / Components.Remove / Entities.Create / Entities.Destroy thread safe?
