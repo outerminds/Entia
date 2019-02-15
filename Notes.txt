@@ -46,6 +46,7 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- allow to see the version of Entia
 - [Require]
 	- if type is wrong WARNING
 - Support for default value provider on components/resources:
