@@ -44,6 +44,8 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- [Require]
+	- if type is wrong WARNING
 - Support for default value provider on components/resources:
 	- ex:
 		public struct Position : IComponent
