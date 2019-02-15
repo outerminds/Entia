@@ -4,7 +4,11 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>7.3</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- <GenerateDocumentationFile>true</GenerateDocumentationFile> -->
     <Configurations>Debug;Release;Debug VS;Release VS</Configurations>
   </PropertyGroup>
 
+  <Target Name="Copy" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">
+    <Exec Command="dotnet &quot;$(SolutionDir)Tools\Documentor\Documentor.dll&quot; &quot;$(PublishDir)$(ProjectName).xml&quot;" />
+  </Target>
 </Project>
