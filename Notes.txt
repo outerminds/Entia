@@ -21,6 +21,8 @@ Documentation:
 		// Aimerait pouvoir mettre [Header("Boba")] sur component fields comme sur des monobehaviors
 		// Aimerait pouvoir mettre [Hide] en plus de [Disable] sur les component fields pour pouvoir cacher les variables internes inutiles à exposer à l'editeur
 		// Il y a t-il une façon d'utiliser les méthodes de Unity comme OnCollisionEnter, OnTriggerEnter sans passer par un MonoBehaviour?
+		// Comment getter le world en dehors d'un système? -> via un lien vers le WorldReference ou via le WorldRegistry 
+		// Pourquoi est-ce que les fields d'un MonoBehaviour ne sont pas injectés?
 	- replace screenshots with light skin versions
 	- mention: Entity is converted to EntityReference and back by the generator
 	- add: tested on {list of platforms}
@@ -72,7 +74,7 @@ Features:
 Bugs:
 - Rename is not reliable when used with FileSystemWatcher...
 	- VSCode may not have saved all files modified by a rename
-	- Visual Studio may not to a proper rename if a newly generated file is not present in the .csproj
+	- Visual Studio may not do a proper rename if a newly generated file is not present in the .csproj (when double renaming)
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
 - error in Unity when renaming a component/resource.
 	- the error prevents to go in play mode while it is there
