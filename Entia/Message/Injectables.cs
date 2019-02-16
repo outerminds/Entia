@@ -38,7 +38,7 @@ namespace Entia.Injectables
     public readonly struct Emitter<T> : IInjectable where T : struct, IMessage
     {
         [Injector]
-        static readonly Injector<Emitter<T>> _injector = Injector.From(world => new Emitter<T>(world.Messages().Emitter<T>()));
+        static readonly Injector<object> _injector = Injector.From<object>((_, world) => new Emitter<T>(world.Messages().Emitter<T>()));
         [Depender]
         static readonly IDepender _depender = Depender.From<T>(new Emit(typeof(T)), new Write(typeof(T)));
 
@@ -51,7 +51,7 @@ namespace Entia.Injectables
     public readonly struct Receiver<T> : IInjectable where T : struct, IMessage
     {
         [Injector]
-        static readonly Injector<Receiver<T>> _injector = Injector.From(world => new Receiver<T>(world.Messages().Receiver<T>()));
+        static readonly Injector<object> _injector = Injector.From<object>((_, world) => new Receiver<T>(world.Messages().Receiver<T>()));
         [Depender]
         static readonly IDepender _depender = Depender.From<T>(new Read(typeof(T)));
 
@@ -67,7 +67,7 @@ namespace Entia.Injectables
     public readonly struct Reaction<T> : IInjectable where T : struct, IMessage
     {
         [Injector]
-        static readonly Injector<Reaction<T>> _injector = Injector.From(world => new Reaction<T>(world.Messages().Reaction<T>()));
+        static readonly Injector<object> _injector = Injector.From<object>((_, world) => new Reaction<T>(world.Messages().Reaction<T>()));
         [Depender]
         static readonly IDepender _depender = Depender.From<T>(new React(typeof(T)));
 

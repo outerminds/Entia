@@ -25,10 +25,20 @@ namespace Entia.Modules.Message
 
         Type IReaction.Type => typeof(T);
 
-        InAction<T> _reaction = _empty;
+        event InAction<T> _reaction = _empty;
 
-        public bool Add(InAction<T> reaction) => _reaction != Concurrent.Mutate(ref _reaction, reaction, (current, state) => current + state);
-        public bool Remove(InAction<T> reaction) => _reaction != Concurrent.Mutate(ref _reaction, reaction, (current, state) => current - state);
+        public bool Add(InAction<T> reaction)
+        {
+            var before = _reaction;
+            _reaction += reaction;
+            return before != _reaction;
+        }
+        public bool Remove(InAction<T> reaction)
+        {
+            var before = _reaction;
+            _reaction -= reaction;
+            return before != _reaction;
+        }
         public bool Clear() => _reaction != Concurrent.Mutate(ref _reaction, _ => _empty);
 
         public IEnumerator<Delegate> GetEnumerator() => _reaction.GetInvocationList().Slice().GetEnumerator();
