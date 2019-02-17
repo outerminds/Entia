@@ -4,11 +4,11 @@ Documentation:
 	- make sure you have .Net Core SDK 2.0+
 	- CTRL+SHIFT+P, 'Run Test Task' -> should run tests without failure
 	- CTRL+SHIFT+B, 'publish release' -> should create the 'Release' folder in root
-- mention in the description of 'Injectable' and of 'World' that using the world in a system will make thread safety analysis fail
 - make a 'Entia' game jam
 - make a 'Entia.Unity' game jam
 
 - ENTIA WIKI
+	- mention in the description of 'Injectable' and of 'World' that using the world in a system will make thread safety analysis fail
 	- Extensibility sections are hard to understand
 		- The page on extensibility should include a graph that links all concepts together
 	- extensibility of Node.md (IBuilder)
@@ -47,8 +47,6 @@ Frictions:
 
 Features:
 - allow to see the version of Entia
-- [Require]
-	- if type is wrong WARNING
 - Support for default value provider on components/resources:
 	- ex:
 		public struct Position : IComponent
@@ -59,11 +57,6 @@ Features:
 		}
 	- could support fields/properties/no parameter methods
 - Consider using Travis CI https://travis-ci.org/ for automated testing.
-- 'Unity<T>' should work for all Unity component
-	- will most likely require to generate code to ensure proper AOT of the 'Unity<T>' types
-	- is there some IL2CPP magic that can be exploited (like for Specialize<T>)?
-	- ensure that all 'Unity<T>' are AOT compiled via a generated file, then use 'MakeGenericType'
-- add an option to disable 'Watch' behavior of the generator
 - add tests for 'Resolvers' module
 - make Components.Set / Components.Remove / Entities.Create / Entities.Destroy thread safe?
 	- this might be very hard or impossible to accomplish without locking
@@ -74,30 +67,12 @@ Features:
 - run tests on device with IL2CPP build
 
 Bugs:
-- Rename is not reliable when used with FileSystemWatcher...
-	- VSCode may not have saved all files modified by a rename
-	- Visual Studio may not do a proper rename if a newly generated file is not present in the .csproj (when double renaming)
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
-- error in Unity when renaming a component/resource.
-	- the error prevents to go in play mode while it is there
-	- the error disapears on the next compilation
-	: the error appears in the console but is removed when compilation is done
-- if a new arbitrary type is defined outside the generator's input folders and then used in a component, the generator will try to look for that type in the assembly that Unity compiles but will fail to find it since Unity didn't get a chance to compile it; then the generator will generate a component with a potentially wrongly named type which will prevent Unity from compiling
-	- currently a user has to manually repair the broken type reference to give Unity a chance to compile, after which the generator will properly find the type
-	- a potential solution is to include all files as input to the generator
-		- the performance hit might be reduced by not having to include 'ScriptAssemblies'
-		- the generator would be triggered only when a file within the input folders is modified but would take all the project files as input
-	- otherwise, the generator can try to generate using the input folders, but if a reference cannot be resolved, it could retry using all the project files
-		- in most cases, the generator succeeds without needing all the files, so the performance hit should occur only in rare cases
-- Instantiation/Initialization can get stuck in an inifinite loop
-- If 2 components of the same name but in different namespaces are included in a query, the generator will generate ambiguous extensions
-	-ex: Group<All<Components.Boba.A, Components.Fett.A>>; item.A();
-	- would require adding namespace elements to the extensions until they are no longer ambiguous; item.BobaA(); item.FettA();
 
 Optimization:
 - Shrink component segment stores by half when the 'count < capacity / 4'
 	- This will free up some memory
-	- This behaviour might cause allocations is lots of entities are moved around causing some segment to grow alot and shrink soon after
+	- This behaviour might cause allocations if lots of entities are moved around causing some segment to grow alot and shrink soon after
 	- Shrink could only happen after a given number of frames (ex: 100) where the 'count < capacity / 4'
 	- Note that shrinking will force all groups to refresh all their pointers, so it should not be done frequently
 	- Shrink threshold could be set to 'count < capactity / 8'
@@ -108,7 +83,6 @@ Optimization:
 		- ex: Components.HasAll<(Boba, Fett)>()
 		- I need the 'ITuple' interface to appropriately constrain the generic argument, but it exists only in .Net Standard 2.1 which is not yet supported by Unity
 - do not reserve a store for empty components
-- WorldReferenceEditor is very slow. Can try to cache stuff.
 
 Questions:
 - should system methods be implemented explicitly by convention?
@@ -137,6 +111,7 @@ Questions:
 		- since all fields are meant to be public in a resource, a separate MonoBehaviour will be able to display the state
 		- this exposes the state to all systems but is more inline with Entia
 - find a better way to enable/disable profiling than using Application.isEditor?
+	- using ControllerModifiers?
 - leave 'Controller' state wrappers in builds?
 	- the performance cost might not be worth any effort
 	- could be useful to be able to disable a system in a build
