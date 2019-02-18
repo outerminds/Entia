@@ -18,8 +18,7 @@ namespace Entia.Modules
 
         public Injectors(World world) { _world = world; }
 
-        public Result<T> Inject<T>() where T : IInjectable => Inject<T>(typeof(T));
-        public Result<T> Inject<T>(MemberInfo member) where T : IInjectable => Get<T>().Inject(member, _world).Cast<T>();
+        public Result<T> Inject<T>(MemberInfo member = null) where T : IInjectable => Get<T>().Inject(member ?? typeof(T), _world).Cast<T>();
         public Result<object> Inject(MemberInfo member)
         {
             var type = member as Type ??
@@ -28,7 +27,8 @@ namespace Entia.Modules
             if (type == null) return Result.Failure($"Expected member '{member}' to be a '{typeof(Type).Format()}', '{typeof(FieldInfo).Format()}' or '{typeof(PropertyInfo).Format()}'.");
             return Inject(type, member);
         }
-        public Result<object> Inject(Type injectable, MemberInfo member) => Get(injectable).Inject(member, _world).As(injectable);
+        public Result<object> Inject(Type injectable, MemberInfo member = null) =>
+            Get(injectable).Inject(member ?? injectable, _world).As(injectable);
 
         public IInjector Default<T>() where T : IInjectable => Default(typeof(T));
         public IInjector Default(Type injectable) => _defaults.Default(injectable, typeof(IInjectable<>), typeof(InjectorAttribute), () => new Default());

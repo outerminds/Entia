@@ -83,8 +83,8 @@ namespace Entia.Test
             .And(value.Components().TryGet(_entity, typeof(IComponent), out _).Not().Label("Components.TryGet<T>(IComponent).Not()"))
             .And(value.Components().TryGet(_entity, typeof(void), out _).Not().Label("Components.TryGet<T>(void).Not()"))
 
+            .And(value.Components().Set(_entity, (IComponent)default(TConcrete)).Not().Label("Components.Set(TConcrete).Not()"))
             .And(value.Components().Set(_entity, default(TConcrete)).Not().Label("Components.Set<TConcrete>().Not()"))
-            .And(value.Components().Set(_entity, default(TConcrete)).Not().Label("Components.Set(TConcrete).Not()"))
 
             .And((_onAdd.Length == 1 && _onAdd[0].Entity == _entity && _onAdd[0].Component.Type == typeof(TConcrete)).Label("OnAdd"))
             .And((_onAddT.Length == 1 && _onAddT[0].Entity == _entity).Label("OnAddT"));

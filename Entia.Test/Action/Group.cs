@@ -35,11 +35,7 @@ namespace Entia.Test
             _entities = _segments.SelectMany(segment => segment.Entities.Slice()).ToArray();
             return true;
         }
-        public override void Do(World value, Model model)
-        {
-            _group = value.Groups().Get(_querier);
-            model.Groups.Add(_group);
-        }
+        public override void Do(World value, Model model) => _group = value.Groups().Get(_querier);
         public override Property Check(World value, Model model) =>
             (_group.Count == _entities.Length).Label("Group.Count")
             .And((_group.Count == _group.Count()).Label("Group.Count()"))

@@ -1,7 +1,9 @@
 ﻿using Entia.Core;
+using Entia.Injectables;
 using Entia.Modules;
 using Entia.Modules.Query;
 using Entia.Queryables;
+using Entia.Systems;
 using FsCheck;
 using System;
 using System.Collections.Generic;
@@ -13,6 +15,10 @@ namespace Entia.Test
 {
     public static class Test
     {
+        static Type[] _injectables = TypeUtility.AllTypes
+            .Where(type => !type.IsAbstract && !type.IsGenericType && type.Is<IInjectable>())
+            .ToArray();
+
         public interface IComponentA : IComponentC { }
         public interface IComponentB : IComponentC { }
         public interface IComponentC : IComponent { }
@@ -20,7 +26,11 @@ namespace Entia.Test
         public struct ComponentB : IComponentA { public float Value; }
         public struct ComponentC<T> : IComponentB { public List<T> A, B, C; }
         public struct MessageA : IMessage { }
-        public struct MessageB : IMessage { }
+        public struct MessageB : IMessage { public ulong A, B; }
+        public struct MessageC : IMessage { public string[] Values; }
+        public struct ResourceA : IResource { }
+        public struct ResourceB : IResource { public byte A, B, C; }
+        public struct ResourceC : IResource { public Stack<int> Values; }
         [All(typeof(ComponentC<>))]
         public struct ProviderA { }
         [None(typeof(ComponentA), typeof(ComponentB))]
@@ -42,6 +52,32 @@ namespace Entia.Test
         {
             public QueryA A;
             public Any<Read<ComponentB>, Write<ComponentA>> B;
+        }
+
+        public struct Injectable : ISystem
+        {
+            public readonly World World;
+            public readonly AllEntities Entities;
+            public readonly AllEntities.Read EntitiesRead;
+            public readonly AllComponents Components;
+            public readonly AllComponents.Read ComponentsRead;
+            public readonly AllComponents.Write ComponentsWrite;
+            public readonly Components<ComponentA> ComponentsA;
+            public readonly Components<ComponentB>.Read ComponentsB;
+            public readonly Components<ComponentC<Unit>>.Write ComponentsC;
+            public readonly AllEmitters Emitters;
+            public readonly Emitter<MessageA> EmitterA;
+            public readonly Reaction<MessageB> ReactionB;
+            public readonly Receiver<MessageC> ReceiverC;
+            public readonly Defer Defer;
+            [All(typeof(IComponentA))]
+            [None(typeof(ComponentB))]
+            public readonly Group<QueryA> GroupA;
+            [None(typeof(ComponentA), typeof(ComponentB))]
+            public readonly Group<QueryB> GroupB;
+            [All(typeof(ComponentC<>))]
+            public readonly Group<QueryC> GroupC;
+            public readonly Resource<ResourceA> ResourceA;
         }
 
         public static void Run(int count = 1600, int size = 1600)
@@ -66,32 +102,43 @@ namespace Entia.Test
                 (15, Gen.Fresh(() => new RemoveComponent<ComponentC<Unit>>().ToAction())),
                 (15, Gen.Fresh(() => new RemoveComponent(typeof(IComponentC)).ToAction())),
                 (15, Gen.Fresh(() => new RemoveComponent(typeof(ComponentC<>)).ToAction())),
-                (2, Gen.Fresh(() => new ClearComponent<ComponentA>().ToAction())),
-                (2, Gen.Fresh(() => new ClearComponent<ComponentB>().ToAction())),
-                (2, Gen.Fresh(() => new ClearComponent<ComponentC<Unit>>().ToAction())),
-                (2, Gen.Fresh(() => new ClearComponent(typeof(IComponentB)).ToAction())),
+                (1, Gen.Fresh(() => new ClearComponent<ComponentA>().ToAction())),
+                (1, Gen.Fresh(() => new ClearComponent<ComponentB>().ToAction())),
+                (1, Gen.Fresh(() => new ClearComponent<ComponentC<Unit>>().ToAction())),
+                (1, Gen.Fresh(() => new ClearComponent(typeof(IComponentB)).ToAction())),
 
                 // Group
-                (3, Gen.Fresh(() => new GetGroup<Read<ComponentA>>().ToAction())),
-                (3, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<ComponentC<Unit>>>>().ToAction())),
-                (3, Gen.Fresh(() => new GetGroup<Maybe<Read<ComponentA>>>().ToAction())),
-                (3, Gen.Fresh(() => new GetGroup<Read<ComponentC<Unit>>>(typeof(ProviderA)).ToAction())),
-                (3, Gen.Fresh(() => new GetGroup<QueryA>().ToAction())),
-                (3, Gen.Fresh(() => new GetGroup<QueryB>().ToAction())),
-                (3, Gen.Fresh(() => new GetGroup<QueryC>().ToAction())),
-                (3, Gen.Fresh(() => new GetEntityGroup(typeof(ProviderB)).ToAction())),
-                (3, Gen.Fresh(() => new GetEntityGroup(typeof(ProviderC)).ToAction())),
-                (3, Gen.Fresh(() => new GetGroup<Any<Write<ComponentC<Unit>>, Read<ComponentB>>>().ToAction())),
+                (1, Gen.Fresh(() => new GetGroup<Read<ComponentA>>().ToAction())),
+                (1, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<ComponentC<Unit>>>>().ToAction())),
+                (1, Gen.Fresh(() => new GetGroup<Maybe<Read<ComponentA>>>().ToAction())),
+                (1, Gen.Fresh(() => new GetGroup<Read<ComponentC<Unit>>>(typeof(ProviderA)).ToAction())),
+                (1, Gen.Fresh(() => new GetGroup<QueryA>().ToAction())),
+                (1, Gen.Fresh(() => new GetGroup<QueryB>().ToAction())),
+                (1, Gen.Fresh(() => new GetGroup<QueryC>().ToAction())),
+                (1, Gen.Fresh(() => new GetEntityGroup(typeof(ProviderB)).ToAction())),
+                (1, Gen.Fresh(() => new GetEntityGroup(typeof(ProviderC)).ToAction())),
+                (1, Gen.Fresh(() => new GetGroup<Any<Write<ComponentC<Unit>>, Read<ComponentB>>>().ToAction())),
 
                 // Message
-                (5, Gen.Fresh(() => new EmitMessage<MessageA>().ToAction())),
-                (5, Gen.Fresh(() => new EmitMessage<MessageB>().ToAction()))
+                (1, Gen.Fresh(() => new EmitMessage<MessageA>().ToAction())),
+                (1, Gen.Fresh(() => new EmitMessage<MessageB>().ToAction())),
+                (1, Gen.Fresh(() => new EmitMessage<MessageC>().ToAction())),
+
+                // Injectables
+                (1, Gen.Fresh(() => new Inject(_injectables).ToAction())),
+                (1, Gen.Fresh(() => new Inject<Components<ComponentA>>().ToAction())),
+                (1, Gen.Fresh(() => new Inject<Components<ComponentB>.Read>().ToAction())),
+                (1, Gen.Fresh(() => new Inject<Components<ComponentC<Unit>>.Write>().ToAction())),
+                (1, Gen.Fresh(() => new Inject<Emitter<MessageA>>().ToAction())),
+                (1, Gen.Fresh(() => new Inject<Reaction<MessageB>>().ToAction())),
+                (1, Gen.Fresh(() => new Inject<Receiver<MessageC>>().ToAction())),
+                (1, Gen.Fresh(() => new Inject<Group<Entity>>().ToAction())),
+                (1, Gen.Fresh(() => new Inject<Resource<ResourceA>>().ToAction())),
+                (1, Gen.Fresh(() => new Inject<Resource<ResourceB>.Read>().ToAction())),
+                (1, Gen.Fresh(() => new Inject<Injectable>().ToAction()))
 
             // Add non generic component actions
-            // Add injector tests
             // Add resolver tests
-            // Check if world.Injectors.Inject can inject all injectable types: 
-            // AllEntities, AllComponents, Components<T>, Emitter<T>, Receiver<T>, Reaction<T>, Group<T>, Query<T>, Resource<T>, ISystem
             );
             var sequence = generator.ToSequence(
                 seed => (new World(), new Model(seed)),
@@ -107,10 +154,7 @@ namespace Entia.Test
                         .Label("model.Components.ContainsKey()"))
                     .And(model.Components.All(pair => pair.Value.Keys.All(type => world.Components().Has(pair.Key, type)))
                         .Label("world.Components().Has()"))
-
-                    .And((world.Groups().Count == model.Groups.Count).Label("Groups.Count"))
-                    .And((world.Groups().Count() == model.Groups.Count).Label("Groups.Count()"))
-                    .And((world.Groups().Count <= 10).Label("world.Groups().Count <= 10")));
+                    .And((world.Groups().Count <= 15).Label("world.Groups().Count <= 15")));
 
             var parallel =
 #if DEBUG
