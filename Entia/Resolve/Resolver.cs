@@ -6,17 +6,13 @@ namespace Entia.Resolvers
 {
     public interface IResolver
     {
-        void Resolve(IResolvable resolvable);
+        bool Resolve(IResolvable resolvable);
     }
 
     public abstract class Resolver<T> : IResolver where T : struct, IResolvable
     {
-        public abstract void Resolve(in T resolvable);
-
-        void IResolver.Resolve(IResolvable resolvable)
-        {
-            if (resolvable is T casted) Resolve(casted);
-        }
+        public abstract bool Resolve(in T resolvable);
+        bool IResolver.Resolve(IResolvable resolvable) => resolvable is T casted && Resolve(casted);
     }
 
     [AttributeUsage(Modules.ModuleUtility.AttributeUsage)]
@@ -24,6 +20,6 @@ namespace Entia.Resolvers
 
     public sealed class Default<T> : Resolver<T> where T : struct, IResolvable
     {
-        public override void Resolve(in T resolvable) { throw new NotImplementedException(); }
+        public override bool Resolve(in T resolvable) => false;
     }
 }

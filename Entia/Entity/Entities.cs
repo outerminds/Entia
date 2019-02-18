@@ -157,9 +157,11 @@ namespace Entia.Modules
         IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        void IResolvable.Resolve()
+        bool IResolvable.Resolve()
         {
+            var resolved = _frozen.count > 0;
             while (_frozen.count > 0) _free.Push(_frozen.Pop());
+            return resolved;
         }
 
         [ThreadSafe]

@@ -13,7 +13,11 @@ namespace Entia.Resolvables
     {
         sealed class Resolver : Resolver<Do<T>>
         {
-            public override void Resolve(in Do<T> resolvable) => resolvable.Action(resolvable.State);
+            public override bool Resolve(in Do<T> resolvable)
+            {
+                resolvable.Action(resolvable.State);
+                return true;
+            }
         }
 
         [Resolver]

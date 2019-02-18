@@ -247,7 +247,7 @@ namespace Entia.Experiment
                     GroupTask3
                 },
                 1000,
-                after: world.Resolve);
+                after: () => world.Resolve());
             Console.WriteLine();
         }
 

@@ -1,4 +1,4 @@
 ﻿namespace Entia.Modules
 {
-    public interface IResolvable { void Resolve(); }
+    public interface IResolvable { bool Resolve(); }
 }

@@ -9,13 +9,13 @@ using System.Collections;
 
 namespace Entia.Modules
 {
-    public delegate void Resolve<T>(in T resolvable);
+    public delegate bool Resolve<T>(in T resolvable);
 
     public sealed class Resolvers : IModule, Modules.IResolvable, IEnumerable<IResolver>
     {
         struct Data
         {
-            public Action<Array, int> Resolve;
+            public Func<Array, int, bool> Resolve;
             public Array Resolvables;
             public int Count;
         }
@@ -42,8 +42,9 @@ namespace Entia.Modules
 
         public Resolvers(World world) { _world = world; }
 
-        public void Resolve()
+        public bool Resolve()
         {
+            var resolved = false;
             // NOTE: with this implementation, if a resolution causes to enqueue a new resolvable, it is going to be resolved within this call making it vulnerable to infinite loops;
             // this may be the desired behaviour but an alternative would be to have an 'active' queue and a 'pending' queue and switch the two when resolving
             for (int i = 0; i < _queue.count; i++)
@@ -51,9 +52,9 @@ namespace Entia.Modules
                 var pair = _queue.items[i];
                 ref var data = ref _data[pair.data];
                 data.Count--;
-                data.Resolve(data.Resolvables, pair.resolvable);
+                resolved |= data.Resolve(data.Resolvables, pair.resolvable);
             }
-            _queue.count = 0;
+            return _queue.count.Change(0) || resolved;
         }
 
         public void Defer<T>(in T resolvable) where T : struct, Resolvables.IResolvable
@@ -73,6 +74,7 @@ namespace Entia.Modules
             }
         }
 
+        public void Defer(Action @do) => Defer(@do, action => action());
         public void Defer<T>(in T state, Action<T> @do) => Defer(new Do<T>(state, @do));
         public void Defer<T>(in T state, Action<T, World> @do) => Defer((state, world: _world, @do), input => input.@do(input.state, input.world));
         public void Defer<T>(Action<World> @do) => Defer(_world, @do);

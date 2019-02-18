@@ -50,9 +50,11 @@ namespace Entia
             _resolvables = Array.Empty<IResolvable>();
             return _modules.Clear();
         }
-        public void Resolve()
+        public bool Resolve()
         {
-            for (int i = 0; i < _resolvables.Length; i++) _resolvables[i].Resolve();
+            var resolved = false;
+            for (int i = 0; i < _resolvables.Length; i++) resolved |= _resolvables[i].Resolve();
+            return resolved;
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>

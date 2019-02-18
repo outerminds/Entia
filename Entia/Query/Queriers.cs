@@ -13,12 +13,6 @@ namespace Entia.Modules
 {
     public sealed class Queriers : IModule, IEnumerable<IQuerier>
     {
-        sealed class Provider : Queryables.IQueryable
-        {
-            [Querier]
-            static readonly IQuerier _querier = Querier.All();
-        }
-
         readonly World _world;
         readonly TypeMap<Queryables.IQueryable, IQuerier> _defaults = new TypeMap<Queryables.IQueryable, IQuerier>();
         readonly Dictionary<MemberInfo, IQuerier> _queriers = new Dictionary<MemberInfo, IQuerier>();
@@ -61,12 +55,13 @@ namespace Entia.Modules
         {
             if (_queriers.TryGetValue(member, out var querier)) return querier;
             var queryable =
-                member is Type type ? type :
-                member is FieldInfo field ? field.FieldType :
-                member is PropertyInfo property ? property.PropertyType :
-                member is MethodInfo method ? method.ReturnType :
-                typeof(Provider);
-            return _queriers[member] = Querier.All(Default(queryable), Querier.From(queryable), Querier.From(member));
+                (member as Type) ??
+                (member as FieldInfo)?.FieldType ??
+                (member as PropertyInfo)?.PropertyType ??
+                (member as MethodInfo)?.ReturnType;
+            return _queriers[member] =
+                queryable == null ? new Default() :
+                Querier.All(Default(queryable), Querier.From(queryable), Querier.From(member));
         }
 
         public bool Set<T>(Querier<T> querier) where T : struct, Queryables.IQueryable => _queriers.Set(typeof(T), querier);

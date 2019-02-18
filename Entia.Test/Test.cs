@@ -15,9 +15,31 @@ namespace Entia.Test
 {
     public static class Test
     {
-        static Type[] _injectables = TypeUtility.AllTypes
-            .Where(type => !type.IsAbstract && !type.IsGenericType && type.Is<IInjectable>())
-            .ToArray();
+        static readonly Type[] _injectables;
+        static readonly Type[] _queryables;
+        static readonly Type[] _components;
+        static readonly Type[] _resources;
+
+        static Test()
+        {
+            var injectables = new List<Type>();
+            var queryables = new List<Type>();
+            var components = new List<Type>();
+            var resources = new List<Type>();
+
+            foreach (var type in TypeUtility.AllTypes.Where(type => !type.IsAbstract && !type.IsGenericType))
+            {
+                if (type.Is<IInjectable>()) injectables.Add(type);
+                if (type.Is<Queryables.IQueryable>()) queryables.Add(type);
+                if (type.Is<IComponent>()) components.Add(type);
+                if (type.Is<IResource>()) resources.Add(type);
+            }
+
+            _injectables = injectables.ToArray();
+            _queryables = queryables.ToArray();
+            _components = components.ToArray();
+            _resources = resources.ToArray();
+        }
 
         public interface IComponentA : IComponentC { }
         public interface IComponentB : IComponentC { }
@@ -135,7 +157,13 @@ namespace Entia.Test
                 (1, Gen.Fresh(() => new Inject<Group<Entity>>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Resource<ResourceA>>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Resource<ResourceB>.Read>().ToAction())),
-                (1, Gen.Fresh(() => new Inject<Injectable>().ToAction()))
+                (1, Gen.Fresh(() => new Inject<Injectable>().ToAction())),
+
+                // Queryables
+                (1, Gen.Fresh(() => new Query(_queryables).ToAction())),
+
+                // Resolvables
+                (1, Gen.Fresh(() => new Resolve().ToAction()))
 
             // Add non generic component actions
             // Add resolver tests

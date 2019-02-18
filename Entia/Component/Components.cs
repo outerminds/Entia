@@ -491,7 +491,7 @@ namespace Entia.Modules
             }
         }
 
-        void IResolvable.Resolve()
+        bool IResolvable.Resolve()
         {
             foreach (ref var slot in _transient.Slots.Slice())
             {
@@ -525,9 +525,7 @@ namespace Entia.Modules
                 }
             }
 
-            _created.Entities.count = 0;
-            _destroyed.Entities.count = 0;
-            _transient.Slots.count = 0;
+            return _created.Entities.count.Change(0) | _destroyed.Entities.count.Change(0) | _transient.Slots.count.Change(0);
         }
 
         [ThreadSafe]

@@ -48,7 +48,11 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
-- allow to see the version of Entia
+- move resolve logic from World to Resolvers
+- draw gizmos with up to date component (read-write)
+- exclude entities that have the [IsDisabled] component by default
+	- might exclude entities from group for a non-explicit reason
+	- allow user to define this implicit exclusion somehow?
 - Support for default value provider on components/resources:
 	- ex:
 		public struct Position : IComponent
@@ -58,6 +62,7 @@ Features:
 			public float X, Y;
 		}
 	- could support fields/properties/no parameter methods
+	- would allow to do 'world.Components().Set<Components.IsDisabled>(entity)' without specifying the component since the default function will be used (if none exist: () => default(T))
 - Consider using Travis CI https://travis-ci.org/ for automated testing.
 - add tests for 'Resolvers' module
 - make Components.Set / Components.Remove / Entities.Create / Entities.Destroy thread safe?
