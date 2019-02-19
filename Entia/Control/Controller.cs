@@ -13,28 +13,37 @@ namespace Entia.Modules.Control
     {
         public enum States : byte { Enabled, Disabled }
 
+        [ThreadSafe]
+        static class Cache<T> where T : struct, IPhase
+        {
+            public static Run<T> Empty = (in T _) => { };
+        }
+
         public readonly (Node node, IRunner runner) Root;
         public readonly World World;
+        public readonly Node[] Nodes;
+        public readonly IRunner[] Runners;
 
-        public IEnumerable<Node> Nodes => _nodeToRunner.Keys;
-        public IEnumerable<IRunner> Runners => _runnerToIndex.Keys;
-
-        readonly TypeMap<IPhase, Delegate> _phaseToRun = new TypeMap<IPhase, Delegate>();
         readonly Dictionary<Node, IRunner> _nodeToRunner;
         readonly Dictionary<IRunner, int> _runnerToIndex;
         readonly States[] _states;
+        readonly Concurrent<TypeMap<IPhase, Delegate>> _phaseToRun = new TypeMap<IPhase, Delegate>();
 
         public Controller((Node node, IRunner runner) root, World world, Dictionary<Node, IRunner> nodes, Dictionary<IRunner, int> runners, States[] states)
         {
             Root = root;
             World = world;
+            Nodes = nodes.Keys.ToArray();
+            Runners = runners.Keys.ToArray();
             _nodeToRunner = nodes;
             _runnerToIndex = runners;
             _states = states;
         }
 
+        [ThreadSafe]
         public bool TryIndex(IRunner runner, out int index) => _runnerToIndex.TryGetValue(runner, out index);
 
+        [ThreadSafe]
         public bool TryIndex(Node node, out int index)
         {
             if (TryRunner(node, out var runner)) return TryIndex(runner, out index);
@@ -42,6 +51,7 @@ namespace Entia.Modules.Control
             return false;
         }
 
+        [ThreadSafe]
         public bool TryRunner(Node node, out IRunner runner)
         {
             if (node == Root.node)
@@ -52,11 +62,16 @@ namespace Entia.Modules.Control
             return _nodeToRunner.TryGetValue(node, out runner);
         }
 
-        public bool Has<T>() where T : struct, IPhase => _phaseToRun.Has<T>();
-        public bool Has(Type phase) => _phaseToRun.Has(phase);
+        [ThreadSafe]
+        public bool Has<T>() where T : struct, IPhase => _phaseToRun.Read(map => map.Has<T>());
+        [ThreadSafe]
+        public bool Has(Type phase) => _phaseToRun.Read(phase, (map, state) => map.Has(state));
 
+        [ThreadSafe]
         public bool TryState(Node node, out States state) => TryIndex(node, out var index) & TryState(index, out state);
+        [ThreadSafe]
         public bool TryState(IRunner runner, out States state) => TryIndex(runner, out var index) & TryState(index, out state);
+        [ThreadSafe]
         public bool TryState(int index, out States state)
         {
             if (index < _states.Length)
@@ -79,13 +94,28 @@ namespace Entia.Modules.Control
         public bool Disable(IRunner runner) => TryIndex(runner, out var index) && Disable(index);
         public bool Disable(int index) => _states[index].Change(States.Disabled);
 
-        public void Run<T>() where T : struct, IPhase => Run<T>(default);
-        public void Run<T>(in T phase) where T : struct, IPhase
+        [ThreadSafe]
+        public void Run<T>() where T : struct, IPhase => Run<T>(DefaultUtility.Cache<T>.Provide());
+        [ThreadSafe]
+        public void Run<T>(in T phase) where T : struct, IPhase => GetRun<T>()(phase);
+
+        [ThreadSafe]
+        Run<T> GetRun<T>() where T : struct, IPhase
         {
-            var run =
-                _phaseToRun.TryGet<T>(out var value) ? value :
-                _phaseToRun[typeof(T)] = Root.runner.Specialize<T>(this).Or(default(Run<T>));
-            (run as Run<T>)?.Invoke(phase);
+            using (var read = _phaseToRun.Read(true))
+            {
+                if (read.Value.TryGet<T>(out var run) && run is Run<T> casted1) return casted1;
+                else
+                {
+                    casted1 = Root.runner.Specialize<T>(this).Or(Cache<T>.Empty);
+                    using (var write = _phaseToRun.Write())
+                    {
+                        if (write.Value.TryGet<T>(out run) && run is Run<T> casted2) return casted2;
+                        write.Value.Set<T>(casted1);
+                        return casted1;
+                    }
+                }
+            }
         }
     }
 }

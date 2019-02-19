@@ -42,11 +42,33 @@ namespace Entia.Modules
             }
         }
 
+        public bool Emit<T>() where T : struct, IMessage
+        {
+            if (TryEmitter<T>(out var emitter))
+            {
+                emitter.Emit();
+                return true;
+            }
+
+            return false;
+        }
+
         public bool Emit<T>(in T message) where T : struct, IMessage
         {
             if (TryEmitter<T>(out var emitter))
             {
                 emitter.Emit(message);
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool Emit(Type message)
+        {
+            if (TryEmitter(message, out var emitter))
+            {
+                emitter.Emit();
                 return true;
             }
 

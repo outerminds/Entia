@@ -38,13 +38,8 @@ namespace Entia.Analyze
         public static IEnumerable<IFieldSymbol> Fields(this ITypeSymbol symbol, bool recursive = false) =>
             symbol.Members(recursive).OfType<IFieldSymbol>();
 
-        public static IEnumerable<IFieldSymbol> InstanceFields(this ITypeSymbol symbol) => symbol.GetMembers()
-            .OfType<IFieldSymbol>()
-            .Where(field =>
-                !field.IsImplicitlyDeclared &&
-                !field.IsStatic &&
-                !field.IsConst &&
-                field.CanBeReferencedByName);
+        public static IEnumerable<IFieldSymbol> InstanceFields(this ITypeSymbol symbol) => 
+            symbol.InstanceMembers().OfType<IFieldSymbol>().Where(field => !field.IsConst);
 
         public static IEnumerable<ISymbol> Members(this ITypeSymbol symbol, bool recursive = false)
         {
@@ -52,6 +47,9 @@ namespace Entia.Analyze
             if (recursive) return members.Concat(symbol.Bases().SelectMany(@base => @base.Members()));
             else return members;
         }
+
+        public static IEnumerable<ISymbol> InstanceMembers(this ITypeSymbol symbol) => symbol.GetMembers()
+            .Where(member => !member.IsImplicitlyDeclared && !member.IsStatic && member.CanBeReferencedByName);
 
         public static INamespaceSymbol Namespace(this SemanticModel model, string name) =>
             model.LookupNamespacesAndTypes(0, name: name).OfType<INamespaceSymbol>().FirstOrDefault();

@@ -13,6 +13,7 @@ namespace Entia.Modules.Message
         IReceiver[] Receivers { get; }
         Type Type { get; }
 
+        void Emit();
         bool Emit(IMessage message);
         bool Has(IReceiver receiver);
         bool Add(IReceiver receiver);
@@ -31,6 +32,8 @@ namespace Entia.Modules.Message
         Type IEmitter.Type => typeof(T);
 
         Concurrent<(Receiver<T>[] items, int count)> _receivers = (new Receiver<T>[2], 0);
+
+        public void Emit() => Emit(DefaultUtility.Cache<T>.Provide());
 
         public void Emit(in T message)
         {

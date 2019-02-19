@@ -22,10 +22,10 @@ namespace Entia.Analyze.Analyzers
                 DiagnosticSeverity.Warning,
                 true);
 
-            public static readonly DiagnosticDescriptor MustBeInstancePublicField = new DiagnosticDescriptor(
-                "Entia_" + nameof(MustBeInstancePublicField),
-                nameof(MustBeInstancePublicField),
-                $"Type '{{0}}' can only hold instance public fields.",
+            public static readonly DiagnosticDescriptor MustBePublicInstanceField = new DiagnosticDescriptor(
+                "Entia_" + nameof(MustBePublicInstanceField),
+                nameof(MustBePublicInstanceField),
+                $"Member '{{1}}' in type '{{0}}' must be a public field.",
                 nameof(Entia),
                 DiagnosticSeverity.Warning,
                 true);
@@ -120,7 +120,7 @@ namespace Entia.Analyze.Analyzers
             Rules.FieldMustNotBeSystem,
             Rules.FieldMustNotBePhase,
             Rules.FieldMustBeQueryable,
-            Rules.MustBeInstancePublicField,
+            Rules.MustBePublicInstanceField,
             Rules.MustImplementOnlyOneEntiaInterface,
             Rules.SystemPublicFieldMustBeInjectable,
             Rules.SystemNotPublicFieldWillNotBeInjected
@@ -136,6 +136,7 @@ namespace Entia.Analyze.Analyzers
                 void ReportMember(DiagnosticDescriptor rule, ISymbol member) => context.ReportDiagnostic(Diagnostic.Create(rule, member.Locations[0], symbol.Name, member.Name));
 
                 var members = symbol.Members().ToArray();
+                var instanceMembers = symbol.InstanceMembers().ToArray();
                 var fields = symbol.Fields().ToArray();
                 var instanceFields = symbol.InstanceFields().ToArray();
                 var global = context.Compilation.GlobalNamespace;
@@ -175,21 +176,17 @@ namespace Entia.Analyze.Analyzers
 
                 if (isComponent || isResource || isMessage || isPhase || isQueryable)
                 {
-                    foreach (var member in members.Where(member => !member.Is<INamedTypeSymbol>()))
+                    foreach (var member in instanceMembers)
                     {
-                        if (member.IsStatic)
-                            ReportMember(Rules.MustBeInstancePublicField, member);
-                        else if (!member.Is<IFieldSymbol>() && !member.IsImplicitlyDeclared)
-                            ReportMember(Rules.MustBeInstancePublicField, member);
-
                         if (member is IFieldSymbol field)
                         {
-                            if (field.DeclaredAccessibility != Accessibility.Public) ReportMember(Rules.MustBeInstancePublicField, field);
+                            if (field.DeclaredAccessibility != Accessibility.Public) ReportMember(Rules.MustBePublicInstanceField, field);
                             if (field.Type.Implements(symbols.Component)) ReportMember(Rules.FieldMustNotBeComponent, field);
                             if (field.Type.Implements(symbols.Message)) ReportMember(Rules.FieldMustNotBeMessage, field);
                             if (field.Type.Implements(symbols.Resource)) ReportMember(Rules.FieldMustNotBeResource, field);
                             if (field.Type.Implements(symbols.Phase)) ReportMember(Rules.FieldMustNotBePhase, field);
                         }
+                        else ReportMember(Rules.MustBePublicInstanceField, member);
                     }
                 }
 

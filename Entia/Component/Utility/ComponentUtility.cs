@@ -154,5 +154,29 @@ namespace Entia.Modules.Component
 
             return default;
         }
+
+        static Func<T> CreateDefaultProvider<T>() where T : struct, IComponent
+        {
+            foreach (var member in typeof(T).GetMembers(TypeUtility.Static))
+            {
+                try
+                {
+                    if (member.GetCustomAttributes(true).OfType<DefaultAttribute>().Any())
+                    {
+                        switch (member)
+                        {
+                            case FieldInfo field when field.FieldType.Is<T>() && field.GetValue(null) is T value: return () => value;
+                            case PropertyInfo property when property.CanRead && property.PropertyType.Is<T>():
+                                return (Func<T>)Delegate.CreateDelegate(typeof(Func<T>), property.GetGetMethod());
+                            case MethodInfo method when method.ReturnType.Is<T>() && method.GetParameters().None():
+                                return (Func<T>)Delegate.CreateDelegate(typeof(Func<T>), method);
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            return () => default;
+        }
     }
 }

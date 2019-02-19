@@ -48,8 +48,8 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- remove 'Default(value)' attribute
 - move resolve logic from World to Resolvers
-- draw gizmos with up to date component (read-write)
 - exclude entities that have the [IsDisabled] component by default
 	- might exclude entities from group for a non-explicit reason
 	- allow user to define this implicit exclusion somehow?

@@ -59,13 +59,14 @@ namespace Entia.Modules
             if (TryGetBox(resource, out var box)) return box;
             var type = typeof(Box<>).MakeGenericType(resource);
             _boxes.Set(resource, box = Activator.CreateInstance(type) as IBox);
+            box.Value = DefaultUtility.Default(resource);
             return box;
         }
 
         public Box<T> GetBox<T>() where T : struct, IResource
         {
             if (TryGetBox<T>(out var box)) return box;
-            _boxes.Set<T>(box = new Box<T>());
+            _boxes.Set<T>(box = new Box<T> { Value = DefaultUtility.Cache<T>.Provide() });
             return box;
         }
 

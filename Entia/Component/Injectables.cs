@@ -33,6 +33,12 @@ namespace Entia.Injectables
             /// <param name="components"></param>
             public Write(Components components) { _components = components; }
 
+            /// <inheritdoc cref="Components.Default{T}()"/>
+            [ThreadSafe]
+            public T Default<T>() where T : struct, IComponent => _components.Default<T>();
+            /// <inheritdoc cref="Components.TryDefault(Type, out IComponent)"/>
+            [ThreadSafe]
+            public bool TryDefault(Type type, out IComponent component) => _components.TryDefault(type, out component);
             /// <inheritdoc cref="Components.Get{T}(Entity)"/>
             [ThreadSafe]
             public ref T Get<T>(Entity entity) where T : struct, IComponent => ref _components.Get<T>(entity);
@@ -81,6 +87,12 @@ namespace Entia.Injectables
             /// <param name="components"></param>
             public Read(Components components) { _components = components; }
 
+            /// <inheritdoc cref="Components.Default{T}()"/>
+            [ThreadSafe]
+            public T Default<T>() where T : struct, IComponent => _components.Default<T>();
+            /// <inheritdoc cref="Components.TryDefault(Type, out IComponent)"/>
+            [ThreadSafe]
+            public bool TryDefault(Type type, out IComponent component) => _components.TryDefault(type, out component);
             /// <inheritdoc cref="Components.Get{T}(Entity)"/>
             [ThreadSafe]
             public ref readonly T Get<T>(Entity entity) where T : struct, IComponent => ref _components.Get<T>(entity);
@@ -131,6 +143,12 @@ namespace Entia.Injectables
         /// <param name="components"></param>
         public AllComponents(Components components) { _components = components; }
 
+        /// <inheritdoc cref="Components.Default{T}()"/>
+        [ThreadSafe]
+        public T Default<T>() where T : struct, IComponent => _components.Default<T>();
+        /// <inheritdoc cref="Components.TryDefault(Type, out IComponent)"/>
+        [ThreadSafe]
+        public bool TryDefault(Type type, out IComponent component) => _components.TryDefault(type, out component);
         /// <inheritdoc cref="Components.Get{T}(Entity)"/>
         [ThreadSafe]
         public ref T Get<T>(Entity entity) where T : struct, IComponent => ref _components.Get<T>(entity);
@@ -155,8 +173,12 @@ namespace Entia.Injectables
         public IEnumerable<(Entity entity, IComponent component)> Get(Type type) => _components.Get(type);
         /// <inheritdoc cref="Components.Set{T}(Entity, in T)"/>
         public bool Set<T>(Entity entity, in T component) where T : struct, IComponent => _components.Set(entity, component);
+        /// <inheritdoc cref="Components.Set{T}(Entity)"/>
+        public bool Set<T>(Entity entity) where T : struct, IComponent => _components.Set<T>(entity);
         /// <inheritdoc cref="Components.Set(Entity, IComponent)"/>
         public bool Set(Entity entity, IComponent component) => _components.Set(entity, component);
+        /// <inheritdoc cref="Components.Set(Entity, Type)"/>
+        public bool Set(Entity entity, Type type) => _components.Set(entity, type);
         /// <inheritdoc cref="Components.Has{T}(Entity)"/>
         [ThreadSafe]
         public bool Has<T>(Entity entity) where T : IComponent => _components.Has<T>(entity);
@@ -204,6 +226,8 @@ namespace Entia.Injectables
             /// <param name="components"></param>
             public Write(Components components) { _components = components; }
 
+            /// <inheritdoc cref="Components.Default{T}()"/>
+            public T Default() => _components.Default<T>();
             /// <inheritdoc cref="Components.GetOrDummy{T}(Entity, out bool)"/>
             public ref T GetOrDummy(Entity entity, out bool success) => ref _components.GetOrDummy<T>(entity, out success);
             /// <inheritdoc cref="Components.TryGet{T}(Entity, out T)"/>
@@ -236,6 +260,8 @@ namespace Entia.Injectables
             /// <param name="components"></param>
             public Read(Components components) { _components = components; }
 
+            /// <inheritdoc cref="Components.Default{T}()"/>
+            public T Default() => _components.Default<T>();
             /// <inheritdoc cref="Components.GetOrDummy{T}(Entity, out bool)"/>
             public ref readonly T GetOrDummy(Entity entity, out bool success) => ref _components.GetOrDummy<T>(entity, out success);
             /// <inheritdoc cref="Components.TryGet{T}(Entity, out T)"/>
@@ -268,6 +294,9 @@ namespace Entia.Injectables
         /// <param name="components"></param>
         public Components(Components components) { _components = components; }
 
+        /// <inheritdoc cref="Components.Default{T}()"/>
+        [ThreadSafe]
+        public T Default() => _components.Default<T>();
         /// <inheritdoc cref="Components.GetOrAdd{T}(Entity, Func{T})"/>
         public ref T GetOrAdd(Entity entity, Func<T> create = null) => ref _components.GetOrAdd(entity, create);
         /// <inheritdoc cref="Components.GetOrDummy{T}(Entity, out bool)"/>
@@ -279,6 +308,8 @@ namespace Entia.Injectables
         /// <inheritdoc cref="Components.Get{T}(Entity)"/>
         [ThreadSafe]
         public ref T Get(Entity entity) => ref _components.Get<T>(entity);
+        /// <inheritdoc cref="Components.Set{T}(Entity)"/>
+        public bool Set(Entity entity) => _components.Set<T>(entity);
         /// <inheritdoc cref="Components.Set{T}(Entity, in T)"/>
         public bool Set(Entity entity, in T component) => _components.Set(entity, component);
         /// <inheritdoc cref="Components.Has{T}(Entity)"/>

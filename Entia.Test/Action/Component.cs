@@ -13,6 +13,7 @@ namespace Entia.Test
     {
         Type _abstract;
         Entity _entity;
+        TConcrete _component;
         OnAdd[] _onAdd;
         OnAdd<TConcrete>[] _onAddT;
 
@@ -21,9 +22,10 @@ namespace Entia.Test
         public override bool Pre(World value, Model model)
         {
             if (value.Entities().Count <= 0) return false;
-            var entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count()));
+            var entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count));
             if (value.Components().Has<TConcrete>(entity)) return false;
             _entity = entity;
+            _component = value.Components().Default<TConcrete>();
             return true;
         }
         public override void Do(World value, Model model)
@@ -31,8 +33,8 @@ namespace Entia.Test
             var onAdd = value.Messages().Receiver<OnAdd>();
             var onAddT = value.Messages().Receiver<OnAdd<TConcrete>>();
             {
-                value.Components().Set(_entity, default(TConcrete));
-                model.Components[_entity][typeof(TConcrete)] = default(TConcrete);
+                value.Components().Set(_entity, _component);
+                model.Components[_entity][typeof(TConcrete)] = _component;
             }
             _onAdd = onAdd.Pop().ToArray();
             _onAddT = onAddT.Pop().ToArray();
@@ -75,6 +77,8 @@ namespace Entia.Test
             .And(value.Components().Get(_entity).OfType<TAbstract>().Any().Label("Components.Get().OfType<TAbstract>().Any()"))
             .And(value.Components().Get(_entity).OfType(_abstract, true, true).Any().Label("Components.Get().OfType(abstract).Any()"))
             .And(value.Components().Get(_entity).OfType<IComponent>().Any().Label("Components.Get().OfType<IComponent>().Any()"))
+            .And((value.Components().Get<TConcrete>(_entity).Equals(_component)).Label("Components.Get<TConcrete>() == component"))
+            .And((value.Components().Get(_entity, typeof(TConcrete)).Equals(_component)).Label("Components.Get(TConcrete) == component"))
 
             .And(value.Components().TryGet<TConcrete>(_entity, out _).Label("Components.TryGet<TConcrete>()"))
             .And(value.Components().TryGet(_entity, typeof(TConcrete), out _).Label("Components.TryGet(TConcrete)"))
@@ -83,8 +87,13 @@ namespace Entia.Test
             .And(value.Components().TryGet(_entity, typeof(IComponent), out _).Not().Label("Components.TryGet<T>(IComponent).Not()"))
             .And(value.Components().TryGet(_entity, typeof(void), out _).Not().Label("Components.TryGet<T>(void).Not()"))
 
-            .And(value.Components().Set(_entity, (IComponent)default(TConcrete)).Not().Label("Components.Set(TConcrete).Not()"))
-            .And(value.Components().Set(_entity, default(TConcrete)).Not().Label("Components.Set<TConcrete>().Not()"))
+            .And((value.Components().Default<TConcrete>().Equals(_component)).Label("Components.Default<TConcrete>() == component"))
+            .And((value.Components().TryDefault(typeof(TConcrete), out var component) && component.Equals(_component)).Label("Components.TryDefault(TConcrete) == component"))
+
+            .And(value.Components().Set(_entity, (IComponent)_component).Not().Label("Components.Set(Entity, component).Not()"))
+            .And(value.Components().Set(_entity, _component).Not().Label("Components.Set<TConcrete>(Entity, component).Not()"))
+            .And(value.Components().Set(_entity, typeof(TConcrete)).Not().Label("Components.Set(Entity, TConcrete).Not()"))
+            .And(value.Components().Set<TConcrete>(_entity).Not().Label("Components.Set<TConcrete>(Entity).Not()"))
 
             .And((_onAdd.Length == 1 && _onAdd[0].Entity == _entity && _onAdd[0].Component.Type == typeof(TConcrete)).Label("OnAdd"))
             .And((_onAddT.Length == 1 && _onAddT[0].Entity == _entity).Label("OnAddT"));

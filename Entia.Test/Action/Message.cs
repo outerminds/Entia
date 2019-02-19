@@ -11,12 +11,14 @@ namespace Entia.Test
     {
         int _local;
         int _global;
+        T _message;
         Emitter<T> _emitter;
         Receiver<T> _receiver;
         Reaction<T> _reaction;
 
         public override bool Pre(World value, Model model)
         {
+            _message = default;
             _emitter = value.Messages().Emitter<T>();
             _receiver = value.Messages().Receiver<T>();
             _reaction = value.Messages().Reaction<T>();
@@ -30,9 +32,12 @@ namespace Entia.Test
 
         public override void Do(World value, Model model)
         {
-            _emitter.Emit(default);
-            value.Messages().Emit<T>(default);
-            value.Messages().Emit((IMessage)default(T));
+            _emitter.Emit();
+            _emitter.Emit(_message);
+            value.Messages().Emit<T>();
+            value.Messages().Emit(typeof(T));
+            value.Messages().Emit<T>(_message);
+            value.Messages().Emit((IMessage)_message);
         }
 
         public override Property Check(World value, Model model) =>
@@ -49,12 +54,12 @@ namespace Entia.Test
             .And(_emitter.Receivers.Contains(_receiver).Label("emitter.Receivers.Contains()"))
             .And(_emitter.Add(_receiver).Not().Label("emitter.Has(Receiver<T>)"))
 
-            .And((_local == 3).Label("local == 3"))
-            .And((_global == 3).Label("global == 3"))
-            .And((_receiver.Count == 3).Label("receiver.Count == 3"))
-            .And((_receiver.TryPop(out _)).Label("receiver.TryPop(3)"))
-            .And((_receiver.Count == 2).Label("receiver.Count == 2"))
-            .And((_receiver.Clear()).Label("receiver.Clear(2)"))
+            .And((_local == 6).Label("local == 6"))
+            .And((_global == 6).Label("global == 6"))
+            .And((_receiver.Count == 6).Label("receiver.Count == 6"))
+            .And((_receiver.TryPop(out _)).Label("receiver.TryPop(6)"))
+            .And((_receiver.Count == 5).Label("receiver.Count == 5"))
+            .And((_receiver.Clear()).Label("receiver.Clear(5)"))
             .And((_receiver.Count == 0).Label("receiver.Count == 0"))
             .And(_receiver.Clear().Not().Label("receiver.Clear(0)"))
             .And(_receiver.TryPop(out _).Not().Label("receiver.TryPop(0)"))

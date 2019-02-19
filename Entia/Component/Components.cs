@@ -59,6 +59,34 @@ namespace Entia.Modules
         }
 
         /// <summary>
+        /// Gets a default component of type <typeref name="T"/>.
+        /// If the component type has a <c>static</c> field, property or method tagged with the <see cref="Entia.DefaultAttribute"/> attribute, this member will be used to instantiate the component.
+        /// </summary>
+        /// <returns>The default component.</returns>
+        [ThreadSafe]
+        public T Default<T>() where T : struct, IComponent => DefaultUtility.Cache<T>.Provide();
+
+        /// <summary>
+        /// Gets a default component of provided <paramref name="type"/>.
+        /// If the component type has a <c>static</c> field, property or method tagged with the <see cref="Entia.DefaultAttribute"/> attribute, this member will be used to instantiate the component.
+        /// </summary>
+        /// <param name="type">The concrete component type.</param>
+        /// <param name="component">The default component.</param>
+        /// <returns>Returns <c>true</c> if a valid component was created; otherwise, <c>false</c>.</returns>
+        [ThreadSafe]
+        public bool TryDefault(Type type, out IComponent component)
+        {
+            if (ComponentUtility.TryGetMetadata(type, out _) && DefaultUtility.Default(type) is IComponent casted)
+            {
+                component = casted;
+                return true;
+            }
+
+            component = default;
+            return false;
+        }
+
+        /// <summary>
         /// Gets a component of type <typeref name="T"/> associated with the entity <paramref name="entity"/>.
         /// If the component is missing, a <see cref="OnException"/> message will be emitted.
         /// </summary>
@@ -97,6 +125,7 @@ namespace Entia.Modules
         /// <summary>
         /// Gets a component of type <typeref name="T"/> associated with the <paramref name="entity"/>.
         /// If the component is missing, a new instance will be created using the <paramref name="create"/> function.
+        /// If the <paramref name="create"> function is omitted, the default provider will be used.
         /// </summary>
         /// <typeparam name="T">The concrete component type.</typeparam>
         /// <param name="entity">The entity associated with the component.</param>
@@ -105,7 +134,8 @@ namespace Entia.Modules
         public ref T GetOrAdd<T>(Entity entity, Func<T> create = null) where T : struct, IComponent
         {
             if (TryStore<T>(entity, out var store, out var adjusted)) return ref store[adjusted];
-            Set(entity, create?.Invoke() ?? default);
+            if (create == null) Set<T>(entity);
+            else Set(entity, create());
             return ref Get<T>(entity);
         }
 
@@ -259,6 +289,15 @@ namespace Entia.Modules
             0;
 
         /// <summary>
+        /// Sets a default component of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
+        /// If the component is missing, it is added.
+        /// </summary>
+        /// <typeparam name="T">The concrete component type.</typeparam>
+        /// <param name="entity">The entity.</param>
+        /// <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
+        public bool Set<T>(Entity entity) where T : struct, IComponent => Set(entity, Default<T>());
+
+        /// <summary>
         /// Sets the <paramref name="component"/> of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
         /// If the component is missing, it is added.
         /// </summary>
@@ -300,6 +339,15 @@ namespace Entia.Modules
 
             return false;
         }
+
+        /// <summary>
+        /// Sets a default component of provided type <paramref name="type"/> associated with the <paramref name="entity"/>.
+        /// If the component is missing, it is added.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="type">The concrete component type.</typeparam>
+        /// <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
+        public bool Set(Entity entity, Type type) => TryDefault(type, out var component) && Set(entity, component);
 
         /// <summary>
         /// Sets the <paramref name="component"/> associated with the <paramref name="entity"/>.

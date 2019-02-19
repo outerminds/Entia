@@ -45,13 +45,28 @@ namespace Entia.Test
         public interface IComponentB : IComponentC { }
         public interface IComponentC : IComponent { }
         public struct ComponentA : IComponentA { }
-        public struct ComponentB : IComponentA { public float Value; }
+        public struct ComponentB : IComponentA
+        {
+            [Default]
+            public static ComponentB Default => new ComponentB { Value = 19f };
+            public float Value;
+        }
         public struct ComponentC<T> : IComponentB { public List<T> A, B, C; }
         public struct MessageA : IMessage { }
-        public struct MessageB : IMessage { public ulong A, B; }
+        public struct MessageB : IMessage
+        {
+            [Default]
+            public static MessageB Default() => new MessageB { A = 12, B = 26 };
+            public ulong A, B;
+        }
         public struct MessageC : IMessage { public string[] Values; }
         public struct ResourceA : IResource { }
-        public struct ResourceB : IResource { public byte A, B, C; }
+        public struct ResourceB : IResource
+        {
+            [Default]
+            public static readonly ResourceB Default = new ResourceB { A = 11, B = 23, C = 37 };
+            public byte A, B, C;
+        }
         public struct ResourceC : IResource { public Stack<int> Values; }
         [All(typeof(ComponentC<>))]
         public struct ProviderA { }
@@ -76,8 +91,11 @@ namespace Entia.Test
             public Any<Read<ComponentB>, Write<ComponentA>> B;
         }
 
-        public struct Injectable : ISystem
+        public struct Injectable : IDispose
         {
+            [Default]
+            public static Injectable Default => new Injectable { _values = new List<int>() };
+
             public readonly World World;
             public readonly AllEntities Entities;
             public readonly AllEntities.Read EntitiesRead;
@@ -100,6 +118,10 @@ namespace Entia.Test
             [All(typeof(ComponentC<>))]
             public readonly Group<QueryC> GroupC;
             public readonly Resource<ResourceA> ResourceA;
+
+            List<int> _values;
+
+            public void Dispose() { _values.Clear(); }
         }
 
         public static void Run(int count = 1600, int size = 1600)
