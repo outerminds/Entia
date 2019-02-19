@@ -48,6 +48,8 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- are disabled GameObjects initialized (in scene or instantiated)?
+- show controller nodes in chunks?
 - remove 'Default(value)' attribute
 - move resolve logic from World to Resolvers
 - exclude entities that have the [IsDisabled] component by default

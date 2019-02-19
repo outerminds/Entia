@@ -60,7 +60,7 @@ namespace Entia.Modules
                 (member as PropertyInfo)?.PropertyType ??
                 (member as MethodInfo)?.ReturnType;
             return _queriers[member] =
-                queryable == null ? new Default() :
+                queryable == null ? new False() :
                 Querier.All(Default(queryable), Querier.From(queryable), Querier.From(member));
         }
 

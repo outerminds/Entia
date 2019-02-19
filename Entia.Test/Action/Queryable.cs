@@ -14,15 +14,15 @@ namespace Entia.Test
     public sealed class Query : Action<World, Model>
     {
         readonly Type[] _types;
-        IQuerier[] _defaults;
+        IQuerier[] _failures;
 
         public Query(params Type[] types) { _types = types; }
 
         public override void Do(World value, Model model)
         {
-            _defaults = _types.Select(value.Queriers().Get).OfType<Default>().ToArray();
+            _failures = _types.Select(value.Queriers().Get).OfType<Queriers.False>().ToArray();
         }
 
-        public override Property Check(World value, Model model) => (_defaults.Length == 0).Label("defaults.Length == 0");
+        public override Property Check(World value, Model model) => (_failures.Length == 0).Label("defaults.Length == 0");
     }
 }

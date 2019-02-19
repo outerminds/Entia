@@ -83,11 +83,21 @@ namespace Entia.Queriers
     }
 
     [ThreadSafe]
-    public sealed class Default : IQuerier
+    public sealed class True : IQuerier
     {
         public bool TryQuery(Segment segment, World world, out Query query)
         {
-            query = default;
+            query = Query.Empty;
+            return true;
+        }
+    }
+
+    [ThreadSafe]
+    public sealed class False : IQuerier
+    {
+        public bool TryQuery(Segment segment, World world, out Query query)
+        {
+            query = Query.Empty;
             return false;
         }
     }
@@ -113,9 +123,9 @@ namespace Entia.Queriers
 
         public static IQuerier All(params IQuerier[] queriers)
         {
-            queriers = queriers.Except(queriers.OfType<Default>()).ToArray();
+            queriers = queriers.Except(queriers.OfType<True>()).ToArray();
             return
-                queriers.Length == 0 ? new Default() :
+                queriers.Length == 0 ? new True() :
                 queriers.Length == 1 ? queriers[0] :
                 new Try((Segment segment, World world, out Query query) =>
                 {
@@ -140,7 +150,7 @@ namespace Entia.Queriers
 
             var merged = All(queriers);
             return
-                merged is Default ? querier :
+                merged is True ? querier :
                 new Try<T>((Segment segment, World world, out Query<T> query) =>
                     querier.TryQuery(segment, world, out query) && merged.TryQuery(segment, world, out _));
         }
