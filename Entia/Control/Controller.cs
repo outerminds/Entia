@@ -95,7 +95,7 @@ namespace Entia.Modules.Control
         public bool Disable(int index) => _states[index].Change(States.Disabled);
 
         [ThreadSafe]
-        public void Run<T>() where T : struct, IPhase => Run<T>(DefaultUtility.Cache<T>.Provide());
+        public void Run<T>() where T : struct, IPhase => Run<T>(DefaultUtility.Default<T>());
         [ThreadSafe]
         public void Run<T>(in T phase) where T : struct, IPhase => GetRun<T>()(phase);
 

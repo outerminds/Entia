@@ -64,7 +64,7 @@ namespace Entia.Modules
         /// </summary>
         /// <returns>The default component.</returns>
         [ThreadSafe]
-        public T Default<T>() where T : struct, IComponent => DefaultUtility.Cache<T>.Provide();
+        public T Default<T>() where T : struct, IComponent => DefaultUtility.Default<T>();
 
         /// <summary>
         /// Gets a default component of provided <paramref name="type"/>.

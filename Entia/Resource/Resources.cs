@@ -66,7 +66,7 @@ namespace Entia.Modules
         public Box<T> GetBox<T>() where T : struct, IResource
         {
             if (TryGetBox<T>(out var box)) return box;
-            _boxes.Set<T>(box = new Box<T> { Value = DefaultUtility.Cache<T>.Provide() });
+            _boxes.Set<T>(box = new Box<T> { Value = DefaultUtility.Default<T>() });
             return box;
         }
 

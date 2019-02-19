@@ -33,7 +33,7 @@ namespace Entia.Modules.Message
 
         Concurrent<(Receiver<T>[] items, int count)> _receivers = (new Receiver<T>[2], 0);
 
-        public void Emit() => Emit(DefaultUtility.Cache<T>.Provide());
+        public void Emit() => Emit(DefaultUtility.Default<T>());
 
         public void Emit(in T message)
         {
