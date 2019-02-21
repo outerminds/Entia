@@ -8,6 +8,7 @@ Documentation:
 - make a 'Entia.Unity' game jam
 
 - ENTIA WIKI
+	- add documentation for [Default]
 	- mention in the description of 'Injectable' and of 'World' that using the world in a system will make thread safety analysis fail
 	- Extensibility sections are hard to understand
 		- The page on extensibility should include a graph that links all concepts together
