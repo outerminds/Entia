@@ -44,8 +44,6 @@ Documentation:
 Frictions:
 - add tests similar to 'Inject' that scans assemblies but for other elements (such as components)
 - make a type builder for generic types to make tests even more generative
-- no default values (for components, messages, resources, systems)
-	: components and resources can now use the 'DefaultAttribute'
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
