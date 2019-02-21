@@ -60,7 +60,7 @@ namespace Entia.Modules
 
         /// <summary>
         /// Gets a default component of type <typeref name="T"/>.
-        /// If the component type has a <c>static</c> field, property or method tagged with the <see cref="Entia.DefaultAttribute"/> attribute, this member will be used to instantiate the component.
+        /// If the component type has a <c>static</c> field, property or method tagged with the <see cref="Entia.Core.DefaultAttribute"/> attribute, this member will be used to instantiate the component.
         /// </summary>
         /// <returns>The default component.</returns>
         [ThreadSafe]
@@ -68,7 +68,7 @@ namespace Entia.Modules
 
         /// <summary>
         /// Gets a default component of provided <paramref name="type"/>.
-        /// If the component type has a <c>static</c> field, property or method tagged with the <see cref="Entia.DefaultAttribute"/> attribute, this member will be used to instantiate the component.
+        /// If the component type has a <c>static</c> field, property or method tagged with the <see cref="Entia.Core.DefaultAttribute"/> attribute, this member will be used to instantiate the component.
         /// </summary>
         /// <param name="type">The concrete component type.</param>
         /// <param name="component">The default component.</param>
@@ -125,7 +125,7 @@ namespace Entia.Modules
         /// <summary>
         /// Gets a component of type <typeref name="T"/> associated with the <paramref name="entity"/>.
         /// If the component is missing, a new instance will be created using the <paramref name="create"/> function.
-        /// If the <paramref name="create"> function is omitted, the default provider will be used.
+        /// If the <paramref name="create"/> function is omitted, the default provider will be used.
         /// </summary>
         /// <typeparam name="T">The concrete component type.</typeparam>
         /// <param name="entity">The entity associated with the component.</param>
@@ -345,7 +345,7 @@ namespace Entia.Modules
         /// If the component is missing, it is added.
         /// </summary>
         /// <param name="entity">The entity.</param>
-        /// <param name="type">The concrete component type.</typeparam>
+        /// <param name="type">The concrete component type.</param>
         /// <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
         public bool Set(Entity entity, Type type) => TryDefault(type, out var component) && Set(entity, component);
 

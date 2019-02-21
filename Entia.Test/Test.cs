@@ -188,7 +188,6 @@ namespace Entia.Test
                 (1, Gen.Fresh(() => new Resolve().ToAction()))
 
             // Add non generic component actions
-            // Add resolver tests
             );
             var sequence = generator.ToSequence(
                 seed => (new World(), new Model(seed)),
@@ -198,6 +197,7 @@ namespace Entia.Test
                     .And(model.Entities.All(world.Entities().Has)).Label("world.Entities().Has()")
                     .And(world.Entities().Distinct().SequenceEqual(world.Entities())).Label("world.Entities().Distinct()")
 
+                    .And(world.Entities().All(_ => _).Label("Entities.All()"))
                     .And(world.Entities().All(entity => world.Components().Get(entity).Count() == model.Components[entity].Count)
                         .Label("world.Components().Get().Count()"))
                     .And(world.Entities().All(entity => world.Components().Get(entity).All(component => model.Components[entity].ContainsKey(component.GetType())))

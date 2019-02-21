@@ -17,6 +17,8 @@ namespace Entia.Modules
         public IResource Get(Type resource) => (IResource)GetBox(resource).Value;
         public void Set<T>(in T resource) where T : struct, IResource => GetBox<T>().Value = resource;
         public void Set(IResource resource) => GetBox(resource.GetType()).Value = resource;
+        public bool Has<T>() where T : struct, IResource => _boxes.Has<T>();
+        public bool Has(Type resource) => _boxes.Has(resource);
 
         public bool Remove<T>() where T : struct, IResource
         {

@@ -106,7 +106,7 @@ namespace Entia.Modules.Component
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Array Store(int index) => _stores[GetStoreIndex(index)];
         /// <summary>
-        /// Ensures that all component stores are at least of the same size as the <see cref="Entities"> array.
+        /// Ensures that all component stores are at least of the same size as the <see cref="Entities"/> array.
         /// If a component store not large enough, it is resized.
         /// </summary>
         /// <returns>Returns <c>true</c> if a component store was resized; otherwise, <c>false</c>.</returns>

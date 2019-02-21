@@ -49,6 +49,12 @@ namespace Entia
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Entity a, Entity b) => !a.Equals(b);
+        /// <summary>
+        /// Implements and implicit <c>bool</c> operator.
+        /// </summary>
+        /// <returns>Returns <c>true</c> if the entity is valid; otherwise, <c>false</c>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator bool(Entity entity) => !entity.Equals(Zero);
 
         /// <summary>
         /// The world-unique identifier.
