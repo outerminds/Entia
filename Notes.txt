@@ -50,13 +50,11 @@ Frictions:
 Features:
 - are disabled GameObjects initialized (in scene or instantiated)?
 - show controller nodes in chunks?
-- remove 'Default(value)' attribute
 - move resolve logic from World to Resolvers
 - exclude entities that have the [IsDisabled] component by default
 	- might exclude entities from group for a non-explicit reason
 	- allow user to define this implicit exclusion somehow?
 - Consider using Travis CI https://travis-ci.org/ for automated testing.
-- add tests for 'Resolvers' module
 - make Components.Set / Components.Remove / Entities.Create / Entities.Destroy thread safe?
 	- this might be very hard or impossible to accomplish without locking
 - improve better removal actions in tests by querying all removable entities from the world and choosing from that query
