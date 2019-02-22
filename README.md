@@ -163,5 +163,5 @@ I will specify here recurrent usage patterns that are used in the framework.
     - _AOT_ support is essential since some target platforms (such as iOS) require it.
 -   Most existing implementations can be replaced with your own.
     -   If you don't like how the framework parallelizes your **S**ystems, you can replace the threading model by your own.
-    -   Most modules are implemented as a map between a type and an `interface` and expose a 'Set' method such that implementations can be replaced.
--   It is to be noted that extensions require a fair amount of knowledge of how the framework works to make them work properly. I have tried to make relatively small modules such that extending one doesn't require too much knowledge, but still consider this as an advanced feature.
+    -   Most modules are implemented as a map between a _specification_ type and an _implementation_ `interface` and expose a `Set` method such that implementations can be replaced.
+-   It is to be noted that extensions may require a fair amount of knowledge about how the framework works to make them work properly. I have tried to make relatively small modules such that extending one doesn't require too much knowledge, but still consider this as an advanced feature.
