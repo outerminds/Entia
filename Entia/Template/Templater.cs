@@ -27,11 +27,17 @@ namespace Entia.Templaters
     [System.AttributeUsage(ModuleUtility.AttributeUsage)]
     public sealed class TemplaterAttribute : PreserveAttribute { }
 
+    public sealed class Identity : ITemplater
+    {
+        public Result<IInitializer> Initializer(object value, Context context, World world) => new Initializers.Identity();
+        public Result<IInstantiator> Instantiator(object value, Context context, World world) => new Instantiators.Constant(value);
+    }
+
     public sealed class Default : ITemplater
     {
         public Result<IInitializer> Initializer(object value, Context context, World world)
         {
-            if (TypeUtility.IsPrimitive(value)) return new Identity();
+            if (TypeUtility.IsPlain(value)) return new Initializers.Identity();
 
             switch (value)
             {
@@ -65,13 +71,13 @@ namespace Entia.Templaters
                         }
                         return new Object(members.ToArray());
                     }
-                default: return new Identity();
+                default: return new Initializers.Identity();
             }
         }
 
         public Result<IInstantiator> Instantiator(object value, Context context, World world)
         {
-            if (TypeUtility.IsPrimitive(value)) return new Constant(value);
+            if (TypeUtility.IsPlain(value)) return new Constant(value);
             return new Clone(value);
         }
     }

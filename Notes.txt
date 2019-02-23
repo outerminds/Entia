@@ -1,3 +1,7 @@
+Sample:
+- how to spawn A LOT of prefabs without the overhead of Unity objects while still designing them in the editor?
+- add an injectable for Unity components that acts as a shorthand for all 'Unity<T>' operations
+
 Documentation:
 - add: CONTRIBUTING.md
 	- clone repository
@@ -14,6 +18,8 @@ Documentation:
 		- The page on extensibility should include a graph that links all concepts together
 	- extensibility of Node.md (IBuilder)
 	- extensibility of System.md (IScheduler)
+	- add FAQ:
+		- Why everything is a struct? (issue #8)
 - ENTIA.UNITY WIKI
 	- feedback:
 		// Run() mais en fixed update pour gérer la physique de unity?

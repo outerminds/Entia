@@ -22,6 +22,13 @@ namespace Entia.Instantiators
         public Result<object> Instantiate(object[] instances) => Create();
     }
 
+    public sealed class Reference : IInstantiator
+    {
+        public readonly int Index;
+        public Reference(int index) { Index = index; }
+        public Result<object> Instantiate(object[] instances) => Index < instances.Length ? instances[Index] : Result.Failure();
+    }
+
     public sealed class Clone : IInstantiator
     {
         public readonly object Value;
