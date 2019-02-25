@@ -50,6 +50,8 @@ namespace Entia.Core
         [ThreadSafe]
         public bool HasAll(BitMask mask)
         {
+            if (mask._buckets.count > _buckets.count) return false;
+
             var count = Math.Min(_buckets.count, mask._buckets.count);
             for (var i = 0; i < count; i++)
             {

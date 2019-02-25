@@ -31,7 +31,7 @@ namespace Entia.Test
             .And(value.Entities().Distinct().SequenceEqual(value.Entities()).Label("Entities.Distinct()"))
             .And(value.Entities().Has(_entity).Label("Entities.Has()"))
             .And(value.Entities().Contains(_entity).Label("Entities.Contains()"))
-            .And((value.Entities().Count() == model.Entities.Count).Label("Entities.Count"))
+            .And((value.Entities().Count == model.Entities.Count).Label("Entities.Count"))
             .And((_onCreate.Length == 1 && _onCreate[0].Entity == _entity).Label("OnCreate"));
         public override string ToString() => $"{GetType().Format()}({_entity})";
     }
@@ -44,8 +44,8 @@ namespace Entia.Test
 
         public override bool Pre(World value, Model model)
         {
-            if (value.Entities().Count() <= 0) return false;
-            _entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count()));
+            if (value.Entities().Count <= 0) return false;
+            _entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count));
             return true;
         }
         public override void Do(World value, Model model)
@@ -66,7 +66,7 @@ namespace Entia.Test
             model.Entities.Except(value.Entities()).None().Label("Entities.Except().None()")
             .And(value.Entities().Has(_entity).Not().Label("Entities.Has()"))
             .And(value.Entities().Destroy(_entity).Not().Label("Entities.Destroy()"))
-            .And((value.Entities().Count() == model.Entities.Count).Label("Entities.Count"))
+            .And((value.Entities().Count == model.Entities.Count).Label("Entities.Count"))
             .And((_onPreDestroy.Length == _onPostDestroy.Length).Label("OnDestroy.Length"))
             .And((_onPreDestroy.Length == 1 && _onPreDestroy[0].Entity == _entity).Label("OnPreDestroy"))
             .And((_onPostDestroy.Length == 1 && _onPostDestroy[0].Entity == _entity).Label("OnPostDestroy"));
@@ -100,7 +100,7 @@ namespace Entia.Test
         }
         public override Property Check(World value, Model model) =>
             value.Entities().None().Label("Entities.None()")
-            .And((value.Entities().Count() == 0).Label("Entities.Count"))
+            .And((value.Entities().Count == 0).Label("Entities.Count"))
             .And(_entities.None(value.Entities().Has).Label("Entities.Has()"))
             .And(_entities.None(value.Entities().Destroy).Label("Entities.Destroy()"))
             .And(value.Entities().Clear().Not().Label("Entities.Clear().Not()"))

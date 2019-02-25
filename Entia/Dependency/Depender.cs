@@ -23,8 +23,9 @@ namespace Entia.Dependers
 
     public sealed class Fields : IDepender
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world) => member is IReflect reflect ?
-            reflect.GetFields(TypeUtility.Instance).SelectMany(world.Dependers().Dependencies) :
+        public IEnumerable<IDependency> Depend(MemberInfo member, World world) =>
+            member is Type type ? type.InstanceFields().SelectMany(world.Dependers().Dependencies) :
+            member is IReflect reflect ? reflect.GetFields(TypeUtility.Instance).SelectMany(world.Dependers().Dependencies) :
             Array.Empty<IDependency>();
     }
 

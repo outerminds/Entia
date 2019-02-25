@@ -35,7 +35,7 @@ namespace Entia.Modules
             if (attribute != null && result.IsFailure())
             {
                 var generic = type.GetGenericArguments();
-                result = type.GetMembers(TypeUtility.Static)
+                result = type.StaticMembers()
                     .Where(member => member.GetCustomAttributes(true).Any(current => current.GetType().Is(attribute)))
                     .Select(member =>
                         member is Type nested ? Result.Try(() =>

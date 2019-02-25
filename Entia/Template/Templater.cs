@@ -57,7 +57,7 @@ namespace Entia.Templaters
                     }
                 case object @object:
                     {
-                        var fields = TypeUtility.GetFields(@object.GetType());
+                        var fields = @object.GetType().InstanceFields();
                         var members = new List<(FieldInfo, int)>(fields.Length);
                         for (var i = 0; i < fields.Length; i++)
                         {

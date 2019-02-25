@@ -51,7 +51,12 @@ namespace Entia.Test
             public static ComponentB Default => new ComponentB { Value = 19f };
             public float Value;
         }
-        public struct ComponentC<T> : IComponentB { public List<T> A, B, C; }
+        public struct ComponentC<T> : IComponentB
+        {
+            [Default]
+            public static ComponentC<T> Default => new ComponentC<T> { B = new List<T>(), C = new List<T> { default, default } };
+            public List<T> A, B, C;
+        }
         public struct MessageA : IMessage { }
         public struct MessageB : IMessage
         {
@@ -67,7 +72,12 @@ namespace Entia.Test
             public static readonly ResourceB Default = new ResourceB { A = 11, B = 23, C = 37 };
             public byte A, B, C;
         }
-        public struct ResourceC : IResource { public Stack<int> Values; }
+        public struct ResourceC<T> : IResource
+        {
+            [Default]
+            public static ResourceC<T> Default => new ResourceC<T> { Values = new Stack<T>() };
+            public Stack<T> Values;
+        }
         [All(typeof(ComponentC<>))]
         public struct ProviderA { }
         [None(typeof(ComponentA), typeof(ComponentB))]
@@ -118,6 +128,7 @@ namespace Entia.Test
             [All(typeof(ComponentC<>))]
             public readonly Group<QueryC> GroupC;
             public readonly Resource<ResourceA> ResourceA;
+            public readonly Resource<ResourceB>.Read ResourceB;
 
             List<int> _values;
 
@@ -146,6 +157,7 @@ namespace Entia.Test
                 (15, Gen.Fresh(() => new RemoveComponent<ComponentC<Unit>>().ToAction())),
                 (15, Gen.Fresh(() => new RemoveComponent(typeof(IComponentC)).ToAction())),
                 (15, Gen.Fresh(() => new RemoveComponent(typeof(ComponentC<>)).ToAction())),
+                (5, Gen.Fresh(() => new CloneComponents().ToAction())),
                 (1, Gen.Fresh(() => new ClearComponent<ComponentA>().ToAction())),
                 (1, Gen.Fresh(() => new ClearComponent<ComponentB>().ToAction())),
                 (1, Gen.Fresh(() => new ClearComponent<ComponentC<Unit>>().ToAction())),
@@ -192,7 +204,7 @@ namespace Entia.Test
             var sequence = generator.ToSequence(
                 seed => (new World(), new Model(seed)),
                 (world, model) =>
-                    (world.Entities().Count() == model.Entities.Count).Label("Entities.Count")
+                    (world.Entities().Count == model.Entities.Count).Label("Entities.Count")
                     .And(world.Entities().All(model.Entities.Contains).Label("model.Entities.Contains()"))
                     .And(model.Entities.All(world.Entities().Has)).Label("world.Entities().Has()")
                     .And(world.Entities().Distinct().SequenceEqual(world.Entities())).Label("world.Entities().Distinct()")

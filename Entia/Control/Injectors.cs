@@ -16,7 +16,8 @@ namespace Entia.Injectors
                 case Type type:
                     return Result
                         .Cast<ISystem>(DefaultUtility.Default(type))
-                        .Bind(instance => TypeUtility.GetFields(type, TypeUtility.PublicInstance)
+                        .Bind(instance => type.InstanceFields()
+                            .Where(field => field.IsPublic)
                             .Select(field => world.Injectors().Inject(field).Do(current => field.SetValue(instance, current)))
                             .All()
                             .Return(instance));

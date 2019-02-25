@@ -38,7 +38,7 @@ namespace Entia.Queriers
     [ThreadSafe]
     public sealed class Default<T> : Querier<T> where T : struct, Queryables.IQueryable
     {
-        static readonly FieldInfo[] _fields = typeof(T).GetFields(TypeUtility.Instance)
+        static readonly FieldInfo[] _fields = TypeUtility.Cache<T>.Data.InstanceFields
             .OrderBy(field => field.MetadataToken)
             .ToArray();
 

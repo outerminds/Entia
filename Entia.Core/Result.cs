@@ -14,10 +14,11 @@ namespace Entia.Core
     {
         public static readonly Success<T> Empty = new Success<T>(default);
 
+        Result.Tags IResult.Tag => Result.Tags.Success;
+
         public readonly T Value;
         public Success(in T value) { Value = value; }
 
-        Result.Tags IResult.Tag => Result.Tags.Success;
         Result<T1> IResult.Cast<T1>() => Result.Cast<T1>(Value);
 
         public static implicit operator Success<T>(in T value) => new Success<T>(value);
@@ -32,10 +33,11 @@ namespace Entia.Core
     {
         public static readonly Failure Empty = new Failure(new string[0]);
 
+        Result.Tags IResult.Tag => Result.Tags.Failure;
+
         public readonly string[] Messages;
         public Failure(string[] messages) { Messages = messages; }
 
-        Result.Tags IResult.Tag => Result.Tags.Failure;
         Result<T> IResult.Cast<T>() => Result.Failure(Messages);
 
         public static implicit operator None(in Failure failure) => Option.None();
@@ -363,9 +365,11 @@ namespace Entia.Core
         public static Result<TOut> Cast<TIn, TOut>(in TIn value) => Success(value).AsResult().Cast<TOut>();
 
         public static Result<T> As<T>(in this Result<T> result, Type type, bool hierarchy = false, bool definition = false) => result.Bind(
-            (value, state) =>
-                value.Is(state.type, state.hierarchy, state.definition) ? Result.Success(value).AsResult() :
-                Result.Failure($"Expected value '{value?.ToString() ?? "null"}' to be of type '{state}'."),
+            (value, state) => As(value, state.type, state.hierarchy, state.definition),
             (type, hierarchy, definition));
+
+        public static Result<T> As<T>(in T value, Type type, bool hierarchy = false, bool definition = false) =>
+            TypeUtility.Is(value, type, hierarchy, definition) ? Result.Success(value).AsResult() :
+            Result.Failure($"Expected value '{value?.ToString() ?? "null"}' to be of type '{type.FullFormat()}'.");
     }
 }

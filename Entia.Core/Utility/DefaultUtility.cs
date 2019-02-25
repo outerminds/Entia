@@ -57,11 +57,12 @@ namespace Entia.Core
 
         static Func<T> CreateProvider<T>()
         {
-            foreach (var member in typeof(T).GetMembers(TypeUtility.Static))
+            var data = TypeUtility.Cache<T>.Data;
+            foreach (var member in data.StaticMembers)
             {
                 try
                 {
-                    if (member.GetCustomAttributes(true).OfType<DefaultAttribute>().Any())
+                    if (member.GetCustomAttributes(typeof(DefaultAttribute), true).Any())
                     {
                         switch (member)
                         {
@@ -83,11 +84,12 @@ namespace Entia.Core
 
         static Func<object> CreateProvider(Type type)
         {
-            foreach (var member in type.GetMembers(TypeUtility.Static))
+            var data = TypeUtility.GetData(type);
+            foreach (var member in data.StaticMembers)
             {
                 try
                 {
-                    if (member.GetCustomAttributes(true).OfType<DefaultAttribute>().Any())
+                    if (member.GetCustomAttributes(typeof(DefaultAttribute), true).Any())
                     {
                         switch (member)
                         {
@@ -104,7 +106,7 @@ namespace Entia.Core
                 catch { }
             }
 
-            var @default = TypeUtility.GetDefault(type);
+            var @default = data.Default;
             return () => @default;
         }
     }

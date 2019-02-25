@@ -87,9 +87,6 @@ namespace Entia.Test
             .And(value.Components().TryGet(_entity, typeof(IComponent), out _).Not().Label("Components.TryGet<T>(IComponent).Not()"))
             .And(value.Components().TryGet(_entity, typeof(void), out _).Not().Label("Components.TryGet<T>(void).Not()"))
 
-            .And((value.Components().Default<TConcrete>().Equals(_component)).Label("Components.Default<TConcrete>() == component"))
-            .And((value.Components().TryDefault(typeof(TConcrete), out var component) && component.Equals(_component)).Label("Components.TryDefault(TConcrete) == component"))
-
             .And(value.Components().Set(_entity, (IComponent)_component).Not().Label("Components.Set(Entity, component).Not()"))
             .And(value.Components().Set(_entity, _component).Not().Label("Components.Set<TConcrete>(Entity, component).Not()"))
             .And(value.Components().Set(_entity, typeof(TConcrete)).Not().Label("Components.Set(Entity, TConcrete).Not()"))
@@ -111,7 +108,7 @@ namespace Entia.Test
         public override bool Pre(World value, Model model)
         {
             if (value.Entities().Count <= 0) return false;
-            var entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count()));
+            var entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count));
             if (value.Components().Has(entity, _type))
             {
                 _entity = entity;
@@ -148,7 +145,7 @@ namespace Entia.Test
         public override bool Pre(World value, Model model)
         {
             if (value.Entities().Count <= 0) return false;
-            var entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count()));
+            var entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count));
             if (value.Components().Has<T>(entity))
             {
                 _entity = entity;
@@ -253,5 +250,49 @@ namespace Entia.Test
             .And((_entities.Length == _onRemoveT.Length).Label("OnRemove<T>.Length"))
             .And(_entities.OrderBy(_ => _).SequenceEqual(_onRemoveT.Select(message => message.Entity).OrderBy(_ => _)).Label("OnRemoveT.Entity"));
         public override string ToString() => $"{GetType().Format()}({_entities.Length})";
+    }
+
+    public sealed class CloneComponents : Action<World, Model>
+    {
+        Entity _source;
+        Entity _target;
+        IComponent[] _sources;
+        IComponent[] _targets;
+        IComponent[] _clones;
+        Type[] _missing;
+        OnAdd[] _onAdd;
+        bool _success;
+
+        public override bool Pre(World value, Model model)
+        {
+            if (value.Entities().Count <= 0) return false;
+            _source = value.Entities().ElementAt(model.Random.Next(value.Entities().Count));
+            _target = value.Entities().ElementAt(model.Random.Next(value.Entities().Count));
+            return true;
+        }
+        public override void Do(World value, Model model)
+        {
+            _sources = value.Components().Get(_source).ToArray();
+            _targets = value.Components().Get(_target).ToArray();
+            _missing = _sources.Select(component => component.GetType()).Except(_targets.Select(component => component.GetType())).ToArray();
+
+            var receiver = value.Messages().Receiver<OnAdd>();
+            {
+                _success = value.Components().Clone(_source, _target);
+                _clones = value.Components().Get(_target).ToArray();
+                foreach (var component in _clones) model.Components[_target][component.GetType()] = component;
+            }
+            _onAdd = receiver.Pop().ToArray();
+            value.Messages().Remove(receiver);
+        }
+        public override Property Check(World value, Model model) =>
+            _success.Label("success")
+            .And((_sources.Length <= _clones.Length).Label("sources.Length <= clones.Length"))
+            .And((_targets.Length <= _clones.Length).Label("targets.Length <= clones.Length"))
+            .And((_clones.Length == _targets.Length + _missing.Length).Label("clones.Length == targets.Length + missing.Length"))
+            .And((_missing.Length == _onAdd.Length).Label("missing.Length == onAdd.Length"))
+            .And((_onAdd.All(message => _missing.Contains(message.Component.Type))).Label("onAdd.All(missing.Contains())"))
+            .And(_sources.All(original => value.Components().Has(_target, original.GetType())).Label("sources.All(Has(target, source.GetType()))"));
+        public override string ToString() => $"{GetType().Format()}({_source}, {_target})";
     }
 }

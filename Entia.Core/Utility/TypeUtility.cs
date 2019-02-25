@@ -6,8 +6,87 @@ using System.Reflection;
 
 namespace Entia.Core
 {
+    public sealed class TypeData
+    {
+        public readonly Type Type;
+        public readonly Type Element;
+        public readonly MemberInfo[] StaticMembers;
+        public readonly MemberInfo[] InstanceMembers;
+        public readonly FieldInfo[] InstanceFields;
+        public readonly Type[] Interfaces;
+        public readonly Type[] Declaring;
+        public readonly Type[] Bases;
+        public readonly bool IsPlain;
+        public readonly object Default;
+
+        public TypeData(Type type)
+        {
+            Type GetElement(Type current, Type[] interfaces)
+            {
+                if (current.IsArray) return type.GetElementType();
+                return interfaces
+                    .Where(child => child.IsGenericType && child.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                    .SelectMany(child => child.GetGenericArguments())
+                    .FirstOrDefault();
+            }
+
+            object GetDefault(Type current)
+            {
+                try { return current.IsValueType ? Activator.CreateInstance(current) : null; }
+                catch { return null; }
+            }
+
+            IEnumerable<Type> GetBases(Type current)
+            {
+                current = current.BaseType;
+                while (current != null)
+                {
+                    yield return current;
+                    current = current.BaseType;
+                }
+            }
+
+            IEnumerable<Type> GetDeclaring(Type current)
+            {
+                current = current.DeclaringType;
+                while (current != null)
+                {
+                    yield return current;
+                    current = current.DeclaringType;
+                }
+            }
+
+            bool GetIsPlain(Type current, FieldInfo[] fields)
+            {
+                if (current.IsPrimitive || current == typeof(string)) return true;
+                if (current.IsValueType)
+                {
+                    foreach (var field in fields)
+                        if (!GetIsPlain(field.FieldType, field.FieldType.GetFields(TypeUtility.Instance))) return false;
+                    return true;
+                }
+                return false;
+            }
+
+            Type = type;
+            StaticMembers = Type.GetMembers(TypeUtility.Static);
+            InstanceMembers = Type.GetMembers(TypeUtility.Instance);
+            InstanceFields = Type.GetFields(TypeUtility.Instance);
+            Interfaces = Type.GetInterfaces();
+            Element = GetElement(Type, Interfaces);
+            Bases = GetBases(Type).ToArray();
+            Declaring = GetDeclaring(Type).ToArray();
+            IsPlain = GetIsPlain(Type, InstanceFields);
+            Default = GetDefault(Type);
+        }
+    }
+
     public static class TypeUtility
     {
+        public static class Cache<T>
+        {
+            public static readonly TypeData Data = GetData(typeof(T));
+        }
 
         public const BindingFlags Members = BindingFlags.Public | BindingFlags.NonPublic;
         public const BindingFlags PublicInstance = BindingFlags.Instance | BindingFlags.Public;
@@ -28,46 +107,20 @@ namespace Entia.Core
             }
         }
 
-        static readonly Concurrent<Dictionary<Type, object>> _typeToDefaults = new Dictionary<Type, object>();
-        static readonly Concurrent<Dictionary<(Type, BindingFlags), FieldInfo[]>> _typeToFields = new Dictionary<(Type, BindingFlags), FieldInfo[]>();
+        static readonly Concurrent<Dictionary<Type, TypeData>> _typeToData = new Dictionary<Type, TypeData>();
 
-        public static object GetDefault(Type type) => type.IsValueType ?
-            _typeToDefaults.ReadValueOrWrite(type, type, key => (key, Activator.CreateInstance(key))) :
-            null;
-
-        public static FieldInfo[] GetFields(Type type, BindingFlags flags = Instance) =>
-            _typeToFields.ReadValueOrWrite((type, flags), (type, flags), key => (key, key.type.GetFields(key.flags)));
-
-        public static Result<object> GetValue(this object instance, string member, BindingFlags flags = Instance) =>
-            instance.GetType().GetMember(member, flags)
-                .Select(current =>
-                {
-                    switch (current)
-                    {
-                        case FieldInfo field: return Result.Try(field.GetValue, instance);
-                        case PropertyInfo property: return Result.Try(property.GetValue, instance);
-                        case MethodInfo method when method.GetParameters().Length == 0: return Result.Try(method.Invoke, instance, Type.EmptyTypes);
-                        default: return Result.Failure();
-                    }
-                })
-                .Any();
-
-        public static Result<T> GetValue<T>(this object instance, string member, BindingFlags flags = Instance) => instance.GetValue(member, flags).Cast<T>();
-
-        public static bool IsValueTuple(this Type type)
+        public static TypeData GetData(Type type)
         {
-            if (!type.IsGenericType) return false;
-
-            var definition = type.IsGenericTypeDefinition ? type : type.GetGenericTypeDefinition();
-            return
-                definition == typeof(ValueTuple<>) ||
-                definition == typeof(ValueTuple<,>) ||
-                definition == typeof(ValueTuple<,,>) ||
-                definition == typeof(ValueTuple<,,,>) ||
-                definition == typeof(ValueTuple<,,,,>) ||
-                definition == typeof(ValueTuple<,,,,,>) ||
-                definition == typeof(ValueTuple<,,,,,,>) ||
-                definition == typeof(ValueTuple<,,,,,,,>);
+            using (var read = _typeToData.Read(true))
+            {
+                if (read.Value.TryGetValue(type, out var value)) return value;
+                var data = new TypeData(type);
+                using (var write = _typeToData.Write())
+                {
+                    if (write.Value.TryGetValue(type, out value)) return value;
+                    return write.Value[type] = data;
+                }
+            }
         }
 
         public static string Trimmed(this Type type) => type.Name.Split('`').First();
@@ -83,7 +136,7 @@ namespace Entia.Core
                 name = $"{type.Trimmed()}<{arguments}>";
             }
 
-            return string.Join(".", type.Outer().Reverse().Select(Trimmed).Append(name));
+            return string.Join(".", type.Declaring().Reverse().Select(Trimmed).Append(name));
         }
 
         public static string FullFormat(this Type type) =>
@@ -105,7 +158,7 @@ namespace Entia.Core
             return element != null;
         }
 
-        public static bool Is(this object value, Type type, bool hierarchy = false, bool definition = false)
+        public static bool Is(object value, Type type, bool hierarchy = false, bool definition = false)
         {
             switch (value)
             {
@@ -146,89 +199,24 @@ namespace Entia.Core
             return stack.Prepend(root.Namespace.Split('.'));
         }
 
-        public static IEnumerable<Type> Hierarchy(this Type type) => type.Bases().Prepend(type).Concat(type.GetInterfaces());
-
-        public static IEnumerable<Type> Outer(this Type type)
+        public static IEnumerable<Type> Hierarchy(this Type type)
         {
-            var current = type.DeclaringType;
-            while (current != null)
-            {
-                yield return current;
-                current = current.DeclaringType;
-            }
+            var data = GetData(type);
+            yield return type;
+            foreach (var @base in data.Bases) yield return @base;
+            foreach (var @interface in data.Interfaces) yield return @interface;
         }
 
-        public static IEnumerable<Type> Bases(this Type type)
-        {
-            var current = type.BaseType;
-            while (current != null)
-            {
-                yield return current;
-                current = current.BaseType;
-            }
-        }
-
-        public static bool Validate(object value, Func<object, bool?> @base, Func<MemberInfo, object, bool> validate = null)
-        {
-            validate = validate ?? ((_, __) => true);
-            var map = new Dictionary<object, bool>();
-            bool Next(object current)
-            {
-                var result = @base(current);
-                if (result.HasValue) return result.Value;
-                if (map.TryGetValue(current, out var cached)) return cached;
-                map[current] = true;
-
-                switch (current)
-                {
-                    case Array array:
-                        {
-                            var type = array.GetType().GetElementType();
-                            for (var i = 0; i < array.Length; i++)
-                            {
-                                var item = array.GetValue(i);
-                                if (!validate(type, item) || !Next(item))
-                                    return map[current] = false;
-                            }
-                            return true;
-                        }
-                    default:
-                        foreach (var field in GetFields(current.GetType()))
-                        {
-                            var item = field.GetValue(current);
-                            if (!validate(field, item) || !Next(item))
-                                return map[current] = false;
-                        }
-
-                        return true;
-                }
-            }
-
-            return Next(value);
-        }
-
-        public static bool IsShallow(this Type type, object value) =>
-            IsImmutable(value) || IsDefault(value) || (type == value.GetType() && IsPlain(value));
-
-        public static bool IsDefault(object value) => value is null || value.Equals(GetDefault(value.GetType()));
-
-        public static bool IsPlain(this Type type) => type.IsPrimitive || (type.IsValueType && type.GetFields(Instance).All(field => IsPlain(field.FieldType)));
-
-        public static bool IsPlain(object value) =>
-            Validate(value,
-                current => IsValue(current) ? true : current.GetType().IsValueType ? Nullable.Null<bool>() : false,
-                (member, current) =>
-                    member is FieldInfo field ? field.FieldType == current?.GetType() :
-                    member is Type type ? type == current?.GetType() :
-                    IsValue(current));
-
-        public static bool IsImmutable(object value) =>
-            Validate(value,
-                current => IsValue(current) ? true : current is IList list && !list.IsReadOnly ? false : Nullable.Null<bool>(),
-                (member, _) => member is FieldInfo field ? field.IsInitOnly : true);
-
+        public static bool IsPlain(this Type type) => GetData(type).IsPlain;
+        public static bool IsPlain(object value) => value is null || GetData(value.GetType()).IsPlain;
+        public static bool IsDefault(object value) => value is null || value.Equals(GetData(value.GetType()).Default);
         public static bool IsPrimitive(object value) => value is null || value is string || value.GetType().IsPrimitive;
-
-        static bool IsValue(object value) => IsPrimitive(value) || (value is IList list && list.IsFixedSize && list.Count == 0);
+        public static MemberInfo[] InstanceMembers(this Type type) => GetData(type).InstanceMembers;
+        public static MemberInfo[] StaticMembers(this Type type) => GetData(type).StaticMembers;
+        public static FieldInfo[] InstanceFields(this Type type) => GetData(type).InstanceFields;
+        public static Type[] Bases(this Type type) => GetData(type).Bases;
+        public static Type[] Interfaces(this Type type) => GetData(type).Interfaces;
+        public static Type[] Declaring(this Type type) => GetData(type).Declaring;
+        public static object Default(this Type type) => GetData(type).Default;
     }
 }

@@ -6,7 +6,6 @@ using Entia.Queriers;
 using Entia.Queryables;
 using System;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace Entia.Experiment

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -43,7 +42,7 @@ namespace Entia.Core
 
             static Cast()
             {
-                foreach (var field in _fields)
+                foreach (var field in typeof(Delegate).InstanceFields())
                 {
                     var value = field.GetValue(_return);
                     field.SetValue(ToReference, value);
@@ -59,7 +58,7 @@ namespace Entia.Core
 
             static Cast()
             {
-                foreach (var field in _fields)
+                foreach (var field in typeof(Delegate).InstanceFields())
                 {
                     var value = field.GetValue(_return);
                     field.SetValue(To, value);
@@ -68,6 +67,5 @@ namespace Entia.Core
         }
 
         static readonly Return _return = _ => _;
-        static readonly FieldInfo[] _fields = typeof(Delegate).GetFields(TypeUtility.Instance);
     }
 }

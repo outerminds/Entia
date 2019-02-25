@@ -33,6 +33,7 @@ namespace Entia.Modules
 
         readonly Entities _entities;
         readonly Messages _messages;
+        readonly Cloners _cloners;
         readonly Transient _transient = new Transient();
         readonly Segment _created = new Segment(int.MaxValue, new BitMask());
         readonly Segment _destroyed = new Segment(int.MaxValue, new BitMask(), 1);
@@ -44,12 +45,11 @@ namespace Entia.Modules
         /// <summary>
         /// Initializes a new instance of the <see cref="Components"/> class.
         /// </summary>
-        /// <param name="entities"></param>
-        /// <param name="messages"></param>
-        public Components(Entities entities, Messages messages)
+        public Components(Entities entities, Messages messages, Cloners cloners)
         {
             _entities = entities;
             _messages = messages;
+            _cloners = cloners;
             // NOTE: do not include '_created' and '_destroyed' here
             _segments = (new Segment[] { _empty }, 1);
             _maskToSegment = new Dictionary<BitMask, Segment> { { _empty.Mask, _empty } };
@@ -520,6 +520,34 @@ namespace Entia.Modules
             return false;
         }
 
+        /// <summary>
+        /// Clones all the components from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
+        /// </summary>
+        /// <param name="source">The source entity.</param>
+        /// <param name="target">The target entity.</param>
+        /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
+        public bool Clone(Entity source, Entity target)
+        {
+            ref var sourceData = ref GetData(source, out var sourceSuccess);
+            ref var targetData = ref GetData(target, out var targetSuccess);
+            if (sourceSuccess && targetSuccess)
+            {
+                var segment = GetTargetSegment(sourceData);
+                var types = segment.Types.data;
+                ref var slot = ref GetTransientSlot(target, ref targetData);
+                for (var i = 0; i < types.Length; i++)
+                {
+                    ref readonly var metadata = ref types[i];
+                    if (Clone(metadata, sourceData, ref targetData) && slot.Mask.Add(metadata.Index))
+                        MessageUtility.OnAdd(_messages, target, metadata);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IComponent> GetEnumerator()
         {
@@ -722,6 +750,40 @@ namespace Entia.Modules
             return store != null;
         }
 
+        bool GetStore(ref Data data, in Metadata metadata, out Array store, out int adjusted)
+        {
+            adjusted = data.Index;
+            if (data.Segment.TryStore(metadata.Index, out store)) return true;
+
+            if (data.Transient is int transient)
+            {
+                // NOTE: prioritize the segment store
+                store = _transient.Store(transient, metadata, out adjusted);
+                return true;
+            }
+
+            return false;
+        }
+
+        bool Clone(in Metadata metadata, in Data source, ref Data target)
+        {
+            if (TryGetStore(source, metadata, out var sourceStore, out var sourceIndex) &&
+                GetStore(ref target, metadata, out var targetStore, out var targetIndex))
+            {
+                if (metadata.Data.IsPlain)
+                    Array.Copy(sourceStore, sourceIndex, targetStore, targetIndex, 1);
+                else
+                {
+                    var component = sourceStore.GetValue(sourceIndex);
+                    var result = _cloners.Clone(component, metadata.Data);
+                    if (result.TryValue(out var clone)) targetStore.SetValue(clone, targetIndex);
+                    else return false;
+                }
+                return true;
+            }
+            return false;
+        }
+
         int MoveTo(in (Segment segment, int index) source, Segment target)
         {
             if (source.segment == target) return source.index;
@@ -754,7 +816,7 @@ namespace Entia.Modules
                     Array.Copy(sourceStore, sourceIndex, targetStore, target.index, 1);
                     // NOTE: clearing is not strictly needed, but is done when the component type contains managed references in order to allow
                     // them to be collected by the garbage collector
-                    if (!metadata.IsPlain) Array.Clear(sourceStore, sourceIndex, 1);
+                    if (!metadata.Data.IsPlain) Array.Clear(sourceStore, sourceIndex, 1);
                 }
             }
 

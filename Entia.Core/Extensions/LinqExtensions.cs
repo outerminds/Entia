@@ -263,7 +263,7 @@ namespace Entia.Core
         }
 
         public static IEnumerable<T> OfType<T>(this IEnumerable<T> source, Type type, bool hierarchy = false, bool definition = false) =>
-            source.Where(item => item.Is(type, hierarchy, definition));
+            source.Where(item => TypeUtility.Is(item, type, hierarchy, definition));
 
         public static (T[] @true, T[] @false) Split<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {

@@ -2,7 +2,6 @@ using Entia.Core;
 using Entia.Core.Documentation;
 using System;
 using System.Linq;
-using System.Reflection;
 
 namespace Entia.Modules.Component
 {
@@ -25,36 +24,35 @@ namespace Entia.Modules.Component
         /// Returns true if the instance is valid.
         /// </summary>
         /// <value>Returns <c>true</c> if this instance is valid; otherwise, <c>false</c>.</value>
-        public bool IsValid => Type != null && Index >= 0;
-
+        public bool IsValid => Data != null && Index >= 0;
         /// <summary>
         /// The component type.
         /// </summary>
-        public readonly Type Type;
+        public Type Type => Data.Type;
+
+        /// <summary>
+        /// The component type data.
+        /// </summary>
+        public readonly TypeData Data;
         /// <summary>
         /// The component index.
         /// </summary>
         public readonly int Index;
-        /// <summary>
-        /// Is <c>true</c> if the component type has recusively no references to managed types; otherwise, <c>false</c>.
-        /// </summary>
-        public readonly bool IsPlain;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Metadata"/> struct.
         /// </summary>
-        public Metadata(Type type, int index)
+        public Metadata(TypeData data, int index)
         {
-            Type = type;
+            Data = data;
             Index = index;
-            IsPlain = TypeUtility.IsPlain(type);
         }
 
         /// <inheritdoc cref="IEquatable{T}.Equals(T)"/>
-        public bool Equals(Metadata other) => (Type, Index) == (other.Type, other.Index);
+        public bool Equals(Metadata other) => (Data, Index) == (other.Data, other.Index);
         /// <inheritdoc cref="ValueType.Equals(object)"/>
         public override bool Equals(object obj) => obj is Metadata metadata && Equals(metadata);
         /// <inheritdoc cref="ValueType.GetHashCode"/>
-        public override int GetHashCode() => (Type, Index).GetHashCode();
+        public override int GetHashCode() => (Data, Index).GetHashCode();
     }
 }

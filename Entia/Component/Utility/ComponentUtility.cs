@@ -144,7 +144,7 @@ namespace Entia.Modules.Component
                     if (write.Value.ConcreteToMetadata.TryGetValue(type, out var data)) return data;
 
                     var index = write.Value.Concretes.count;
-                    data = new Metadata(type, index);
+                    data = new Metadata(TypeUtility.GetData(type), index);
                     write.Value.ConcreteToMetadata[type] = data;
                     write.Value.Concretes.Push(data);
                     foreach (var @abstract in abstracts) GetConcrete(@abstract).Add(index);
@@ -157,7 +157,7 @@ namespace Entia.Modules.Component
 
         static Func<T> CreateDefaultProvider<T>() where T : struct, IComponent
         {
-            foreach (var member in typeof(T).GetMembers(TypeUtility.Static))
+            foreach (var member in TypeUtility.Cache<T>.Data.StaticMembers)
             {
                 try
                 {
