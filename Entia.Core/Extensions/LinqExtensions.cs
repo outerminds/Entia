@@ -223,6 +223,9 @@ namespace Entia.Core
 
         public static IEnumerable<T> Except<T>(this IEnumerable<T> source, params T[] values) => source.Except(values.AsEnumerable());
 
+        public static IEnumerable<T> Except<T>(this IEnumerable<T> source, params object[] values) where T : class =>
+            source.Except(values.AsEnumerable());
+
         public static IEnumerable<T[]> Window<T>(this IEnumerable<T> source, int size)
         {
             if (size <= 0) yield break;

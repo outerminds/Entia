@@ -5,6 +5,20 @@ namespace Entia.Core
 {
     public static class ArrayExtensions
     {
+        public static TResult[] Map<TSource, TResult>(this TSource[] array, Func<TSource, TResult> map)
+        {
+            var results = new TResult[array.Length];
+            for (int i = 0; i < array.Length; i++) results[i] = map(array[i]);
+            return results;
+        }
+
+        public static TResult[] Map<TSource, TResult, TState>(this TSource[] array, in TState state, Func<TSource, TState, TResult> map)
+        {
+            var results = new TResult[array.Length];
+            for (int i = 0; i < array.Length; i++) results[i] = map(array[i], state);
+            return results;
+        }
+
         public static (T[] left, T[] right) Split<T>(this T[] source, int index)
         {
             var left = new T[index];

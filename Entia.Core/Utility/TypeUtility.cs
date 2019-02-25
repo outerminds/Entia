@@ -58,7 +58,7 @@ namespace Entia.Core
 
             bool GetIsPlain(Type current, FieldInfo[] fields)
             {
-                if (current.IsPrimitive || current == typeof(string)) return true;
+                if (current.IsPrimitive || current == typeof(string) || current.GetCustomAttributes(typeof(PlainAttribute)).Any()) return true;
                 if (current.IsValueType)
                 {
                     foreach (var field in fields)

@@ -15,7 +15,7 @@ namespace Entia.Cloners
         Result<object> ICloner.Clone(object instance, TypeData type, World world)
         {
             var result = Result.Cast<T>(instance);
-            if (result.TryValue(out var casted)) return Clone(casted, type, world);
+            if (result.TryValue(out var casted)) return Clone(casted, type, world).Box();
             return result.Box();
         }
     }
@@ -39,7 +39,7 @@ namespace Entia.Cloners
                         {
                             var result = cloners.Clone(clone.GetValue(i), element);
                             if (result.TryValue(out var item)) clone.SetValue(item, i);
-                            else return result.AsFailure();
+                            else return result;
                         }
                         return clone;
                     }
@@ -55,7 +55,7 @@ namespace Entia.Cloners
 
                             var result = cloners.Clone(field.GetValue(clone), data);
                             if (result.TryValue(out var value)) field.SetValue(clone, value);
-                            else return result.AsFailure();
+                            else return result;
                         }
                         return clone;
                     }
