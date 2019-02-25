@@ -521,6 +521,78 @@ namespace Entia.Modules
         }
 
         /// <summary>
+        /// Copies components of type <typeparamref name="T"/> from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <param name="source">The source entity.</param>
+        /// <param name="target">The target entity.</param>
+        /// <returns>Returns <c>true</c> if the copy was successful; otherwise, <c>false</c>.</returns>
+        public bool Copy<T>(Entity source, Entity target) where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
+            Copy(source, target, ComponentUtility.Abstract<T>.Data, ComponentUtility.Abstract<T>.OnAdd) :
+            Copy(source, target, ComponentUtility.Abstract<T>.Mask);
+
+        /// <summary>
+        /// Copies components of provided <paramref name="type"/> from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
+        /// </summary>
+        /// <param name="source">The source entity.</param>
+        /// <param name="target">The target entity.</param>
+        /// <param name="type">The component type.</param>
+        /// <returns>Returns <c>true</c> if the copy was successful; otherwise, <c>false</c>.</returns>
+        public bool Copy(Entity source, Entity target, Type type) =>
+            ComponentUtility.TryGetMetadata(type, out var metadata) ? Copy(source, target, metadata, MessageUtility.OnAdd(metadata)) :
+            ComponentUtility.TryGetConcrete(type, out var mask) && Copy(source, target, mask);
+
+        /// <summary>
+        /// Copies all the components from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
+        /// </summary>
+        /// <param name="source">The source entity.</param>
+        /// <param name="target">The target entity.</param>
+        /// <returns>Returns <c>true</c> if the copy was successful; otherwise, <c>false</c>.</returns>
+        public bool Copy(Entity source, Entity target)
+        {
+            ref var sourceData = ref GetData(source, out var sourceSuccess);
+            ref var targetData = ref GetData(target, out var targetSuccess);
+            if (sourceSuccess && targetSuccess)
+            {
+                var segment = GetTargetSegment(sourceData);
+                var types = segment.Types.data;
+                ref var slot = ref GetTransientSlot(target, ref targetData);
+
+                for (var i = 0; i < types.Length; i++)
+                {
+                    ref readonly var metadata = ref types[i];
+                    Copy(sourceData, ref targetData, ref slot, metadata, MessageUtility.OnAdd(metadata));
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Clones components of type <typeparamref name="T"/> from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
+        /// </summary>
+        /// <typeparam name="T">The component type.</typeparam>
+        /// <param name="source">The source entity.</param>
+        /// <param name="target">The target entity.</param>
+        /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
+        public bool Clone<T>(Entity source, Entity target) where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
+            Clone(source, target, ComponentUtility.Abstract<T>.Data, ComponentUtility.Abstract<T>.OnAdd) :
+            Clone(source, target, ComponentUtility.Abstract<T>.Mask);
+
+        /// <summary>
+        /// Clones components of provided <paramref name="type"/> from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
+        /// </summary>
+        /// <param name="source">The source entity.</param>
+        /// <param name="target">The target entity.</param>
+        /// <param name="type">The component type.</param>
+        /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
+        public bool Clone(Entity source, Entity target, Type type) =>
+            ComponentUtility.TryGetMetadata(type, out var metadata) ? Clone(source, target, metadata, MessageUtility.OnAdd(metadata)) :
+            ComponentUtility.TryGetConcrete(type, out var mask) && Clone(source, target, mask);
+
+        /// <summary>
         /// Clones all the components from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
         /// </summary>
         /// <param name="source">The source entity.</param>
@@ -535,16 +607,36 @@ namespace Entia.Modules
                 var segment = GetTargetSegment(sourceData);
                 var types = segment.Types.data;
                 ref var slot = ref GetTransientSlot(target, ref targetData);
+
                 for (var i = 0; i < types.Length; i++)
                 {
                     ref readonly var metadata = ref types[i];
-                    if (Clone(metadata, sourceData, ref targetData) && slot.Mask.Add(metadata.Index))
-                        MessageUtility.OnAdd(_messages, target, metadata);
+                    Clone(sourceData, ref targetData, ref slot, metadata, MessageUtility.OnAdd(metadata));
                 }
 
                 return true;
             }
 
+            return false;
+        }
+
+        /// <summary>
+        /// Removes the components on the <paramref name="target"/> that the <paramref name="source"/> does not have.
+        /// </summary>
+        /// <param name="source">The source entity.</param>
+        /// <param name="target">The target entity.</param>
+        /// <returns>Returns <c>true</c> if a component was removed; otherwise, <c>false</c>.</returns>
+        public bool Trim(Entity source, Entity target)
+        {
+            ref var sourceData = ref GetData(source, out var sourceSuccess);
+            ref var targetData = ref GetData(target, out var targetSuccess);
+            if (sourceSuccess && targetSuccess)
+            {
+                var segment = GetTargetSegment(sourceData);
+                var types = segment.Types.data;
+                ref var slot = ref GetTransientSlot(target, ref targetData);
+                return Trim(ref slot, targetData, segment.Mask);
+            }
             return false;
         }
 
@@ -652,17 +744,17 @@ namespace Entia.Modules
             if (Has(data, metadata.Index))
             {
                 ref var slot = ref GetTransientSlot(entity, ref data);
-                return Remove(entity, ref slot, metadata, onRemove);
+                return Remove(ref slot, metadata, onRemove);
             }
 
             return false;
         }
 
-        bool Remove(Entity entity, ref Transient.Slot slot, in Metadata metadata, Action<Messages, Entity> onRemove)
+        bool Remove(ref Transient.Slot slot, in Metadata metadata, Action<Messages, Entity> onRemove)
         {
             if (slot.Mask.Remove(metadata.Index))
             {
-                onRemove(_messages, entity);
+                onRemove(_messages, slot.Entity);
                 return true;
             }
 
@@ -688,7 +780,7 @@ namespace Entia.Modules
             for (var i = 0; i < types.Length; i++)
             {
                 ref readonly var metadata = ref types[i];
-                removed |= Remove(entity, ref slot, metadata, MessageUtility.OnRemove(metadata));
+                removed |= Remove(ref slot, metadata, MessageUtility.OnRemove(metadata));
             }
 
             return removed;
@@ -765,13 +857,121 @@ namespace Entia.Modules
             return false;
         }
 
+        bool Trim(ref Transient.Slot slot, in Data data, BitMask mask) => Trim(ref slot, mask, GetTargetSegment(data).Types.data);
+
+        bool Trim(ref Transient.Slot slot, BitMask mask, Metadata[] types)
+        {
+            var trimmed = false;
+            for (int i = 0; i < types.Length; i++)
+            {
+                ref readonly var metadata = ref types[i];
+                if (mask.Has(metadata.Index)) continue;
+                trimmed |= Remove(ref slot, metadata, MessageUtility.OnRemove(metadata));
+            }
+            return trimmed;
+        }
+
+        bool Copy(Entity source, Entity target, in Metadata metadata, Action<Messages, Entity> onAdd)
+        {
+            ref var sourceData = ref GetData(source, out var sourceSuccess);
+            ref var targetData = ref GetData(target, out var targetSuccess);
+            if (sourceSuccess && targetSuccess)
+            {
+                ref var slot = ref GetTransientSlot(target, ref targetData);
+                Copy(sourceData, ref targetData, ref slot, metadata, onAdd);
+                return true;
+            }
+            return false;
+        }
+
+        bool Copy(Entity source, Entity target, BitMask mask)
+        {
+            ref var sourceData = ref GetData(source, out var sourceSuccess);
+            ref var targetData = ref GetData(target, out var targetSuccess);
+            if (sourceSuccess && targetSuccess)
+            {
+                ref var slot = ref GetTransientSlot(target, ref targetData);
+                var segment = GetSegment(mask);
+                var types = segment.Types.data;
+                for (var i = 0; i < types.Length; i++)
+                {
+                    ref readonly var metadata = ref types[i];
+                    Copy(sourceData, ref targetData, ref slot, metadata, MessageUtility.OnAdd(metadata));
+                }
+                return true;
+            }
+            return false;
+        }
+
+        bool Copy(in Data source, ref Data target, ref Transient.Slot slot, in Metadata metadata, Action<Messages, Entity> onAdd)
+        {
+            if (Copy(metadata, source, ref target) && slot.Mask.Add(metadata.Index))
+            {
+                onAdd(_messages, slot.Entity);
+                return true;
+            }
+            return false;
+        }
+
+        bool Copy(in Metadata metadata, in Data source, ref Data target)
+        {
+            if (TryGetStore(source, metadata, out var sourceStore, out var sourceIndex) &&
+                GetStore(ref target, metadata, out var targetStore, out var targetIndex))
+            {
+                Array.Copy(sourceStore, sourceIndex, targetStore, targetIndex, 1);
+                return true;
+            }
+            return false;
+        }
+
+        bool Clone(Entity source, Entity target, in Metadata metadata, Action<Messages, Entity> onAdd)
+        {
+            ref var sourceData = ref GetData(source, out var sourceSuccess);
+            ref var targetData = ref GetData(target, out var targetSuccess);
+            if (sourceSuccess && targetSuccess)
+            {
+                ref var slot = ref GetTransientSlot(target, ref targetData);
+                Clone(sourceData, ref targetData, ref slot, metadata, onAdd);
+                return true;
+            }
+            return false;
+        }
+
+        bool Clone(Entity source, Entity target, BitMask mask)
+        {
+            ref var sourceData = ref GetData(source, out var sourceSuccess);
+            ref var targetData = ref GetData(target, out var targetSuccess);
+            if (sourceSuccess && targetSuccess)
+            {
+                ref var slot = ref GetTransientSlot(target, ref targetData);
+                var segment = GetSegment(mask);
+                var types = segment.Types.data;
+                for (var i = 0; i < types.Length; i++)
+                {
+                    ref readonly var metadata = ref types[i];
+                    Clone(sourceData, ref targetData, ref slot, metadata, MessageUtility.OnAdd(metadata));
+                }
+                return true;
+            }
+            return false;
+        }
+
+        bool Clone(in Data source, ref Data target, ref Transient.Slot slot, in Metadata metadata, Action<Messages, Entity> onAdd)
+        {
+            if (Clone(metadata, source, ref target) && slot.Mask.Add(metadata.Index))
+            {
+                onAdd(_messages, slot.Entity);
+                return true;
+            }
+            return false;
+        }
+
         bool Clone(in Metadata metadata, in Data source, ref Data target)
         {
             if (TryGetStore(source, metadata, out var sourceStore, out var sourceIndex) &&
                 GetStore(ref target, metadata, out var targetStore, out var targetIndex))
             {
-                if (metadata.Data.IsPlain)
-                    Array.Copy(sourceStore, sourceIndex, targetStore, targetIndex, 1);
+                if (metadata.Data.IsPlain) Array.Copy(sourceStore, sourceIndex, targetStore, targetIndex, 1);
                 else
                 {
                     var component = sourceStore.GetValue(sourceIndex);
@@ -890,7 +1090,7 @@ namespace Entia.Modules
                 for (var i = 0; i < types.Length; i++)
                 {
                     ref readonly var metadata = ref types[i];
-                    Remove(entity, ref slot, metadata, MessageUtility.OnRemove(metadata));
+                    Remove(ref slot, metadata, MessageUtility.OnRemove(metadata));
                 }
 
                 slot.Resolution = Transient.Resolutions.Remove;

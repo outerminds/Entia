@@ -335,6 +335,7 @@ namespace Entia.Experiment
 
         static void Main()
         {
+            ComponentTest.Run();
             // ParallelTest.Run();
             // TypeMap();
 

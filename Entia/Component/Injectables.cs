@@ -196,6 +196,20 @@ namespace Entia.Injectables
         public bool Clear(Entity entity) => _components.Clear(entity);
         /// <inheritdoc cref="Components.Clear()"/>
         public bool Clear() => _components.Clear();
+        /// <inheritdoc cref="Components.Copy{T}(Entity, Entity)"/>
+        public bool Copy<T>(Entity source, Entity target) where T : IComponent => _components.Copy<T>(source, target);
+        /// <inheritdoc cref="Components.Copy(Entity, Entity, Type)"/>
+        public bool Copy(Entity source, Entity target, Type type) => _components.Copy(source, target, type);
+        /// <inheritdoc cref="Components.Copy(Entity, Entity)"/>
+        public bool Copy(Entity source, Entity target) => _components.Copy(source, target);
+        /// <inheritdoc cref="Components.Clone{T}(Entity, Entity)"/>
+        public bool Clone<T>(Entity source, Entity target) where T : IComponent => _components.Clone<T>(source, target);
+        /// <inheritdoc cref="Components.Clone(Entity, Entity, Type)"/>
+        public bool Clone(Entity source, Entity target, Type type) => _components.Clone(source, target, type);
+        /// <inheritdoc cref="Components.Clone(Entity, Entity)"/>
+        public bool Clone(Entity source, Entity target) => _components.Clone(source, target);
+        /// <inheritdoc cref="Components.Trim(Entity, Entity)"/>
+        public bool Trim(Entity source, Entity target) => _components.Trim(source, target);
         /// <inheritdoc cref="Components.GetEnumerator()"/>
         public IEnumerator<IComponent> GetEnumerator() => _components.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => _components.GetEnumerator();
@@ -318,6 +332,10 @@ namespace Entia.Injectables
         public bool Remove(Entity entity) => _components.Remove<T>(entity);
         /// <inheritdoc cref="Components.Clear{T}()"/>
         public bool Clear() => _components.Clear<T>();
+        /// <inheritdoc cref="Components.Copy{T}(Entity, Entity)"/>
+        public bool Copy(Entity source, Entity target) => _components.Copy<T>(source, target);
+        /// <inheritdoc cref="Components.Clone{T}(Entity, Entity)"/>
+        public bool Clone(Entity source, Entity target) => _components.Clone<T>(source, target);
         /// <inheritdoc cref="Components.GetEnumerator()"/>
         [ThreadSafe]
         public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>().GetEnumerator();
