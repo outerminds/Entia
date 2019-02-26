@@ -31,13 +31,14 @@ namespace Entia.Cloners
                 case Array array:
                     {
                         var clone = array.Clone() as Array;
-                        var element = TypeUtility.GetData(array.GetType().GetElementType());
-                        if (element.IsPlain) return clone;
+                        var cloneType = TypeUtility.GetData(clone.GetType());
+                        var elementType = TypeUtility.GetData(cloneType.Element);
+                        if (elementType.IsPlain) return clone;
 
                         var cloners = world.Cloners();
                         for (int i = 0; i < clone.Length; i++)
                         {
-                            var result = cloners.Clone(clone.GetValue(i), element);
+                            var result = cloners.Clone(clone.GetValue(i), elementType);
                             if (result.TryValue(out var item)) clone.SetValue(item, i);
                             else return result;
                         }
@@ -45,15 +46,21 @@ namespace Entia.Cloners
                     }
                 default:
                     {
-                        var clone = CloneUtility.Shallow(instance);
+                        // NOTE: use the visible type to skip shallow cloning
+                        var clone = type.Type.IsValueType ? instance : CloneUtility.Shallow(instance);
                         var cloners = world.Cloners();
-                        for (int i = 0; i < type.InstanceFields.Length; i++)
-                        {
-                            var field = type.InstanceFields[i];
-                            var data = TypeUtility.GetData(field.FieldType);
-                            if (data.IsPlain) continue;
+                        // NOTE: use the runtime type to iterate on fields
+                        var cloneType = TypeUtility.GetData(clone.GetType());
+                        // NOTE: the visible type might've been a reference type but if the runtime type is plain, return early
+                        if (cloneType.IsPlain) return clone;
 
-                            var result = cloners.Clone(field.GetValue(clone), data);
+                        for (int i = 0; i < cloneType.InstanceFields.Length; i++)
+                        {
+                            var field = cloneType.InstanceFields[i];
+                            var fieldType = TypeUtility.GetData(field.FieldType);
+                            if (fieldType.IsPlain) continue;
+
+                            var result = cloners.Clone(field.GetValue(clone), fieldType);
                             if (result.TryValue(out var value)) field.SetValue(clone, value);
                             else return result;
                         }

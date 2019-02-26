@@ -21,6 +21,11 @@ namespace Entia.Core
 
         public TypeData(Type type)
         {
+            FieldInfo[] GetFields(Type current, Type[] bases) => bases.Prepend(current)
+                .SelectMany(@base => @base.GetFields(TypeUtility.Instance))
+                .Distinct()
+                .ToArray();
+
             Type GetElement(Type current, Type[] interfaces)
             {
                 if (current.IsArray) return type.GetElementType();
@@ -69,12 +74,12 @@ namespace Entia.Core
             }
 
             Type = type;
+            Interfaces = Type.GetInterfaces();
+            Bases = GetBases(Type).ToArray();
+            Element = GetElement(Type, Interfaces);
             StaticMembers = Type.GetMembers(TypeUtility.Static);
             InstanceMembers = Type.GetMembers(TypeUtility.Instance);
-            InstanceFields = Type.GetFields(TypeUtility.Instance);
-            Interfaces = Type.GetInterfaces();
-            Element = GetElement(Type, Interfaces);
-            Bases = GetBases(Type).ToArray();
+            InstanceFields = GetFields(Type, Bases);
             Declaring = GetDeclaring(Type).ToArray();
             IsPlain = GetIsPlain(Type, InstanceFields);
             Default = GetDefault(Type);
