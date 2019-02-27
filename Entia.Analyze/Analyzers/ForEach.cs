@@ -45,7 +45,7 @@ namespace Entia.Analyze.Analyzers
 
             if (context.Node is ForEachStatementSyntax statement &&
                 !statement.Type.Is<RefTypeSyntax>() &&
-                statement?.Expression is ExpressionSyntax expression &&
+                statement.Expression is ExpressionSyntax expression &&
                 context.SemanticModel.GetTypeInfo(expression).Type is INamedTypeSymbol symbol &&
                 symbol.IsValueType &&
                 symbol.GetMembers(nameof(IEnumerable.GetEnumerator))
