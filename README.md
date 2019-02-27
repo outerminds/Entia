@@ -141,13 +141,14 @@ ___
 I will specify here recurrent usage patterns that are used in the framework.
 
 ### When in doubt, use a `struct`.
--   Almost everything you will implement when using the framework will be a `struct`. **E**ntities are structs, **C**omponents are structs, **S**ystems are structs and other concepts such as Messages, Resources, Queryables and Injectables are all structs.
--   The framework will enforce the usage of structs.
--   This (almost abusive) usage of structs is deliberate.
-    -   It prevents any kind of OOP inheritance impulses that one could have since structs cannot inherit from anything.
-    -   structs correspond much more appropriately to plain and inert data.
+- Almost everything you will implement when using the framework will be a `struct`. **E**ntities are structs, **C**omponents are structs, **S**ystems are structs and other concepts such as Messages, Resources, Queryables and Injectables are all structs.
+- The framework will enforce the usage of structs.
+- This (almost abusive) usage of structs is deliberate.
+    - structs are great for cache locality and as such will allow the CPU to access them much more quickly than reference types.
+    - _ECS_ is all about favoring composition and structs enforce this idea since they prevent any kind of OOP inheritance impulses that one could have.
+    - structs correspond much more appropriately to plain and inert data.
     - structs don't require useless indirection and null checking when accessing members.
-    -   The cost of passing (copying) structs around is nullified by C#7's `ref` returns.
+    - The cost of passing (copying) large structs around is nullified by C#7's `ref` returns.
 
 ### Most concepts have an empty associated `interface`.
 -   **C**omponents must implement `IComponent`, **S**ystems must implement `ISystem`, Messages must implement `IMessage` and so on.
