@@ -53,6 +53,7 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- remove analyzer warning for type members in components/resources/etc.
 - are disabled GameObjects initialized (in scene or instantiated)?
 - show controller nodes in chunks?
 - move resolve logic from World to Resolvers

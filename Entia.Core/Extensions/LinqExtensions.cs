@@ -14,12 +14,39 @@ namespace Entia.Core
             return true;
         }
 
+        public static bool All<T>(this T[] source, Func<T, bool> predicate)
+        {
+            for (int i = 0; i < source.Length; i++) if (!predicate(source[i])) return false;
+            return true;
+        }
+
+        public static bool All<T>(this T[] source, Func<T, int, bool> predicate)
+        {
+            for (int i = 0; i < source.Length; i++) if (!predicate(source[i], i)) return false;
+            return true;
+        }
+
         public static bool Any<T>(this IEnumerable<T> source, Func<T, int, bool> predicate)
         {
             var index = 0;
             foreach (var item in source) if (predicate(item, index++)) return true;
             return false;
         }
+
+        public static bool Any<T>(this T[] source, Func<T, bool> predicate)
+        {
+            for (int i = 0; i < source.Length; i++) if (predicate(source[i])) return true;
+            return false;
+        }
+
+        public static bool Any<T>(this T[] source, Func<T, int, bool> predicate)
+        {
+            for (int i = 0; i < source.Length; i++) if (predicate(source[i], i)) return true;
+            return false;
+        }
+
+        public static bool None<T>(this T[] source, Func<T, bool> predicate) => !source.Any(predicate);
+        public static bool None<T>(this T[] source, Func<T, int, bool> predicate) => !source.Any(predicate);
 
         public static (Option<T> head, T[] tail) Chop<T>(this IEnumerable<T> source)
         {
