@@ -53,6 +53,8 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- cleaner support to reinitialize references
+	- currently, EntityReference must be Pre/Post Initialize/Dispose
 - remove analyzer warning for type members in components/resources/etc.
 - are disabled GameObjects initialized (in scene or instantiated)?
 - show controller nodes in chunks?
