@@ -26,7 +26,7 @@ namespace Entia.Experiment
                 B = new Dictionary<object, int> { { key, 5 } }
             });
             var target = entities.Create();
-            components.Copy(source, target);
+            components.Clone(source, target, Depth.Deep);
             ref var a = ref components.Get<Boba>(source);
             ref var b = ref components.Get<Boba>(target);
             var c = a.A == b.A;

@@ -10,6 +10,7 @@ namespace Entia.Test
 {
     public sealed class CloneComponent<T> : Action<World, Model> where T : IComponent
     {
+        readonly Depth _depth;
         Entity _source;
         Entity _target;
         IComponent[] _sources;
@@ -18,6 +19,8 @@ namespace Entia.Test
         Type[] _missing;
         OnAdd[] _onAdd;
         bool _success;
+
+        public CloneComponent(Depth depth = Depth.Shallow) { _depth = depth; }
 
         public override bool Pre(World value, Model model)
         {
@@ -38,7 +41,7 @@ namespace Entia.Test
 
             var receiver = value.Messages().Receiver<OnAdd>();
             {
-                _success = value.Components().Clone<T>(_source, _target);
+                _success = value.Components().Clone<T>(_source, _target, _depth);
                 _clones = value.Components().Get(_target).Where(component => component.Is<T>()).ToArray();
                 foreach (var component in _clones) model.Components[_target][component.GetType()] = component;
             }
@@ -53,12 +56,13 @@ namespace Entia.Test
             .And((_missing.Length == _onAdd.Length).Label("missing.Length == onAdd.Length"))
             .And((_onAdd.All(message => _missing.Contains(message.Component.Type))).Label("onAdd.All(missing.Contains())"))
             .And(_sources.All(source => value.Components().Has(_target, source.GetType())).Label("sources.All(Has(target, source.GetType()))"));
-        public override string ToString() => $"{GetType().Format()}({_source}, {_target})";
+        public override string ToString() => $"{GetType().Format()}({_source}, {_target}, {_depth})";
     }
 
     public sealed class CloneComponent : Action<World, Model>
     {
-        Type _type;
+        readonly Type _type;
+        readonly Depth _depth;
         Entity _source;
         Entity _target;
         IComponent[] _sources;
@@ -68,7 +72,11 @@ namespace Entia.Test
         OnAdd[] _onAdd;
         bool _success;
 
-        public CloneComponent(Type type) { _type = type; }
+        public CloneComponent(Type type, Depth depth = Depth.Shallow)
+        {
+            _type = type;
+            _depth = depth;
+        }
 
         public override bool Pre(World value, Model model)
         {
@@ -91,7 +99,7 @@ namespace Entia.Test
 
             var receiver = value.Messages().Receiver<OnAdd>();
             {
-                _success = value.Components().Clone(_source, _target, _type);
+                _success = value.Components().Clone(_source, _target, _type, _depth);
                 _clones = value.Components().Get(_target).Where(Is).ToArray();
                 foreach (var component in _clones) model.Components[_target][component.GetType()] = component;
             }
@@ -106,11 +114,12 @@ namespace Entia.Test
             .And((_missing.Length == _onAdd.Length).Label("missing.Length == onAdd.Length"))
             .And((_onAdd.All(message => _missing.Contains(message.Component.Type))).Label("onAdd.All(missing.Contains())"))
             .And(_sources.All(source => value.Components().Has(_target, source.GetType())).Label("sources.All(Has(target, source.GetType()))"));
-        public override string ToString() => $"{GetType().Format()}({_source}, {_target})";
+        public override string ToString() => $"{GetType().Format()}({_source}, {_target}, {_depth})";
     }
 
     public sealed class CloneComponents : Action<World, Model>
     {
+        readonly Depth _depth;
         Entity _source;
         Entity _target;
         IComponent[] _sources;
@@ -119,6 +128,8 @@ namespace Entia.Test
         Type[] _missing;
         OnAdd[] _onAdd;
         bool _success;
+
+        public CloneComponents(Depth depth = Depth.Shallow) { _depth = depth; }
 
         public override bool Pre(World value, Model model)
         {
@@ -135,7 +146,7 @@ namespace Entia.Test
 
             var receiver = value.Messages().Receiver<OnAdd>();
             {
-                _success = value.Components().Clone(_source, _target);
+                _success = value.Components().Clone(_source, _target, _depth);
                 _clones = value.Components().Get(_target).ToArray();
                 foreach (var component in _clones) model.Components[_target][component.GetType()] = component;
             }
@@ -150,6 +161,6 @@ namespace Entia.Test
             .And((_missing.Length == _onAdd.Length).Label("missing.Length == onAdd.Length"))
             .And((_onAdd.All(message => _missing.Contains(message.Component.Type))).Label("onAdd.All(missing.Contains())"))
             .And(_sources.All(source => value.Components().Has(_target, source.GetType())).Label("sources.All(Has(target, source.GetType()))"));
-        public override string ToString() => $"{GetType().Format()}({_source}, {_target})";
+        public override string ToString() => $"{GetType().Format()}({_source}, {_target}, {_depth})";
     }
 }
