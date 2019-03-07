@@ -31,7 +31,7 @@ namespace Entia.Modules
             Get(injectable).Inject(member ?? injectable, _world).As(injectable);
 
         public IInjector Default<T>() where T : IInjectable => Default(typeof(T));
-        public IInjector Default(Type injectable) => _defaults.Default(injectable, typeof(IInjectable<>), typeof(InjectorAttribute), () => new Default());
+        public IInjector Default(Type injectable) => _defaults.Default(injectable, typeof(IInjectable<>), typeof(InjectorAttribute), _ => new Default());
         public bool Has<T>() where T : IInjectable => _injectors.Has<T>(true);
         public bool Has(Type injectable) => _injectors.Has(injectable, true);
         public IInjector Get<T>() where T : IInjectable => _injectors.TryGet<T>(out var injector, true) ? injector : Default<T>();

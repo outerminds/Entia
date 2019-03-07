@@ -39,7 +39,7 @@ namespace Entia.Modules
         }
 
         public ITemplater Default<T>() => _defaults.TryGet<T>(out var templater) ? templater : Default(typeof(T));
-        public ITemplater Default(Type type) => _defaults.Default(type, typeof(ITemplateable<>), typeof(TemplaterAttribute), () => new Default());
+        public ITemplater Default(Type type) => _defaults.Default(type, typeof(ITemplateable<>), typeof(TemplaterAttribute), _ => new Default());
         public ITemplater Get<T>() => _templaters.TryGet<T>(out var templater, true) ? templater : Default<T>();
         public ITemplater Get(Type type) => _templaters.TryGet(type, out var templater, true) ? templater : Default(type);
         public bool Set<T>(Templater<T> templater) => _templaters.Set<T>(templater);

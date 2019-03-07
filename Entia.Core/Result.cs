@@ -204,6 +204,9 @@ namespace Entia.Core
             return result;
         }
 
+        public static T Or<T, TState>(in this Result<T> result, in TState state, Func<TState, T> provide) =>
+            result.TryValue(out var current) ? current : provide(state);
+
         public static T Or<T>(in this Result<T> result, Func<T> provide) => result.TryValue(out var current) ? current : provide();
 
         public static T Or<T>(in this Result<T> result, in T value) => result.TryValue(out var current) ? current : value;

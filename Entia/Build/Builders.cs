@@ -21,7 +21,7 @@ namespace Entia.Modules
 
         public Result<IRunner> Build(Node node, Node root) => Get(node.Value.GetType()).Build(node, root, _world);
         public IBuilder Default<T>() where T : struct, IBuildable => _defaults.TryGet<T>(out var builder) ? builder : Default(typeof(T));
-        public IBuilder Default(Type buildable) => _defaults.Default(buildable, typeof(IBuildable<>), typeof(BuilderAttribute), () => new Default());
+        public IBuilder Default(Type buildable) => _defaults.Default(buildable, typeof(IBuildable<>), typeof(BuilderAttribute), _ => new Default());
         public bool Has<T>() where T : struct, IBuildable => _builders.Has<T>(true);
         public bool Has(Type buildable) => _builders.Has(buildable, true);
         public IBuilder Get<T>() where T : struct, IBuildable => _builders.TryGet<T>(out var builder, true) ? builder : Default<T>();

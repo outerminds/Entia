@@ -80,7 +80,7 @@ namespace Entia.Modules
         public void Defer<T>(Action<World> @do) => Defer(_world, @do);
 
         public Resolver<T> Default<T>() where T : struct, Resolvables.IResolvable =>
-            _defaults.Default(typeof(T), typeof(Resolvables.IResolvable<>), typeof(ResolverAttribute), () => new Default<T>()) as Resolver<T>;
+            _defaults.Default(typeof(T), typeof(Resolvables.IResolvable<>), typeof(ResolverAttribute), _ => new Default<T>()) as Resolver<T>;
         public IResolver Default(Type resolvable) =>
             _defaults.Default(resolvable, typeof(Resolvables.IResolvable<>), typeof(ResolverAttribute), typeof(Default<>));
 

@@ -9,24 +9,24 @@ namespace Entia.Modules
     {
         public const AttributeTargets AttributeUsage = AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method;
 
-        public static TValue Default<TKey, TValue>(this Concurrent<TypeMap<TKey, TValue>> map, Type type, Type definition = null, Type attribute = null, Func<TValue> @default = null)
+        public static TValue Default<TKey, TValue>(this Concurrent<TypeMap<TKey, TValue>> map, Type type, Type definition = null, Type attribute = null, Func<Type, TValue> @default = null)
             where TKey : class where TValue : class =>
             map.ReadValueOrWrite(type,
                 (type, definition, attribute, @default),
-                state => Default<TValue>(state.type, state.definition, state.attribute).Or(() => state.@default?.Invoke()));
+                state1 => Default<TValue>(state1.type, state1.definition, state1.attribute).Or(state1, state2 => state2.@default?.Invoke(state2.type)));
 
-        public static TValue Default<TKey, TValue>(this TypeMap<TKey, TValue> map, Type type, Type definition = null, Type attribute = null, Func<TValue> @default = null)
+        public static TValue Default<TKey, TValue>(this TypeMap<TKey, TValue> map, Type type, Type definition = null, Type attribute = null, Func<Type, TValue> @default = null)
             where TKey : class where TValue : class =>
             map.TryGet(type, out var value) ? value :
-            map[type] = Default<TValue>(type, definition, attribute).Or(() => @default?.Invoke());
+            map[type] = Default<TValue>(type, definition, attribute).Or((@default, type), state => state.@default?.Invoke(state.type));
 
         public static TValue Default<TKey, TValue>(this TypeMap<TKey, TValue> map, Type type, Type definition, Type attribute, Type @default)
             where TKey : class where TValue : class =>
             map.Default(
                 type, definition, attribute,
                 @default.IsGenericType ?
-                    new Func<TValue>(() => Activator.CreateInstance(@default.MakeGenericType(type)) as TValue) :
-                    new Func<TValue>(() => Activator.CreateInstance(@default) as TValue));
+                    new Func<Type, TValue>(generic => Activator.CreateInstance(@default.MakeGenericType(generic)) as TValue) :
+                    new Func<Type, TValue>(_ => Activator.CreateInstance(@default) as TValue));
 
         public static Result<T> Default<T>(Type type, Type definition = null, Type attribute = null) where T : class
         {

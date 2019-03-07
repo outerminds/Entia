@@ -20,7 +20,7 @@ namespace Entia.Modules
 
         public Result<IDependency[]> Analyze(Node node, Node root) => Get(node.Value.GetType()).Analyze(node, root, _world);
         public IAnalyzer Default<T>() where T : struct, IAnalyzable => _defaults.TryGet<T>(out var analyzer) ? analyzer : Default(typeof(T));
-        public IAnalyzer Default(Type analyzable) => _defaults.Default(analyzable, typeof(IAnalyzable<>), typeof(AnalyzerAttribute), () => new Default());
+        public IAnalyzer Default(Type analyzable) => _defaults.Default(analyzable, typeof(IAnalyzable<>), typeof(AnalyzerAttribute), _ => new Default());
         public IAnalyzer Get<T>() where T : struct, IAnalyzable => _analyzers.TryGet<T>(out var analyzer, true) ? analyzer : Default<T>();
         public IAnalyzer Get(Type analyzable) => _analyzers.TryGet(analyzable, out var analyzer, true) ? analyzer : Default(analyzable);
         public bool Has<T>() where T : struct, IAnalyzable => _analyzers.Has<T>(true);

@@ -20,7 +20,7 @@ namespace Entia.Modules
         public Result<object> Clone(object instance, TypeData type) => Get(type.Type).Clone(instance, type, _world);
         public Result<object> Clone(object instance, Type type) => Clone(instance, TypeUtility.GetData(type));
         public ICloner Default<T>() => _defaults.TryGet<T>(out var cloner) ? cloner : Default(typeof(T));
-        public ICloner Default(Type type) => _defaults.Default(type, typeof(ICloneable<>), typeof(ClonerAttribute), () => new Default());
+        public ICloner Default(Type type) => _defaults.Default(type, typeof(ICloneable<>), typeof(ClonerAttribute), _ => new Default());
         public ICloner Get<T>() => _cloners.TryGet<T>(out var cloner, true) ? cloner : Default<T>();
         public ICloner Get(Type type) => _cloners.TryGet(type, out var cloner, true) ? cloner : Default(type);
         public bool Has<T>() => _cloners.Has<T>(true);

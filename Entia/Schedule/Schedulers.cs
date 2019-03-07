@@ -32,7 +32,7 @@ namespace Entia.Modules
             .ToArray();
 
         public IScheduler Default<T>() where T : ISchedulable => _defaults.TryGet<T>(out var scheduler) ? scheduler : Default(typeof(T));
-        public IScheduler Default(Type schedulable) => _defaults.Default(schedulable, typeof(ISchedulable<>), null, () => new Default());
+        public IScheduler Default(Type schedulable) => _defaults.Default(schedulable, typeof(ISchedulable<>), null, _ => new Default());
         public IScheduler Get<T>() where T : ISchedulable => _schedulers.TryGet<T>(out var scheduler, true) ? scheduler : Default<T>();
         public IScheduler Get(Type schedulable) => _schedulers.TryGet(schedulable, out var scheduler, true) ? scheduler : Default(schedulable);
         public bool Set<T>(Scheduler<T> scheduler) where T : ISchedulable => _schedulers.Set<T>(scheduler);

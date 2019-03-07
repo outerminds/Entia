@@ -24,7 +24,7 @@ namespace Entia.Modules
         public bool TryQuery(IQuerier querier, Segment segment, out Query.Query query) => querier.TryQuery(segment, _world, out query);
 
         public Querier<T> Default<T>() where T : struct, Queryables.IQueryable =>
-            _defaults.Default(typeof(T), typeof(Queryables.IQueryable<>), typeof(QuerierAttribute), () => new Default<T>()) as Querier<T>;
+            _defaults.Default(typeof(T), typeof(Queryables.IQueryable<>), typeof(QuerierAttribute), _ => new Default<T>()) as Querier<T>;
         public IQuerier Default(Type queryable) =>
             _defaults.Default(queryable, typeof(Queryables.IQueryable<>), typeof(QuerierAttribute), typeof(Default<>));
 

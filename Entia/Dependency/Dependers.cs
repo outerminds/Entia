@@ -63,7 +63,7 @@ namespace Entia.Modules
         }
 
         public IDepender Default<T>() where T : struct, IDependable => _defaults.TryGet<T>(out var depender) ? depender : Default(typeof(T));
-        public IDepender Default(Type dependable) => _defaults.Default(dependable, typeof(IDependable<>), typeof(DependerAttribute), () => new Default());
+        public IDepender Default(Type dependable) => _defaults.Default(dependable, typeof(IDependable<>), typeof(DependerAttribute), _ => new Default());
         public bool Has<T>() where T : struct, IDependable => _dependers.Has<T>(true);
         public bool Has(Type dependable) => _dependers.Has(dependable, true);
         public IDepender Get<T>() where T : struct, IDependable => _dependers.TryGet<T>(out var depender, true) ? depender : Default<T>();

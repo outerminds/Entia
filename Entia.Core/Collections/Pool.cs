@@ -1,52 +1,49 @@
 using System;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using Entia.Core.Documentation;
 
 namespace Entia.Core
 {
-    public struct Pool<T> where T : class
+    public sealed class Pool<T> where T : class
     {
+        public readonly struct Disposable : IDisposable
+        {
+            public readonly T Instance;
+            readonly Pool<T> _pool;
+
+            public Disposable(Pool<T> pool)
+            {
+                _pool = pool;
+                Instance = pool.Take();
+            }
+
+            public void Dispose() => _pool.Put(Instance);
+        }
+
         readonly Func<T> _create;
         readonly Action<T> _initialize;
-        readonly int _chunk;
+        readonly Action<T> _dispose;
+        (T[] items, int count) _items;
 
-        int _next;
-        T[][] _chunks;
-
-        public Pool(Func<T> create, Action<T> initialize = null, int chunk = 8)
+        public Pool(Func<T> create, Action<T> initialize = null, Action<T> dispose = null, int capacity = 4)
         {
             _create = create;
             _initialize = initialize ?? (_ => { });
-            _chunk = chunk;
-            _next = -1;
-            _chunks = new T[][] { new T[chunk] };
+            _dispose = dispose ?? (_ => { });
+            _items = (new T[capacity], 0);
         }
 
-        [ThreadSafe]
-        public T Allocate()
+        public T Take()
         {
-            var index = Interlocked.Increment(ref _next);
-            var chunk = Chunk(index, out index);
-            var item = chunk[index] ?? (chunk[index] = _create());
-            _initialize(item);
-            return item;
+            var instance = _items.TryPop(out var item) ? item : _create();
+            _initialize(instance);
+            return instance;
         }
 
-        public bool Free() => _next.Change(-1);
-
-        [ThreadSafe]
-        T[] Chunk(int index, out int adjusted)
+        public void Put(T instance)
         {
-            var chunk = index / _chunk;
-            adjusted = index % _chunk;
-            if (chunk >= _chunks.Length)
-            {
-                // NOTE: the lock only tries to prevent multiple resize/assign of the array;
-                // it doesn't matter if another thread access different outer chunks arrays since the inner chunk arrays never move
-                lock (_chunks) { if (chunk >= _chunks.Length) ArrayUtility.Add(ref _chunks, new T[_chunk]); }
-            }
-            return _chunks[chunk];
+            _dispose(instance);
+            _items.Push(instance);
         }
+
+        public Disposable Use() => new Disposable(this);
     }
 }
