@@ -27,13 +27,14 @@ namespace Entia.Nodes
                 if (Child.Specialize<T>(controller).TryValue(out var child))
                 {
                     var messages = controller.World.Messages();
+                    var onProfile = messages.Emitter<OnProfile>();
                     var watch = new Stopwatch();
                     void Run(in T phase)
                     {
                         watch.Restart();
                         child(phase);
                         watch.Stop();
-                        messages.Emit(new OnProfile { Runner = this, Phase = typeof(T), Elapsed = watch.Elapsed });
+                        onProfile.Emit(new OnProfile { Runner = this, Phase = typeof(T), Elapsed = watch.Elapsed });
                     }
                     return new Run<T>(Run);
                 }

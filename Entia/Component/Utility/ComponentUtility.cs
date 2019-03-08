@@ -15,18 +15,8 @@ namespace Entia.Modules.Component
         [ThreadSafe]
         public static class Concrete<T> where T : struct, IComponent
         {
-            public static readonly Metadata Data;
-            public static readonly Action<Messages, Entity> OnAdd;
-            public static readonly Action<Messages, Entity> OnRemove;
-            public static readonly BitMask Mask;
-
-            static Concrete()
-            {
-                Data = GetMetadata(typeof(T));
-                OnAdd = MessageUtility.OnAdd<T>();
-                OnRemove = MessageUtility.OnRemove<T>();
-                Mask = GetConcrete(typeof(T));
-            }
+            public static readonly Metadata Data = GetMetadata(typeof(T));
+            public static readonly BitMask Mask = GetConcrete(typeof(T));
         }
 
         [ThreadSafe]
@@ -36,20 +26,10 @@ namespace Entia.Modules.Component
             public static bool IsAbstract => Kind == Kinds.Abstract;
 
             public static readonly Kinds Kind = GetKind(typeof(T));
+            public static readonly BitMask Mask = GetConcrete(typeof(T));
             public static readonly Metadata Data;
-            public static readonly Action<Messages, Entity> OnAdd;
-            public static readonly Action<Messages, Entity> OnRemove;
-            public static readonly BitMask Mask;
 
-            static Abstract()
-            {
-                if (TryGetMetadata(typeof(T), out Data))
-                {
-                    OnAdd = MessageUtility.OnAdd(Data);
-                    OnRemove = MessageUtility.OnRemove(Data);
-                }
-                Mask = GetConcrete(typeof(T));
-            }
+            static Abstract() { TryGetMetadata(typeof(T), out Data); }
         }
 
         struct State

@@ -2,9 +2,11 @@ using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Messages;
 using Entia.Modules.Component;
+using Entia.Modules.Message;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Entia.Modules
 {
@@ -36,6 +38,11 @@ namespace Entia.Modules
         readonly Entities _entities;
         readonly Messages _messages;
         readonly Cloners _cloners;
+        readonly Emitter<OnException> _onException;
+        readonly Emitter<OnAdd> _onAdd;
+        readonly Emitter<OnRemove> _onRemove;
+        readonly Emitter<Entia.Messages.Segment.OnCreate> _onCreate;
+        readonly Emitter<Entia.Messages.Segment.OnMove> _onMove;
         readonly Transient _transient = new Transient();
         readonly Segment _created = new Segment(int.MaxValue, new BitMask());
         readonly Segment _destroyed = new Segment(int.MaxValue, new BitMask(), 1);
@@ -43,6 +50,7 @@ namespace Entia.Modules
         readonly Dictionary<BitMask, Segment> _maskToSegment;
         (Data[] items, int count) _data = (new Data[64], 0);
         (Segment[] items, int count) _segments;
+        ((Action<Entity> onAdd, Action<Entity> onRemove)[] items, int count) _emitters = (new (Action<Entity>, Action<Entity>)[8], 0);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Components"/> class.
@@ -52,6 +60,11 @@ namespace Entia.Modules
             _entities = entities;
             _messages = messages;
             _cloners = cloners;
+            _onException = _messages.Emitter<OnException>();
+            _onAdd = _messages.Emitter<OnAdd>();
+            _onRemove = _messages.Emitter<OnRemove>();
+            _onCreate = _messages.Emitter<Entia.Messages.Segment.OnCreate>();
+            _onMove = _messages.Emitter<Entia.Messages.Segment.OnMove>();
             // NOTE: do not include '_created' and '_destroyed' here
             _segments = (new Segment[] { _empty }, 1);
             _maskToSegment = new Dictionary<BitMask, Segment> { { _empty.Mask, _empty } };
@@ -99,7 +112,7 @@ namespace Entia.Modules
         public ref T Get<T>(Entity entity) where T : struct, IComponent
         {
             if (TryStore<T>(entity, out var store, out var adjusted)) return ref store[adjusted];
-            if (_messages.Has<OnException>()) _messages.Emit(new OnException { Exception = ExceptionUtility.MissingComponent(entity, typeof(T)) });
+            _onException.Emit(new OnException { Exception = ExceptionUtility.MissingComponent(entity, typeof(T)) });
             return ref Dummy<T>.Value;
         }
 
@@ -186,7 +199,7 @@ namespace Entia.Modules
         public IComponent Get(Entity entity, Type type)
         {
             if (TryGet(entity, type, out var component)) return component;
-            if (_messages.Has<OnException>()) _messages.Emit(new OnException { Exception = ExceptionUtility.MissingComponent(entity, type) });
+            _onException.Emit(new OnException { Exception = ExceptionUtility.MissingComponent(entity, type) });
             return null;
         }
 
@@ -318,7 +331,7 @@ namespace Entia.Modules
                     store[data.Index] = component;
                     if (data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index))
                     {
-                        ComponentUtility.Concrete<T>.OnAdd(_messages, entity);
+                        GetEmitters<T>().onAdd(entity);
                         return true;
                     }
 
@@ -334,7 +347,7 @@ namespace Entia.Modules
 
                 if (slot.Mask.Add(metadata.Index))
                 {
-                    ComponentUtility.Concrete<T>.OnAdd(_messages, entity);
+                    GetEmitters<T>().onAdd(entity);
                     return true;
                 }
             }
@@ -370,7 +383,7 @@ namespace Entia.Modules
                     store.SetValue(component, data.Index);
                     if (data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index))
                     {
-                        MessageUtility.OnAdd(_messages, entity, metadata);
+                        GetEmitters(metadata).onAdd(entity);
                         return true;
                     }
 
@@ -386,7 +399,7 @@ namespace Entia.Modules
 
                 if (slot.Mask.Add(metadata.Index))
                 {
-                    MessageUtility.OnAdd(_messages, entity, metadata);
+                    GetEmitters(metadata).onAdd(entity);
                     return true;
                 }
             }
@@ -404,7 +417,7 @@ namespace Entia.Modules
         {
             ref var data = ref GetData(entity, out var success);
             if (success) return ComponentUtility.Abstract<T>.IsConcrete ?
-                Remove(entity, ref data, ComponentUtility.Abstract<T>.Data, ComponentUtility.Abstract<T>.OnRemove) :
+                Remove(entity, ref data, ComponentUtility.Abstract<T>.Data, GetEmitters(ComponentUtility.Abstract<T>.Data).onRemove) :
                 Remove(entity, ref data, ComponentUtility.Abstract<T>.Mask);
             return false;
         }
@@ -419,7 +432,7 @@ namespace Entia.Modules
         {
             ref var data = ref GetData(entity, out var success);
             if (success) return
-                ComponentUtility.TryGetMetadata(type, out var metadata) ? Remove(entity, ref data, metadata, MessageUtility.OnRemove(metadata)) :
+                ComponentUtility.TryGetMetadata(type, out var metadata) ? Remove(entity, ref data, metadata, GetEmitters(metadata).onRemove) :
                 ComponentUtility.TryGetConcrete(type, out var mask) && Remove(entity, ref data, mask);
             return false;
         }
@@ -430,7 +443,7 @@ namespace Entia.Modules
         /// <typeparam name="T">The component type.</typeparam>
         /// <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
         public bool Clear<T>() where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
-            Clear(ComponentUtility.Abstract<T>.Data, ComponentUtility.Abstract<T>.OnRemove) :
+            Clear(ComponentUtility.Abstract<T>.Data, GetEmitters(ComponentUtility.Abstract<T>.Data).onRemove) :
             Clear(ComponentUtility.Abstract<T>.Mask);
 
         /// <summary>
@@ -439,7 +452,7 @@ namespace Entia.Modules
         /// <param name="type">The component type.</param>
         /// <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
         public bool Clear(Type type) =>
-            ComponentUtility.TryGetMetadata(type, out var metadata) ? Clear(metadata, MessageUtility.OnRemove(metadata)) :
+            ComponentUtility.TryGetMetadata(type, out var metadata) ? Clear(metadata, GetEmitters(metadata).onRemove) :
             ComponentUtility.TryGetConcrete(type, out var mask) && Clear(mask);
 
         /// <summary>
@@ -531,7 +544,7 @@ namespace Entia.Modules
         /// <param name="depth">The depth of the clone.</param>
         /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
         public bool Clone<T>(Entity source, Entity target, Depth depth = Depth.Shallow) where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
-            Clone(source, target, depth, ComponentUtility.Abstract<T>.Data, ComponentUtility.Abstract<T>.OnAdd) :
+            Clone(source, target, depth, ComponentUtility.Abstract<T>.Data, GetEmitters(ComponentUtility.Abstract<T>.Data).onAdd) :
             Clone(source, target, depth, ComponentUtility.Abstract<T>.Mask);
 
         /// <summary>
@@ -543,7 +556,7 @@ namespace Entia.Modules
         /// <param name="depth">The depth of the clone.</param>
         /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
         public bool Clone(Entity source, Entity target, Type type, Depth depth = Depth.Shallow) =>
-            ComponentUtility.TryGetMetadata(type, out var metadata) ? Clone(source, target, depth, metadata, MessageUtility.OnAdd(metadata)) :
+            ComponentUtility.TryGetMetadata(type, out var metadata) ? Clone(source, target, depth, metadata, GetEmitters(metadata).onAdd) :
             ComponentUtility.TryGetConcrete(type, out var mask) && Clone(source, target, depth, mask);
 
         /// <summary>
@@ -566,7 +579,7 @@ namespace Entia.Modules
                 for (var i = 0; i < types.Length; i++)
                 {
                     ref readonly var metadata = ref types[i];
-                    Clone(sourceData, ref targetData, depth, ref slot, metadata, MessageUtility.OnAdd(metadata));
+                    Clone(sourceData, ref targetData, depth, ref slot, metadata, GetEmitters(metadata).onAdd);
                 }
 
                 return true;
@@ -678,7 +691,7 @@ namespace Entia.Modules
             return false;
         }
 
-        bool Clear(in Metadata metadata, Action<Messages, Entity> onRemove)
+        bool Clear(in Metadata metadata, Action<Entity> onRemove)
         {
             var cleared = false;
             foreach (ref var data in _data.Slice())
@@ -694,7 +707,7 @@ namespace Entia.Modules
             return cleared;
         }
 
-        bool Remove(Entity entity, ref Data data, in Metadata metadata, Action<Messages, Entity> onRemove)
+        bool Remove(Entity entity, ref Data data, in Metadata metadata, Action<Entity> onRemove)
         {
             if (Has(data, metadata.Index))
             {
@@ -705,11 +718,12 @@ namespace Entia.Modules
             return false;
         }
 
-        bool Remove(ref Transient.Slot slot, in Metadata metadata, Action<Messages, Entity> onRemove)
+        bool Remove(ref Transient.Slot slot, in Metadata metadata, Action<Entity> onRemove)
         {
-            if (slot.Mask.Remove(metadata.Index))
+            if (slot.Mask.Has(metadata.Index))
             {
-                onRemove(_messages, slot.Entity);
+                onRemove(slot.Entity);
+                slot.Mask.Remove(metadata.Index);
                 return true;
             }
 
@@ -735,7 +749,7 @@ namespace Entia.Modules
             for (var i = 0; i < types.Length; i++)
             {
                 ref readonly var metadata = ref types[i];
-                removed |= Remove(ref slot, metadata, MessageUtility.OnRemove(metadata));
+                removed |= Remove(ref slot, metadata, GetEmitters(metadata).onRemove);
             }
 
             return removed;
@@ -821,12 +835,12 @@ namespace Entia.Modules
             {
                 ref readonly var metadata = ref types[i];
                 if (mask.Has(metadata.Index)) continue;
-                trimmed |= Remove(ref slot, metadata, MessageUtility.OnRemove(metadata));
+                trimmed |= Remove(ref slot, metadata, GetEmitters(metadata).onRemove);
             }
             return trimmed;
         }
 
-        bool Clone(Entity source, Entity target, Depth depth, in Metadata metadata, Action<Messages, Entity> onAdd)
+        bool Clone(Entity source, Entity target, Depth depth, in Metadata metadata, Action<Entity> onAdd)
         {
             ref var sourceData = ref GetData(source, out var sourceSuccess);
             ref var targetData = ref GetData(target, out var targetSuccess);
@@ -851,18 +865,18 @@ namespace Entia.Modules
                 for (var i = 0; i < types.Length; i++)
                 {
                     ref readonly var metadata = ref types[i];
-                    Clone(sourceData, ref targetData, depth, ref slot, metadata, MessageUtility.OnAdd(metadata));
+                    Clone(sourceData, ref targetData, depth, ref slot, metadata, GetEmitters(metadata).onAdd);
                 }
                 return true;
             }
             return false;
         }
 
-        bool Clone(in Data source, ref Data target, Depth depth, ref Transient.Slot slot, in Metadata metadata, Action<Messages, Entity> onAdd)
+        bool Clone(in Data source, ref Data target, Depth depth, ref Transient.Slot slot, in Metadata metadata, Action<Entity> onAdd)
         {
             if (Clone(metadata, source, ref target, depth) && slot.Mask.Add(metadata.Index))
             {
-                onAdd(_messages, slot.Entity);
+                onAdd(slot.Entity);
                 return true;
             }
             return false;
@@ -927,7 +941,7 @@ namespace Entia.Modules
             data.Segment = target.segment;
             data.Index = target.index;
             entity = default;
-            _messages.Emit(message);
+            _onMove.Emit(message);
             return true;
         }
 
@@ -993,7 +1007,7 @@ namespace Entia.Modules
                 for (var i = 0; i < types.Length; i++)
                 {
                     ref readonly var metadata = ref types[i];
-                    Remove(ref slot, metadata, MessageUtility.OnRemove(metadata));
+                    Remove(ref slot, metadata, GetEmitters(metadata).onRemove);
                 }
 
                 slot.Resolution = Transient.Resolutions.Remove;
@@ -1014,8 +1028,50 @@ namespace Entia.Modules
             if (_maskToSegment.TryGetValue(mask, out var segment)) return segment;
             var clone = new BitMask { mask };
             segment = _maskToSegment[clone] = _segments.Push(new Segment(_segments.count, clone));
-            _messages.Emit(new Entia.Messages.Segment.OnCreate { Segment = segment });
+            _onCreate.Emit(new Entia.Messages.Segment.OnCreate { Segment = segment });
             return segment;
         }
+
+        (Action<Entity> onAdd, Action<Entity> onRemove) GetEmitters<T>() where T : struct, IComponent
+        {
+            var index = ComponentUtility.Concrete<T>.Data.Index;
+            _emitters.Ensure(ComponentUtility.Concrete<T>.Data.Index + 1);
+            ref var pair = ref _emitters.items[index];
+            if (pair.onAdd == null || pair.onRemove == null) pair = CreateEmitters<T>();
+            return pair;
+        }
+
+        (Action<Entity> onAdd, Action<Entity> onRemove) GetEmitters(in Metadata metadata)
+        {
+            _emitters.Ensure(metadata.Index + 1);
+            ref var pair = ref _emitters.items[metadata.Index];
+            if (pair.onAdd == null || pair.onRemove == null) pair = CreateEmitters(metadata);
+            return pair;
+        }
+
+        (Action<Entity> onAdd, Action<Entity> onRemove) CreateEmitters<T>() where T : struct, IComponent
+        {
+            var metadata = ComponentUtility.Concrete<T>.Data;
+            var onAdd = _messages.Emitter<OnAdd<T>>();
+            var onRemove = _messages.Emitter<OnRemove<T>>();
+            return (
+                new Action<Entity>(entity =>
+                {
+                    onAdd.Emit(new OnAdd<T> { Entity = entity });
+                    _onAdd.Emit(new OnAdd { Entity = entity, Component = metadata });
+                }),
+                new Action<Entity>(entity =>
+                {
+                    onRemove.Emit(new OnRemove<T> { Entity = entity });
+                    _onRemove.Emit(new OnRemove { Entity = entity, Component = metadata });
+                })
+            );
+        }
+
+        (Action<Entity> onAdd, Action<Entity> onRemove) CreateEmitters(in Metadata metadata) => ((Action<Entity> onAdd, Action<Entity> onRemove))GetType()
+            .GetMethods(TypeUtility.Instance)
+            .First(method => method.Name == nameof(CreateEmitters) && method.IsGenericMethod && method.GetParameters().Length == 0)
+            .MakeGenericMethod(metadata.Type)
+            .Invoke(this, Array.Empty<object>());
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Messages;
+using Entia.Modules.Message;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -77,7 +78,9 @@ namespace Entia.Modules
         [ThreadSafe]
         public int Count => _data.count - _free.count - _frozen.count;
 
-        readonly Messages _messages;
+        readonly Emitter<OnCreate> _onCreate;
+        readonly Emitter<OnPreDestroy> _onPreDestroy;
+        readonly Emitter<OnPostDestroy> _onPostDestroy;
         (int[] items, int count) _free = (new int[8], 0);
         (int[] items, int count) _frozen = (new int[8], 0);
         (Data[] items, int count) _data = (new Data[64], 0);
@@ -86,7 +89,12 @@ namespace Entia.Modules
         /// Initializes a new instance of the <see cref="Entities"/> class.
         /// </summary>
         /// <param name="messages">The messages.</param>
-        public Entities(Messages messages) { _messages = messages; }
+        public Entities(Messages messages)
+        {
+            _onCreate = messages.Emitter<OnCreate>();
+            _onPreDestroy = messages.Emitter<OnPreDestroy>();
+            _onPostDestroy = messages.Emitter<OnPostDestroy>();
+        }
 
         /// <summary>
         /// Creates a world-unique entity.
@@ -98,7 +106,7 @@ namespace Entia.Modules
             ref var data = ref _data.items[reserved];
             var entity = new Entity(reserved, ++data.Generation);
             data.Allocated = true;
-            _messages.Emit(new OnCreate { Entity = entity });
+            _onCreate.Emit(new OnCreate { Entity = entity });
             return entity;
         }
 
@@ -180,10 +188,10 @@ namespace Entia.Modules
 
         void Destroy(Entity entity, ref Data data)
         {
-            _messages.Emit(new OnPreDestroy { Entity = entity });
+            _onPreDestroy.Emit(new OnPreDestroy { Entity = entity });
             data.Allocated = false;
             _frozen.Push(entity.Index);
-            _messages.Emit(new OnPostDestroy { Entity = entity });
+            _onPostDestroy.Emit(new OnPostDestroy { Entity = entity });
         }
 
         int ReserveIndex()
