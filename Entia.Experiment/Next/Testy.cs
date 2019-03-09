@@ -222,7 +222,7 @@ namespace Entia.Experiment.Next
 
     public static class Program
     {
-        public static void Main()
+        public static void Test()
         {
             var world = new World();
             var controller = world.Controllers.Get(Nodes.Main);
