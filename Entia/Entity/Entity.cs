@@ -1,11 +1,20 @@
-﻿using Entia.Core.Documentation;
+﻿using Entia.Core;
+using Entia.Core.Documentation;
+using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependers;
+using Entia.Initializers;
+using Entia.Instantiators;
+using Entia.Modules;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
+using Entia.Modules.Template;
 using Entia.Queriers;
 using Entia.Queryables;
+using Entia.Templateables;
+using Entia.Templaters;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Entia
@@ -14,8 +23,10 @@ namespace Entia
     /// Represents a world-unique identifier used to logically group components.
     /// </summary>
     /// <seealso cref="IQueryable" />
+    /// <seealso cref="ITemplateable" />
+    /// <seealso cref="IDependable" />
     [ThreadSafe]
-    public readonly struct Entity : IQueryable, IEquatable<Entity>, IComparable<Entity>
+    public readonly struct Entity : IQueryable, ITemplateable, IDependable, IEquatable<Entity>, IComparable<Entity>
     {
         sealed class Querier : Querier<Entity>
         {
@@ -26,6 +37,61 @@ namespace Entia
             }
         }
 
+        sealed class Instantiator : Instantiator<Entia.Entity>
+        {
+            public readonly Entities Entities;
+            public Instantiator(Entities entities) { Entities = entities; }
+            public override Result<Entia.Entity> Instantiate(object[] instances) => Entities.Create();
+        }
+
+        sealed class Initializer : Initializer<Entia.Entity>
+        {
+            public readonly int[] Components;
+            public readonly World World;
+
+            public Initializer(int[] components, World world)
+            {
+                Components = components;
+                World = world;
+            }
+
+            public override Result<Unit> Initialize(Entia.Entity instance, object[] instances)
+            {
+                try
+                {
+                    var components = World.Components();
+                    for (int i = 0; i < Components.Length; i++)
+                    {
+                        var reference = Components[i];
+                        components.Set(instance, instances[reference] as IComponent);
+                    }
+                    return Result.Success();
+                }
+                catch (Exception exception) { return Result.Exception(exception); }
+            }
+        }
+
+        sealed class Templater : ITemplater
+        {
+            public Result<(IInstantiator instantiator, IInitializer initializer)> Template(in Context context, World world)
+            {
+                if (context.Index == 0 && Result.Cast<Entia.Entity>(context.Value).TryValue(out var entity))
+                {
+                    var indices = new List<int>();
+                    var templaters = world.Templaters();
+                    foreach (var component in world.Components().Get(entity))
+                    {
+                        var result = templaters.Template(new Context(component, component.GetType(), context));
+                        if (result.TryFailure(out var failure)) return failure;
+                        if (result.TryValue(out var reference)) indices.Add(reference.Index);
+                    }
+                    return (new Instantiator(world.Entities()), new Initializer(indices.ToArray(), world));
+                }
+
+                return (new Instantiators.Constant(context.Value), new Initializers.Identity());
+            }
+        }
+
         /// <summary>
         /// A zero initialized entity that will always be invalid.
         /// </summary>
@@ -33,6 +99,8 @@ namespace Entia
 
         [Querier]
         static readonly Querier _querier = new Querier();
+        [Templater]
+        static readonly Templater _templater = new Templater();
         [Depender]
         static readonly IDepender _depender = Depender.From(new Read(typeof(Entity)));
 

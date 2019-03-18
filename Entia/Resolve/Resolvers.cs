@@ -84,14 +84,14 @@ namespace Entia.Modules
         public IResolver Default(Type resolvable) =>
             _defaults.Default(resolvable, typeof(Resolvables.IResolvable<>), typeof(ResolverAttribute), typeof(Default<>));
 
-        public bool Has<T>() where T : struct, Resolvables.IResolvable => _resolvers.Has<T>();
-        public bool Has(Type resolvable) => _resolvers.Has(resolvable);
-        public Resolver<T> Get<T>() where T : struct, Resolvables.IResolvable => _resolvers.TryGet<T>(out var resolver) && resolver is Resolver<T> casted ? casted : Default<T>();
-        public IResolver Get(Type resolvable) => _resolvers.TryGet(resolvable, out var resolver, true) ? resolver : Default(resolvable);
+        public bool Has<T>() where T : struct, Resolvables.IResolvable => _resolvers.Has<T>(true, false);
+        public bool Has(Type resolvable) => _resolvers.Has(resolvable, true, false);
+        public Resolver<T> Get<T>() where T : struct, Resolvables.IResolvable => _resolvers.TryGet<T>(out var resolver, true, false) && resolver is Resolver<T> casted ? casted : Default<T>();
+        public IResolver Get(Type resolvable) => _resolvers.TryGet(resolvable, out var resolver, true, false) ? resolver : Default(resolvable);
         public bool Set<T>(Resolver<T> resolver) where T : struct, Resolvables.IResolvable => _resolvers.Set<T>(resolver);
         public bool Set(Type resolvable, IResolver resolver) => _resolvers.Set(resolvable, resolver);
-        public bool Remove<T>() where T : struct, Resolvables.IResolvable => _resolvers.Remove<T>();
-        public bool Remove(Type resolvable) => _resolvers.Remove(resolvable);
+        public bool Remove<T>() where T : struct, Resolvables.IResolvable => _resolvers.Remove<T>(false, false);
+        public bool Remove(Type resolvable) => _resolvers.Remove(resolvable, false, false);
         public bool Clear() => _defaults.Clear() | _resolvers.Clear();
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IResolver> GetEnumerator() => _resolvers.Values.Concat(_defaults.Values).GetEnumerator();

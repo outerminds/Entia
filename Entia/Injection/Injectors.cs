@@ -32,14 +32,14 @@ namespace Entia.Modules
 
         public IInjector Default<T>() where T : IInjectable => Default(typeof(T));
         public IInjector Default(Type injectable) => _defaults.Default(injectable, typeof(IInjectable<>), typeof(InjectorAttribute), _ => new Default());
-        public bool Has<T>() where T : IInjectable => _injectors.Has<T>(true);
-        public bool Has(Type injectable) => _injectors.Has(injectable, true);
-        public IInjector Get<T>() where T : IInjectable => _injectors.TryGet<T>(out var injector, true) ? injector : Default<T>();
-        public IInjector Get(Type injectable) => _injectors.TryGet(injectable, out var injector, true) ? injector : Default(injectable);
+        public bool Has<T>() where T : IInjectable => _injectors.Has<T>(true, false);
+        public bool Has(Type injectable) => _injectors.Has(injectable, true, false);
+        public IInjector Get<T>() where T : IInjectable => _injectors.TryGet<T>(out var injector, true, false) ? injector : Default<T>();
+        public IInjector Get(Type injectable) => _injectors.TryGet(injectable, out var injector, true, false) ? injector : Default(injectable);
         public bool Set<T>(Injector<T> injector) where T : IInjectable => _injectors.Set<T>(injector);
         public bool Set(Type injectable, IInjector injector) => _injectors.Set(injectable, injector);
-        public bool Remove<T>() where T : IInjectable => _injectors.Remove<T>();
-        public bool Remove(Type injectable) => _injectors.Remove(injectable);
+        public bool Remove<T>() where T : IInjectable => _injectors.Remove<T>(false, false);
+        public bool Remove(Type injectable) => _injectors.Remove(injectable, false, false);
         public bool Clear() => _defaults.Clear() | _injectors.Clear();
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IInjector> GetEnumerator() => _injectors.Values.Concat(_defaults.Values).GetEnumerator();

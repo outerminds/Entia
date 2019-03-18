@@ -24,7 +24,7 @@ namespace Entia
 
         public bool TryGet<T>(out T module) where T : IModule
         {
-            if (_modules.TryGet<T>(out var value) && value is T casted)
+            if (_modules.TryGet<T>(out var value, false, false) && value is T casted)
             {
                 module = casted;
                 return true;
@@ -39,11 +39,11 @@ namespace Entia
             if (module is IResolvable resolvable) ArrayUtility.Add(ref _resolvables, resolvable);
             return _modules.Set<T>(module);
         }
-        public bool Has<T>() where T : IModule => _modules.Has<T>();
+        public bool Has<T>() where T : IModule => _modules.Has<T>(false, false);
         public bool Remove<T>() where T : IModule
         {
-            if (_modules.TryGet<T>(out var module) && module is IResolvable resolvable) ArrayUtility.Remove(ref _resolvables, resolvable);
-            return _modules.Remove<T>();
+            if (_modules.TryGet<T>(out var module, false, false) && module is IResolvable resolvable) ArrayUtility.Remove(ref _resolvables, resolvable);
+            return _modules.Remove<T>(false, false);
         }
         public bool Clear()
         {

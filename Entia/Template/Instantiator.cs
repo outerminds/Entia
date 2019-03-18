@@ -8,6 +8,12 @@ namespace Entia.Instantiators
         Result<object> Instantiate(object[] instances);
     }
 
+    public abstract class Instantiator<T> : IInstantiator
+    {
+        public abstract Result<T> Instantiate(object[] instances);
+        Result<object> IInstantiator.Instantiate(object[] instances) => Instantiate(instances).Box();
+    }
+
     public sealed class Constant : IInstantiator
     {
         public readonly object Value;
@@ -15,18 +21,11 @@ namespace Entia.Instantiators
         public Result<object> Instantiate(object[] instances) => Value;
     }
 
-    public sealed class Factory<T> : IInstantiator where T : new()
-    {
-        public readonly Func<T> Create;
-        public Factory(Func<T> create) { Create = create; }
-        public Result<object> Instantiate(object[] instances) => Create();
-    }
-
     public sealed class Reference : IInstantiator
     {
         public readonly int Index;
         public Reference(int index) { Index = index; }
-        public Result<object> Instantiate(object[] instances) => Index < instances.Length ? instances[Index] : Result.Failure();
+        public Result<object> Instantiate(object[] instances) => Result.Try(state => state.instances[state.index], (index: Index, instances));
     }
 
     public sealed class Clone : IInstantiator

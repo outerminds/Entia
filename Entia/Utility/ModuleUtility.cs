@@ -13,11 +13,12 @@ namespace Entia.Modules
             where TKey : class where TValue : class =>
             map.ReadValueOrWrite(type,
                 (type, definition, attribute, @default),
-                state1 => Default<TValue>(state1.type, state1.definition, state1.attribute).Or(state1, state2 => state2.@default?.Invoke(state2.type)));
+                state1 => Default<TValue>(state1.type, state1.definition, state1.attribute).Or(state1, state2 => state2.@default?.Invoke(state2.type)),
+                super: false, sub: false);
 
         public static TValue Default<TKey, TValue>(this TypeMap<TKey, TValue> map, Type type, Type definition = null, Type attribute = null, Func<Type, TValue> @default = null)
             where TKey : class where TValue : class =>
-            map.TryGet(type, out var value) ? value :
+            map.TryGet(type, out var value, false, false) ? value :
             map[type] = Default<TValue>(type, definition, attribute).Or((@default, type), state => state.@default?.Invoke(state.type));
 
         public static TValue Default<TKey, TValue>(this TypeMap<TKey, TValue> map, Type type, Type definition, Type attribute, Type @default)

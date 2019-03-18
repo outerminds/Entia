@@ -164,19 +164,21 @@ namespace Entia.Experiment
 
         static void TypeMap()
         {
+            var (super, sub) = (false, false);
             var map = new TypeMap<IEnumerable, string>();
             map.Set<List<int>>("Poulah");
             map.Set<List<string>>("Viarge");
-            var value1 = map.Get(typeof(List<>), out var success1, true);
-            var value2 = map.Get(typeof(IList), out var success2, true);
-            var value3 = map.Get(typeof(List<>), out var success3, true);
-            var value4 = map.Get<IList>(out var success4, true);
-            var value5 = map.Get(typeof(List<string>), out var success5, true);
-            var value6 = map.Get(typeof(IList<string>), out var success6, true);
-            var value7 = map.Get<IList<string>>(out var success7, true);
-            map.Remove<List<int>>();
-            var value8 = map.Get(typeof(IList), out var success8, true);
-            var value9 = map.Get<IList>(out var success9, true);
+            map.Set<IList>("Jango");
+            var value1 = map.Get(typeof(List<>), out var success1, super, sub);
+            var value2 = map.Get(typeof(IList), out var success2, super, sub);
+            var value3 = map.Get(typeof(List<>), out var success3, super, sub);
+            var value4 = map.Get<IList>(out var success4, super, sub);
+            var value5 = map.Get(typeof(List<string>), out var success5, super, sub);
+            var value6 = map.Get(typeof(IList<string>), out var success6, super, sub);
+            var value7 = map.Get<IList<string>>(out var success7, super, sub);
+            map.Remove<List<int>>(super, sub);
+            var value8 = map.Get(typeof(IList), out var success8, super, sub);
+            var value9 = map.Get<IList>(out var success9, super, sub);
         }
 
         class Shiatsi { public ulong A; }
@@ -335,9 +337,9 @@ namespace Entia.Experiment
 
         static void Main()
         {
-            ComponentTest.Run();
+            // ComponentTest.Run();
             // ParallelTest.Run();
-            // TypeMap();
+            TypeMap();
 
             // Group3Test.Benchmark(1_000);
             // Group3Test.Benchmark(10_000);

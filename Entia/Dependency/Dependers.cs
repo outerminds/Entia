@@ -62,16 +62,16 @@ namespace Entia.Modules
             return _dependencies[member] = Next(member).Distinct().ToArray();
         }
 
-        public IDepender Default<T>() where T : struct, IDependable => _defaults.TryGet<T>(out var depender) ? depender : Default(typeof(T));
+        public IDepender Default<T>() where T : struct, IDependable => _defaults.TryGet<T>(out var depender, false, false) ? depender : Default(typeof(T));
         public IDepender Default(Type dependable) => _defaults.Default(dependable, typeof(IDependable<>), typeof(DependerAttribute), _ => new Default());
-        public bool Has<T>() where T : struct, IDependable => _dependers.Has<T>(true);
-        public bool Has(Type dependable) => _dependers.Has(dependable, true);
-        public IDepender Get<T>() where T : struct, IDependable => _dependers.TryGet<T>(out var depender, true) ? depender : Default<T>();
-        public IDepender Get(Type dependable) => _dependers.TryGet(dependable, out var depender, true) ? depender : Default(dependable);
+        public bool Has<T>() where T : struct, IDependable => _dependers.Has<T>(true, false);
+        public bool Has(Type dependable) => _dependers.Has(dependable, true, false);
+        public IDepender Get<T>() where T : struct, IDependable => _dependers.TryGet<T>(out var depender, true, false) ? depender : Default<T>();
+        public IDepender Get(Type dependable) => _dependers.TryGet(dependable, out var depender, true, false) ? depender : Default(dependable);
         public bool Set<T>(IDepender depender) where T : struct, IDependable => _dependers.Set<T>(depender);
         public bool Set(Type dependable, IDepender depender) => _dependers.Set(dependable, depender);
-        public bool Remove<T>() where T : struct, IDependable => _dependers.Remove<T>();
-        public bool Remove(Type dependable) => _dependers.Remove(dependable);
+        public bool Remove<T>() where T : struct, IDependable => _dependers.Remove<T>(false, false);
+        public bool Remove(Type dependable) => _dependers.Remove(dependable, false, false);
         public bool Clear() => _defaults.Clear() | _dependers.Clear() | _dependencies.TryClear();
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IDepender> GetEnumerator() => _dependers.Values.Concat(_defaults.Values).GetEnumerator();

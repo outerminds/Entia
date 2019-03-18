@@ -10,8 +10,6 @@ using System.Linq;
 
 namespace Entia.Modules
 {
-    public enum Depth : byte { Shallow, Deep }
-
     /// <summary>
     /// Module that stores and manages components.
     /// </summary>
@@ -37,7 +35,6 @@ namespace Entia.Modules
 
         readonly Entities _entities;
         readonly Messages _messages;
-        readonly Cloners _cloners;
         readonly Emitter<OnException> _onException;
         readonly Emitter<OnAdd> _onAdd;
         readonly Emitter<OnRemove> _onRemove;
@@ -55,11 +52,10 @@ namespace Entia.Modules
         /// <summary>
         /// Initializes a new instance of the <see cref="Components"/> class.
         /// </summary>
-        public Components(Entities entities, Messages messages, Cloners cloners)
+        public Components(Entities entities, Messages messages)
         {
             _entities = entities;
             _messages = messages;
-            _cloners = cloners;
             _onException = _messages.Emitter<OnException>();
             _onAdd = _messages.Emitter<OnAdd>();
             _onRemove = _messages.Emitter<OnRemove>();
@@ -536,37 +532,34 @@ namespace Entia.Modules
         }
 
         /// <summary>
-        /// Clones components of type <typeparamref name="T"/> from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
+        /// Copies components of type <typeparamref name="T"/> from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
         /// </summary>
         /// <typeparam name="T">The component type.</typeparam>
         /// <param name="source">The source entity.</param>
         /// <param name="target">The target entity.</param>
-        /// <param name="depth">The depth of the clone.</param>
         /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
-        public bool Clone<T>(Entity source, Entity target, Depth depth = Depth.Shallow) where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
-            Clone(source, target, depth, ComponentUtility.Abstract<T>.Data, GetEmitters(ComponentUtility.Abstract<T>.Data).onAdd) :
-            Clone(source, target, depth, ComponentUtility.Abstract<T>.Mask);
+        public bool Copy<T>(Entity source, Entity target) where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
+            Copy(source, target, ComponentUtility.Abstract<T>.Data, GetEmitters(ComponentUtility.Abstract<T>.Data).onAdd) :
+            Copy(source, target, ComponentUtility.Abstract<T>.Mask);
 
         /// <summary>
-        /// Clones components of provided <paramref name="type"/> from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
+        /// Copies components of provided <paramref name="type"/> from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
         /// </summary>
         /// <param name="source">The source entity.</param>
         /// <param name="target">The target entity.</param>
         /// <param name="type">The component type.</param>
-        /// <param name="depth">The depth of the clone.</param>
         /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
-        public bool Clone(Entity source, Entity target, Type type, Depth depth = Depth.Shallow) =>
-            ComponentUtility.TryGetMetadata(type, out var metadata) ? Clone(source, target, depth, metadata, GetEmitters(metadata).onAdd) :
-            ComponentUtility.TryGetConcrete(type, out var mask) && Clone(source, target, depth, mask);
+        public bool Copy(Entity source, Entity target, Type type) =>
+            ComponentUtility.TryGetMetadata(type, out var metadata) ? Copy(source, target, metadata, GetEmitters(metadata).onAdd) :
+            ComponentUtility.TryGetConcrete(type, out var mask) && Copy(source, target, mask);
 
         /// <summary>
-        /// Clones all the components from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
+        /// Copies all the components from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
         /// </summary>
         /// <param name="source">The source entity.</param>
         /// <param name="target">The target entity.</param>
-        /// <param name="depth">The depth of the clone.</param>
         /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
-        public bool Clone(Entity source, Entity target, Depth depth = Depth.Shallow)
+        public bool Copy(Entity source, Entity target)
         {
             ref var sourceData = ref GetData(source, out var sourceSuccess);
             ref var targetData = ref GetData(target, out var targetSuccess);
@@ -579,7 +572,7 @@ namespace Entia.Modules
                 for (var i = 0; i < types.Length; i++)
                 {
                     ref readonly var metadata = ref types[i];
-                    Clone(sourceData, ref targetData, depth, ref slot, metadata, GetEmitters(metadata).onAdd);
+                    Copy(sourceData, ref targetData, ref slot, metadata, GetEmitters(metadata).onAdd);
                 }
 
                 return true;
@@ -840,20 +833,20 @@ namespace Entia.Modules
             return trimmed;
         }
 
-        bool Clone(Entity source, Entity target, Depth depth, in Metadata metadata, Action<Entity> onAdd)
+        bool Copy(Entity source, Entity target, in Metadata metadata, Action<Entity> onAdd)
         {
             ref var sourceData = ref GetData(source, out var sourceSuccess);
             ref var targetData = ref GetData(target, out var targetSuccess);
             if (sourceSuccess && targetSuccess)
             {
                 ref var slot = ref GetTransientSlot(target, ref targetData);
-                Clone(sourceData, ref targetData, depth, ref slot, metadata, onAdd);
+                Copy(sourceData, ref targetData, ref slot, metadata, onAdd);
                 return true;
             }
             return false;
         }
 
-        bool Clone(Entity source, Entity target, Depth depth, BitMask mask)
+        bool Copy(Entity source, Entity target, BitMask mask)
         {
             ref var sourceData = ref GetData(source, out var sourceSuccess);
             ref var targetData = ref GetData(target, out var targetSuccess);
@@ -865,16 +858,16 @@ namespace Entia.Modules
                 for (var i = 0; i < types.Length; i++)
                 {
                     ref readonly var metadata = ref types[i];
-                    Clone(sourceData, ref targetData, depth, ref slot, metadata, GetEmitters(metadata).onAdd);
+                    Copy(sourceData, ref targetData, ref slot, metadata, GetEmitters(metadata).onAdd);
                 }
                 return true;
             }
             return false;
         }
 
-        bool Clone(in Data source, ref Data target, Depth depth, ref Transient.Slot slot, in Metadata metadata, Action<Entity> onAdd)
+        bool Copy(in Data source, ref Data target, ref Transient.Slot slot, in Metadata metadata, Action<Entity> onAdd)
         {
-            if (Clone(metadata, source, ref target, depth) && slot.Mask.Add(metadata.Index))
+            if (Copy(metadata, source, ref target) && slot.Mask.Add(metadata.Index))
             {
                 onAdd(slot.Entity);
                 return true;
@@ -882,20 +875,12 @@ namespace Entia.Modules
             return false;
         }
 
-        bool Clone(in Metadata metadata, in Data source, ref Data target, Depth depth)
+        bool Copy(in Metadata metadata, in Data source, ref Data target)
         {
             if (TryGetStore(source, metadata, out var sourceStore, out var sourceIndex) &&
                 GetStore(ref target, metadata, out var targetStore, out var targetIndex))
             {
-                if (depth == Depth.Shallow || metadata.Data.IsPlain)
-                    Array.Copy(sourceStore, sourceIndex, targetStore, targetIndex, 1);
-                else
-                {
-                    var component = sourceStore.GetValue(sourceIndex);
-                    var result = _cloners.Clone(component, metadata.Data);
-                    if (result.TryValue(out var clone)) targetStore.SetValue(clone, targetIndex);
-                    else return false;
-                }
+                Array.Copy(sourceStore, sourceIndex, targetStore, targetIndex, 1);
                 return true;
             }
             return false;
