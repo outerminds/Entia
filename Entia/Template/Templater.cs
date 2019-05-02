@@ -18,18 +18,12 @@ namespace Entia.Templaters
     [System.AttributeUsage(ModuleUtility.AttributeUsage)]
     public sealed class TemplaterAttribute : PreserveAttribute { }
 
-    public sealed class Identity : ITemplater
-    {
-        public Result<(IInstantiator instantiator, IInitializer initializer)> Template(in Context context, World world) =>
-            (new Instantiators.Constant(context.Value), new Initializers.Identity());
-    }
-
     public sealed class Default : ITemplater
     {
         public Result<(IInstantiator instantiator, IInitializer initializer)> Template(in Context context, World world)
         {
             var staticType = TypeUtility.GetData(context.Type);
-            if (staticType.IsPlain || TypeUtility.IsPrimitive(context.Value)) return (new Instantiators.Constant(context.Value), new Initializers.Identity());
+            if (staticType.IsPlain || TypeUtility.IsPrimitive(context.Value)) return (new Constant(context.Value), new Identity());
 
             var dynamicType = TypeUtility.GetData(context.Value.GetType());
             var templaters = world.Templaters();
@@ -37,7 +31,7 @@ namespace Entia.Templaters
             {
                 case System.Array array:
                     var elementType = TypeUtility.GetData(dynamicType.Element);
-                    if (elementType.IsPlain) return (new Instantiators.Clone(array), new Initializers.Identity());
+                    if (elementType.IsPlain) return (new Clone(array), new Identity());
 
                     var items = new List<(int index, int reference)>(array.Length);
                     for (var i = 0; i < array.Length; i++)
@@ -50,12 +44,12 @@ namespace Entia.Templaters
                         if (result.TryValue(out var reference)) items.Add((i, reference.Index));
                     }
 
-                    return (new Instantiators.Clone(array), new Initializers.Array(items.ToArray()));
+                    return (new Clone(array), new Initializers.Array(items.ToArray()));
                 default:
                     var instantiator = staticType.Type.IsValueType ?
-                        new Instantiators.Constant(context.Value) as IInstantiator :
-                        new Instantiators.Clone(context.Value);
-                    if (dynamicType.IsPlain) return (instantiator, new Initializers.Identity());
+                        new Constant(context.Value) as IInstantiator :
+                        new Clone(context.Value);
+                    if (dynamicType.IsPlain) return (instantiator, new Identity());
 
                     var fields = new List<(FieldInfo field, int reference)>(dynamicType.InstanceFields.Length);
                     for (int i = 0; i < dynamicType.InstanceFields.Length; i++)

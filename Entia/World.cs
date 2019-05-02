@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependers;
@@ -14,13 +15,51 @@ namespace Entia
 {
     public sealed class World : IInjectable, IEnumerable<IModule>
     {
-        [Injector]
-        static readonly Injector<World> _injector = Injector.From(world => world);
-        [Depender]
-        static readonly IDepender _depender = Depender.From(new Dependencies.Unknown());
+        struct State
+        {
+            public Dictionary<ulong, WeakReference<World>> Worlds;
+            public ulong Count;
+        }
 
+        [Injector]
+        static Injector<World> Injector => Injectors.Injector.From(world => world);
+        [Depender]
+        static IDepender Depender => Dependers.Depender.From(new Dependencies.Unknown());
+
+        static readonly Concurrent<State> _state = new State { Worlds = new Dictionary<ulong, WeakReference<World>>() };
+
+        [ThreadSafe]
+        public static World[] Instances
+        {
+            get
+            {
+                using (var write = _state.Write())
+                {
+                    var worlds = new List<World>(write.Value.Worlds.Count);
+                    foreach (var reference in write.Value.Worlds.Values)
+                        if (reference.TryGetTarget(out var world)) worlds.Add(world);
+                    return worlds.ToArray();
+                }
+            }
+        }
+
+        readonly ulong _identifier;
         readonly TypeMap<IModule, IModule> _modules = new TypeMap<IModule, IModule>();
         IResolvable[] _resolvables = Array.Empty<IResolvable>();
+
+        public World()
+        {
+            using (var write = _state.Write())
+            {
+                _identifier = ++write.Value.Count;
+                write.Value.Worlds[_identifier] = new WeakReference<World>(this);
+            }
+        }
+
+        ~World()
+        {
+            using (var write = _state.Write()) write.Value.Worlds.Remove(_identifier);
+        }
 
         public bool TryGet<T>(out T module) where T : IModule
         {
@@ -56,6 +95,10 @@ namespace Entia
             for (int i = 0; i < _resolvables.Length; i++) resolved |= _resolvables[i].Resolve();
             return resolved;
         }
+
+        public override string ToString() =>
+            TryGet<Modules.Resources>(out var resources) && resources.TryGet<Resources.Debug>(out var debug) ?
+            debug.Name : base.ToString();
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public TypeMap<IModule, IModule>.ValueEnumerator GetEnumerator() => _modules.Values.GetEnumerator();

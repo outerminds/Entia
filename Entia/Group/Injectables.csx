@@ -25,9 +25,9 @@ $@"    /// <summary>
     public readonly struct Group<{parameters}> : IInjectable, IEnumerable<{itemType}> {constraints}
     {{
         [Injector]
-        static readonly Injector<object> _injector = Injector.From<object>((member, world) => new Group<{parameters}>(world.Groups().Get(world.Queriers().Get<{itemType}>(member))));
+        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<{parameters}>(world.Groups().Get(world.Queriers().Get<{itemType}>(member))));
         [Depender]
-        static readonly IDepender _depender = Depender.From<{itemType}>(new Dependencies.Read(typeof(Entity)));
+        static IDepender Depender => Dependers.Depender.From<{itemType}>(new Dependencies.Read(typeof(Entity)));
 
         /// <inheritdoc cref=""Modules.Group.Group{{T}}.Count""/>
         public int Count => _group.Count;

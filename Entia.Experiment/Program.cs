@@ -335,11 +335,48 @@ namespace Entia.Experiment
             Set(position.X, 123);
         }
 
+        static void DebugView()
+        {
+            var world1 = new World();
+            world1.Resources().Set(new Resources.Debug { Name = "World1" });
+            var world2 = new World();
+            var random = new Random();
+
+            var trace = new StackTrace();
+
+
+            for (int i = 0; i < 100; i++)
+            {
+                var world = random.NextDouble() < 0.5 ? world1 : world2;
+                var entity = world.Entities().Create();
+                world.Components().Set(entity, new Components.Debug { Name = $"Index {i}" });
+
+                if (random.NextDouble() < 0.5)
+                    world.Components().Set(entity, new Position { X = i + 1, Y = i + 2, Z = i + 3 });
+                else
+                    world.Components().Set(entity, new Velocity { X = i + 1, Y = i + 2, Z = i + 3 });
+            }
+
+            var entities = world1.Entities().ToArray();
+
+            byte[] Allocate(int amount) => new byte[amount];
+
+            for (int i = 0; i < 1000; i++)
+            {
+                Allocate(4096);
+                world1 = world2 = new World();
+                Allocate(8192);
+            }
+
+            var instances = World.Instances;
+        }
+
         static void Main()
         {
+            DebugView();
             // ComponentTest.Run();
             // ParallelTest.Run();
-            TypeMap();
+            // TypeMap();
 
             // Group3Test.Benchmark(1_000);
             // Group3Test.Benchmark(10_000);

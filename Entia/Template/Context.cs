@@ -50,5 +50,14 @@ namespace Entia.Modules.Template
         {
             Index = index;
         }
+
+        public Reference Add(object value, IInstantiator instantiator, IInitializer initializer)
+        {
+            var key = new Key(value);
+            var index = Pairs.Count;
+            Indices[key] = index;
+            Pairs.Add((instantiator, initializer));
+            return new Reference(index, instantiator, initializer);
+        }
     }
 }

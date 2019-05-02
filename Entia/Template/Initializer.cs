@@ -53,8 +53,8 @@ namespace Entia.Initializers
 
         public Object((FieldInfo field, int reference)[] fields = null, (PropertyInfo property, int reference)[] properties = null)
         {
-            Fields = fields ?? new (FieldInfo, int)[0];
-            Properties = properties ?? new (PropertyInfo, int)[0];
+            Fields = fields ?? System.Array.Empty<(FieldInfo, int)>();
+            Properties = properties ?? System.Array.Empty<(PropertyInfo, int)>();
         }
 
         public Result<Unit> Initialize(object instance, object[] instances)

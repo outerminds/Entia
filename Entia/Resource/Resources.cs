@@ -13,6 +13,18 @@ namespace Entia.Modules
 
         readonly TypeMap<IResource, IBox> _boxes = new TypeMap<IResource, IBox>();
 
+        public bool TryGet<T>(out T resource) where T : struct, IResource
+        {
+            if (TryGetBox<T>(out var box))
+            {
+                resource = box.Value;
+                return true;
+            }
+
+            resource = default;
+            return false;
+        }
+
         public ref T Get<T>() where T : struct, IResource => ref GetBox<T>().Value;
         public IResource Get(Type resource) => (IResource)GetBox(resource).Value;
         public void Set<T>(in T resource) where T : struct, IResource => GetBox<T>().Value = resource;

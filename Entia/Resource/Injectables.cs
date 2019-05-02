@@ -17,9 +17,9 @@ namespace Entia.Injectables
         public readonly struct Read : IInjectable
         {
             [Injector]
-            static readonly Injector<Read> _injector = Injector.From(world => new Read(world.Resources().GetBox<T>()));
+            static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Resources().GetBox<T>()));
             [Depender]
-            static readonly IDepender _depender = Depender.From(world => world.Dependers().Dependencies<T>().Prepend(new Dependencies.Read(typeof(T))));
+            static IDepender Depender => Dependers.Depender.From(world => world.Dependers().Dependencies<T>().Prepend(new Dependencies.Read(typeof(T))));
 
             public ref readonly T Value => ref _box.Value;
 
@@ -29,9 +29,9 @@ namespace Entia.Injectables
         }
 
         [Injector]
-        static readonly Injector<Resource<T>> _injector = Injector.From(world => new Resource<T>(world.Resources().GetBox<T>()));
+        static Injector<Resource<T>> Injector => Injectors.Injector.From(world => new Resource<T>(world.Resources().GetBox<T>()));
         [Depender]
-        static readonly IDepender _depender = Depender.From(world => world.Dependers().Dependencies<T>().Prepend(new Dependencies.Write(typeof(T))));
+        static IDepender Depender => Dependers.Depender.From(world => world.Dependers().Dependencies<T>().Prepend(new Dependencies.Write(typeof(T))));
 
         public ref T Value => ref _box.Value;
 

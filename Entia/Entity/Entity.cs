@@ -15,6 +15,8 @@ using Entia.Templateables;
 using Entia.Templaters;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Entia
@@ -22,12 +24,58 @@ namespace Entia
     /// <summary>
     /// Represents a world-unique identifier used to logically group components.
     /// </summary>
-    /// <seealso cref="IQueryable" />
+    /// <seealso cref="Queryables.IQueryable" />
     /// <seealso cref="ITemplateable" />
     /// <seealso cref="IDependable" />
     [ThreadSafe]
-    public readonly struct Entity : IQueryable, ITemplateable, IDependable, IEquatable<Entity>, IComparable<Entity>
+    [DebuggerTypeProxy(typeof(Entity.Debug))]
+    public readonly struct Entity : Queryables.IQueryable, ITemplateable, IDependable, IEquatable<Entity>, IComparable<Entity>
     {
+        sealed class Debug
+        {
+            readonly struct Item
+            {
+                [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+                public Entity Entity { get; }
+                public World World { get; }
+                public string Name => Entity.Name(World);
+                public int Index => Entity.Index;
+                public uint Generation => Entity.Generation;
+                public long Identifier => Entity.Identifier;
+                [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+                public IComponent[] Components => World.Components().Get(Entity).ToArray();
+
+                public Item(Entity entity, World world)
+                {
+                    Entity = entity;
+                    World = world;
+                }
+
+                public override string ToString() => $"{{ World: {World}, Name: {Entity.Name(World)} }}";
+            }
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public object Items
+            {
+                get
+                {
+                    var worlds = World.Instances
+                        .Where(world => world.Entities().Has(_entity))
+                        .ToArray();
+                    switch (worlds.Length)
+                    {
+                        case 0: return null;
+                        case 1: return new Item(_entity, worlds[0]);
+                        default: return worlds.Select(world => new Item(_entity, world)).ToArray();
+                    }
+                }
+            }
+
+            readonly Entity _entity;
+
+            public Debug(Entity entity) { _entity = entity; }
+        }
+
         sealed class Querier : Querier<Entity>
         {
             public override bool TryQuery(Segment segment, World world, out Query<Entity> query)
@@ -102,7 +150,7 @@ namespace Entia
         [Templater]
         static readonly Templater _templater = new Templater();
         [Depender]
-        static readonly IDepender _depender = Depender.From(new Read(typeof(Entity)));
+        static readonly IDepender _depender = Dependers.Depender.From(new Read(typeof(Entity)));
 
         /// <summary>
         /// Implements the operator ==.
@@ -140,7 +188,7 @@ namespace Entia
         public readonly uint Generation;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal Entity(int index, uint generation)
+        public Entity(int index, uint generation)
         {
             Index = index;
             Generation = generation;

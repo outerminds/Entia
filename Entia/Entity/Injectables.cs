@@ -22,9 +22,9 @@ namespace Entia.Injectables
         public readonly struct Read : IInjectable, IEnumerable<Entity>
         {
             [Injector]
-            static readonly Injector<Read> _injector = Injector.From(world => new Read(world.Entities()));
+            static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Entities()));
             [Depender]
-            static readonly IDepender _depender = Depender.From(new Dependencies.Read(typeof(Entity)));
+            static IDepender Depender => Dependers.Depender.From(new Dependencies.Read(typeof(Entity)));
 
             /// <inheritdoc cref="Entities.Count"/>
             public int Count => _entities.Count;
@@ -47,9 +47,9 @@ namespace Entia.Injectables
         }
 
         [Injector]
-        static readonly Injector<AllEntities> _injector = Injector.From(world => new AllEntities(world.Entities()));
+        static Injector<AllEntities> Injector => Injectors.Injector.From(world => new AllEntities(world.Entities()));
         [Depender]
-        static readonly IDepender _depender = Depender.From(
+        static IDepender Depender => Dependers.Depender.From(
             new Dependencies.Write(typeof(Entity)),
             new Dependencies.Emit(typeof(Messages.OnCreate)),
             new Dependencies.Emit(typeof(Messages.OnPreDestroy)),

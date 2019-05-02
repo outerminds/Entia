@@ -11,7 +11,7 @@ namespace Entia.Injectables
     public readonly struct Defer : IInjectable
     {
         [Injector]
-        static readonly Injector<Defer> _injector = Injector.From(world => new Defer(world.Resolvers()));
+        static Injector<Defer> Injector => Injectors.Injector.From(world => new Defer(world.Resolvers()));
 
         readonly Modules.Resolvers _resolvers;
 
