@@ -151,14 +151,14 @@ namespace Entia.Core
         public override int GetHashCode()
         {
             if (_hash is int hash) return hash;
-            hash = ArrayUtility.GetHashCode(_buckets);
+            _hash = hash = ArrayUtility.GetHashCode(_buckets);
             return hash;
         }
 
         void RefreshRange()
         {
             var count = 0;
-            for (var i = 0; i < _buckets.items.Length; i++) if (_buckets.items[i] != 0) count++;
+            for (var i = 0; i < _buckets.items.Length; i++) if (_buckets.items[i] != 0) count = i + 1;
             _buckets.count = count;
             _hash = null;
         }
