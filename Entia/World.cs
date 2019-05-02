@@ -13,7 +13,7 @@ using System.Reflection;
 
 namespace Entia
 {
-    public sealed class World : IInjectable, IEnumerable<IModule>
+    public sealed class World : IInjectable, IEnumerable<TypeMap<IModule, IModule>.ValueEnumerator, IModule>
     {
         struct State
         {

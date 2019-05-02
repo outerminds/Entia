@@ -12,7 +12,7 @@ namespace Entia.Modules.Group
     /// </summary>
     /// <typeparam name="T">The query type.</typeparam>
     [ThreadSafe]
-    public readonly struct Segment<T> : IEnumerable<T> where T : struct, IQueryable
+    public readonly struct Segment<T> : IEnumerable<Slice<T>.Read.Enumerator, T> where T : struct, IQueryable
     {
         /// <summary>
         /// Gets the entity count.

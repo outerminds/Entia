@@ -13,13 +13,13 @@ namespace Entia.Injectables
     /// <summary>
     /// Gives access to all entity operations.
     /// </summary>
-    public readonly struct AllEntities : IInjectable, IEnumerable<Entity>
+    public sealed class AllEntities : IInjectable, IEnumerable<Entities.Enumerator, Entity>
     {
         /// <summary>
         /// Gives access to entity read operations.
         /// </summary>
         [ThreadSafe]
-        public readonly struct Read : IInjectable, IEnumerable<Entity>
+        public sealed class Read : IInjectable, IEnumerable<Entities.Enumerator, Entity>
         {
             [Injector]
             static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Entities()));

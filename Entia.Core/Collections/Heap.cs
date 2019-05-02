@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Entia.Core
 {
-    public sealed class Heap<T> : IEnumerable<T>
+    public sealed class Heap<T> : IEnumerable<Heap<T>.Enumerator, T>
     {
         public struct Enumerator : IEnumerator<T>
         {

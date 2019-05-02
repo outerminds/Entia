@@ -1,3 +1,4 @@
+using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Queryables;
 using System;
@@ -13,7 +14,7 @@ namespace Entia.Modules.Group
     /// </summary>
     /// <typeparam name="T">The query type.</typeparam>
     [ThreadSafe]
-    public readonly struct Split<T> : IEnumerable<T> where T : struct, IQueryable
+    public readonly struct Split<T> : IEnumerable<Split<T>.Enumerator, T> where T : struct, IQueryable
     {
         /// <summary>
         /// An enumerator that enumerates over the split's items.

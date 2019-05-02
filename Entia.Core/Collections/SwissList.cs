@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace Entia.Core
 {
-    public sealed class SwissList<T> : IEnumerable<T>
+    public sealed class SwissList<T> : IEnumerable<SwissList<T>.Enumerator, T>
     {
         public struct Enumerator : IEnumerator<T>
         {

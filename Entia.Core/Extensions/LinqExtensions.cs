@@ -117,18 +117,6 @@ namespace Entia.Core
             return false;
         }
 
-        public static bool TryFirst<TEnumerable, TItem>(this TEnumerable source, out TItem item) where TEnumerable : IEnumerable<TItem>
-        {
-            foreach (var current in source)
-            {
-                item = current;
-                return true;
-            }
-
-            item = default;
-            return false;
-        }
-
         public static bool TryLast<T>(this IEnumerable<T> source, out T item)
         {
             var has = false;
@@ -143,36 +131,7 @@ namespace Entia.Core
             return has;
         }
 
-        public static bool TryLast<TEnumerable, TItem>(this TEnumerable source, out TItem item) where TEnumerable : IEnumerable<TItem>
-        {
-            var has = false;
-            item = default;
-
-            foreach (var current in source)
-            {
-                item = current;
-                has = true;
-            }
-
-            return has;
-        }
-
         public static bool TryAt<T>(this IEnumerable<T> source, int index, out T item)
-        {
-            foreach (var current in source)
-            {
-                if (index-- <= 0)
-                {
-                    item = current;
-                    return true;
-                }
-            }
-
-            item = default;
-            return false;
-        }
-
-        public static bool TryAt<TEnumerable, TItem>(this TEnumerable source, int index, out TItem item) where TEnumerable : IEnumerable<TItem>
         {
             foreach (var current in source)
             {

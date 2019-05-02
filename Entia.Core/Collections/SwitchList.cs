@@ -5,7 +5,7 @@ using System;
 
 namespace Entia.Core
 {
-    public sealed class SwitchList<T> : IEnumerable<T>
+    public sealed class SwitchList<T> : IEnumerable<SwitchList<T>.Enumerator, T>
     {
         public struct Enumerator : IEnumerator<T>
         {

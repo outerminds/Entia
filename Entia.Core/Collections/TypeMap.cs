@@ -7,7 +7,7 @@ using Entia.Core.Documentation;
 
 namespace Entia.Core
 {
-    public sealed class TypeMap<TBase, TValue> : IEnumerable<(Type type, TValue value)>
+    public sealed class TypeMap<TBase, TValue> : IEnumerable<TypeMap<TBase, TValue>.Enumerator, (Type type, TValue value)>
     {
         public struct Enumerator : IEnumerator<(Type type, TValue value)>
         {
@@ -77,7 +77,7 @@ namespace Entia.Core
             public void Dispose() => _map = null;
         }
 
-        public readonly struct KeyEnumerable : IEnumerable<Type>
+        public readonly struct KeyEnumerable : IEnumerable<KeyEnumerator, Type>
         {
             readonly TypeMap<TBase, TValue> _map;
 
@@ -124,7 +124,7 @@ namespace Entia.Core
             public void Dispose() => _map = null;
         }
 
-        public readonly struct ValueEnumerable : IEnumerable<TValue>
+        public readonly struct ValueEnumerable : IEnumerable<ValueEnumerator, TValue>
         {
             readonly TypeMap<TBase, TValue> _map;
 

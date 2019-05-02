@@ -19,7 +19,7 @@ namespace Entia.Injectables
     /// Gives access to group operations.
     /// </summary>
     [ThreadSafe]
-    public readonly struct Group<T> : IInjectable, IEnumerable<T> where T : struct, IQueryable
+    public sealed class Group<T> : IInjectable, IEnumerable<Modules.Group.Group<T>.Enumerator, T> where T : struct, IQueryable
     {
         [Injector]
         static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T>(world.Groups().Get(world.Queriers().Get<T>(member))));
@@ -56,7 +56,7 @@ namespace Entia.Injectables
     /// Gives access to group operations.
     /// </summary>
     [ThreadSafe]
-    public readonly struct Group<T1, T2> : IInjectable, IEnumerable<All<T1, T2>> where T1 : struct, IQueryable where T2 : struct, IQueryable
+    public sealed class Group<T1, T2> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2>>.Enumerator, All<T1, T2>> where T1 : struct, IQueryable where T2 : struct, IQueryable
     {
         [Injector]
         static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2>(world.Groups().Get(world.Queriers().Get<All<T1, T2>>(member))));
@@ -93,7 +93,7 @@ namespace Entia.Injectables
     /// Gives access to group operations.
     /// </summary>
     [ThreadSafe]
-    public readonly struct Group<T1, T2, T3> : IInjectable, IEnumerable<All<T1, T2, T3>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable
+    public sealed class Group<T1, T2, T3> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3>>.Enumerator, All<T1, T2, T3>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable
     {
         [Injector]
         static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3>>(member))));
@@ -130,7 +130,7 @@ namespace Entia.Injectables
     /// Gives access to group operations.
     /// </summary>
     [ThreadSafe]
-    public readonly struct Group<T1, T2, T3, T4> : IInjectable, IEnumerable<All<T1, T2, T3, T4>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable
+    public sealed class Group<T1, T2, T3, T4> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4>>.Enumerator, All<T1, T2, T3, T4>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable
     {
         [Injector]
         static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4>>(member))));
@@ -167,7 +167,7 @@ namespace Entia.Injectables
     /// Gives access to group operations.
     /// </summary>
     [ThreadSafe]
-    public readonly struct Group<T1, T2, T3, T4, T5> : IInjectable, IEnumerable<All<T1, T2, T3, T4, T5>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable
+    public sealed class Group<T1, T2, T3, T4, T5> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4, T5>>.Enumerator, All<T1, T2, T3, T4, T5>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable
     {
         [Injector]
         static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4, T5>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4, T5>>(member))));
@@ -204,7 +204,7 @@ namespace Entia.Injectables
     /// Gives access to group operations.
     /// </summary>
     [ThreadSafe]
-    public readonly struct Group<T1, T2, T3, T4, T5, T6> : IInjectable, IEnumerable<All<T1, T2, T3, T4, T5, T6>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable
+    public sealed class Group<T1, T2, T3, T4, T5, T6> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.Enumerator, All<T1, T2, T3, T4, T5, T6>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable
     {
         [Injector]
         static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4, T5, T6>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4, T5, T6>>(member))));
@@ -241,7 +241,7 @@ namespace Entia.Injectables
     /// Gives access to group operations.
     /// </summary>
     [ThreadSafe]
-    public readonly struct Group<T1, T2, T3, T4, T5, T6, T7> : IInjectable, IEnumerable<All<T1, T2, T3, T4, T5, T6, T7>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable
+    public sealed class Group<T1, T2, T3, T4, T5, T6, T7> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.Enumerator, All<T1, T2, T3, T4, T5, T6, T7>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable
     {
         [Injector]
         static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4, T5, T6, T7>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4, T5, T6, T7>>(member))));

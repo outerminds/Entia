@@ -57,7 +57,7 @@ namespace Entia.Modules.Group
     /// Queries and caches all entities that satisfy the query of type <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T">The query type.</typeparam>
-    public sealed class Group<T> : IGroup, IEnumerable<T> where T : struct, IQueryable
+    public sealed class Group<T> : IGroup, IEnumerable<Group<T>.Enumerator, T> where T : struct, IQueryable
     {
         /// <summary>
         /// An enumerator that enumerates over the group items.
@@ -131,17 +131,17 @@ namespace Entia.Modules.Group
         /// An enumerable that enumerates over the group entities.
         /// </summary>
         [ThreadSafe]
-        public readonly struct EntityEnumerable : IEnumerable<Entity>
+        public sealed class EntityEnumerable : IEnumerable<EntityEnumerator, Entity>
         {
-            readonly Segment<T>[] _segments;
+            readonly Group<T> _group;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="EntityEnumerable"/> struct.
             /// </summary>
-            /// <param name="segments">The segments.</param>
-            public EntityEnumerable(Segment<T>[] segments) { _segments = segments; }
+            /// <param name="group">The group.</param>
+            public EntityEnumerable(Group<T> group) { _group = group; }
             /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
-            public EntityEnumerator GetEnumerator() => new EntityEnumerator(_segments);
+            public EntityEnumerator GetEnumerator() => new EntityEnumerator(_group._segments);
             IEnumerator<Entity> IEnumerable<Entity>.GetEnumerator() => GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
@@ -217,7 +217,7 @@ namespace Entia.Modules.Group
         /// An enumerable that enumerates over splits of a given size.
         /// </summary>
         [ThreadSafe]
-        public readonly struct SplitEnumerable : IEnumerable<Split<T>>
+        public readonly struct SplitEnumerable : IEnumerable<SplitEnumerator, Split<T>>
         {
             readonly Segment<T>[] _segments;
             readonly int _size;
@@ -318,8 +318,7 @@ namespace Entia.Modules.Group
         [ThreadSafe]
         public Segment<T>[] Segments => _segments;
         /// <inheritdoc cref="IGroup.Entities"/>
-        [ThreadSafe]
-        public EntityEnumerable Entities => new EntityEnumerable(_segments);
+        public readonly EntityEnumerable Entities;
         /// <inheritdoc cref="IGroup.Querier"/>
         public readonly Querier<T> Querier;
 
@@ -343,6 +342,7 @@ namespace Entia.Modules.Group
         public Group(Querier<T> querier, World world)
         {
             Querier = querier;
+            Entities = new EntityEnumerable(this);
             _world = world;
             _components = world.Components();
             _messages = world.Messages();

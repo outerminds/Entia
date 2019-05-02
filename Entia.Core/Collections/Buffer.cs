@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Entia.Core
 {
-    public sealed class Buffer<T> : IEnumerable<T>
+    public sealed class Buffer<T> : IEnumerable<Buffer<T>.Enumerator, T>
     {
         public struct Enumerator : IEnumerator<T>
         {

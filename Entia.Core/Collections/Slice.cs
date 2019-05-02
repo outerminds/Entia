@@ -7,10 +7,10 @@ using Entia.Core.Documentation;
 namespace Entia.Core
 {
     [ThreadSafe]
-    public readonly struct Slice<T> : IEnumerable<T>
+    public readonly struct Slice<T> : IEnumerable<Slice<T>.Enumerator, T>
     {
         [ThreadSafe]
-        public readonly struct Read : IEnumerable<T>
+        public readonly struct Read : IEnumerable<Read.Enumerator, T>
         {
             public struct Enumerator : IEnumerator<T>
             {
