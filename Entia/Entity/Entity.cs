@@ -29,7 +29,7 @@ namespace Entia
     /// <seealso cref="IDependable" />
     [ThreadSafe]
     [DebuggerTypeProxy(typeof(Entity.Debug))]
-    public readonly struct Entity : Queryables.IQueryable, ITemplateable, IDependable, IEquatable<Entity>, IComparable<Entity>
+    public readonly struct Entity : IEquatable<Entity>, IComparable<Entity>, Queryables.IQueryable<Entity.Querier>, ITemplateable<Entity.Templater>, IDependable
     {
         sealed class Debug
         {
@@ -59,9 +59,7 @@ namespace Entia
             {
                 get
                 {
-                    var worlds = World.Instances
-                        .Where(world => world.Entities().Has(_entity))
-                        .ToArray();
+                    var worlds = World.Instances(_entity, (world, state) => world.Entities().Has(state));
                     switch (worlds.Length)
                     {
                         case 0: return null;
@@ -85,14 +83,14 @@ namespace Entia
             }
         }
 
-        sealed class Instantiator : Instantiator<Entia.Entity>
+        public sealed class Instantiator : Instantiator<Entia.Entity>
         {
             public readonly Entities Entities;
             public Instantiator(Entities entities) { Entities = entities; }
             public override Result<Entia.Entity> Instantiate(object[] instances) => Entities.Create();
         }
 
-        sealed class Initializer : Initializer<Entia.Entity>
+        public sealed class Initializer : Initializer<Entia.Entity>
         {
             public readonly int[] Components;
             public readonly World World;
@@ -145,10 +143,6 @@ namespace Entia
         /// </summary>
         public static readonly Entity Zero;
 
-        [Querier]
-        static readonly Querier _querier = new Querier();
-        [Templater]
-        static readonly Templater _templater = new Templater();
         [Depender]
         static readonly IDepender _depender = Dependers.Depender.From(new Read(typeof(Entity)));
 

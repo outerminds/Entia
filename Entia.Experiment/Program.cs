@@ -368,7 +368,7 @@ namespace Entia.Experiment
                 Allocate(8192);
             }
 
-            var instances = World.Instances;
+            var instances = World.Instances();
         }
 
         static void Main()

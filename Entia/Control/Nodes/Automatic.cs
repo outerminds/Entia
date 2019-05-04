@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace Entia.Nodes
 {
-    public readonly struct Automatic : IAtomic
+    public readonly struct Automatic : IAtomic, IBuildable<Automatic.Builder>
     {
         sealed class Builder : IBuilder
         {
@@ -53,8 +53,5 @@ namespace Entia.Nodes
                 return world.Builders().Build(Node.Sequence(node.Name, groups.ToArray()), root);
             }
         }
-
-        [Builder]
-        static readonly Builder _builder = new Builder();
     }
 }

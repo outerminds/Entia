@@ -117,6 +117,37 @@ namespace Entia.Core
             return false;
         }
 
+        public static bool TryFirst<T>(this IEnumerable<T> source, Func<T, bool> predicate, out T item)
+        {
+            foreach (var current in source)
+            {
+                if (predicate(current))
+                {
+                    item = current;
+                    return true;
+                }
+            }
+
+            item = default;
+            return false;
+        }
+
+        public static bool TryFirst<T>(this IEnumerable<T> source, Func<T, int, bool> predicate, out T item)
+        {
+            var index = 0;
+            foreach (var current in source)
+            {
+                if (predicate(current, index++))
+                {
+                    item = current;
+                    return true;
+                }
+            }
+
+            item = default;
+            return false;
+        }
+
         public static bool TryLast<T>(this IEnumerable<T> source, out T item)
         {
             var has = false;
@@ -126,6 +157,23 @@ namespace Entia.Core
             {
                 item = current;
                 has = true;
+            }
+
+            return has;
+        }
+
+        public static bool TryLast<T>(this IEnumerable<T> source, Func<T, bool> predicate, out T item)
+        {
+            var has = false;
+            item = default;
+
+            foreach (var current in source)
+            {
+                if (predicate(current))
+                {
+                    item = current;
+                    has = true;
+                }
             }
 
             return has;

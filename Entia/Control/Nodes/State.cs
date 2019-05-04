@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace Entia.Nodes
 {
-    public readonly struct State : IWrapper
+    public readonly struct State : IWrapper, IBuildable<State.Builder>
     {
         sealed class Runner : IRunner
         {
@@ -38,9 +38,6 @@ namespace Entia.Nodes
                 .Bind(data => world.Builders().Build(Node.Sequence(node.Name, node.Children), root)
                     .Map(child => new Runner(data.Get, child)));
         }
-
-        [Builder]
-        static readonly Builder _builder = new Builder();
 
         public readonly Func<Controller.States> Get;
         public State(Func<Controller.States> get) { Get = get; }

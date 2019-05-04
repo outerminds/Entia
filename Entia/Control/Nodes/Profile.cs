@@ -12,7 +12,7 @@ using System.Diagnostics;
 
 namespace Entia.Nodes
 {
-    public readonly struct Profile : IWrapper
+    public readonly struct Profile : IWrapper, IBuildable<Profile.Builder>
     {
         sealed class Runner : IRunner
         {
@@ -48,8 +48,5 @@ namespace Entia.Nodes
                 .Bind(_ => world.Builders().Build(Node.Sequence(node.Children), root))
                 .Map(child => new Runner(child));
         }
-
-        [Builder]
-        static readonly Builder _builder = new Builder();
     }
 }

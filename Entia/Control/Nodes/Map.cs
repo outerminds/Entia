@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace Entia.Nodes
 {
-    public readonly struct Map : IWrapper
+    public readonly struct Map : IWrapper, IBuildable<Map.Builder>
     {
         sealed class Builder : IBuilder
         {
@@ -18,9 +18,6 @@ namespace Entia.Nodes
                 .Bind(data => world.Builders().Build(Node.Sequence(node.Name, node.Children), root)
                     .Map(child => data.Mapper(child)));
         }
-
-        [Builder]
-        static readonly Builder _builder = new Builder();
 
         public readonly Func<IRunner, IRunner> Mapper;
         public Map(Func<IRunner, IRunner> mapper) { Mapper = mapper; }

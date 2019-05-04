@@ -38,21 +38,18 @@ namespace Entia.Core
             using (var enumerator = source.GetEnumerator()) return enumerator.MoveNext();
         }
 
-        public static bool Any<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, bool> predicate) where TEnumerator : IEnumerator<TItem>
-        {
-            using (var enumerator = source.GetEnumerator())
-            {
-                while (enumerator.MoveNext()) if (predicate(enumerator.Current)) return true;
-                return false;
-            }
-        }
+        public static bool Any<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, bool> predicate) where TEnumerator : IEnumerator<TItem> =>
+            source.Any(predicate, (current, _, state) => state(current));
 
-        public static bool Any<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, int, bool> predicate) where TEnumerator : IEnumerator<TItem>
+        public static bool Any<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, int, bool> predicate) where TEnumerator : IEnumerator<TItem> =>
+            source.Any(predicate, (current, index, state) => state(current, index));
+
+        public static bool Any<TEnumerator, TItem, TState>(this IEnumerable<TEnumerator, TItem> source, in TState state, Func<TItem, int, TState, bool> predicate) where TEnumerator : IEnumerator<TItem>
         {
             using (var enumerator = source.GetEnumerator())
             {
                 var index = 0;
-                while (enumerator.MoveNext()) if (predicate(enumerator.Current, index++)) return true;
+                while (enumerator.MoveNext()) if (predicate(enumerator.Current, index++, state)) return true;
                 return false;
             }
         }
@@ -66,6 +63,9 @@ namespace Entia.Core
         public static bool None<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, int, bool> predicate) where TEnumerator : IEnumerator<TItem> =>
             !source.Any(predicate);
 
+        public static bool None<TEnumerator, TItem, TState>(this IEnumerable<TEnumerator, TItem> source, in TState state, Func<TItem, int, TState, bool> predicate) where TEnumerator : IEnumerator<TItem> =>
+            !source.Any(state, predicate);
+
         public static bool Contains<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, in TItem value, IEqualityComparer<TItem> comparer = null) where TEnumerator : IEnumerator<TItem>
         {
             using (var enumerator = source.GetEnumerator())
@@ -76,33 +76,22 @@ namespace Entia.Core
             }
         }
 
-        public static int Count<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source) where TEnumerator : IEnumerator<TItem>
-        {
-            using (var enumerator = source.GetEnumerator())
-            {
-                var count = 0;
-                while (enumerator.MoveNext()) count++;
-                return count;
-            }
-        }
+        public static int Count<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source) where TEnumerator : IEnumerator<TItem> =>
+            source.Count(_ => true);
 
-        public static int Count<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, bool> predicate) where TEnumerator : IEnumerator<TItem>
-        {
-            using (var enumerator = source.GetEnumerator())
-            {
-                var count = 0;
-                while (enumerator.MoveNext()) if (predicate(enumerator.Current)) count++;
-                return count;
-            }
-        }
+        public static int Count<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, bool> predicate) where TEnumerator : IEnumerator<TItem> =>
+            source.Count(predicate, (current, _, state) => state(current));
 
-        public static int Count<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, int, bool> predicate) where TEnumerator : IEnumerator<TItem>
+        public static int Count<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, int, bool> predicate) where TEnumerator : IEnumerator<TItem> =>
+            source.Count(predicate, (current, index, state) => state(current, index));
+
+        public static int Count<TEnumerator, TItem, TState>(this IEnumerable<TEnumerator, TItem> source, in TState state, Func<TItem, int, TState, bool> predicate) where TEnumerator : IEnumerator<TItem>
         {
             using (var enumerator = source.GetEnumerator())
             {
                 var index = 0;
                 var count = 0;
-                while (enumerator.MoveNext()) if (predicate(enumerator.Current, index++)) count++;
+                while (enumerator.MoveNext()) if (predicate(enumerator.Current, index++, state)) count++;
                 return count;
             }
         }
@@ -169,14 +158,24 @@ namespace Entia.Core
             }
         }
 
-        public static bool TryFirst<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, out TItem item) where TEnumerator : IEnumerator<TItem>
+        public static bool TryFirst<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, out TItem item) where TEnumerator : IEnumerator<TItem> =>
+            source.TryFirst(_ => true, out item);
+
+        public static bool TryFirst<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, bool> predicate, out TItem item) where TEnumerator : IEnumerator<TItem> =>
+            source.TryFirst(predicate, (current, _, state) => state(current), out item);
+
+        public static bool TryFirst<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, int, bool> predicate, out TItem item) where TEnumerator : IEnumerator<TItem> =>
+            source.TryFirst(predicate, (current, index, state) => state(current, index), out item);
+
+        public static bool TryFirst<TEnumerator, TItem, TState>(this IEnumerable<TEnumerator, TItem> source, in TState state, Func<TItem, int, TState, bool> predicate, out TItem item) where TEnumerator : IEnumerator<TItem>
         {
             using (var enumerator = source.GetEnumerator())
             {
-                if (enumerator.MoveNext())
+                var index = 0;
+                while (enumerator.MoveNext())
                 {
                     item = enumerator.Current;
-                    return true;
+                    if (predicate(item, index++, state)) return true;
                 }
 
                 item = default;
@@ -184,19 +183,34 @@ namespace Entia.Core
             }
         }
 
-        public static bool TryLast<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, out TItem item) where TEnumerator : IEnumerator<TItem>
+        public static bool TryLast<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, out TItem item) where TEnumerator : IEnumerator<TItem> =>
+            source.TryLast(_ => true, out item);
+
+        public static bool TryLast<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, bool> predicate, out TItem item) where TEnumerator : IEnumerator<TItem> =>
+            source.TryLast(predicate, (current, _, state) => state(current), out item);
+
+        public static bool TryLast<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, int, bool> predicate, out TItem item) where TEnumerator : IEnumerator<TItem> =>
+            source.TryLast(predicate, (current, index, state) => state(current, index), out item);
+
+        public static bool TryLast<TEnumerator, TItem, TState>(this IEnumerable<TEnumerator, TItem> source, in TState state, Func<TItem, int, TState, bool> predicate, out TItem item) where TEnumerator : IEnumerator<TItem>
         {
             using (var enumerator = source.GetEnumerator())
             {
-                if (enumerator.MoveNext())
+                var has = false;
+                var index = 0;
+                item = default;
+
+                while (enumerator.MoveNext())
                 {
-                    do item = enumerator.Current;
-                    while (enumerator.MoveNext());
-                    return true;
+                    var current = enumerator.Current;
+                    if (predicate(current, index++, state))
+                    {
+                        item = current;
+                        has = true;
+                    }
                 }
 
-                item = default;
-                return false;
+                return has;
             }
         }
 

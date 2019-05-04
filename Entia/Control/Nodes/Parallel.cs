@@ -3,6 +3,7 @@ using Entia.Builders;
 using Entia.Core;
 using Entia.Dependencies;
 using Entia.Modules;
+using Entia.Modules.Analysis;
 using Entia.Modules.Build;
 using Entia.Modules.Control;
 using Entia.Modules.Schedule;
@@ -13,7 +14,7 @@ using System.Linq;
 
 namespace Entia.Nodes
 {
-    public readonly struct Parallel : IAtomic
+    public readonly struct Parallel : IAtomic, IAnalyzable<Parallel.Analyzer>, IBuildable<Parallel.Builder>
     {
         sealed class Runner : IRunner
         {
@@ -92,10 +93,5 @@ namespace Entia.Nodes
                 });
 
         }
-
-        [Analyzer]
-        static readonly Analyzer _analyzer = new Analyzer();
-        [Builder]
-        static readonly Builder _builder = new Builder();
     }
 }

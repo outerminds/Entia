@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace Entia.Nodes
 {
-    public readonly struct Resolve : IWrapper
+    public readonly struct Resolve : IWrapper, IBuildable<Resolve.Builder>
     {
         sealed class Runner : IRunner
         {
@@ -41,8 +41,5 @@ namespace Entia.Nodes
                 .Bind(_ => world.Builders().Build(Node.Sequence(node.Name, node.Children), root))
                 .Map(child => new Runner(child));
         }
-
-        [Builder]
-        static readonly Builder _builder = new Builder();
     }
 }

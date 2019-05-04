@@ -17,9 +17,11 @@ namespace Entia.Modules
 
         public Templaters(World world) { _world = world; }
 
-        public Result<Template<T>> Template<T>(T value)
+        public Result<Template<T>> Template<T>(T value) => Template<T>(value, typeof(T));
+
+        public Result<Template<T>> Template<T>(object value, Type type)
         {
-            var context = new Context(value, typeof(T));
+            var context = new Context(value, type);
             return Template(context).Map((_, state) => new Template<T>(state.Pairs.ToArray()), context);
         }
 
@@ -41,13 +43,15 @@ namespace Entia.Modules
         public ITemplater Default(Type type) => _defaults.Default(type, typeof(ITemplateable<>), typeof(TemplaterAttribute), _ => new Default());
         public ITemplater Get<T>() => _templaters.TryGet<T>(out var templater, true, false) ? templater : Default<T>();
         public ITemplater Get(Type type) => _templaters.TryGet(type, out var templater, true, false) ? templater : Default(type);
-        public bool Set<T>(ITemplater templater) => _templaters.Set<T>(templater);
-        public bool Set(Type type, ITemplater templater) => _templaters.Set(type, templater);
-        public bool Has<T>() => _templaters.Has<T>(true, false);
-        public bool Has(Type type) => _templaters.Has(type, true, false);
-        public bool Remove<T>() => _templaters.Remove<T>(false, false);
-        public bool Remove(Type type) => _templaters.Remove(type, false, false);
-        public bool Clear() => _defaults.Clear() | _templaters.Clear();
+        public bool Set<T>(ITemplater templater, bool fallback = false) =>
+            fallback ? _defaults.Set<T>(templater) : _templaters.Set<T>(templater);
+        public bool Set(Type type, ITemplater templater, bool fallback = false) =>
+            fallback ? _defaults.Set(type, templater) : _templaters.Set(type, templater);
+        public bool Has<T>() => _templaters.Has<T>(true, false) || _defaults.Has<T>(true, false);
+        public bool Has(Type type) => _templaters.Has(type, true, false) || _defaults.Has(type, true, false);
+        public bool Remove<T>() => _templaters.Remove<T>(false, false) || _defaults.Remove<T>(false, false);
+        public bool Remove(Type type) => _templaters.Remove(type, false, false) || _templaters.Remove(type, false, false);
+        public bool Clear() => _templaters.Clear() | _defaults.Clear();
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<ITemplater> GetEnumerator() => _templaters.Values.Concat(_defaults.Values).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

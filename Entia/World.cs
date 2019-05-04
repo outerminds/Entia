@@ -29,17 +29,37 @@ namespace Entia
         static readonly Concurrent<State> _state = new State { Worlds = new Dictionary<ulong, WeakReference<World>>() };
 
         [ThreadSafe]
-        public static World[] Instances
+        public static World[] Instances() => Instances(_ => true);
+
+        [ThreadSafe]
+        public static World[] Instances(Func<World, bool> predicate) => Instances(predicate, (world, state) => state(world));
+
+        [ThreadSafe]
+        public static World[] Instances<TState>(in TState state, Func<World, TState, bool> predicate)
         {
-            get
+            using (var write = _state.Write())
             {
-                using (var write = _state.Write())
-                {
-                    var worlds = new List<World>(write.Value.Worlds.Count);
-                    foreach (var reference in write.Value.Worlds.Values)
-                        if (reference.TryGetTarget(out var world)) worlds.Add(world);
-                    return worlds.ToArray();
-                }
+                var worlds = new List<World>(write.Value.Worlds.Count);
+                foreach (var reference in write.Value.Worlds.Values)
+                    if (reference.TryGetTarget(out var world) && predicate(world, state)) worlds.Add(world);
+                return worlds.ToArray();
+            }
+        }
+
+        [ThreadSafe]
+        public static bool TryInstance<TState>(Func<World, bool> predicate, out World world) =>
+            TryInstance(predicate, (instance, state) => state(instance), out world);
+
+        [ThreadSafe]
+        public static bool TryInstance<TState>(in TState state, Func<World, TState, bool> predicate, out World world)
+        {
+            using (var write = _state.Write())
+            {
+                foreach (var reference in write.Value.Worlds.Values)
+                    if (reference.TryGetTarget(out world) && predicate(world, state)) return true;
+
+                world = default;
+                return false;
             }
         }
 

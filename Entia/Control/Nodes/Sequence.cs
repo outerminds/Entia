@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace Entia.Nodes
 {
-    public readonly struct Sequence : INode
+    public readonly struct Sequence : INode, IBuildable<Sequence.Builder>
     {
         sealed class Runner : IRunner
         {
@@ -39,8 +39,5 @@ namespace Entia.Nodes
                     .Map(children => new Runner(children))
                     .Cast<IRunner>();
         }
-
-        [Builder]
-        static readonly Builder _builder = new Builder();
     }
 }
