@@ -1,5 +1,4 @@
 Sample:
-- should the Components module react to OnPreDestroy or OnPostDestroy?
 - should a parent EntityReference that is disposed want to propagate the dispose to its children?
 - how to spawn A LOT of prefabs without the overhead of Unity objects while still designing them in the editor?
 - add an injectable for Unity components that acts as a shorthand for all 'Unity<T>' operations

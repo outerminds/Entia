@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using static Entia.Nodes.Node;
 
@@ -371,9 +372,36 @@ namespace Entia.Experiment
             var instances = World.Instances();
         }
 
+        static void Performance()
+        {
+            var count = 0;
+            void Run()
+            {
+                var world = new World();
+                var entities = world.Entities();
+                while (true)
+                {
+                    var entity = entities.Create();
+                    entities.Destroy(entity);
+                    world.Resolve();
+                    count++;
+                }
+            }
+            Task.Run(Run);
+
+            var timer = new Timer(_ =>
+            {
+                var current = count;
+                count = 0;
+                Console.WriteLine(current);
+            }, default, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+            while (true) { }
+        }
+
         static void Main()
         {
-            DebugView();
+            Performance();
+            // DebugView();
             // ComponentTest.Run();
             // ParallelTest.Run();
             // TypeMap();
