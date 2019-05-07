@@ -49,11 +49,18 @@ Documentation:
 		: added error message
 
 Frictions:
+- faire '.Value' sur les 'Resource<T>'
+- trop de using non nécessaire dans les templates de création de script dans Unity
+- OnAdd<T> receivers can be unreliable if the 'T' component was removed before the receiver consumed the message
+	- can also happen with OnRemove<T>
 - add tests similar to 'Inject' that scans assemblies but for other elements (such as components)
 - make a type builder for generic types to make tests even more generative
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- add builtin messages OnDestroy<T> where T : struct, IComponent
+	- is sent when a removal of a component is part of the destruction of an entity
+	- is sent after the OnRemove<T>
 - cleaner support to reinitialize references
 	- currently, EntityReference must be Pre/Post Initialize/Dispose
 - remove analyzer warning for type members in components/resources/etc.
@@ -63,6 +70,7 @@ Features:
 - exclude entities that have the [IsDisabled] component by default
 	- might exclude entities from group for a non-explicit reason
 	- allow user to define this implicit exclusion somehow?
+	- might be accomplished by using global filters in groups/queriers modules
 - Consider using Travis CI https://travis-ci.org/ for automated testing.
 - make Components.Set / Components.Remove / Entities.Create / Entities.Destroy thread safe?
 	- this might be very hard or impossible to accomplish without locking

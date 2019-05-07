@@ -59,6 +59,7 @@ namespace Entia.Modules
         {
             public uint Generation;
             public bool Allocated;
+            public bool Alive;
         }
 
         /// <summary>
@@ -106,6 +107,7 @@ namespace Entia.Modules
             ref var data = ref _data.items[reserved];
             var entity = new Entity(reserved, ++data.Generation);
             data.Allocated = true;
+            data.Alive = true;
             _onCreate.Emit(new OnCreate { Entity = entity });
             return entity;
         }
@@ -118,13 +120,7 @@ namespace Entia.Modules
         public bool Destroy(Entity entity)
         {
             ref var data = ref GetData(entity, out var success);
-            if (success)
-            {
-                Destroy(entity, ref data);
-                return true;
-            }
-
-            return false;
+            return success && Destroy(entity, ref data);
         }
 
         /// <summary>
@@ -186,17 +182,25 @@ namespace Entia.Modules
             return ref Dummy<Data>.Value;
         }
 
-        void Destroy(Entity entity, ref Data data)
+        bool Destroy(Entity entity, ref Data data)
         {
-            _onPreDestroy.Emit(new OnPreDestroy { Entity = entity });
-            data.Allocated = false;
-            _frozen.Push(entity.Index);
-            _onPostDestroy.Emit(new OnPostDestroy { Entity = entity });
+            // NOTE: this guard is necessary in case a reaction to 'OnPreDestroy' calls 'Destroy'
+            if (data.Alive)
+            {
+                data.Alive = false;
+                _onPreDestroy.Emit(new OnPreDestroy { Entity = entity });
+                data.Allocated = false;
+                _frozen.Push(entity.Index);
+                _onPostDestroy.Emit(new OnPostDestroy { Entity = entity });
+                return true;
+            }
+
+            return false;
         }
 
         int ReserveIndex()
         {
-            // Prioritizing the increase of the maximum index until it hits the capacity makes sure that all available indices are used.
+            // NOTE: prioritizing the increase of the maximum index until it hits the capacity makes sure that all available indices are used
             var index = _data.count < _data.items.Length || _free.count == 0 ? _data.count++ : _free.Pop();
             _data.Ensure();
             return index;

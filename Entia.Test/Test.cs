@@ -218,7 +218,9 @@ namespace Entia.Test
             var sequence = generator.ToSequence(
                 seed => (new World(), new Model(seed)),
                 (world, model) =>
-                    (world.Entities().Count == model.Entities.Count).Label("Entities.Count")
+                    World.Instances().Contains(world).Label("World.Instances().Contains()")
+                    .And(World.TryInstance(world.Equals, out _).Label("World.TryInstance"))
+                    .And((world.Entities().Count == model.Entities.Count).Label("Entities.Count"))
                     .And(world.Entities().All(model.Entities.Contains).Label("model.Entities.Contains()"))
                     .And(model.Entities.All(world.Entities().Has)).Label("world.Entities().Has()")
                     .And(world.Entities().Distinct().SequenceEqual(world.Entities())).Label("world.Entities().Distinct()")

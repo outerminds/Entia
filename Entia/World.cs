@@ -47,7 +47,7 @@ namespace Entia
         }
 
         [ThreadSafe]
-        public static bool TryInstance<TState>(Func<World, bool> predicate, out World world) =>
+        public static bool TryInstance(Func<World, bool> predicate, out World world) =>
             TryInstance(predicate, (instance, state) => state(instance), out world);
 
         [ThreadSafe]
