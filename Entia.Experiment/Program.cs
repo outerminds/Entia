@@ -343,8 +343,6 @@ namespace Entia.Experiment
             var world2 = new World();
             var random = new Random();
 
-            var trace = new StackTrace();
-
 
             for (int i = 0; i < 100; i++)
             {
