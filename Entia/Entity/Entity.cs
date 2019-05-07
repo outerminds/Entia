@@ -3,16 +3,11 @@ using Entia.Core.Documentation;
 using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependers;
-using Entia.Initializers;
-using Entia.Instantiators;
 using Entia.Modules;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
-using Entia.Modules.Template;
 using Entia.Queriers;
 using Entia.Queryables;
-using Entia.Templateables;
-using Entia.Templaters;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,13 +20,12 @@ namespace Entia
     /// Represents a world-unique identifier used to logically group components.
     /// </summary>
     /// <seealso cref="Queryables.IQueryable" />
-    /// <seealso cref="ITemplateable" />
     /// <seealso cref="IDependable" />
     [ThreadSafe]
-    [DebuggerTypeProxy(typeof(Entity.Debug))]
-    public readonly struct Entity : IEquatable<Entity>, IComparable<Entity>, Queryables.IQueryable<Entity.Querier>, ITemplateable<Entity.Templater>, IDependable
+    [DebuggerTypeProxy(typeof(Entity.View))]
+    public readonly struct Entity : IEquatable<Entity>, IComparable<Entity>, Queryables.IQueryable<Entity.Querier>, IDependable
     {
-        sealed class Debug
+        sealed class View
         {
             readonly struct Item
             {
@@ -71,7 +65,7 @@ namespace Entia
 
             readonly Entity _entity;
 
-            public Debug(Entity entity) { _entity = entity; }
+            public View(Entity entity) { _entity = entity; }
         }
 
         sealed class Querier : Querier<Entity>
@@ -80,61 +74,6 @@ namespace Entia
             {
                 query = new Query<Entity>(index => segment.Entities.items[index]);
                 return true;
-            }
-        }
-
-        public sealed class Instantiator : Instantiator<Entia.Entity>
-        {
-            public readonly Entities Entities;
-            public Instantiator(Entities entities) { Entities = entities; }
-            public override Result<Entia.Entity> Instantiate(object[] instances) => Entities.Create();
-        }
-
-        public sealed class Initializer : Initializer<Entia.Entity>
-        {
-            public readonly int[] Components;
-            public readonly World World;
-
-            public Initializer(int[] components, World world)
-            {
-                Components = components;
-                World = world;
-            }
-
-            public override Result<Unit> Initialize(Entia.Entity instance, object[] instances)
-            {
-                try
-                {
-                    var components = World.Components();
-                    for (int i = 0; i < Components.Length; i++)
-                    {
-                        var reference = Components[i];
-                        components.Set(instance, instances[reference] as IComponent);
-                    }
-                    return Result.Success();
-                }
-                catch (Exception exception) { return Result.Exception(exception); }
-            }
-        }
-
-        sealed class Templater : ITemplater
-        {
-            public Result<(IInstantiator instantiator, IInitializer initializer)> Template(in Context context, World world)
-            {
-                if (context.Index == 0 && Result.Cast<Entia.Entity>(context.Value).TryValue(out var entity))
-                {
-                    var indices = new List<int>();
-                    var templaters = world.Templaters();
-                    foreach (var component in world.Components().Get(entity))
-                    {
-                        var result = templaters.Template(new Context(component, component.GetType(), context));
-                        if (result.TryFailure(out var failure)) return failure;
-                        if (result.TryValue(out var reference)) indices.Add(reference.Index);
-                    }
-                    return (new Instantiator(world.Entities()), new Initializer(indices.ToArray(), world));
-                }
-
-                return (new Instantiators.Constant(context.Value), new Initializers.Identity());
             }
         }
 
