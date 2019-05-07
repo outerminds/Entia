@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Injectables;
 using System;
 using System.Collections;
@@ -13,6 +14,7 @@ namespace Entia.Modules
 
         readonly TypeMap<IResource, IBox> _boxes = new TypeMap<IResource, IBox>();
 
+        [ThreadSafe]
         public bool TryGet<T>(out T resource) where T : struct, IResource
         {
             if (TryGetBox<T>(out var box))
@@ -25,11 +27,26 @@ namespace Entia.Modules
             return false;
         }
 
+        [ThreadSafe]
+        public bool TryGet(Type type, out IResource resource)
+        {
+            if (TryGetBox(type, out var box))
+            {
+                resource = (IResource)box.Value;
+                return true;
+            }
+
+            resource = default;
+            return false;
+        }
+
         public ref T Get<T>() where T : struct, IResource => ref GetBox<T>().Value;
         public IResource Get(Type resource) => (IResource)GetBox(resource).Value;
         public void Set<T>(in T resource) where T : struct, IResource => GetBox<T>().Value = resource;
         public void Set(IResource resource) => GetBox(resource.GetType()).Value = resource;
+        [ThreadSafe]
         public bool Has<T>() where T : struct, IResource => _boxes.Has<T>(false, false);
+        [ThreadSafe]
         public bool Has(Type resource) => _boxes.Has(resource, false, false);
 
         public bool Remove<T>() where T : struct, IResource
@@ -54,8 +71,10 @@ namespace Entia.Modules
             return false;
         }
 
+        [ThreadSafe]
         public bool TryGetBox(Type resource, out IBox box) => _boxes.TryGet(resource, out box, false, false);
 
+        [ThreadSafe]
         public bool TryGetBox<T>(out Box<T> box) where T : struct, IResource
         {
             if (_boxes.TryGet<T>(out var value, false, false) && value is Box<T> casted)
@@ -85,7 +104,7 @@ namespace Entia.Modules
         }
 
         public bool Clear() => _boxes.Clear();
-        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
+        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator()"/>
         public IEnumerator<IResource> GetEnumerator() => _boxes.Values.Select(pair => pair.Value).OfType<IResource>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
