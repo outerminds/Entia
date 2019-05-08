@@ -56,14 +56,10 @@ using Entia.Core.Documentation;
 
 namespace Entia.Queryables
 {{
-    [ThreadSafe]
-    public static class ItemExtensions
+    public static partial class ItemExtensions
     {{
-        public static void Deconstruct<T>(in this Read<T> item, out T value) where T : struct, IComponent => value = item.Value;
-        public static void Deconstruct<T>(in this Write<T> item, out T value) where T : struct, IComponent => value = item.Value;
-
         {string.Join(Environment.NewLine, Generate(7))}
     }}
 }}";
 
-File.WriteAllText($"./{file}.cs", code);
+File.WriteAllText($"./{file}.Generated.cs", code);
