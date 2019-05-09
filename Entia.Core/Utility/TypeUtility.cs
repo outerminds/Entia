@@ -9,20 +9,36 @@ namespace Entia.Core
     public sealed class TypeData
     {
         public readonly Type Type;
-        public readonly Type Element;
-        public readonly MemberInfo[] StaticMembers;
-        public readonly MemberInfo[] InstanceMembers;
-        public readonly FieldInfo[] InstanceFields;
-        public readonly Type[] Interfaces;
-        public readonly Type[] Declaring;
-        public readonly Type[] Bases;
-        public readonly bool IsPlain;
-        public readonly object Default;
+        public Type Element => _element.Value;
+        public MemberInfo[] StaticMembers => _staticMembers.Value;
+        public MemberInfo[] InstanceMembers => _instanceMembers.Value;
+        public FieldInfo[] InstanceFields => _instanceFields.Value;
+        public PropertyInfo[] InstanceProperties => _instanceProperties.Value;
+        public MethodInfo[] InstanceMethods => _instanceMethods.Value;
+        public ConstructorInfo[] InstanceConstructors => _instanceConstructors.Value;
+        public Type[] Interfaces => _interfaces.Value;
+        public Type[] Declaring => _declaring.Value;
+        public Type[] Bases => _bases.Value;
+        public bool IsPlain => _isPlain.Value;
+        public object Default => _default.Value;
+
+        readonly Lazy<Type> _element;
+        readonly Lazy<MemberInfo[]> _staticMembers;
+        readonly Lazy<MemberInfo[]> _instanceMembers;
+        readonly Lazy<FieldInfo[]> _instanceFields;
+        readonly Lazy<PropertyInfo[]> _instanceProperties;
+        readonly Lazy<MethodInfo[]> _instanceMethods;
+        readonly Lazy<ConstructorInfo[]> _instanceConstructors;
+        readonly Lazy<Type[]> _interfaces;
+        readonly Lazy<Type[]> _declaring;
+        readonly Lazy<Type[]> _bases;
+        readonly Lazy<bool> _isPlain;
+        readonly Lazy<object> _default;
 
         public TypeData(Type type)
         {
-            FieldInfo[] GetFields(Type current, Type[] bases) => bases.Prepend(current)
-                .SelectMany(@base => @base.GetFields(TypeUtility.Instance))
+            MemberInfo[] GetMembers(Type current, Type[] bases) => bases.Prepend(current)
+                .SelectMany(@base => @base.GetMembers(TypeUtility.Instance))
                 .Distinct()
                 .ToArray();
 
@@ -63,26 +79,29 @@ namespace Entia.Core
 
             bool GetIsPlain(Type current, FieldInfo[] fields)
             {
-                if (current.IsPrimitive || current == typeof(string) || current.GetCustomAttributes(typeof(PlainAttribute)).Any()) return true;
+                if (current.IsPrimitive) return true;
                 if (current.IsValueType)
                 {
                     foreach (var field in fields)
-                        if (!GetIsPlain(field.FieldType, field.FieldType.GetFields(TypeUtility.Instance))) return false;
+                        if (!GetIsPlain(field.FieldType, field.FieldType.InstanceFields())) return false;
                     return true;
                 }
                 return false;
             }
 
             Type = type;
-            Interfaces = Type.GetInterfaces();
-            Bases = GetBases(Type).ToArray();
-            Element = GetElement(Type, Interfaces);
-            StaticMembers = Type.GetMembers(TypeUtility.Static);
-            InstanceMembers = Type.GetMembers(TypeUtility.Instance);
-            InstanceFields = GetFields(Type, Bases);
-            Declaring = GetDeclaring(Type).ToArray();
-            IsPlain = GetIsPlain(Type, InstanceFields);
-            Default = GetDefault(Type);
+            _interfaces = new Lazy<Type[]>(() => Type.GetInterfaces());
+            _bases = new Lazy<Type[]>(() => GetBases(Type).ToArray());
+            _element = new Lazy<Type>(() => GetElement(Type, Interfaces));
+            _staticMembers = new Lazy<MemberInfo[]>(() => Type.GetMembers(TypeUtility.Static));
+            _instanceMembers = new Lazy<MemberInfo[]>(() => GetMembers(Type, Bases));
+            _instanceFields = new Lazy<FieldInfo[]>(() => InstanceMembers.OfType<FieldInfo>().ToArray());
+            _instanceProperties = new Lazy<PropertyInfo[]>(() => InstanceMembers.OfType<PropertyInfo>().ToArray());
+            _instanceMethods = new Lazy<MethodInfo[]>(() => InstanceMembers.OfType<MethodInfo>().ToArray());
+            _instanceConstructors = new Lazy<ConstructorInfo[]>(() => InstanceMembers.OfType<ConstructorInfo>().ToArray());
+            _declaring = new Lazy<Type[]>(() => GetDeclaring(Type).ToArray());
+            _isPlain = new Lazy<bool>(() => GetIsPlain(Type, InstanceFields));
+            _default = new Lazy<object>(() => GetDefault(Type));
         }
     }
 
@@ -215,10 +234,13 @@ namespace Entia.Core
         public static bool IsPlain(this Type type) => GetData(type).IsPlain;
         public static bool IsPlain(object value) => value is null || GetData(value.GetType()).IsPlain;
         public static bool IsDefault(object value) => value is null || value.Equals(GetData(value.GetType()).Default);
-        public static bool IsPrimitive(object value) => value is null || value is string || value.GetType().IsPrimitive;
-        public static MemberInfo[] InstanceMembers(this Type type) => GetData(type).InstanceMembers;
+        public static bool IsPrimitive(object value) => value is null || value.GetType().IsPrimitive;
         public static MemberInfo[] StaticMembers(this Type type) => GetData(type).StaticMembers;
+        public static MemberInfo[] InstanceMembers(this Type type) => GetData(type).InstanceMembers;
         public static FieldInfo[] InstanceFields(this Type type) => GetData(type).InstanceFields;
+        public static PropertyInfo[] InstanceProperties(this Type type) => GetData(type).InstanceProperties;
+        public static MethodInfo[] InstanceMethods(this Type type) => GetData(type).InstanceMethods;
+        public static ConstructorInfo[] InstanceConstructors(this Type type) => GetData(type).InstanceConstructors;
         public static Type[] Bases(this Type type) => GetData(type).Bases;
         public static Type[] Interfaces(this Type type) => GetData(type).Interfaces;
         public static Type[] Declaring(this Type type) => GetData(type).Declaring;
