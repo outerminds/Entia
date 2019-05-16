@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Entia.Modules.Control
+namespace Entia
 {
     public sealed class Controller
     {

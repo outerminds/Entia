@@ -135,7 +135,7 @@ namespace Entia.Test
             public void Dispose() { _values.Clear(); }
         }
 
-        public static void Run(int count = 1600, int size = 1600)
+        public static void Run(int count = 1600, int size = 1600, int? seed = null)
         {
             Console.Clear();
 
@@ -158,6 +158,18 @@ namespace Entia.Test
                 (15, Gen.Fresh(() => new RemoveComponent(typeof(IComponentC)).ToAction())),
                 (15, Gen.Fresh(() => new RemoveComponent(typeof(ComponentC<>)).ToAction())),
                 (5, Gen.Fresh(() => new TrimComponents().ToAction())),
+
+                (10, Gen.Fresh(() => new EnableComponent<ComponentA>().ToAction())),
+                (10, Gen.Fresh(() => new EnableComponent<ComponentB>().ToAction())),
+                (10, Gen.Fresh(() => new EnableComponent<ComponentC<Unit>>().ToAction())),
+                (10, Gen.Fresh(() => new EnableComponent(typeof(IComponentC)).ToAction())),
+                (10, Gen.Fresh(() => new EnableComponent(typeof(ComponentC<>)).ToAction())),
+
+                (10, Gen.Fresh(() => new DisableComponent<ComponentA>().ToAction())),
+                (10, Gen.Fresh(() => new DisableComponent<ComponentB>().ToAction())),
+                (10, Gen.Fresh(() => new DisableComponent<ComponentC<Unit>>().ToAction())),
+                (10, Gen.Fresh(() => new DisableComponent(typeof(IComponentC)).ToAction())),
+                (10, Gen.Fresh(() => new DisableComponent(typeof(ComponentC<>)).ToAction())),
 
                 (4, Gen.Fresh(() => new CopyComponents().ToAction())),
                 (2, Gen.Fresh(() => new CopyComponent<ComponentA>().ToAction())),
@@ -216,7 +228,7 @@ namespace Entia.Test
             // Add non generic component actions
             );
             var sequence = generator.ToSequence(
-                seed => (new World(), new Model(seed)),
+                random => (new World(), new Model(random)),
                 (world, model) =>
                     World.Instances().Contains(world).Label("World.Instances().Contains()")
                     .And(World.TryInstance(world.Equals, out _).Label("World.TryInstance"))
@@ -240,23 +252,34 @@ namespace Entia.Test
 #else
             Environment.ProcessorCount;
 #endif
-            var result = sequence.ToArbitrary().ToProperty().Check("Tests", parallel, count: count, size: size);
+            var result = sequence.ToArbitrary().ToProperty(seed).Check("Tests", parallel, count: count, size: size);
 
             if (!result.success)
             {
                 while (true)
                 {
                     Console.WriteLine();
-                    Console.WriteLine($"Press '{ConsoleKey.R}' to restart, '{ConsoleKey.O}' to replay orginal, '{ConsoleKey.P}' to replay shrunk, '{ConsoleKey.X}' to exit.");
+                    Console.WriteLine($"'R' to restart, 'O' to replay orginal, 'S' to replay shrunk, 'X' to exit.");
 
-                    var key = Console.ReadKey();
+                    var line = Console.ReadLine();
                     Console.WriteLine();
-                    switch (key.Key)
+                    switch (line)
                     {
-                        case ConsoleKey.R: Run(count, size); return;
-                        case ConsoleKey.O: result.original.ToProperty(result.seed).QuickCheck("Replay Original"); break;
-                        case ConsoleKey.P: result.shrunk.ToProperty(result.seed).QuickCheck("Replay Shrunk"); break;
-                        case ConsoleKey.X: return;
+                        case "r":
+                        case "R": Run(count, size); return;
+                        case "o":
+                        case "O": result.original.ToProperty(result.seed).QuickCheck("Replay Original"); break;
+                        case "s":
+                        case "S": result.shrunk.ToProperty(result.seed).QuickCheck("Replay Shrunk"); break;
+                        case "x":
+                        case "X": return;
+                        default:
+                            if (int.TryParse(line, out var random))
+                            {
+                                Run(count, size, random);
+                                return;
+                            }
+                            break;
                     }
                 }
             }

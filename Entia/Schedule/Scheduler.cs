@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Entia.Modules.Control;
 using Entia.Modules.Schedule;
 using Entia.Schedulables;
 

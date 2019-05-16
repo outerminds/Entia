@@ -1,3 +1,4 @@
+using Entia.Components;
 using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Messages;
@@ -13,7 +14,7 @@ namespace Entia.Modules
     /// <summary>
     /// Module that stores and manages components.
     /// </summary>
-    public sealed class Components : IModule, IResolvable, IEnumerable<IComponent>
+    public sealed partial class Components : IModule, IResolvable, IEnumerable<IComponent>
     {
         struct Data
         {
@@ -22,6 +23,16 @@ namespace Entia.Modules
             public Segment Segment;
             public int Index;
             public int? Transient;
+        }
+
+        struct Emitters
+        {
+            public bool IsValid => OnAdd != null && OnRemove != null && OnEnable != null && OnDisable != null;
+
+            public Action<Entity> OnAdd;
+            public Action<Entity> OnRemove;
+            public Action<Entity> OnEnable;
+            public Action<Entity> OnDisable;
         }
 
         /// <summary>
@@ -38,6 +49,8 @@ namespace Entia.Modules
         readonly Emitter<OnException> _onException;
         readonly Emitter<OnAdd> _onAdd;
         readonly Emitter<OnRemove> _onRemove;
+        readonly Emitter<OnEnable> _onEnable;
+        readonly Emitter<OnDisable> _onDisable;
         readonly Emitter<Entia.Messages.Segment.OnCreate> _onCreate;
         readonly Emitter<Entia.Messages.Segment.OnMove> _onMove;
         readonly Transient _transient = new Transient();
@@ -47,7 +60,7 @@ namespace Entia.Modules
         readonly Dictionary<BitMask, Segment> _maskToSegment;
         (Data[] items, int count) _data = (new Data[64], 0);
         (Segment[] items, int count) _segments;
-        ((Action<Entity> onAdd, Action<Entity> onRemove)[] items, int count) _emitters = (new (Action<Entity>, Action<Entity>)[8], 0);
+        (Emitters[] items, int count) _emitters = (new Emitters[8], 0);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Components"/> class.
@@ -59,6 +72,8 @@ namespace Entia.Modules
             _onException = _messages.Emitter<OnException>();
             _onAdd = _messages.Emitter<OnAdd>();
             _onRemove = _messages.Emitter<OnRemove>();
+            _onEnable = _messages.Emitter<OnEnable>();
+            _onDisable = _messages.Emitter<OnDisable>();
             _onCreate = _messages.Emitter<Entia.Messages.Segment.OnCreate>();
             _onMove = _messages.Emitter<Entia.Messages.Segment.OnMove>();
             // NOTE: do not include '_created' and '_destroyed' here
@@ -67,449 +82,6 @@ namespace Entia.Modules
             _messages.React((in OnCreate message) => Initialize(message.Entity));
             _messages.React((in OnPostDestroy message) => Dispose(message.Entity));
             foreach (var entity in entities) Initialize(entity);
-        }
-
-        /// <summary>
-        /// Gets a default component of type <typeref name="T"/>.
-        /// If the component type has a <c>static</c> field, property or method tagged with the <see cref="Entia.Core.DefaultAttribute"/> attribute, this member will be used to instantiate the component.
-        /// </summary>
-        /// <returns>The default component.</returns>
-        [ThreadSafe]
-        public T Default<T>() where T : struct, IComponent => DefaultUtility.Default<T>();
-
-        /// <summary>
-        /// Gets a default component of provided <paramref name="type"/>.
-        /// If the component type has a <c>static</c> field, property or method tagged with the <see cref="Entia.Core.DefaultAttribute"/> attribute, this member will be used to instantiate the component.
-        /// </summary>
-        /// <param name="type">The concrete component type.</param>
-        /// <param name="component">The default component.</param>
-        /// <returns>Returns <c>true</c> if a valid component was created; otherwise, <c>false</c>.</returns>
-        [ThreadSafe]
-        public bool TryDefault(Type type, out IComponent component)
-        {
-            if (ComponentUtility.TryGetMetadata(type, out _) && DefaultUtility.Default(type) is IComponent casted)
-            {
-                component = casted;
-                return true;
-            }
-
-            component = default;
-            return false;
-        }
-
-        /// <summary>
-        /// Gets a component of type <typeref name="T"/> associated with the entity <paramref name="entity"/>.
-        /// If the component is missing, a <see cref="OnException"/> message will be emitted.
-        /// </summary>
-        /// <typeparam name="T">The concrete component type.</typeparam>
-        /// <param name="entity">The entity associated with the component.</param>
-        /// <returns>The component reference or <see cref="Dummy{T}.Value"/> if the component is missing.</returns>
-        [ThreadSafe]
-        public ref T Get<T>(Entity entity) where T : struct, IComponent
-        {
-            if (TryStore<T>(entity, out var store, out var adjusted)) return ref store[adjusted];
-            _onException.Emit(new OnException { Exception = ExceptionUtility.MissingComponent(entity, typeof(T)) });
-            return ref Dummy<T>.Value;
-        }
-
-        /// <summary>
-        /// Gets a component of type <typeref name="T"/> associated with the <paramref name="entity"/>.
-        /// If the component is missing, a dummy reference will be returned.
-        /// </summary>
-        /// <typeparam name="T">The concrete component type.</typeparam>
-        /// <param name="entity">The entity associated with the component.</param>
-        /// <param name="success">Is <c>true</c> if the component was found; otherwise, <c>false</c>.</param>
-        /// <returns>The component reference or <see cref="Dummy{T}.Value"/> if the component is missing.</returns>
-        [ThreadSafe]
-        public ref T GetOrDummy<T>(Entity entity, out bool success) where T : struct, IComponent
-        {
-            if (TryStore<T>(entity, out var store, out var adjusted))
-            {
-                success = true;
-                return ref store[adjusted];
-            }
-
-            success = false;
-            return ref Dummy<T>.Value;
-        }
-
-        /// <summary>
-        /// Gets a component of type <typeref name="T"/> associated with the <paramref name="entity"/>.
-        /// If the component is missing, a new instance will be created using the <paramref name="create"/> function.
-        /// If the <paramref name="create"/> function is omitted, the default provider will be used.
-        /// </summary>
-        /// <typeparam name="T">The concrete component type.</typeparam>
-        /// <param name="entity">The entity associated with the component.</param>
-        /// <param name="create">A function that creates a component of type <typeparamref name="T"/>.</param>
-        /// <returns>The existing or added component reference.</returns>
-        public ref T GetOrAdd<T>(Entity entity, Func<T> create = null) where T : struct, IComponent
-        {
-            if (TryStore<T>(entity, out var store, out var adjusted)) return ref store[adjusted];
-            if (create == null) Set<T>(entity);
-            else Set(entity, create());
-            return ref Get<T>(entity);
-        }
-
-        /// <summary>
-        /// Tries to get a component of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
-        /// </summary>
-        /// <typeparam name="T">The concrete component type.</typeparam>
-        /// <param name="entity">The entity.</param>
-        /// <param name="component">The component.</param>
-        /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
-        [ThreadSafe]
-        public bool TryGet<T>(Entity entity, out T component) where T : struct, IComponent
-        {
-            component = GetOrDummy<T>(entity, out var success);
-            return success;
-        }
-
-        /// <summary>
-        /// Tries to get a component of provided <paramref name="type"/> associated with the <paramref name="entity"/>.
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// <param name="type">The concrete component type.</param>
-        /// <param name="component">The component.</param>
-        /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
-        [ThreadSafe]
-        public bool TryGet(Entity entity, Type type, out IComponent component)
-        {
-            if (TryStore(entity, type, out var store, out var index))
-            {
-                component = (IComponent)store.GetValue(index);
-                return true;
-            }
-
-            component = default;
-            return false;
-        }
-
-        /// <summary>
-        /// Gets a component of provided <paramref name="type"/> associated with the entity <paramref name="entity"/>.
-        /// If the component is missing, a <see cref="OnException"/> message will be emitted.
-        /// </summary>
-        /// <param name="entity">The entity associated with the component.</param>
-        /// <param name="type">The concrete component type.</param>
-        /// <returns>The component or null if the component is missing.</returns>
-        [ThreadSafe]
-        public IComponent Get(Entity entity, Type type)
-        {
-            if (TryGet(entity, type, out var component)) return component;
-            _onException.Emit(new OnException { Exception = ExceptionUtility.MissingComponent(entity, type) });
-            return null;
-        }
-
-        /// <summary>
-        /// Gets all the components associated with the <paramref name="entity"/>.
-        /// </summary>
-        /// <param name="entity">The entity associated with the components.</param>
-        /// <returns>The components.</returns>
-        public IEnumerable<IComponent> Get(Entity entity)
-        {
-            ref var data = ref GetData(entity, out var success);
-            return success ? Get(data) : Array.Empty<IComponent>();
-        }
-
-        /// <summary>
-        /// Gets all entity-component pairs that have a component of type <typeparamref name="T"/>.
-        /// </summary>
-        /// <typeparam name="T">The concrete component type.</typeparam>
-        /// <returns>The entity-component pairs.</returns>
-        [ThreadSafe]
-        public IEnumerable<(Entity entity, T component)> Get<T>() where T : struct, IComponent
-        {
-            for (var i = 0; i < _data.count; i++)
-            {
-                var data = _data.items[i];
-                if (data.IsValid && TryGetStore<T>(data, out var store, out var index))
-                    yield return (data.Segment.Entities.items[data.Index], store[index]);
-            }
-        }
-
-        /// <summary>
-        /// Gets all entity-component pairs that have a component of provided <paramref name="type"/>.
-        /// </summary>
-        /// <param name="type">The concrete component type.</param>
-        /// <returns>The entity-component pairs.</returns>
-        [ThreadSafe]
-        public IEnumerable<(Entity entity, IComponent component)> Get(Type type)
-        {
-            if (ComponentUtility.TryGetMetadata(type, out var metadata))
-            {
-                for (var i = 0; i < _data.count; i++)
-                {
-                    var data = _data.items[i];
-                    if (data.IsValid && TryGetStore(data, metadata, out var store, out var index))
-                        yield return (data.Segment.Entities.items[data.Index], (IComponent)store.GetValue(index));
-                }
-            }
-        }
-
-        /// <summary>
-        /// Determines whether the <paramref name="entity"/> has a component of type <typeparamref name="T"/>.
-        /// </summary>
-        /// <typeparam name="T">The component type.</typeparam>
-        /// <param name="entity">The entity.</param>
-        /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
-        [ThreadSafe]
-        public bool Has<T>(Entity entity) where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
-            Has(entity, ComponentUtility.Abstract<T>.Data.Index) :
-            Has(entity, ComponentUtility.Abstract<T>.Mask);
-
-        /// <summary>
-        /// Determines whether the <paramref name="entity"/> has a component of provided <paramref name="type"/>.
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// <param name="type">The component type.</param>
-        /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
-        [ThreadSafe]
-        public bool Has(Entity entity, Type type) =>
-            ComponentUtility.TryGetMetadata(type, out var metadata) ? Has(entity, metadata.Index) :
-            ComponentUtility.TryGetConcrete(type, out var mask) && Has(entity, mask);
-
-        /// <summary>
-        /// Counts the components associated with the <paramref name="entity"/>.
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// <returns>The number of components.</returns>
-        public int Count(Entity entity)
-        {
-            ref var data = ref GetData(entity, out var success);
-            return success ? GetTargetSegment(data).Types.data.Length : 0;
-        }
-
-        /// <summary>
-        /// Counts all the components of type <typeparamref name="T"/>.
-        /// </summary>
-        /// <typeparam name="T">The component type.</typeparam>
-        /// <returns>The number of components.</returns>
-        [ThreadSafe]
-        public int Count<T>() where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
-            Count(ComponentUtility.Abstract<T>.Data.Index) :
-            Count(ComponentUtility.Abstract<T>.Mask);
-
-        /// <summary>
-        /// Counts all the components of provided <paramref name="type"/>.
-        /// </summary>
-        /// <param name="type">The component type.</param>
-        /// <returns>The number of components.</returns>
-        [ThreadSafe]
-        public int Count(Type type) =>
-            ComponentUtility.TryGetMetadata(type, out var metadata) ? Count(metadata.Index) :
-            ComponentUtility.TryGetConcrete(type, out var mask) ? Count(mask) :
-            0;
-
-        /// <summary>
-        /// Sets a default component of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
-        /// If the component is missing, it is added.
-        /// </summary>
-        /// <typeparam name="T">The concrete component type.</typeparam>
-        /// <param name="entity">The entity.</param>
-        /// <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
-        public bool Set<T>(Entity entity) where T : struct, IComponent => Set(entity, Default<T>());
-
-        /// <summary>
-        /// Sets the <paramref name="component"/> of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
-        /// If the component is missing, it is added.
-        /// </summary>
-        /// <typeparam name="T">The concrete component type.</typeparam>
-        /// <param name="entity">The entity.</param>
-        /// <param name="component">The component.</param>
-        /// <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
-        public bool Set<T>(Entity entity, in T component) where T : struct, IComponent
-        {
-            ref var data = ref GetData(entity, out var success);
-            if (success)
-            {
-                ref readonly var metadata = ref ComponentUtility.Concrete<T>.Data;
-                if (data.Segment.TryStore<T>(out var store))
-                {
-                    store[data.Index] = component;
-                    if (data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index))
-                    {
-                        GetEmitters<T>().onAdd(entity);
-                        return true;
-                    }
-
-                    return false;
-                }
-
-                ref var slot = ref GetTransientSlot(entity, ref data);
-                if (slot.Resolution == Transient.Resolutions.Remove) return false;
-
-                var index = data.Transient.Value;
-                store = _transient.Store<T>(index, out var adjusted);
-                store[adjusted] = component;
-
-                if (slot.Mask.Add(metadata.Index))
-                {
-                    GetEmitters<T>().onAdd(entity);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Sets a default component of provided type <paramref name="type"/> associated with the <paramref name="entity"/>.
-        /// If the component is missing, it is added.
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// <param name="type">The concrete component type.</param>
-        /// <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
-        public bool Set(Entity entity, Type type) => TryDefault(type, out var component) && Set(entity, component);
-
-        /// <summary>
-        /// Sets the <paramref name="component"/> associated with the <paramref name="entity"/>.
-        /// If the component is missing, it is added.
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// <param name="component">The component.</param>
-        /// <returns>Returns <c>true</c> if the component was added; otherwise, <c>false</c>.</returns>
-        public bool Set(Entity entity, IComponent component)
-        {
-            if (component == null) return false;
-
-            ref var data = ref GetData(entity, out var success);
-            if (success && ComponentUtility.TryGetMetadata(component.GetType(), out var metadata))
-            {
-                if (data.Segment.TryStore(metadata.Index, out var store))
-                {
-                    store.SetValue(component, data.Index);
-                    if (data.Transient is int transient && _transient.Slots.items[transient].Mask.Add(metadata.Index))
-                    {
-                        GetEmitters(metadata).onAdd(entity);
-                        return true;
-                    }
-
-                    return false;
-                }
-
-                ref var slot = ref GetTransientSlot(entity, ref data);
-                if (slot.Resolution == Transient.Resolutions.Remove) return false;
-
-                var index = data.Transient.Value;
-                store = _transient.Store(index, metadata, out var adjusted);
-                store.SetValue(component, adjusted);
-
-                if (slot.Mask.Add(metadata.Index))
-                {
-                    GetEmitters(metadata).onAdd(entity);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Removes components of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
-        /// </summary>
-        /// <typeparam name="T">The component type.</typeparam>
-        /// <param name="entity">The entity.</param>
-        /// <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
-        public bool Remove<T>(Entity entity) where T : IComponent
-        {
-            ref var data = ref GetData(entity, out var success);
-            if (success) return ComponentUtility.Abstract<T>.IsConcrete ?
-                Remove(entity, ref data, ComponentUtility.Abstract<T>.Data, GetEmitters(ComponentUtility.Abstract<T>.Data).onRemove) :
-                Remove(entity, ref data, ComponentUtility.Abstract<T>.Mask);
-            return false;
-        }
-
-        /// <summary>
-        /// Removes components of provided <paramref name="type"/> associated with the <paramref name="entity"/>.
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// <param name="type">The component type.</param>
-        /// <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
-        public bool Remove(Entity entity, Type type)
-        {
-            ref var data = ref GetData(entity, out var success);
-            if (success) return
-                ComponentUtility.TryGetMetadata(type, out var metadata) ? Remove(entity, ref data, metadata, GetEmitters(metadata).onRemove) :
-                ComponentUtility.TryGetConcrete(type, out var mask) && Remove(entity, ref data, mask);
-            return false;
-        }
-
-        /// <summary>
-        /// Clears all components of type <typeparamref name="T"/>.
-        /// </summary>
-        /// <typeparam name="T">The component type.</typeparam>
-        /// <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
-        public bool Clear<T>() where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
-            Clear(ComponentUtility.Abstract<T>.Data, GetEmitters(ComponentUtility.Abstract<T>.Data).onRemove) :
-            Clear(ComponentUtility.Abstract<T>.Mask);
-
-        /// <summary>
-        /// Clears all components of provided <paramref name="type"/>.
-        /// </summary>
-        /// <param name="type">The component type.</param>
-        /// <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
-        public bool Clear(Type type) =>
-            ComponentUtility.TryGetMetadata(type, out var metadata) ? Clear(metadata, GetEmitters(metadata).onRemove) :
-            ComponentUtility.TryGetConcrete(type, out var mask) && Clear(mask);
-
-        /// <summary>
-        /// Clears all components associated with the <paramref name="entity"/>.
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
-        public bool Clear(Entity entity)
-        {
-            ref var data = ref GetData(entity, out var success);
-            return success && Clear(entity, ref data);
-        }
-
-        /// <summary>
-        /// Clears all components.
-        /// </summary>
-        /// <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
-        public bool Clear()
-        {
-            var cleared = false;
-            foreach (ref var data in _data.Slice()) cleared |= Clear(data.Segment.Entities.items[data.Index], ref data);
-            return cleared;
-        }
-
-        /// <summary>
-        /// Tries to get the component store of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
-        /// </summary>
-        /// <typeparam name="T">The concrete component type.</typeparam>
-        /// <param name="entity">The entity.</param>
-        /// <param name="store">The store.</param>
-        /// <param name="index">The index in the store where the component is.</param>
-        /// <returns>Returns <c>true</c> if the store was found; otherwise, <c>false</c>.</returns>
-        [ThreadSafe]
-        public bool TryStore<T>(Entity entity, out T[] store, out int index) where T : struct, IComponent
-        {
-            ref readonly var data = ref GetData(entity, out var success);
-            if (success && TryGetStore(data, out store, out index)) return true;
-            store = default;
-            index = default;
-            return false;
-        }
-
-        /// <summary>
-        /// Tries to get the component store of provided <paramref name="type"/> associated with the <paramref name="entity"/>.
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// <param name="type">The concrete component type.</param>
-        /// <param name="store">The store.</param>
-        /// <param name="index">The index in the store where the component is.</param>
-        /// <returns>Returns <c>true</c> if the store was found; otherwise, <c>false</c>.</returns>
-        [ThreadSafe]
-        public bool TryStore(Entity entity, Type type, out Array store, out int index)
-        {
-            if (TryGetData(entity, out var data) &&
-                ComponentUtility.TryGetMetadata(type, out var metadata) &&
-                TryGetStore(data, metadata, out store, out index))
-                return true;
-
-            store = default;
-            index = default;
-            return false;
         }
 
         /// <summary>
@@ -531,221 +103,62 @@ namespace Entia.Modules
             return false;
         }
 
-        /// <summary>
-        /// Copies components of type <typeparamref name="T"/> from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
-        /// </summary>
-        /// <typeparam name="T">The component type.</typeparam>
-        /// <param name="source">The source entity.</param>
-        /// <param name="target">The target entity.</param>
-        /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
-        public bool Copy<T>(Entity source, Entity target) where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
-            Copy(source, target, ComponentUtility.Abstract<T>.Data, GetEmitters(ComponentUtility.Abstract<T>.Data).onAdd) :
-            Copy(source, target, ComponentUtility.Abstract<T>.Mask);
-
-        /// <summary>
-        /// Copies components of provided <paramref name="type"/> from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
-        /// </summary>
-        /// <param name="source">The source entity.</param>
-        /// <param name="target">The target entity.</param>
-        /// <param name="type">The component type.</param>
-        /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
-        public bool Copy(Entity source, Entity target, Type type) =>
-            ComponentUtility.TryGetMetadata(type, out var metadata) ? Copy(source, target, metadata, GetEmitters(metadata).onAdd) :
-            ComponentUtility.TryGetConcrete(type, out var mask) && Copy(source, target, mask);
-
-        /// <summary>
-        /// Copies all the components from the <paramref name="source"/> and sets them on the <paramref name="target"/>.
-        /// </summary>
-        /// <param name="source">The source entity.</param>
-        /// <param name="target">The target entity.</param>
-        /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
-        public bool Copy(Entity source, Entity target)
-        {
-            ref var sourceData = ref GetData(source, out var sourceSuccess);
-            ref var targetData = ref GetData(target, out var targetSuccess);
-            if (sourceSuccess && targetSuccess)
-            {
-                var segment = GetTargetSegment(sourceData);
-                var types = segment.Types.data;
-                ref var slot = ref GetTransientSlot(target, ref targetData);
-
-                for (var i = 0; i < types.Length; i++)
-                {
-                    ref readonly var metadata = ref types[i];
-                    Copy(sourceData, ref targetData, ref slot, metadata, GetEmitters(metadata).onAdd);
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Removes the components on the <paramref name="target"/> that the <paramref name="source"/> does not have.
-        /// </summary>
-        /// <param name="source">The source entity.</param>
-        /// <param name="target">The target entity.</param>
-        /// <returns>Returns <c>true</c> if a component was removed; otherwise, <c>false</c>.</returns>
-        public bool Trim(Entity source, Entity target)
-        {
-            ref var sourceData = ref GetData(source, out var sourceSuccess);
-            ref var targetData = ref GetData(target, out var targetSuccess);
-            if (sourceSuccess && targetSuccess)
-            {
-                var segment = GetTargetSegment(sourceData);
-                var types = segment.Types.data;
-                ref var slot = ref GetTransientSlot(target, ref targetData);
-                return Trim(ref slot, targetData, segment.Mask);
-            }
-            return false;
-        }
-
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<IComponent> GetEnumerator()
         {
             foreach (var data in _data.Slice())
-                if (data.IsValid) foreach (var component in Get(data)) yield return component;
+                if (data.IsValid) foreach (var component in Get(data, States.All)) yield return component;
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        IEnumerable<IComponent> Get(Data data)
-        {
-            var segment = GetTargetSegment(data);
-            var types = segment.Types.data;
-            for (var i = 0; i < types.Length; i++)
-            {
-                if (TryGetStore(data, types[i], out var store, out var index))
-                    yield return (IComponent)store.GetValue(index);
-            }
-        }
-
         bool IResolvable.Resolve()
         {
-            foreach (ref var slot in _transient.Slots.Slice())
+            var keep = 0;
+            for (int i = 0; i < _transient.Slots.count; i++)
             {
+                ref var slot = ref _transient.Slots.items[i];
                 ref var data = ref GetData(slot.Entity, out var success);
                 if (success)
                 {
                     switch (slot.Resolution)
                     {
-                        case Transient.Resolutions.Add:
+                        case Transient.Resolutions.None:
                             {
-                                var segment = GetSegment(slot.Mask);
-                                CopyTo((data.Segment, data.Index), (segment, segment.Entities.count++));
                                 data.Transient = default;
                                 break;
                             }
-                        case Transient.Resolutions.Remove:
+                        case Transient.Resolutions.Disabled:
                             {
-                                MoveTo((data.Segment, data.Index), _destroyed);
+                                if (MoveDisabledTo(ref data, ref slot, i, keep)) keep++;
+                                break;
+                            }
+                        case Transient.Resolutions.Move:
+                            {
+                                var enabled = GetSegment(slot.Enabled);
+                                MoveSegmentTo((data.Segment, data.Index), enabled);
+                                if (MoveDisabledTo(ref data, ref slot, i, keep)) keep++;
+                                break;
+                            }
+                        case Transient.Resolutions.Initialize:
+                            {
+                                var segment = GetSegment(slot.Enabled);
+                                CopySegmentTo((data.Segment, data.Index), (segment, segment.Entities.count++));
+                                if (MoveDisabledTo(ref data, ref slot, i, keep)) keep++;
+                                break;
+                            }
+                        case Transient.Resolutions.Dispose:
+                            {
+                                MoveSegmentTo((data.Segment, data.Index), _destroyed);
+                                ClearDisabled(i, slot);
                                 _destroyed.Entities.count = 0;
                                 data = default;
-                                break;
-                            }
-                        default:
-                            {
-                                var segment = GetSegment(slot.Mask);
-                                MoveTo((data.Segment, data.Index), segment);
-                                data.Transient = default;
                                 break;
                             }
                     }
                 }
             }
 
-            return _created.Entities.count.Change(0) | _destroyed.Entities.count.Change(0) | _transient.Slots.count.Change(0);
-        }
-
-        [ThreadSafe]
-        int Count(int index)
-        {
-            var count = 0;
-            foreach (ref var data in _data.Slice()) if (data.IsValid && Has(data, index)) count++;
-            return count;
-        }
-
-        [ThreadSafe]
-        int Count(BitMask mask)
-        {
-            var count = 0;
-            foreach (ref var data in _data.Slice()) if (data.IsValid && Has(data, mask)) count++;
-            return count;
-        }
-
-        bool Clear(Entity entity, ref Data data)
-        {
-            if (data.Segment != _empty)
-            {
-                ref var slot = ref GetTransientSlot(entity, ref data);
-                return slot.Mask.Clear();
-            }
-
-            return false;
-        }
-
-        bool Clear(in Metadata metadata, Action<Entity> onRemove)
-        {
-            var cleared = false;
-            foreach (ref var data in _data.Slice())
-                cleared |= data.IsValid && Remove(data.Segment.Entities.items[data.Index], ref data, metadata, onRemove);
-            return cleared;
-        }
-
-        bool Clear(BitMask mask)
-        {
-            var cleared = false;
-            foreach (ref var data in _data.Slice())
-                cleared |= data.IsValid && Remove(data.Segment.Entities.items[data.Index], ref data, mask);
-            return cleared;
-        }
-
-        bool Remove(Entity entity, ref Data data, in Metadata metadata, Action<Entity> onRemove)
-        {
-            if (Has(data, metadata.Index))
-            {
-                ref var slot = ref GetTransientSlot(entity, ref data);
-                return Remove(ref slot, metadata, onRemove);
-            }
-
-            return false;
-        }
-
-        bool Remove(ref Transient.Slot slot, in Metadata metadata, Action<Entity> onRemove)
-        {
-            if (slot.Mask.Has(metadata.Index))
-            {
-                onRemove(slot.Entity);
-                slot.Mask.Remove(metadata.Index);
-                return true;
-            }
-
-            return false;
-        }
-
-        bool Remove(Entity entity, ref Data data, BitMask mask)
-        {
-            if (Has(data, mask))
-            {
-                ref var slot = ref GetTransientSlot(entity, ref data);
-                return Remove(entity, ref slot, mask);
-            }
-
-            return false;
-        }
-
-        bool Remove(Entity entity, ref Transient.Slot slot, BitMask mask)
-        {
-            var removed = false;
-            var segment = GetSegment(mask);
-            var types = segment.Types.data;
-            for (var i = 0; i < types.Length; i++)
-            {
-                ref readonly var metadata = ref types[i];
-                removed |= Remove(ref slot, metadata, GetEmitters(metadata).onRemove);
-            }
-
-            return removed;
+            return _created.Entities.count.Change(0) | _destroyed.Entities.count.Change(0) | _transient.Slots.count.Change(keep);
         }
 
         [ThreadSafe]
@@ -773,131 +186,78 @@ namespace Entia.Modules
             return success;
         }
 
-        [ThreadSafe]
-        bool TryGetStore<T>(in Data data, out T[] store, out int adjusted) where T : struct, IComponent
-        {
-            if (TryGetStore(data, ComponentUtility.Concrete<T>.Data, out var array, out adjusted))
-            {
-                store = array as T[];
-                return store != null;
-            }
-
-            store = default;
-            return false;
-        }
-
-        [ThreadSafe]
-        bool TryGetStore(in Data data, in Metadata metadata, out Array store, out int adjusted)
-        {
-            adjusted = data.Index;
-            data.Segment.TryStore(metadata.Index, out store);
-
-            if (data.Transient is int transient)
-            {
-                // NOTE: prioritize the segment store
-                if (store == null) _transient.TryStore(transient, metadata, out store, out adjusted);
-                ref readonly var slot = ref _transient.Slots.items[transient];
-                // NOTE: if the slot has the component, then the store must not be null
-                return Has(slot, metadata.Index);
-            }
-
-            return store != null;
-        }
-
-        bool GetStore(ref Data data, in Metadata metadata, out Array store, out int adjusted)
-        {
-            adjusted = data.Index;
-            if (data.Segment.TryStore(metadata.Index, out store)) return true;
-
-            if (data.Transient is int transient)
-            {
-                // NOTE: prioritize the segment store
-                store = _transient.Store(transient, metadata, out adjusted);
-                return true;
-            }
-
-            return false;
-        }
-
-        bool Trim(ref Transient.Slot slot, in Data data, BitMask mask) => Trim(ref slot, mask, GetTargetSegment(data).Types.data);
-
-        bool Trim(ref Transient.Slot slot, BitMask mask, Metadata[] types)
-        {
-            var trimmed = false;
-            for (int i = 0; i < types.Length; i++)
-            {
-                ref readonly var metadata = ref types[i];
-                if (mask.Has(metadata.Index)) continue;
-                trimmed |= Remove(ref slot, metadata, GetEmitters(metadata).onRemove);
-            }
-            return trimmed;
-        }
-
-        bool Copy(Entity source, Entity target, in Metadata metadata, Action<Entity> onAdd)
-        {
-            ref var sourceData = ref GetData(source, out var sourceSuccess);
-            ref var targetData = ref GetData(target, out var targetSuccess);
-            if (sourceSuccess && targetSuccess)
-            {
-                ref var slot = ref GetTransientSlot(target, ref targetData);
-                Copy(sourceData, ref targetData, ref slot, metadata, onAdd);
-                return true;
-            }
-            return false;
-        }
-
-        bool Copy(Entity source, Entity target, BitMask mask)
-        {
-            ref var sourceData = ref GetData(source, out var sourceSuccess);
-            ref var targetData = ref GetData(target, out var targetSuccess);
-            if (sourceSuccess && targetSuccess)
-            {
-                ref var slot = ref GetTransientSlot(target, ref targetData);
-                var segment = GetSegment(mask);
-                var types = segment.Types.data;
-                for (var i = 0; i < types.Length; i++)
-                {
-                    ref readonly var metadata = ref types[i];
-                    Copy(sourceData, ref targetData, ref slot, metadata, GetEmitters(metadata).onAdd);
-                }
-                return true;
-            }
-            return false;
-        }
-
-        bool Copy(in Data source, ref Data target, ref Transient.Slot slot, in Metadata metadata, Action<Entity> onAdd)
-        {
-            if (Copy(metadata, source, ref target) && slot.Mask.Add(metadata.Index))
-            {
-                onAdd(slot.Entity);
-                return true;
-            }
-            return false;
-        }
-
-        bool Copy(in Metadata metadata, in Data source, ref Data target)
-        {
-            if (TryGetStore(source, metadata, out var sourceStore, out var sourceIndex) &&
-                GetStore(ref target, metadata, out var targetStore, out var targetIndex))
-            {
-                Array.Copy(sourceStore, sourceIndex, targetStore, targetIndex, 1);
-                return true;
-            }
-            return false;
-        }
-
-        int MoveTo(in (Segment segment, int index) source, Segment target)
+        int MoveSegmentTo(in (Segment segment, int index) source, Segment target)
         {
             if (source.segment == target) return source.index;
 
             var index = target.Entities.count++;
-            CopyTo(source, (target, index));
+            CopySegmentTo(source, (target, index));
             // NOTE: copy the last entity to the moved entity's slot
-            CopyTo((source.segment, --source.segment.Entities.count), source);
+            CopySegmentTo((source.segment, --source.segment.Entities.count), source);
             return index;
         }
 
-        bool CopyTo(in (Segment segment, int index) source, in (Segment segment, int index) target)
+        bool MoveDisabledTo(ref Data data, ref Transient.Slot slot, int source, int target)
+        {
+            if (slot.Disabled.IsEmpty)
+            {
+                data.Transient = default;
+                return false;
+            }
+            else if (source == target)
+            {
+                slot.Resolution = Transient.Resolutions.Disabled;
+                return true;
+            }
+            else
+            {
+                var disabled = GetSegment(slot.Disabled);
+                return MoveTransientTo(ref data, ref slot, source, target, disabled.Types.data);
+            }
+        }
+
+        bool MoveTransientTo(ref Data data, ref Transient.Slot slot, int source, int target, Metadata[] types)
+        {
+            var moved = false;
+            for (int i = 0; i < types.Length; i++)
+            {
+                ref readonly var metadata = ref types[i];
+                if (TryGetStore(data, metadata, States.All, out var sourceStore, out var sourceIndex))
+                {
+                    var targetStore = _transient.Store(target, metadata, out var targetIndex);
+                    Array.Copy(sourceStore, sourceIndex, targetStore, targetIndex, 1);
+                    // NOTE: clearing is not strictly needed, but is done when the component type contains managed references in order to allow
+                    // them to be collected by the garbage collector
+                    if (!metadata.Data.IsPlain) Array.Clear(sourceStore, sourceIndex, 1);
+                    moved = true;
+                }
+            }
+
+            data.Transient = target;
+            slot = ref slot.Swap(ref _transient.Slots.items[target]);
+            slot.Resolution = Transient.Resolutions.Disabled;
+            return moved;
+        }
+
+        void ClearDisabled(int transient, in Transient.Slot slot)
+        {
+            if (slot.Disabled.IsEmpty) return;
+            var disabled = GetSegment(slot.Disabled);
+            ClearTransient(transient, disabled.Types.data);
+        }
+
+        void ClearTransient(int transient, Metadata[] types)
+        {
+            for (int i = 0; i < types.Length; i++)
+            {
+                ref readonly var metadata = ref types[i];
+                if (metadata.Data.IsPlain) continue;
+                if (_transient.TryStore(transient, metadata, out var store, out var adjusted))
+                    Array.Clear(store, adjusted, 1);
+            }
+        }
+
+        bool CopySegmentTo(in (Segment segment, int index) source, in (Segment segment, int index) target)
         {
             if (source == target) return false;
 
@@ -913,7 +273,7 @@ namespace Entia.Modules
                 ref readonly var metadata = ref types[i];
                 var targetStore = target.segment.Store(metadata.Index);
 
-                if (TryGetStore(data, metadata, out var sourceStore, out var sourceIndex))
+                if (TryGetStore(data, metadata, States.All, out var sourceStore, out var sourceIndex))
                 {
                     Array.Copy(sourceStore, sourceIndex, targetStore, target.index, 1);
                     // NOTE: clearing is not strictly needed, but is done when the component type contains managed references in order to allow
@@ -930,50 +290,9 @@ namespace Entia.Modules
             return true;
         }
 
-        [ThreadSafe]
-        bool Has(Entity entity, BitMask mask)
-        {
-            ref var data = ref GetData(entity, out var success);
-            return success && Has(data, mask);
-        }
-
-        [ThreadSafe]
-        bool Has(Entity entity, int index)
-        {
-            ref var data = ref GetData(entity, out var success);
-            return success && Has(data, index);
-        }
-
-        [ThreadSafe]
-        bool Has(in Data data, BitMask mask)
-        {
-            if (data.Transient is int transient)
-            {
-                ref readonly var slot = ref _transient.Slots.items[transient];
-                return Has(slot, mask);
-            }
-            return data.Segment.Mask.HasAny(mask);
-        }
-
-        [ThreadSafe]
-        bool Has(in Data data, int index)
-        {
-            if (data.Transient is int transient)
-            {
-                ref readonly var slot = ref _transient.Slots.items[transient];
-                return Has(slot, index);
-            }
-            return data.Segment.Mask.Has(index);
-        }
-
-        [ThreadSafe]
-        bool Has(in Transient.Slot slot, BitMask mask) => slot.Resolution != Transient.Resolutions.Remove && slot.Mask.HasAny(mask);
-        [ThreadSafe]
-        bool Has(in Transient.Slot slot, int index) => slot.Resolution != Transient.Resolutions.Remove && slot.Mask.Has(index);
-
         void Initialize(Entity entity)
         {
-            var transient = _transient.Reserve(entity, Transient.Resolutions.Add);
+            var transient = _transient.Reserve(entity, Transient.Resolutions.Initialize);
             var segment = _created;
             var index = segment.Entities.count++;
             segment.Entities.Ensure();
@@ -986,30 +305,39 @@ namespace Entia.Modules
             ref var data = ref GetData(entity, out var success);
             if (success)
             {
-                ref var slot = ref GetTransientSlot(entity, ref data);
-                var segment = GetSegment(slot.Mask);
-                var types = segment.Types.data;
-                for (var i = 0; i < types.Length; i++)
-                {
-                    ref readonly var metadata = ref types[i];
-                    Remove(ref slot, metadata, GetEmitters(metadata).onRemove);
-                }
-
-                slot.Resolution = Transient.Resolutions.Remove;
+                ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
+                Clear(ref slot, States.All);
+                slot.Resolution.Set(Transient.Resolutions.Dispose);
             }
         }
 
-        Segment GetTargetSegment(in Data data) => data.Transient is int transient ? GetSegment(_transient.Slots.items[transient].Mask) : data.Segment;
+        (Segment enabled, Segment disabled) GetTargetSegments(in Data data, States include) => data.Transient is int transient ?
+            GetTargetSegments(_transient.Slots.items[transient], include) :
+            (include.HasAny(States.Enabled) ? data.Segment : _empty, _empty);
 
-        ref Transient.Slot GetTransientSlot(Entity entity, ref Data data)
+        (Segment enabled, Segment disabled) GetTargetSegments(in Transient.Slot slot, States include)
         {
-            if (data.Transient is int transient) return ref _transient.Slots.items[transient];
-            data.Transient = transient = _transient.Reserve(entity, Transient.Resolutions.Move, data.Segment.Mask);
+            var enabled = include.HasAny(States.Enabled) ? GetSegment(slot.Enabled) : _empty;
+            var disabled = include.HasAny(States.Disabled) ? GetSegment(slot.Disabled) : _empty;
+            return (enabled, disabled);
+        }
+
+        ref Transient.Slot GetTransientSlot(Entity entity, ref Data data, Transient.Resolutions resolution)
+        {
+            if (data.Transient is int transient)
+            {
+                ref var slot = ref _transient.Slots.items[transient];
+                slot.Resolution.Set(resolution);
+                return ref slot;
+            }
+
+            data.Transient = transient = _transient.Reserve(entity, resolution, data.Segment.Mask);
             return ref _transient.Slots.items[transient];
         }
 
         Segment GetSegment(BitMask mask)
         {
+            if (mask.IsEmpty) return _empty;
             if (_maskToSegment.TryGetValue(mask, out var segment)) return segment;
             var clone = new BitMask { mask };
             segment = _maskToSegment[clone] = _segments.Push(new Segment(_segments.count, clone));
@@ -1017,45 +345,58 @@ namespace Entia.Modules
             return segment;
         }
 
-        (Action<Entity> onAdd, Action<Entity> onRemove) GetEmitters<T>() where T : struct, IComponent
+        ref readonly Emitters GetEmitters<T>() where T : struct, IComponent
         {
             var index = ComponentUtility.Concrete<T>.Data.Index;
             _emitters.Ensure(ComponentUtility.Concrete<T>.Data.Index + 1);
-            ref var pair = ref _emitters.items[index];
-            if (pair.onAdd == null || pair.onRemove == null) pair = CreateEmitters<T>();
-            return pair;
+            ref var emitters = ref _emitters.items[index];
+            if (!emitters.IsValid) emitters = CreateEmitters<T>();
+            return ref emitters;
         }
 
-        (Action<Entity> onAdd, Action<Entity> onRemove) GetEmitters(in Metadata metadata)
+        ref readonly Emitters GetEmitters(in Metadata metadata)
         {
             _emitters.Ensure(metadata.Index + 1);
-            ref var pair = ref _emitters.items[metadata.Index];
-            if (pair.onAdd == null || pair.onRemove == null) pair = CreateEmitters(metadata);
-            return pair;
+            ref var emitters = ref _emitters.items[metadata.Index];
+            if (!emitters.IsValid) emitters = CreateEmitters(metadata);
+            return ref emitters;
         }
 
-        (Action<Entity> onAdd, Action<Entity> onRemove) CreateEmitters<T>() where T : struct, IComponent
+        Emitters CreateEmitters<T>() where T : struct, IComponent
         {
             var metadata = ComponentUtility.Concrete<T>.Data;
             var onAdd = _messages.Emitter<OnAdd<T>>();
             var onRemove = _messages.Emitter<OnRemove<T>>();
-            return (
-                new Action<Entity>(entity =>
+            var onEnable = _messages.Emitter<OnEnable<T>>();
+            var onDisable = _messages.Emitter<OnDisable<T>>();
+            return new Emitters
+            {
+                OnAdd = new Action<Entity>(entity =>
                 {
                     onAdd.Emit(new OnAdd<T> { Entity = entity });
                     _onAdd.Emit(new OnAdd { Entity = entity, Component = metadata });
                 }),
-                new Action<Entity>(entity =>
+                OnRemove = new Action<Entity>(entity =>
                 {
                     onRemove.Emit(new OnRemove<T> { Entity = entity });
                     _onRemove.Emit(new OnRemove { Entity = entity, Component = metadata });
-                })
-            );
+                }),
+                OnEnable = new Action<Entity>(entity =>
+                {
+                    onEnable.Emit(new OnEnable<T> { Entity = entity });
+                    _onEnable.Emit(new OnEnable { Entity = entity, Component = metadata });
+                }),
+                OnDisable = new Action<Entity>(entity =>
+                {
+                    onDisable.Emit(new OnDisable<T> { Entity = entity });
+                    _onDisable.Emit(new OnDisable { Entity = entity, Component = metadata });
+                }),
+            };
         }
 
-        (Action<Entity> onAdd, Action<Entity> onRemove) CreateEmitters(in Metadata metadata) => ((Action<Entity> onAdd, Action<Entity> onRemove))GetType()
-            .GetMethods(TypeUtility.Instance)
-            .First(method => method.Name == nameof(CreateEmitters) && method.IsGenericMethod && method.GetParameters().Length == 0)
+        Emitters CreateEmitters(in Metadata metadata) => (Emitters)GetType()
+            .InstanceMethods()
+            .First(method => method.Name == nameof(CreateEmitters) && method.IsGenericMethod)
             .MakeGenericMethod(metadata.Type)
             .Invoke(this, Array.Empty<object>());
     }

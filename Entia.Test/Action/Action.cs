@@ -49,7 +49,7 @@ namespace Entia.Test
                         return
 $@"
 {header}
-Types: 
+Types:
 {groups}
 
 Actions:
@@ -69,8 +69,9 @@ $@"
 
         public static T[] Clone<T>(T[] array) => array.Select(CloneUtility.Shallow).ToArray();
 
-        public static Property ToProperty<T, TModel>(this Arbitrary<Sequence<T, TModel>> arbitrary) =>
-            Prop.ForAll(arbitrary, Arb.Default.DoNotSizeInt32().WithoutShrink(), (sequence, seed) => sequence.ToProperty(seed.Item));
+        public static Property ToProperty<T, TModel>(this Arbitrary<Sequence<T, TModel>> arbitrary, int? seed = null) => seed is int value1 ?
+            Prop.ForAll(arbitrary, sequence => sequence.ToProperty(value1)) :
+            Prop.ForAll(arbitrary, Arb.Default.DoNotSizeInt32().WithoutShrink(), (sequence, value2) => sequence.ToProperty(value2.Item));
 
         public static Property ToProperty<T, TModel>(this Sequence<T, TModel> sequence, int seed)
         {

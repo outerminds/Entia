@@ -8,6 +8,14 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Not(this bool value) => !value;
 
+        public static ref T Swap<T>(ref this T source, ref T target) where T : struct
+        {
+            var temporary = source;
+            source = target;
+            target = temporary;
+            return ref target;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Change(ref this bool source, bool target)
         {

@@ -1,5 +1,4 @@
 ﻿using Entia.Core;
-using Entia.Modules.Control;
 using Entia.Modules.Schedule;
 using Entia.Schedulables;
 using Entia.Schedulers;

@@ -7,11 +7,12 @@ namespace Entia.Modules.Component
 {
     public sealed class Transient
     {
-        public enum Resolutions : byte { Move, Add, Remove }
+        public enum Resolutions : byte { None = 0, Disabled = 1, Move = 2, Initialize = 3, Dispose = 4 }
         public struct Slot
         {
             public Entity Entity;
-            public BitMask Mask;
+            public BitMask Enabled;
+            public BitMask Disabled;
             public Resolutions Resolution;
         }
 
@@ -26,15 +27,17 @@ namespace Entia.Modules.Component
             Slots.Ensure();
 
             ref var slot = ref Slots.items[index];
-            if (slot.Mask == null) slot = new Slot { Entity = entity, Mask = new BitMask(), Resolution = resolution };
+            if (slot.Enabled == null || slot.Disabled == null)
+                slot = new Slot { Entity = entity, Enabled = new BitMask(), Disabled = new BitMask(), Resolution = resolution };
             else
             {
                 slot.Entity = entity;
                 slot.Resolution = resolution;
-                slot.Mask.Clear();
+                slot.Enabled.Clear();
+                slot.Disabled.Clear();
             }
 
-            if (mask != null) slot.Mask.Add(mask);
+            if (mask != null) slot.Enabled.Add(mask);
             return index;
         }
 

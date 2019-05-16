@@ -5,7 +5,6 @@ using Entia.Dependencies;
 using Entia.Modules;
 using Entia.Modules.Analysis;
 using Entia.Modules.Build;
-using Entia.Modules.Control;
 using Entia.Modules.Schedule;
 using Entia.Phases;
 using System;

@@ -38,32 +38,32 @@ namespace Entia.Injectables
             /// <inheritdoc cref="Modules.Components.TryDefault(Type, out IComponent)"/>
             [ThreadSafe]
             public bool TryDefault(Type type, out IComponent component) => _components.TryDefault(type, out component);
-            /// <inheritdoc cref="Modules.Components.Get{T}(Entity)"/>
+            /// <inheritdoc cref="Modules.Components.Get{T}(Entity, States)"/>
             [ThreadSafe]
-            public ref T Get<T>(Entity entity) where T : struct, IComponent => ref _components.Get<T>(entity);
-            /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool)"/>
+            public ref T Get<T>(Entity entity, States include = States.All) where T : struct, IComponent => ref _components.Get<T>(entity, include);
+            /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool, States)"/>
             [ThreadSafe]
-            public ref T GetOrDummy<T>(Entity entity, out bool success) where T : struct, IComponent => ref _components.GetOrDummy<T>(entity, out success);
-            /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T)"/>
+            public ref T GetOrDummy<T>(Entity entity, out bool success, States include = States.All) where T : struct, IComponent => ref _components.GetOrDummy<T>(entity, out success, include);
+            /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T, States)"/>
             [ThreadSafe]
-            public bool TryGet<T>(Entity entity, out T component) where T : struct, IComponent => _components.TryGet(entity, out component);
-            /// <inheritdoc cref="Modules.Components.TryGet(Entity, Type, out IComponent)"/>
+            public bool TryGet<T>(Entity entity, out T component, States include = States.All) where T : struct, IComponent => _components.TryGet(entity, out component, include);
+            /// <inheritdoc cref="Modules.Components.TryGet(Entity, Type, out IComponent, States)"/>
             [ThreadSafe]
-            public bool TryGet(Entity entity, Type type, out IComponent component) => _components.TryGet(entity, type, out component);
-            /// <inheritdoc cref="Modules.Components.Get(Entity)"/>
-            public IEnumerable<IComponent> Get(Entity entity) => _components.Get(entity);
-            /// <inheritdoc cref="Modules.Components.Get{T}()"/>
+            public bool TryGet(Entity entity, Type type, out IComponent component, States include = States.All) => _components.TryGet(entity, type, out component, include);
+            /// <inheritdoc cref="Modules.Components.Get(Entity, States)"/>
+            public IEnumerable<IComponent> Get(Entity entity, States include = States.All) => _components.Get(entity, include);
+            /// <inheritdoc cref="Modules.Components.Get{T}(States)"/>
             [ThreadSafe]
-            public IEnumerable<(Entity entity, T component)> Get<T>() where T : struct, IComponent => _components.Get<T>();
-            /// <inheritdoc cref="Modules.Components.Get(Type)"/>
+            public IEnumerable<(Entity entity, T component)> Get<T>(States include = States.All) where T : struct, IComponent => _components.Get<T>(include);
+            /// <inheritdoc cref="Modules.Components.Get(Type, States)"/>
             [ThreadSafe]
-            public IEnumerable<(Entity entity, IComponent component)> Get(Type type) => _components.Get(type);
-            /// <inheritdoc cref="Modules.Components.Has{T}(Entity)"/>
+            public IEnumerable<(Entity entity, IComponent component)> Get(Type type, States include = States.All) => _components.Get(type, include);
+            /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
             [ThreadSafe]
-            public bool Has<T>(Entity entity) where T : IComponent => _components.Has<T>(entity);
-            /// <inheritdoc cref="Modules.Components.Has(Entity, Type)"/>
+            public bool Has<T>(Entity entity, States include = States.All) where T : IComponent => _components.Has<T>(entity, include);
+            /// <inheritdoc cref="Modules.Components.Has(Entity, Type, States)"/>
             [ThreadSafe]
-            public bool Has(Entity entity, Type type) => _components.Has(entity, type);
+            public bool Has(Entity entity, Type type, States include = States.All) => _components.Has(entity, type, include);
             /// <inheritdoc cref="Modules.Components.GetEnumerator()"/>
             public IEnumerator<IComponent> GetEnumerator() => _components.GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => _components.GetEnumerator();
@@ -92,32 +92,32 @@ namespace Entia.Injectables
             /// <inheritdoc cref="Modules.Components.TryDefault(Type, out IComponent)"/>
             [ThreadSafe]
             public bool TryDefault(Type type, out IComponent component) => _components.TryDefault(type, out component);
-            /// <inheritdoc cref="Modules.Components.Get{T}(Entity)"/>
+            /// <inheritdoc cref="Modules.Components.Get{T}(Entity, States)"/>
             [ThreadSafe]
-            public ref readonly T Get<T>(Entity entity) where T : struct, IComponent => ref _components.Get<T>(entity);
-            /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool)"/>
+            public ref readonly T Get<T>(Entity entity, States include = States.All) where T : struct, IComponent => ref _components.Get<T>(entity, include);
+            /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool, States)"/>
             [ThreadSafe]
-            public ref readonly T GetOrDummy<T>(Entity entity, out bool success) where T : struct, IComponent => ref _components.GetOrDummy<T>(entity, out success);
-            /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T)"/>
+            public ref readonly T GetOrDummy<T>(Entity entity, out bool success, States include = States.All) where T : struct, IComponent => ref _components.GetOrDummy<T>(entity, out success, include);
+            /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T, States)"/>
             [ThreadSafe]
-            public bool TryGet<T>(Entity entity, out T component) where T : struct, IComponent => _components.TryGet(entity, out component);
-            /// <inheritdoc cref="Modules.Components.TryGet(Entity, Type, out IComponent)"/>
+            public bool TryGet<T>(Entity entity, out T component, States include = States.All) where T : struct, IComponent => _components.TryGet(entity, out component, include);
+            /// <inheritdoc cref="Modules.Components.TryGet(Entity, Type, out IComponent, States)"/>
             [ThreadSafe]
-            public bool TryGet(Entity entity, Type type, out IComponent component) => _components.TryGet(entity, type, out component);
-            /// <inheritdoc cref="Modules.Components.Get(Entity)"/>
-            public IEnumerable<IComponent> Get(Entity entity) => _components.Get(entity);
-            /// <inheritdoc cref="Modules.Components.Get{T}()"/>
+            public bool TryGet(Entity entity, Type type, out IComponent component, States include = States.All) => _components.TryGet(entity, type, out component, include);
+            /// <inheritdoc cref="Modules.Components.Get(Entity, States)"/>
+            public IEnumerable<IComponent> Get(Entity entity, States include = States.All) => _components.Get(entity, include);
+            /// <inheritdoc cref="Modules.Components.Get{T}(States)"/>
             [ThreadSafe]
-            public IEnumerable<(Entity entity, T component)> Get<T>() where T : struct, IComponent => _components.Get<T>();
-            /// <inheritdoc cref="Modules.Components.Get(Type)"/>
+            public IEnumerable<(Entity entity, T component)> Get<T>(States include = States.All) where T : struct, IComponent => _components.Get<T>(include);
+            /// <inheritdoc cref="Modules.Components.Get(Type, States)"/>
             [ThreadSafe]
-            public IEnumerable<(Entity entity, IComponent component)> Get(Type type) => _components.Get(type);
-            /// <inheritdoc cref="Modules.Components.Has{T}(Entity)"/>
+            public IEnumerable<(Entity entity, IComponent component)> Get(Type type, States include = States.All) => _components.Get(type, include);
+            /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
             [ThreadSafe]
-            public bool Has<T>(Entity entity) where T : IComponent => _components.Has<T>(entity);
-            /// <inheritdoc cref="Modules.Components.Has(Entity, Type)"/>
+            public bool Has<T>(Entity entity, States include = States.All) where T : IComponent => _components.Has<T>(entity, include);
+            /// <inheritdoc cref="Modules.Components.Has(Entity, Type, States)"/>
             [ThreadSafe]
-            public bool Has(Entity entity, Type type) => _components.Has(entity, type);
+            public bool Has(Entity entity, Type type, States include = States.All) => _components.Has(entity, type, include);
             /// <inheritdoc cref="Modules.Components.GetEnumerator()"/>
             public IEnumerator<IComponent> GetEnumerator() => _components.GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => _components.GetEnumerator();
@@ -132,7 +132,11 @@ namespace Entia.Injectables
             new Dependencies.Emit(typeof(Messages.OnAdd)),
             new Dependencies.Emit(typeof(Messages.OnAdd<>)),
             new Dependencies.Emit(typeof(Messages.OnRemove)),
-            new Dependencies.Emit(typeof(Messages.OnRemove<>)));
+            new Dependencies.Emit(typeof(Messages.OnRemove<>)),
+            new Dependencies.Emit(typeof(Messages.OnEnable)),
+            new Dependencies.Emit(typeof(Messages.OnEnable<>)),
+            new Dependencies.Emit(typeof(Messages.OnDisable)),
+            new Dependencies.Emit(typeof(Messages.OnDisable<>)));
 
         readonly Modules.Components _components;
 
@@ -148,28 +152,28 @@ namespace Entia.Injectables
         /// <inheritdoc cref="Modules.Components.TryDefault(Type, out IComponent)"/>
         [ThreadSafe]
         public bool TryDefault(Type type, out IComponent component) => _components.TryDefault(type, out component);
-        /// <inheritdoc cref="Modules.Components.Get{T}(Entity)"/>
+        /// <inheritdoc cref="Modules.Components.Get{T}(Entity, States)"/>
         [ThreadSafe]
-        public ref T Get<T>(Entity entity) where T : struct, IComponent => ref _components.Get<T>(entity);
+        public ref T Get<T>(Entity entity, States include = States.All) where T : struct, IComponent => ref _components.Get<T>(entity, include);
         /// <inheritdoc cref="Modules.Components.GetOrAdd{T}(Entity, Func{T})"/>
         public ref T GetOrAdd<T>(Entity entity, Func<T> create = null) where T : struct, IComponent => ref _components.GetOrAdd(entity, create);
-        /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool)"/>
+        /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool, States)"/>
         [ThreadSafe]
-        public ref T GetOrDummy<T>(Entity entity, out bool success) where T : struct, IComponent => ref _components.GetOrDummy<T>(entity, out success);
-        /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T)"/>
+        public ref T GetOrDummy<T>(Entity entity, out bool success, States include = States.All) where T : struct, IComponent => ref _components.GetOrDummy<T>(entity, out success, include);
+        /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T, States)"/>
         [ThreadSafe]
-        public bool TryGet<T>(Entity entity, out T component) where T : struct, IComponent => _components.TryGet(entity, out component);
-        /// <inheritdoc cref="Modules.Components.TryGet(Entity, Type, out IComponent)"/>
+        public bool TryGet<T>(Entity entity, out T component, States include = States.All) where T : struct, IComponent => _components.TryGet(entity, out component, include);
+        /// <inheritdoc cref="Modules.Components.TryGet(Entity, Type, out IComponent, States)"/>
         [ThreadSafe]
-        public bool TryGet(Entity entity, Type type, out IComponent component) => _components.TryGet(entity, type, out component);
-        /// <inheritdoc cref="Modules.Components.Get(Entity)"/>
-        public IEnumerable<IComponent> Get(Entity entity) => _components.Get(entity);
-        /// <inheritdoc cref="Modules.Components.Get{T}()"/>
+        public bool TryGet(Entity entity, Type type, out IComponent component, States include = States.All) => _components.TryGet(entity, type, out component, include);
+        /// <inheritdoc cref="Modules.Components.Get(Entity, States)"/>
+        public IEnumerable<IComponent> Get(Entity entity, States include = States.All) => _components.Get(entity, include);
+        /// <inheritdoc cref="Modules.Components.Get{T}(States)"/>
         [ThreadSafe]
-        public IEnumerable<(Entity entity, T component)> Get<T>() where T : struct, IComponent => _components.Get<T>();
-        /// <inheritdoc cref="Modules.Components.Get(Type)"/>
+        public IEnumerable<(Entity entity, T component)> Get<T>(States include = States.All) where T : struct, IComponent => _components.Get<T>(include);
+        /// <inheritdoc cref="Modules.Components.Get(Type, States)"/>
         [ThreadSafe]
-        public IEnumerable<(Entity entity, IComponent component)> Get(Type type) => _components.Get(type);
+        public IEnumerable<(Entity entity, IComponent component)> Get(Type type, States include = States.All) => _components.Get(type, include);
         /// <inheritdoc cref="Modules.Components.Set{T}(Entity, in T)"/>
         public bool Set<T>(Entity entity, in T component) where T : struct, IComponent => _components.Set(entity, component);
         /// <inheritdoc cref="Modules.Components.Set{T}(Entity)"/>
@@ -178,32 +182,45 @@ namespace Entia.Injectables
         public bool Set(Entity entity, IComponent component) => _components.Set(entity, component);
         /// <inheritdoc cref="Modules.Components.Set(Entity, Type)"/>
         public bool Set(Entity entity, Type type) => _components.Set(entity, type);
-        /// <inheritdoc cref="Modules.Components.Has{T}(Entity)"/>
+        /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
         [ThreadSafe]
-        public bool Has<T>(Entity entity) where T : IComponent => _components.Has<T>(entity);
-        /// <inheritdoc cref="Modules.Components.Has(Entity, Type)"/>
+        public bool Has<T>(Entity entity, States include = States.All) where T : IComponent => _components.Has<T>(entity, include);
+        /// <inheritdoc cref="Modules.Components.Has(Entity, Type, States)"/>
         [ThreadSafe]
-        public bool Has(Entity entity, Type type) => _components.Has(entity, type);
-        /// <inheritdoc cref="Modules.Components.Remove{T}(Entity)"/>
-        public bool Remove<T>(Entity entity) where T : IComponent => _components.Remove<T>(entity);
-        /// <inheritdoc cref="Modules.Components.Remove(Entity, Type)"/>
-        public bool Remove(Entity entity, Type type) => _components.Remove(entity, type);
-        /// <inheritdoc cref="Modules.Components.Clear{T}()"/>
-        public bool Clear<T>() where T : IComponent => _components.Clear<T>();
-        /// <inheritdoc cref="Modules.Components.Clear(Type)"/>
-        public bool Clear(Type type) => _components.Clear(type);
-        /// <inheritdoc cref="Modules.Components.Clear(Entity)"/>
-        public bool Clear(Entity entity) => _components.Clear(entity);
-        /// <inheritdoc cref="Modules.Components.Clear()"/>
-        public bool Clear() => _components.Clear();
-        /// <inheritdoc cref="Modules.Components.Copy{T}(Entity, Entity)"/>
-        public bool Copy<T>(Entity source, Entity target) where T : IComponent => _components.Copy<T>(source, target);
-        /// <inheritdoc cref="Modules.Components.Copy(Entity, Entity, Type)"/>
-        public bool Copy(Entity source, Entity target, Type type) => _components.Copy(source, target, type);
-        /// <inheritdoc cref="Modules.Components.Copy(Entity, Entity)"/>
-        public bool Copy(Entity source, Entity target) => _components.Copy(source, target);
-        /// <inheritdoc cref="Modules.Components.Trim(Entity, Entity)"/>
-        public bool Trim(Entity source, Entity target) => _components.Trim(source, target);
+        public bool Has(Entity entity, Type type, States include = States.All) => _components.Has(entity, type, include);
+        /// <inheritdoc cref="Modules.Components.Remove{T}(Entity, States)"/>
+        public bool Remove<T>(Entity entity, States include = States.All) where T : IComponent => _components.Remove<T>(entity, include);
+        /// <inheritdoc cref="Modules.Components.Remove(Entity, Type, States)"/>
+        public bool Remove(Entity entity, Type type, States include = States.All) => _components.Remove(entity, type, include);
+        /// <inheritdoc cref="Modules.Components.Clear{T}(States)"/>
+        public bool Clear<T>(States include = States.All) where T : IComponent => _components.Clear<T>(include);
+        /// <inheritdoc cref="Modules.Components.Clear(Type, States)"/>
+        public bool Clear(Type type, States include = States.All) => _components.Clear(type, include);
+        /// <inheritdoc cref="Modules.Components.Clear(Entity, States)"/>
+        public bool Clear(Entity entity, States include = States.All) => _components.Clear(entity, include);
+        /// <inheritdoc cref="Modules.Components.Clear(States)"/>
+        public bool Clear(States include = States.All) => _components.Clear(include);
+        /// <inheritdoc cref="Modules.Components.Copy{T}(Entity, Entity, States)"/>
+        public bool Copy<T>(Entity source, Entity target, States include = States.All) where T : IComponent => _components.Copy<T>(source, target, include);
+        /// <inheritdoc cref="Modules.Components.Copy(Entity, Entity, Type, States)"/>
+        public bool Copy(Entity source, Entity target, Type type, States include = States.All) => _components.Copy(source, target, type, include);
+        /// <inheritdoc cref="Modules.Components.Copy(Entity, Entity, States)"/>
+        public bool Copy(Entity source, Entity target, States include = States.All) => _components.Copy(source, target, include);
+        /// <inheritdoc cref="Modules.Components.Trim(Entity, Entity, States)"/>
+        public bool Trim(Entity source, Entity target, States include = States.All) => _components.Trim(source, target, include);
+        /// <inheritdoc cref="Modules.Components.Enable{T}(Entity)"/>
+        public bool Enable<T>(Entity entity) where T : struct, IComponent => _components.Enable<T>(entity);
+        /// <inheritdoc cref="Modules.Components.Enable(Entity, Type)"/>
+        public bool Enable(Entity entity, Type type) => _components.Enable(entity, type);
+        /// <inheritdoc cref="Modules.Components.Enable(Entity)"/>
+        public bool Enable(Entity entity) => _components.Enable(entity);
+        /// <inheritdoc cref="Modules.Components.Disable{T}(Entity)"/>
+        public bool Disable<T>(Entity entity) where T : struct, IComponent => _components.Disable<T>(entity);
+        /// <inheritdoc cref="Modules.Components.Disable(Entity, Type)"/>
+        public bool Disable(Entity entity, Type type) => _components.Disable(entity, type);
+        /// <inheritdoc cref="Modules.Components.Disable(Entity)"/>
+        public bool Disable(Entity entity) => _components.Disable(entity);
+
         /// <inheritdoc cref="Modules.Components.GetEnumerator()"/>
         public IEnumerator<IComponent> GetEnumerator() => _components.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => _components.GetEnumerator();
@@ -235,16 +252,16 @@ namespace Entia.Injectables
 
             /// <inheritdoc cref="Modules.Components.Default{T}()"/>
             public T Default() => _components.Default<T>();
-            /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool)"/>
-            public ref T GetOrDummy(Entity entity, out bool success) => ref _components.GetOrDummy<T>(entity, out success);
-            /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T)"/>
-            public bool TryGet(Entity entity, out T component) => _components.TryGet(entity, out component);
-            /// <inheritdoc cref="Modules.Components.Get{T}(Entity)"/>
-            public ref T Get(Entity entity) => ref _components.Get<T>(entity);
-            /// <inheritdoc cref="Modules.Components.Has{T}(Entity)"/>
-            public bool Has(Entity entity) => _components.Has<T>(entity);
+            /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool, States)"/>
+            public ref T GetOrDummy(Entity entity, out bool success, States include = States.All) => ref _components.GetOrDummy<T>(entity, out success, include);
+            /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T, States)"/>
+            public bool TryGet(Entity entity, out T component, States include = States.All) => _components.TryGet(entity, out component, include);
+            /// <inheritdoc cref="Modules.Components.Get{T}(Entity, States)"/>
+            public ref T Get(Entity entity, States include = States.All) => ref _components.Get<T>(entity, include);
+            /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
+            public bool Has(Entity entity, States include = States.All) => _components.Has<T>(entity, include);
             /// <inheritdoc cref="Modules.Components.GetEnumerator()"/>
-            public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>().GetEnumerator();
+            public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>(States.All).GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
@@ -269,16 +286,16 @@ namespace Entia.Injectables
 
             /// <inheritdoc cref="Modules.Components.Default{T}()"/>
             public T Default() => _components.Default<T>();
-            /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool)"/>
-            public ref readonly T GetOrDummy(Entity entity, out bool success) => ref _components.GetOrDummy<T>(entity, out success);
-            /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T)"/>
-            public bool TryGet(Entity entity, out T component) => _components.TryGet(entity, out component);
-            /// <inheritdoc cref="Modules.Components.Get{T}(Entity)"/>
-            public ref readonly T Get(Entity entity) => ref _components.Get<T>(entity);
-            /// <inheritdoc cref="Modules.Components.Has{T}(Entity)"/>
-            public bool Has(Entity entity) => _components.Has<T>(entity);
+            /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool, States)"/>
+            public ref readonly T GetOrDummy(Entity entity, out bool success, States include = States.All) => ref _components.GetOrDummy<T>(entity, out success, include);
+            /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T, States)"/>
+            public bool TryGet(Entity entity, out T component, States include = States.All) => _components.TryGet(entity, out component, include);
+            /// <inheritdoc cref="Modules.Components.Get{T}(Entity, States)"/>
+            public ref readonly T Get(Entity entity, States include = States.All) => ref _components.Get<T>(entity, include);
+            /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
+            public bool Has(Entity entity, States include = States.All) => _components.Has<T>(entity, include);
             /// <inheritdoc cref="Modules.Components.GetEnumerator()"/>
-            public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>().GetEnumerator();
+            public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>(States.All).GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
@@ -306,31 +323,35 @@ namespace Entia.Injectables
         public T Default() => _components.Default<T>();
         /// <inheritdoc cref="Modules.Components.GetOrAdd{T}(Entity, Func{T})"/>
         public ref T GetOrAdd(Entity entity, Func<T> create = null) => ref _components.GetOrAdd(entity, create);
-        /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool)"/>
+        /// <inheritdoc cref="Modules.Components.GetOrDummy{T}(Entity, out bool, States)"/>
         [ThreadSafe]
-        public ref T GetOrDummy(Entity entity, out bool success) => ref _components.GetOrDummy<T>(entity, out success);
-        /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T)"/>
+        public ref T GetOrDummy(Entity entity, out bool success, States include = States.All) => ref _components.GetOrDummy<T>(entity, out success, include);
+        /// <inheritdoc cref="Modules.Components.TryGet{T}(Entity, out T, States)"/>
         [ThreadSafe]
-        public bool TryGet(Entity entity, out T component) => _components.TryGet(entity, out component);
-        /// <inheritdoc cref="Modules.Components.Get{T}(Entity)"/>
+        public bool TryGet(Entity entity, out T component, States include = States.All) => _components.TryGet(entity, out component, include);
+        /// <inheritdoc cref="Modules.Components.Get{T}(Entity, States)"/>
         [ThreadSafe]
-        public ref T Get(Entity entity) => ref _components.Get<T>(entity);
+        public ref T Get(Entity entity, States include = States.All) => ref _components.Get<T>(entity, include);
         /// <inheritdoc cref="Modules.Components.Set{T}(Entity)"/>
         public bool Set(Entity entity) => _components.Set<T>(entity);
         /// <inheritdoc cref="Modules.Components.Set{T}(Entity, in T)"/>
         public bool Set(Entity entity, in T component) => _components.Set(entity, component);
-        /// <inheritdoc cref="Modules.Components.Has{T}(Entity)"/>
+        /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
         [ThreadSafe]
-        public bool Has(Entity entity) => _components.Has<T>(entity);
-        /// <inheritdoc cref="Modules.Components.Remove{T}(Entity)"/>
-        public bool Remove(Entity entity) => _components.Remove<T>(entity);
-        /// <inheritdoc cref="Modules.Components.Clear{T}()"/>
-        public bool Clear() => _components.Clear<T>();
-        /// <inheritdoc cref="Modules.Components.Copy{T}(Entity, Entity)"/>
-        public bool Copy(Entity source, Entity target) => _components.Copy<T>(source, target);
+        public bool Has(Entity entity, States include = States.All) => _components.Has<T>(entity, include);
+        /// <inheritdoc cref="Modules.Components.Remove{T}(Entity, States)"/>
+        public bool Remove(Entity entity, States include = States.All) => _components.Remove<T>(entity, include);
+        /// <inheritdoc cref="Modules.Components.Clear{T}(States)"/>
+        public bool Clear(States include = States.All) => _components.Clear<T>(include);
+        /// <inheritdoc cref="Modules.Components.Copy{T}(Entity, Entity, States)"/>
+        public bool Copy(Entity source, Entity target, States include = States.All) => _components.Copy<T>(source, target, include);
+        /// <inheritdoc cref="Modules.Components.Enable{T}(Entity)"/>
+        public bool Enable(Entity entity) => _components.Enable<T>(entity);
+        /// <inheritdoc cref="Modules.Components.Disable{T}(Entity)"/>
+        public bool Disable(Entity entity) => _components.Disable<T>(entity);
         /// <inheritdoc cref="Modules.Components.GetEnumerator()"/>
         [ThreadSafe]
-        public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>().GetEnumerator();
+        public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>(States.All).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

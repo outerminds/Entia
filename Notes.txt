@@ -1,4 +1,5 @@
 Sample:
+- clean up components that have been disabled then removed
 - should a parent EntityReference that is disposed want to propagate the dispose to its children?
 - how to spawn A LOT of prefabs without the overhead of Unity objects while still designing them in the editor?
 - add an injectable for Unity components that acts as a shorthand for all 'Unity<T>' operations
@@ -81,6 +82,9 @@ Features:
 - run tests on device with IL2CPP build
 
 Bugs:
+- If a 'OnRemove' reaction removes a component, it may cause an infinite loop.
+	- As it is, the 'OnRemove' message is emitted before the 'BitMask' has its bit unset to allow a reaction to retrieve the removed component.
+	- A 'Removed' mask could be used in 'Transient.Slot' to prevent from reentering the message emit.
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
 
 Optimization:

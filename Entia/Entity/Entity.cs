@@ -27,27 +27,6 @@ namespace Entia
     {
         sealed class View
         {
-            readonly struct Item
-            {
-                [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-                public Entity Entity { get; }
-                public World World { get; }
-                public string Name => Entity.Name(World);
-                public int Index => Entity.Index;
-                public uint Generation => Entity.Generation;
-                public long Identifier => Entity.Identifier;
-                [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-                public IComponent[] Components => World.Components().Get(Entity).ToArray();
-
-                public Item(Entity entity, World world)
-                {
-                    Entity = entity;
-                    World = world;
-                }
-
-                public override string ToString() => $"{{ World: {World}, Name: {Entity.Name(World)} }}";
-            }
-
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
             public object Items
             {
@@ -57,8 +36,8 @@ namespace Entia
                     switch (worlds.Length)
                     {
                         case 0: return null;
-                        case 1: return new Item(_entity, worlds[0]);
-                        default: return worlds.Select(world => new Item(_entity, world)).ToArray();
+                        case 1: return new EntityView(_entity, worlds[0]);
+                        default: return worlds.Select(world => new EntityView(_entity, world)).ToArray();
                     }
                 }
             }
@@ -66,6 +45,47 @@ namespace Entia
             readonly Entity _entity;
 
             public View(Entity entity) { _entity = entity; }
+        }
+
+        sealed class EntityView
+        {
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            public Entity Entity { get; }
+            public World World { get; }
+            public string Name => Entity.Name(World);
+            public int Index => Entity.Index;
+            public uint Generation => Entity.Generation;
+            public long Identifier => Entity.Identifier;
+            public ComponentView[] Components => World.TryGet<Modules.Components>(out var components) ?
+                components.Get(Entity, States.All).Select(component => new ComponentView(component, Entity, World)).ToArray() :
+                Array.Empty<ComponentView>();
+
+            public EntityView(Entity entity, World world)
+            {
+                Entity = entity;
+                World = world;
+            }
+
+            public override string ToString() => $"{{ World: {World}, Name: {Entity.Name(World)} }}";
+        }
+
+        sealed class ComponentView
+        {
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public IComponent Component { get; }
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            public Entity Entity { get; }
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            public World World { get; }
+            public States State => World.TryGet<Modules.Components>(out var components) ?
+                components.State(Entity, Component.GetType()) : States.None;
+
+            public ComponentView(IComponent component, Entity entity, World world)
+            {
+                Component = component;
+                Entity = entity;
+                World = world;
+            }
         }
 
         sealed class Querier : Querier<Entity>

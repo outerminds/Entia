@@ -1,5 +1,4 @@
 using System;
-using Entia.Modules.Control;
 using Entia.Phases;
 
 namespace Entia.Modules
