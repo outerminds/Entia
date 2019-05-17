@@ -138,6 +138,7 @@ namespace Entia.Core
             return false;
         }
 
+        public static bool Contains<T>(this T[] array, in T item) => Array.IndexOf(array, item, 0, array.Length) >= 0;
         public static bool Contains<T>(in this (T[] items, int count) array, in T item) => Array.IndexOf(array.items, item, 0, array.count) >= 0;
         public static bool Contains<T>(in this (Array items, int count) array, in T item) => Array.IndexOf(array.items as T[], item, 0, array.count) >= 0;
 

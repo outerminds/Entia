@@ -20,10 +20,11 @@ namespace Entia.Queryables
     {
         sealed class Querier : Querier<Read<T>>
         {
-            public override bool TryQuery(Segment segment, World world, out Query<Read<T>> query)
+            public override bool TryQuery(in Context context, out Query<Read<T>> query)
             {
-                ref readonly var metadata = ref ComponentUtility.Concrete<T>.Data;
-                if (segment.Mask.Has(metadata.Index))
+                ref readonly var metadata = ref ComponentUtility.Cache<T>.Data;
+                var segment = context.Segment;
+                if (context.World.Components().Has(segment.Mask, metadata, context.Include))
                 {
                     query = new Query<Read<T>>(index => new Read<T>(segment.Store<T>(), index), metadata);
                     return true;

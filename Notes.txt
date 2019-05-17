@@ -1,5 +1,18 @@
 Sample:
-- clean up components that have been disabled then removed
+- some usages of 'ComponentUtility.Cache<T>.Data' can still be removed
+- separate component indices from tag indices
+	- this will reduce the cost of using lots of tags
+	- this will reduce memory usage in stores
+	- this should make moving/copying entities faster
+	- adding/removing tags will be ~as fast as setting a bit in a mask
+	- Metadata will have a boolean to select between components and tags
+- [Include(States)] attribute for Group<T> that will add filters
+	- States.Enabled -> type => [None(IsDisabled<type>)]
+	- States.Disabled -> type => [All(IsDisabled<type>)]
+	- States.All -> ...
+	- if no [Include] is found, States.Enabled will be used
+- make Components.IsDisable (not generic) a framework component?
+- Groups should exlude disable components
 - should a parent EntityReference that is disposed want to propagate the dispose to its children?
 - how to spawn A LOT of prefabs without the overhead of Unity objects while still designing them in the editor?
 - add an injectable for Unity components that acts as a shorthand for all 'Unity<T>' operations

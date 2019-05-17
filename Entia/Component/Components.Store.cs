@@ -29,7 +29,8 @@ namespace Entia.Modules
         public bool TryStore<T>(Entity entity, out T[] store, out int index, States include = States.All) where T : struct, IComponent
         {
             ref readonly var data = ref GetData(entity, out var success);
-            if (success && TryGetStore(data, include, out store, out index)) return true;
+            if (success && ComponentUtility.TryGetMetadata<T>(false, out var metadata))
+                return TryGetStore(data, metadata, include, out store, out index);
             store = default;
             index = default;
             return false;
@@ -47,10 +48,9 @@ namespace Entia.Modules
         [ThreadSafe]
         public bool TryStore(Entity entity, Type type, out Array store, out int index, States include = States.All)
         {
-            if (TryGetData(entity, out var data) &&
-                ComponentUtility.TryGetMetadata(type, out var metadata) &&
-                TryGetStore(data, metadata, include, out store, out index))
-                return true;
+            ref readonly var data = ref GetData(entity, out var success);
+            if (success && ComponentUtility.TryGetMetadata(type, false, out var metadata))
+                return TryGetStore(data, metadata, include, out store, out index);
 
             store = default;
             index = default;
@@ -58,9 +58,9 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
-        bool TryGetStore<T>(in Data data, States include, out T[] store, out int adjusted) where T : struct, IComponent
+        bool TryGetStore<T>(in Data data, in Metadata metadata, States include, out T[] store, out int adjusted) where T : struct, IComponent
         {
-            if (TryGetStore(data, ComponentUtility.Concrete<T>.Data, include, out var array, out adjusted))
+            if (TryGetStore(data, metadata, include, out var array, out adjusted))
             {
                 store = array as T[];
                 return store != null;
@@ -82,7 +82,7 @@ namespace Entia.Modules
                 if (store == null) _transient.TryStore(transient, metadata, out store, out adjusted);
                 ref readonly var slot = ref _transient.Slots.items[transient];
                 // NOTE: if the slot has the component, then the store must not be null
-                return Has(slot, metadata.Index, include);
+                return Has(slot, metadata, include);
             }
 
             return store != null;
@@ -92,8 +92,7 @@ namespace Entia.Modules
         {
             adjusted = data.Index;
             if (data.Segment.TryStore(metadata.Index, out store)) return true;
-
-            if (data.Transient is int transient)
+            else if (data.Transient is int transient)
             {
                 // NOTE: prioritize the segment store
                 store = _transient.Store(transient, metadata, out adjusted);
@@ -107,8 +106,7 @@ namespace Entia.Modules
         {
             adjusted = data.Index;
             if (data.Segment.TryStore<T>(out store)) return true;
-
-            if (data.Transient is int transient)
+            else if (data.Transient is int transient)
             {
                 // NOTE: prioritize the segment store
                 store = _transient.Store<T>(transient, out adjusted);

@@ -143,11 +143,13 @@ namespace Entia.Modules
         [ThreadSafe]
         public IEnumerable<(Entity entity, T component)> Get<T>(States include = States.All) where T : struct, IComponent
         {
-            for (var i = 0; i < _data.count; i++)
+            if (ComponentUtility.TryGetMetadata<T>(false, out var metadata))
             {
-                var data = _data.items[i];
-                if (data.IsValid && TryGetStore<T>(data, include, out var store, out var index))
-                    yield return (data.Segment.Entities.items[data.Index], store[index]);
+                foreach (var data in _data.Slice())
+                {
+                    if (data.IsValid && TryGetStore<T>(data, metadata, include, out var store, out var index))
+                        yield return (data.Segment.Entities.items[data.Index], store[index]);
+                }
             }
         }
 
@@ -160,11 +162,10 @@ namespace Entia.Modules
         [ThreadSafe]
         public IEnumerable<(Entity entity, IComponent component)> Get(Type type, States include = States.All)
         {
-            if (ComponentUtility.TryGetMetadata(type, out var metadata))
+            if (ComponentUtility.TryGetMetadata(type, false, out var metadata))
             {
-                for (var i = 0; i < _data.count; i++)
+                foreach (var data in _data.Slice())
                 {
-                    var data = _data.items[i];
                     if (data.IsValid && TryGetStore(data, metadata, include, out var store, out var index))
                         yield return (data.Segment.Entities.items[data.Index], (IComponent)store.GetValue(index));
                 }
@@ -173,18 +174,11 @@ namespace Entia.Modules
 
         IEnumerable<IComponent> Get(Data data, States include)
         {
-            var segments = GetTargetSegments(data, include);
-            var enabled = segments.enabled.Types.data;
-            var disabled = segments.disabled.Types.data;
-            for (var i = 0; i < enabled.Length; i++)
+            var segment = GetTargetSegment(data);
+            var types = segment.Types.data;
+            for (var i = 0; i < types.Length; i++)
             {
-                if (TryGetStore(data, enabled[i], include, out var store, out var index))
-                    yield return (IComponent)store.GetValue(index);
-            }
-
-            for (var i = 0; i < disabled.Length; i++)
-            {
-                if (TryGetStore(data, disabled[i], include, out var store, out var index))
+                if (TryGetStore(data, types[i], include, out var store, out var index))
                     yield return (IComponent)store.GetValue(index);
             }
         }

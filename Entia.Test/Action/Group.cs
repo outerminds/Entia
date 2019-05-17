@@ -31,7 +31,7 @@ namespace Entia.Test
         public override bool Pre(World value, Model model)
         {
             _querier = _member == null ? value.Queriers().Get<T>() : value.Queriers().Get<T>(_member);
-            _segments = value.Components().Segments.Where(segment => _querier.TryQuery(segment, value, out _)).ToArray();
+            _segments = value.Components().Segments.Where(segment => _querier.TryQuery(new Context(segment, value), out _)).ToArray();
             _entities = _segments.SelectMany(segment => segment.Entities.Slice()).ToArray();
             return true;
         }

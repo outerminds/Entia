@@ -34,7 +34,7 @@ namespace Entia.Modules
         [ThreadSafe]
         public bool TryDefault(Type type, out IComponent component)
         {
-            if (ComponentUtility.TryGetMetadata(type, out _) && DefaultUtility.Default(type) is IComponent casted)
+            if (ComponentUtility.IsConcrete(type) && DefaultUtility.Default(type) is IComponent casted)
             {
                 component = casted;
                 return true;

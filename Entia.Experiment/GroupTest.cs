@@ -1,4 +1,5 @@
 using Entia.Modules;
+using Entia.Queriers;
 using Entia.Queryables;
 using System;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace Entia.Experiment
             var group = world.Groups().Get(world.Queriers().Get<All<Write<Position>, Read<Velocity>>>());
             var array = group.ToArray();
             var segments = world.Components().Segments
-                .Where(segment => group.Querier.TryQuery(segment, world, out _))
+                .Where(segment => group.Querier.TryQuery(new Context(segment, world), out _))
                 .ToArray();
             var arrays = segments
                 .Select(segment => (segment.Entities.count, positions: segment.Store<Position>(), velocities: segment.Store<Velocity>()))

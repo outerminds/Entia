@@ -23,14 +23,9 @@ namespace Entia.Modules
         /// <param name="entity">The entity.</param>
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
         /// <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
-        public bool Remove<T>(Entity entity, States include = States.All) where T : IComponent
-        {
-            ref var data = ref GetData(entity, out var success);
-            if (success) return ComponentUtility.Abstract<T>.IsConcrete ?
-                Remove(entity, ref data, ComponentUtility.Abstract<T>.Data, GetEmitters(ComponentUtility.Abstract<T>.Data), include) :
-                Remove(entity, ref data, ComponentUtility.Abstract<T>.Mask, include);
-            return false;
-        }
+        public bool Remove<T>(Entity entity, States include = States.All) where T : IComponent =>
+            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Remove(entity, metadata, include) :
+            ComponentUtility.TryGetConcrete<T>(out var mask, out var types) && Remove(entity, (mask, types), include);
 
         /// <summary>
         /// Removes components of provided <paramref name="type"/> associated with the <paramref name="entity"/>.
@@ -39,58 +34,71 @@ namespace Entia.Modules
         /// <param name="type">The component type.</param>
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
         /// <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
-        public bool Remove(Entity entity, Type type, States include = States.All)
+        public bool Remove(Entity entity, Type type, States include = States.All) =>
+            ComponentUtility.TryGetMetadata(type, false, out var metadata) ? Remove(entity, metadata, include) :
+            ComponentUtility.TryGetConcrete(type, out var mask, out var types) && Remove(entity, (mask, types), include);
+
+        bool Remove(Entity entity, in Metadata metadata, States include)
         {
             ref var data = ref GetData(entity, out var success);
-            if (success) return
-                ComponentUtility.TryGetMetadata(type, out var metadata) ? Remove(entity, ref data, metadata, GetEmitters(metadata), include) :
-                ComponentUtility.TryGetConcrete(type, out var mask) && Remove(entity, ref data, mask, include);
-            return false;
+            return success && Remove(entity, ref data, metadata, include);
         }
 
-        bool Remove(Entity entity, ref Data data, in Metadata metadata, in Emitters emitters, States include)
+        bool Remove(Entity entity, ref Data data, in Metadata metadata, States include) =>
+            TryGetDelegates(metadata, out var delegates) && Remove(entity, ref data, metadata, delegates, include);
+
+        bool Remove(Entity entity, ref Data data, in Metadata metadata, in Delegates delegates, States include)
         {
             ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
-            return Remove(ref slot, metadata, emitters, include);
+            return Remove(ref slot, metadata, delegates, include);
         }
 
-        bool Remove(ref Transient.Slot slot, in Metadata metadata, in Emitters emitters, States include)
+        bool Remove(Entity entity, in (BitMask mask, Metadata[] types) components, States include)
         {
-            if (include.HasAny(States.Enabled) && slot.Enabled.Has(metadata.Index))
+            ref var data = ref GetData(entity, out var success);
+            return success && Remove(entity, ref data, components, include);
+        }
+
+        bool Remove(Entity entity, ref Data data, in (BitMask mask, Metadata[] types) components, States include)
+        {
+            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
+            return Remove(ref slot, components, include);
+        }
+
+        bool Remove(ref Transient.Slot slot, in (BitMask mask, Metadata[] types) components, States include)
+        {
+            var removed = false;
+            for (int i = 0; i < components.types.Length; i++)
             {
-                emitters.OnRemove(slot.Entity);
-                slot.Enabled.Remove(metadata.Index);
+                ref readonly var metadata = ref components.types[i];
+                removed |= TryGetDelegates(metadata, out var delegates) && Remove(ref slot, metadata, delegates, include);
+            }
+            return removed;
+        }
+
+        bool Remove(ref Transient.Slot slot, in Metadata metadata, States include) =>
+            TryGetDelegates(metadata, out var delegates) && Remove(ref slot, metadata, delegates, include);
+
+        bool Remove(ref Transient.Slot slot, in Metadata metadata, in Delegates delegates, States include)
+        {
+            if (Has(slot, metadata, delegates, include))
+            {
+                RemoveDisabled(slot, delegates.IsDisabled.Value);
+                delegates.OnRemove(slot.Entity);
+                slot.Mask.Remove(metadata.Index);
                 slot.Resolution.Set(Transient.Resolutions.Move);
                 return true;
             }
-            else if (include.HasAny(States.Disabled) && slot.Disabled.Has(metadata.Index))
-            {
-                emitters.OnRemove(slot.Entity);
-                slot.Disabled.Remove(metadata.Index);
-                return true;
-            }
-
             return false;
         }
 
-        bool Remove(Entity entity, ref Data data, BitMask mask, States include)
+        void RemoveDisabled(in Transient.Slot slot, in Metadata metadata)
         {
-            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
-            return Remove(entity, ref slot, mask, include);
-        }
-
-        bool Remove(Entity entity, ref Transient.Slot slot, BitMask mask, States include)
-        {
-            var removed = false;
-            var segment = GetSegment(mask);
-            var types = segment.Types.data;
-            for (var i = 0; i < types.Length; i++)
+            if (metadata.IsValid && TryGetDelegates(metadata, out var delegates) && slot.Mask.Has(metadata.Index))
             {
-                ref readonly var metadata = ref types[i];
-                removed |= Remove(ref slot, metadata, GetEmitters(metadata), include);
+                delegates.OnRemove(slot.Entity);
+                slot.Mask.Remove(metadata.Index);
             }
-
-            return removed;
         }
     }
 }

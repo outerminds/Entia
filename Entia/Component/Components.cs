@@ -20,19 +20,19 @@ namespace Entia.Modules
         {
             public bool IsValid => Segment != null;
 
-            public Segment Segment;
             public int Index;
+            public Segment Segment;
             public int? Transient;
         }
 
-        struct Emitters
+        struct Delegates
         {
-            public bool IsValid => OnAdd != null && OnRemove != null && OnEnable != null && OnDisable != null;
-
+            public bool IsValid;
+            public Lazy<Metadata> IsDisabled;
             public Action<Entity> OnAdd;
             public Action<Entity> OnRemove;
-            public Action<Entity> OnEnable;
-            public Action<Entity> OnDisable;
+            public Func<Entity, bool> Enable;
+            public Func<Entity, bool> Disable;
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace Entia.Modules
         readonly Dictionary<BitMask, Segment> _maskToSegment;
         (Data[] items, int count) _data = (new Data[64], 0);
         (Segment[] items, int count) _segments;
-        (Emitters[] items, int count) _emitters = (new Emitters[8], 0);
+        (Delegates[] items, int count) _delegates = (new Delegates[8], 0);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Components"/> class.
@@ -113,7 +113,6 @@ namespace Entia.Modules
 
         bool IResolvable.Resolve()
         {
-            var keep = 0;
             for (int i = 0; i < _transient.Slots.count; i++)
             {
                 ref var slot = ref _transient.Slots.items[i];
@@ -127,29 +126,21 @@ namespace Entia.Modules
                                 data.Transient = default;
                                 break;
                             }
-                        case Transient.Resolutions.Disabled:
-                            {
-                                if (MoveDisabledTo(ref data, ref slot, i, keep)) keep++;
-                                break;
-                            }
                         case Transient.Resolutions.Move:
                             {
-                                var enabled = GetSegment(slot.Enabled);
-                                MoveSegmentTo((data.Segment, data.Index), enabled);
-                                if (MoveDisabledTo(ref data, ref slot, i, keep)) keep++;
+                                var enabled = GetSegment(slot.Mask);
+                                MoveTo((data.Segment, data.Index), enabled);
                                 break;
                             }
                         case Transient.Resolutions.Initialize:
                             {
-                                var segment = GetSegment(slot.Enabled);
-                                CopySegmentTo((data.Segment, data.Index), (segment, segment.Entities.count++));
-                                if (MoveDisabledTo(ref data, ref slot, i, keep)) keep++;
+                                var segment = GetSegment(slot.Mask);
+                                CopyTo((data.Segment, data.Index), (segment, segment.Entities.count++));
                                 break;
                             }
                         case Transient.Resolutions.Dispose:
                             {
-                                MoveSegmentTo((data.Segment, data.Index), _destroyed);
-                                ClearDisabled(i, slot);
+                                MoveTo((data.Segment, data.Index), _destroyed);
                                 _destroyed.Entities.count = 0;
                                 data = default;
                                 break;
@@ -158,7 +149,7 @@ namespace Entia.Modules
                 }
             }
 
-            return _created.Entities.count.Change(0) | _destroyed.Entities.count.Change(0) | _transient.Slots.count.Change(keep);
+            return _created.Entities.count.Change(0) | _destroyed.Entities.count.Change(0) | _transient.Slots.count.Change(0);
         }
 
         [ThreadSafe]
@@ -179,6 +170,12 @@ namespace Entia.Modules
             return ref Dummy<Data>.Value;
         }
 
+        bool HasData(Entity entity)
+        {
+            GetData(entity, out var success);
+            return success;
+        }
+
         [ThreadSafe]
         bool TryGetData(Entity entity, out Data data)
         {
@@ -186,78 +183,18 @@ namespace Entia.Modules
             return success;
         }
 
-        int MoveSegmentTo(in (Segment segment, int index) source, Segment target)
+        int MoveTo(in (Segment segment, int index) source, Segment target)
         {
             if (source.segment == target) return source.index;
 
             var index = target.Entities.count++;
-            CopySegmentTo(source, (target, index));
+            CopyTo(source, (target, index));
             // NOTE: copy the last entity to the moved entity's slot
-            CopySegmentTo((source.segment, --source.segment.Entities.count), source);
+            CopyTo((source.segment, --source.segment.Entities.count), source);
             return index;
         }
 
-        bool MoveDisabledTo(ref Data data, ref Transient.Slot slot, int source, int target)
-        {
-            if (slot.Disabled.IsEmpty)
-            {
-                data.Transient = default;
-                return false;
-            }
-            else if (source == target)
-            {
-                slot.Resolution = Transient.Resolutions.Disabled;
-                return true;
-            }
-            else
-            {
-                var disabled = GetSegment(slot.Disabled);
-                return MoveTransientTo(ref data, ref slot, source, target, disabled.Types.data);
-            }
-        }
-
-        bool MoveTransientTo(ref Data data, ref Transient.Slot slot, int source, int target, Metadata[] types)
-        {
-            var moved = false;
-            for (int i = 0; i < types.Length; i++)
-            {
-                ref readonly var metadata = ref types[i];
-                if (TryGetStore(data, metadata, States.All, out var sourceStore, out var sourceIndex))
-                {
-                    var targetStore = _transient.Store(target, metadata, out var targetIndex);
-                    Array.Copy(sourceStore, sourceIndex, targetStore, targetIndex, 1);
-                    // NOTE: clearing is not strictly needed, but is done when the component type contains managed references in order to allow
-                    // them to be collected by the garbage collector
-                    if (!metadata.Data.IsPlain) Array.Clear(sourceStore, sourceIndex, 1);
-                    moved = true;
-                }
-            }
-
-            data.Transient = target;
-            slot = ref slot.Swap(ref _transient.Slots.items[target]);
-            slot.Resolution = Transient.Resolutions.Disabled;
-            return moved;
-        }
-
-        void ClearDisabled(int transient, in Transient.Slot slot)
-        {
-            if (slot.Disabled.IsEmpty) return;
-            var disabled = GetSegment(slot.Disabled);
-            ClearTransient(transient, disabled.Types.data);
-        }
-
-        void ClearTransient(int transient, Metadata[] types)
-        {
-            for (int i = 0; i < types.Length; i++)
-            {
-                ref readonly var metadata = ref types[i];
-                if (metadata.Data.IsPlain) continue;
-                if (_transient.TryStore(transient, metadata, out var store, out var adjusted))
-                    Array.Clear(store, adjusted, 1);
-            }
-        }
-
-        bool CopySegmentTo(in (Segment segment, int index) source, in (Segment segment, int index) target)
+        bool CopyTo(in (Segment segment, int index) source, in (Segment segment, int index) target)
         {
             if (source == target) return false;
 
@@ -311,16 +248,10 @@ namespace Entia.Modules
             }
         }
 
-        (Segment enabled, Segment disabled) GetTargetSegments(in Data data, States include) => data.Transient is int transient ?
-            GetTargetSegments(_transient.Slots.items[transient], include) :
-            (include.HasAny(States.Enabled) ? data.Segment : _empty, _empty);
+        Segment GetTargetSegment(in Data data) => data.Transient is int transient ?
+            GetTargetSegment(_transient.Slots.items[transient]) : data.Segment;
 
-        (Segment enabled, Segment disabled) GetTargetSegments(in Transient.Slot slot, States include)
-        {
-            var enabled = include.HasAny(States.Enabled) ? GetSegment(slot.Enabled) : _empty;
-            var disabled = include.HasAny(States.Disabled) ? GetSegment(slot.Disabled) : _empty;
-            return (enabled, disabled);
-        }
+        Segment GetTargetSegment(in Transient.Slot slot) => GetSegment(slot.Mask);
 
         ref Transient.Slot GetTransientSlot(Entity entity, ref Data data, Transient.Resolutions resolution)
         {
@@ -335,6 +266,8 @@ namespace Entia.Modules
             return ref _transient.Slots.items[transient];
         }
 
+        // NOTE: make sure that segments are only created with components that have their 'Delegates' initialized;
+        // 'Include' queries depend on it
         Segment GetSegment(BitMask mask)
         {
             if (mask.IsEmpty) return _empty;
@@ -345,59 +278,63 @@ namespace Entia.Modules
             return segment;
         }
 
-        ref readonly Emitters GetEmitters<T>() where T : struct, IComponent
+        ref readonly Delegates GetDelegates<T>() where T : struct, IComponent
         {
-            var index = ComponentUtility.Concrete<T>.Data.Index;
-            _emitters.Ensure(ComponentUtility.Concrete<T>.Data.Index + 1);
-            ref var emitters = ref _emitters.items[index];
-            if (!emitters.IsValid) emitters = CreateEmitters<T>();
-            return ref emitters;
+            var index = ComponentUtility.Cache<T>.Data.Index;
+            _delegates.Ensure(ComponentUtility.Cache<T>.Data.Index + 1);
+            ref var delegates = ref _delegates.items[index];
+            if (!delegates.IsValid) delegates = CreateDelegates<T>();
+            return ref delegates;
         }
 
-        ref readonly Emitters GetEmitters(in Metadata metadata)
+        ref readonly Delegates GetDelegates(in Metadata metadata)
         {
-            _emitters.Ensure(metadata.Index + 1);
-            ref var emitters = ref _emitters.items[metadata.Index];
-            if (!emitters.IsValid) emitters = CreateEmitters(metadata);
-            return ref emitters;
+            _delegates.Ensure(metadata.Index + 1);
+            ref var delegates = ref _delegates.items[metadata.Index];
+            if (!delegates.IsValid) delegates = CreateDelegates(metadata);
+            return ref delegates;
         }
 
-        Emitters CreateEmitters<T>() where T : struct, IComponent
+        [ThreadSafe]
+        bool TryGetDelegates(in Metadata metadata, out Delegates delegates) =>
+            _delegates.TryGet(metadata.Index, out delegates) && delegates.IsValid;
+
+        Delegates CreateDelegates<T>() where T : struct, IComponent
         {
-            var metadata = ComponentUtility.Concrete<T>.Data;
+            var metadata = ComponentUtility.Cache<T>.Data;
             var onAdd = _messages.Emitter<OnAdd<T>>();
             var onRemove = _messages.Emitter<OnRemove<T>>();
-            var onEnable = _messages.Emitter<OnEnable<T>>();
-            var onDisable = _messages.Emitter<OnDisable<T>>();
-            return new Emitters
+            var recusive = typeof(T).Is<IsDisabled>() || typeof(T).Is(typeof(IsDisabled<>), definition: true);
+            return new Delegates
             {
-                OnAdd = new Action<Entity>(entity =>
+                IsValid = true,
+                IsDisabled = new Lazy<Metadata>(recusive ?
+                    new Func<Metadata>(() => default) :
+                    new Func<Metadata>(() => ComponentUtility.GetMetadata<IsDisabled<T>>())),
+                OnAdd = entity =>
                 {
                     onAdd.Emit(new OnAdd<T> { Entity = entity });
                     _onAdd.Emit(new OnAdd { Entity = entity, Component = metadata });
-                }),
-                OnRemove = new Action<Entity>(entity =>
+                },
+                OnRemove = entity =>
                 {
                     onRemove.Emit(new OnRemove<T> { Entity = entity });
                     _onRemove.Emit(new OnRemove { Entity = entity, Component = metadata });
-                }),
-                OnEnable = new Action<Entity>(entity =>
-                {
-                    onEnable.Emit(new OnEnable<T> { Entity = entity });
-                    _onEnable.Emit(new OnEnable { Entity = entity, Component = metadata });
-                }),
-                OnDisable = new Action<Entity>(entity =>
-                {
-                    onDisable.Emit(new OnDisable<T> { Entity = entity });
-                    _onDisable.Emit(new OnDisable { Entity = entity, Component = metadata });
-                }),
+                },
+                Enable = recusive ?
+                    new Func<Entity, bool>(_ => false) :
+                    new Func<Entity, bool>(entity => Remove<IsDisabled<T>>(entity)),
+                Disable = recusive ?
+                    new Func<Entity, bool>(_ => false) :
+                    new Func<Entity, bool>(entity => Set<IsDisabled<T>>(entity)),
             };
         }
 
-        Emitters CreateEmitters(in Metadata metadata) => (Emitters)GetType()
+        Delegates CreateDelegates(in Metadata metadata) => (Delegates)GetType()
             .InstanceMethods()
-            .First(method => method.Name == nameof(CreateEmitters) && method.IsGenericMethod)
+            .First(method => method.Name == nameof(CreateDelegates) && method.IsGenericMethod)
             .MakeGenericMethod(metadata.Type)
             .Invoke(this, Array.Empty<object>());
+
     }
 }

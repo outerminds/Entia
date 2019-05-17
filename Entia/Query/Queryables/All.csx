@@ -6,6 +6,9 @@ IEnumerable<string> Generate(int depth)
             yield return $"T{i}";
     }
 
+    var context = "context";
+    var world = $"{context}.World";
+    var queriers = "queriers";
     for (var i = 2; i <= depth; i++)
     {
         var generics = GenericParameters(i).ToArray();
@@ -22,7 +25,7 @@ $@"        /// <summary>
 
         var tryQueries = string.Join(
             $" && ",
-            generics.Select((generic, index) => $"world.Queriers().TryQuery<{generic}>(segment, out var query{index + 1})"));
+            generics.Select((generic, index) => $"{queriers}.TryQuery<{generic}>({context}, out var query{index + 1})"));
         var queryGets = string.Join(
             $", ",
             generics.Select((_, index) => $"query{index + 1}.Get(index)"));
@@ -39,8 +42,9 @@ $@"    /// <summary>
     {{
         sealed class Querier : Querier<{type}>
         {{
-            public override bool TryQuery(Segment segment, World world, out Query<{type}> query)
+            public override bool TryQuery(in Context {context}, out Query<{type}> query)
             {{
+                var {queriers} = {world}.Queriers();
                 if ({tryQueries})
                 {{
                     query = new Query<{type}>(index => new {type}({queryGets}), {queryTypes});

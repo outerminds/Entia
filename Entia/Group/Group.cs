@@ -399,7 +399,7 @@ namespace Entia.Modules.Group
 
         bool TryAdd(Component.Segment segment)
         {
-            if (!Has(segment) && Querier.TryQuery(segment, _world, out var query))
+            if (!Has(segment) && Querier.TryQuery(new Context(segment, _world), out var query))
             {
                 Count += segment.Entities.count;
                 ArrayUtility.Set(ref _indexToComponentSegment, segment, segment.Index);

@@ -43,7 +43,7 @@ namespace Entia.Modules
 
                 GetStore<T>(ref data, out var store, out var adjusted);
                 store[adjusted] = component;
-                return Set(ref slot, ComponentUtility.Concrete<T>.Data, GetEmitters<T>());
+                return Set(ref slot, ComponentUtility.Cache<T>.Data, GetDelegates<T>());
             }
 
             return false;
@@ -70,29 +70,28 @@ namespace Entia.Modules
             if (component == null) return false;
 
             ref var data = ref GetData(entity, out var success);
-            if (success && ComponentUtility.TryGetMetadata(component.GetType(), out var metadata))
+            if (success && ComponentUtility.TryGetMetadata(component.GetType(), true, out var metadata))
             {
                 ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
                 if (slot.Resolution == Transient.Resolutions.Dispose) return false;
 
                 GetStore(ref data, metadata, out var store, out var adjusted);
                 store.SetValue(component, adjusted);
-                return Set(ref slot, metadata, GetEmitters(metadata));
+                return Set(ref slot, metadata, GetDelegates(metadata));
             }
 
             return false;
         }
 
-        bool Set(ref Transient.Slot slot, in Metadata metadata, in Emitters emitters)
+        bool Set(ref Transient.Slot slot, in Metadata metadata, in Delegates delegates)
         {
-            if (slot.Disabled.Has(metadata.Index)) return false;
-            else if (slot.Enabled.Add(metadata.Index))
+            if (slot.Mask.Add(metadata.Index))
             {
                 slot.Resolution.Set(Transient.Resolutions.Move);
-                emitters.OnAdd(slot.Entity);
+                delegates.OnAdd(slot.Entity);
                 return true;
             }
-            else return false;
+            return false;
         }
     }
 }

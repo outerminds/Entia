@@ -24,9 +24,9 @@ namespace Entia.Modules
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
         /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
         [ThreadSafe]
-        public bool Has<T>(Entity entity, States include = States.All) where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
-            Has(entity, ComponentUtility.Abstract<T>.Data.Index, include) :
-            Has(entity, ComponentUtility.Abstract<T>.Mask, include);
+        public bool Has<T>(Entity entity, States include = States.All) where T : IComponent =>
+            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Has(entity, metadata, include) :
+            ComponentUtility.TryGetConcrete<T>(out var mask, out var types) && Has(entity, (mask, types), include);
 
         /// <summary>
         /// Determines whether the <paramref name="entity"/> has a component of provided <paramref name="type"/>.
@@ -37,62 +37,66 @@ namespace Entia.Modules
         /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
         [ThreadSafe]
         public bool Has(Entity entity, Type type, States include = States.All) =>
-            ComponentUtility.TryGetMetadata(type, out var metadata) ? Has(entity, metadata.Index, include) :
-            ComponentUtility.TryGetConcrete(type, out var mask) && Has(entity, mask, include);
+            ComponentUtility.TryGetMetadata(type, false, out var metadata) ? Has(entity, metadata, include) :
+            ComponentUtility.TryGetConcrete(type, out var mask, out var types) && Has(entity, (mask, types), include);
 
         [ThreadSafe]
-        bool Has(Entity entity, BitMask mask, States include)
+        bool Has(Entity entity, in Metadata metadata, States include)
+        {
+            ref readonly var data = ref GetData(entity, out var success);
+            return success && Has(data, metadata, include);
+        }
+
+        [ThreadSafe]
+        bool Has(in Data data, in Metadata metadata, States include) => data.Transient is int transient ?
+            Has(_transient.Slots.items[transient], metadata, include) :
+            Has(data.Segment.Mask, metadata, include);
+
+        [ThreadSafe]
+        bool Has(in Data data, in Metadata metadata, in Delegates delegates, States include) => data.Transient is int transient ?
+            Has(_transient.Slots.items[transient], metadata, delegates, include) :
+            Has(data.Segment.Mask, metadata, delegates, include);
+
+        [ThreadSafe]
+        bool Has(Entity entity, in (BitMask mask, Metadata[] types) components, States include)
         {
             ref var data = ref GetData(entity, out var success);
-            return success && Has(data, mask, include);
+            return success && Has(data, components, include);
         }
 
         [ThreadSafe]
-        bool Has(Entity entity, int index, States include)
-        {
-            ref var data = ref GetData(entity, out var success);
-            return success && Has(data, index, include);
-        }
+        bool Has(in Data data, in (BitMask mask, Metadata[] types) components, States include) => data.Transient is int transient ?
+            Has(_transient.Slots.items[transient], components, include) :
+            Has(data.Segment.Mask, components, include);
 
         [ThreadSafe]
-        bool Has(in Data data, BitMask mask, States include)
-        {
-            if (data.Transient is int transient)
-            {
-                ref readonly var slot = ref _transient.Slots.items[transient];
-                return Has(slot, mask, include);
-            }
-            return include.HasAny(States.Enabled) && data.Segment.Mask.HasAny(mask);
-        }
+        bool Has(in Transient.Slot slot, in (BitMask mask, Metadata[] types) components, States include) =>
+            slot.Resolution < Transient.Resolutions.Dispose && Has(slot.Mask, components, include);
 
         [ThreadSafe]
-        bool Has(in Data data, int index, States include)
-        {
-            if (data.Transient is int transient)
-            {
-                ref readonly var slot = ref _transient.Slots.items[transient];
-                return Has(slot, index, include);
-            }
-            else
-                return include.HasAny(States.Enabled) && data.Segment.Mask.Has(index);
-        }
+        bool Has(in Transient.Slot slot, Metadata metadata, States include) =>
+            slot.Resolution < Transient.Resolutions.Dispose && Has(slot.Mask, metadata, include);
 
         [ThreadSafe]
-        bool Has(in Transient.Slot slot, BitMask mask, States include)
+        bool Has(in Transient.Slot slot, Metadata metadata, in Delegates delegates, States include) =>
+            slot.Resolution < Transient.Resolutions.Dispose && Has(slot.Mask, metadata, delegates, include);
+
+        [ThreadSafe]
+        bool Has(BitMask mask, in (BitMask mask, Metadata[] types) components, States include)
         {
-            if (slot.Resolution == Transient.Resolutions.Dispose) return false;
-            if (include.HasAny(States.Enabled) && slot.Enabled.HasAny(mask)) return true;
-            if (include.HasAny(States.Disabled) && slot.Disabled.HasAny(mask)) return true;
+            if (include.HasAll(States.All)) return mask.HasAny(components.mask);
+            if (include.HasNone(States.All)) return false;
+            for (int i = 0; i < components.types.Length; i++) if (include.HasAny(State(mask, components.types[i]))) return true;
             return false;
         }
 
         [ThreadSafe]
-        bool Has(in Transient.Slot slot, int index, States include)
-        {
-            if (slot.Resolution == Transient.Resolutions.Dispose) return false;
-            if (include.HasAny(States.Enabled) && slot.Enabled.Has(index)) return true;
-            if (include.HasAny(States.Disabled) && slot.Disabled.Has(index)) return true;
-            return false;
-        }
+        internal bool Has(BitMask mask, in Metadata metadata, States include) =>
+            TryGetDelegates(metadata, out var delegates) && Has(mask, metadata, delegates, include);
+
+        [ThreadSafe]
+        bool Has(BitMask mask, in Metadata metadata, in Delegates delegates, States include) =>
+            include.HasAll(States.All) ? mask.Has(metadata.Index) :
+            include.HasAny(States.All) && include.HasAny(State(mask, metadata, delegates));
     }
 }

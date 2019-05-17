@@ -17,9 +17,9 @@ namespace Entia.Queryables
     {
         sealed class Querier : Querier<Maybe<T>>
         {
-            public override bool TryQuery(Segment segment, World world, out Query<Maybe<T>> query)
+            public override bool TryQuery(in Context context, out Query<Maybe<T>> query)
             {
-                query = world.Queriers().TryQuery<T>(segment, out var inner) ?
+                query = context.World.Queriers().TryQuery<T>(context, out var inner) ?
                     new Query<Maybe<T>>(index => new Maybe<T>(inner.Get(index)), inner.Types) :
                     new Query<Maybe<T>>(_ => default);
                 return true;

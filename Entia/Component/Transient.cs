@@ -7,12 +7,11 @@ namespace Entia.Modules.Component
 {
     public sealed class Transient
     {
-        public enum Resolutions : byte { None = 0, Disabled = 1, Move = 2, Initialize = 3, Dispose = 4 }
+        public enum Resolutions : byte { None = 0, Move = 1, Initialize = 2, Dispose = 3 }
         public struct Slot
         {
             public Entity Entity;
-            public BitMask Enabled;
-            public BitMask Disabled;
+            public BitMask Mask;
             public Resolutions Resolution;
         }
 
@@ -27,24 +26,22 @@ namespace Entia.Modules.Component
             Slots.Ensure();
 
             ref var slot = ref Slots.items[index];
-            if (slot.Enabled == null || slot.Disabled == null)
-                slot = new Slot { Entity = entity, Enabled = new BitMask(), Disabled = new BitMask(), Resolution = resolution };
+            if (slot.Mask == null) slot = new Slot { Entity = entity, Mask = new BitMask(), Resolution = resolution };
             else
             {
                 slot.Entity = entity;
                 slot.Resolution = resolution;
-                slot.Enabled.Clear();
-                slot.Disabled.Clear();
+                slot.Mask.Clear();
             }
 
-            if (mask != null) slot.Enabled.Add(mask);
+            if (mask != null) slot.Mask.Add(mask);
             return index;
         }
 
         [ThreadSafe]
         public bool TryStore<T>(int index, out T[] store, out int adjusted) where T : struct, IComponent
         {
-            if (TryStore(index, ComponentUtility.Concrete<T>.Data, out var array, out adjusted) && array is T[] casted)
+            if (TryStore(index, ComponentUtility.Cache<T>.Data, out var array, out adjusted) && array is T[] casted)
             {
                 store = casted;
                 return true;
@@ -71,7 +68,7 @@ namespace Entia.Modules.Component
 
         public T[] Store<T>(int index, out int adjusted) where T : struct, IComponent
         {
-            ref readonly var metadata = ref ComponentUtility.Concrete<T>.Data;
+            ref readonly var metadata = ref ComponentUtility.Cache<T>.Data;
             var chunk = GetChunk(index, metadata.Index + 1);
             adjusted = index % ChunkSize;
 

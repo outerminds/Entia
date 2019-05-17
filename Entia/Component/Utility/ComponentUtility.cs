@@ -13,30 +13,17 @@ namespace Entia.Modules.Component
         public enum Kinds { Invalid, Abstract, Concrete }
 
         [ThreadSafe]
-        public static class Concrete<T> where T : struct, IComponent
+        public static class Cache<T> where T : struct, IComponent
         {
             public static readonly Metadata Data = GetMetadata(typeof(T));
-            public static readonly BitMask Mask = GetConcrete(typeof(T));
-        }
-
-        [ThreadSafe]
-        public static class Abstract<T> where T : IComponent
-        {
-            public static bool IsConcrete => Kind == Kinds.Concrete;
-            public static bool IsAbstract => Kind == Kinds.Abstract;
-
-            public static readonly Kinds Kind = GetKind(typeof(T));
-            public static readonly BitMask Mask = GetConcrete(typeof(T));
-            public static readonly Metadata Data;
-
-            static Abstract() { TryGetMetadata(typeof(T), out Data); }
         }
 
         struct State
         {
             public (Metadata[] items, int count) Concretes;
-            public Dictionary<Type, Metadata> ConcreteToMetadata;
-            public Dictionary<Type, BitMask> AbstractToMask;
+            public TypeMap<IComponent, Metadata> ConcreteToMetadata;
+            public TypeMap<IComponent, BitMask> AbstractToMask;
+            public TypeMap<IComponent, Metadata[]> AbstractToMetadata;
         }
 
         public static int Count => _state.Read((in State state) => state.Concretes.count);
@@ -44,19 +31,93 @@ namespace Entia.Modules.Component
         static readonly Concurrent<State> _state = new State
         {
             Concretes = (new Metadata[8], 0),
-            ConcreteToMetadata = new Dictionary<Type, Metadata>(),
-            AbstractToMask = new Dictionary<Type, BitMask>()
+            ConcreteToMetadata = new TypeMap<IComponent, Metadata>(),
+            AbstractToMask = new TypeMap<IComponent, BitMask>(),
+            AbstractToMetadata = new TypeMap<IComponent, Metadata[]>()
         };
 
-        public static bool TryGetMetadata(Type type, out Metadata data)
+        public static bool TryGetMetadata<T>(bool create, out Metadata data) where T : IComponent
         {
-            data = GetMetadata(type);
-            return data.IsValid;
+            using (var read = _state.Read(create))
+            {
+                if (read.Value.ConcreteToMetadata.TryGet<T>(out data)) return data.IsValid;
+                if (create) data = CreateMetadata(typeof(T));
+                return data.IsValid;
+            }
         }
 
-        public static bool TryGetConcrete(Type type, out BitMask mask)
+        public static bool TryGetMetadata(Type type, bool create, out Metadata data)
         {
-            using (var read = _state.Read()) return read.Value.AbstractToMask.TryGetValue(type, out mask);
+            using (var read = _state.Read(create))
+            {
+                if (read.Value.ConcreteToMetadata.TryGet(type, out data)) return data.IsValid;
+                else if (create) data = CreateMetadata(type);
+                return data.IsValid;
+            }
+        }
+
+        public static bool TryGetConcreteMask<T>(out BitMask mask) where T : IComponent
+        {
+            using (var read = _state.Read()) return read.Value.AbstractToMask.TryGet<T>(out mask);
+        }
+
+        public static bool TryGetConcreteTypes<T>(out Metadata[] types) where T : IComponent
+        {
+            using (var read = _state.Read()) return read.Value.AbstractToMetadata.TryGet<T>(out types);
+        }
+
+        public static bool TryGetConcrete<T>(out BitMask mask, out Metadata[] types) where T : IComponent
+        {
+            using (var read = _state.Read())
+                return read.Value.AbstractToMask.TryGet<T>(out mask) & read.Value.AbstractToMetadata.TryGet<T>(out types);
+        }
+
+        public static bool TryGetConcreteMask(Type type, out BitMask mask)
+        {
+            using (var read = _state.Read()) return read.Value.AbstractToMask.TryGet(type, out mask);
+        }
+
+        public static bool TryGetConcreteTypes(Type type, out Metadata[] types)
+        {
+            using (var read = _state.Read()) return read.Value.AbstractToMetadata.TryGet(type, out types);
+        }
+
+        public static bool TryGetConcrete(Type type, out BitMask mask, out Metadata[] types)
+        {
+            using (var read = _state.Read())
+                return read.Value.AbstractToMask.TryGet(type, out mask) & read.Value.AbstractToMetadata.TryGet(type, out types);
+        }
+
+        public static Metadata GetMetadata<T>() where T : struct, IComponent
+        {
+            using (var read = _state.Read(true))
+            {
+                if (read.Value.ConcreteToMetadata.TryGet<T>(out var data)) return data;
+                return CreateMetadata(typeof(T));
+            }
+        }
+
+        public static Metadata GetMetadata(Type type)
+        {
+            using (var read = _state.Read(true))
+            {
+                if (read.Value.ConcreteToMetadata.TryGet(type, out var data)) return data;
+                return CreateMetadata(type);
+            }
+        }
+
+        public static BitMask GetConcreteMask(Type type)
+        {
+            using (var read = _state.Read(true))
+            {
+                if (read.Value.AbstractToMask.TryGet(type, out var mask)) return mask;
+                using (var write = _state.Write())
+                {
+                    return
+                        write.Value.AbstractToMask.TryGet(type, out mask) ? mask :
+                        write.Value.AbstractToMask[type] = new BitMask();
+                }
+            }
         }
 
         public static Metadata[] ToMetadata(BitMask mask)
@@ -81,32 +142,10 @@ namespace Entia.Modules.Component
         public static bool IsConcrete(Type type) => GetKind(type) == Kinds.Concrete;
         public static bool IsAbstract(Type type) => GetKind(type) == Kinds.Abstract;
 
-        public static Metadata GetMetadata(Type type)
-        {
-            using (var read = _state.Read(true))
-            {
-                if (read.Value.ConcreteToMetadata.TryGetValue(type, out var data)) return data;
-                return CreateMetadata(type);
-            }
-        }
-
-        public static BitMask GetConcrete(Type type)
-        {
-            using (var read = _state.Read(true))
-            {
-                if (read.Value.AbstractToMask.TryGetValue(type, out var mask)) return mask;
-                using (var write = _state.Write())
-                {
-                    if (write.Value.AbstractToMask.TryGetValue(type, out mask)) return mask;
-                    return write.Value.AbstractToMask[type] = new BitMask();
-                }
-            }
-        }
-
         public static BitMask[] GetMasks(params Type[] types)
         {
             var (concrete, @abstract) = types.Where(ComponentUtility.IsValid).Split(ComponentUtility.IsConcrete);
-            var masks = @abstract.Select(ComponentUtility.GetConcrete);
+            var masks = @abstract.Select(type => ComponentUtility.GetConcreteMask(type));
             if (concrete.Length > 0) masks = masks.Prepend(new BitMask(concrete.Select(component => ComponentUtility.GetMetadata(component).Index).ToArray()));
             return masks.ToArray();
         }
@@ -121,13 +160,21 @@ namespace Entia.Modules.Component
                     .ToArray();
                 using (var write = _state.Write())
                 {
-                    if (write.Value.ConcreteToMetadata.TryGetValue(type, out var data)) return data;
+                    if (write.Value.ConcreteToMetadata.TryGet(type, out var data)) return data;
 
                     var index = write.Value.Concretes.count;
                     data = new Metadata(TypeUtility.GetData(type), index);
                     write.Value.ConcreteToMetadata[type] = data;
                     write.Value.Concretes.Push(data);
-                    foreach (var @abstract in abstracts) GetConcrete(@abstract).Add(index);
+                    foreach (var @abstract in abstracts)
+                    {
+                        if (write.Value.AbstractToMask.TryGet(@abstract, out var mask)) mask.Add(index);
+                        else write.Value.AbstractToMask[@abstract] = new BitMask(index);
+
+                        ref var types = ref write.Value.AbstractToMetadata.Get(@abstract, out var success);
+                        if (success) ArrayUtility.Add(ref types, data);
+                        else write.Value.AbstractToMetadata[@abstract] = new[] { data };
+                    }
                     return data;
                 }
             }

@@ -23,9 +23,10 @@ namespace Entia.Queryables
     {
         sealed class Querier : Querier<All<T1, T2>>
         {
-            public override bool TryQuery(Segment segment, World world, out Query<All<T1, T2>> query)
+            public override bool TryQuery(in Context context, out Query<All<T1, T2>> query)
             {
-                if (world.Queriers().TryQuery<T1>(segment, out var query1) && world.Queriers().TryQuery<T2>(segment, out var query2))
+                var queriers = context.World.Queriers();
+                if (queriers.TryQuery<T1>(context, out var query1) && queriers.TryQuery<T2>(context, out var query2))
                 {
                     query = new Query<All<T1, T2>>(index => new All<T1, T2>(query1.Get(index), query2.Get(index)), query1.Types, query2.Types);
                     return true;
@@ -62,9 +63,10 @@ namespace Entia.Queryables
     {
         sealed class Querier : Querier<All<T1, T2, T3>>
         {
-            public override bool TryQuery(Segment segment, World world, out Query<All<T1, T2, T3>> query)
+            public override bool TryQuery(in Context context, out Query<All<T1, T2, T3>> query)
             {
-                if (world.Queriers().TryQuery<T1>(segment, out var query1) && world.Queriers().TryQuery<T2>(segment, out var query2) && world.Queriers().TryQuery<T3>(segment, out var query3))
+                var queriers = context.World.Queriers();
+                if (queriers.TryQuery<T1>(context, out var query1) && queriers.TryQuery<T2>(context, out var query2) && queriers.TryQuery<T3>(context, out var query3))
                 {
                     query = new Query<All<T1, T2, T3>>(index => new All<T1, T2, T3>(query1.Get(index), query2.Get(index), query3.Get(index)), query1.Types, query2.Types, query3.Types);
                     return true;
@@ -105,9 +107,10 @@ namespace Entia.Queryables
     {
         sealed class Querier : Querier<All<T1, T2, T3, T4>>
         {
-            public override bool TryQuery(Segment segment, World world, out Query<All<T1, T2, T3, T4>> query)
+            public override bool TryQuery(in Context context, out Query<All<T1, T2, T3, T4>> query)
             {
-                if (world.Queriers().TryQuery<T1>(segment, out var query1) && world.Queriers().TryQuery<T2>(segment, out var query2) && world.Queriers().TryQuery<T3>(segment, out var query3) && world.Queriers().TryQuery<T4>(segment, out var query4))
+                var queriers = context.World.Queriers();
+                if (queriers.TryQuery<T1>(context, out var query1) && queriers.TryQuery<T2>(context, out var query2) && queriers.TryQuery<T3>(context, out var query3) && queriers.TryQuery<T4>(context, out var query4))
                 {
                     query = new Query<All<T1, T2, T3, T4>>(index => new All<T1, T2, T3, T4>(query1.Get(index), query2.Get(index), query3.Get(index), query4.Get(index)), query1.Types, query2.Types, query3.Types, query4.Types);
                     return true;
@@ -152,9 +155,10 @@ namespace Entia.Queryables
     {
         sealed class Querier : Querier<All<T1, T2, T3, T4, T5>>
         {
-            public override bool TryQuery(Segment segment, World world, out Query<All<T1, T2, T3, T4, T5>> query)
+            public override bool TryQuery(in Context context, out Query<All<T1, T2, T3, T4, T5>> query)
             {
-                if (world.Queriers().TryQuery<T1>(segment, out var query1) && world.Queriers().TryQuery<T2>(segment, out var query2) && world.Queriers().TryQuery<T3>(segment, out var query3) && world.Queriers().TryQuery<T4>(segment, out var query4) && world.Queriers().TryQuery<T5>(segment, out var query5))
+                var queriers = context.World.Queriers();
+                if (queriers.TryQuery<T1>(context, out var query1) && queriers.TryQuery<T2>(context, out var query2) && queriers.TryQuery<T3>(context, out var query3) && queriers.TryQuery<T4>(context, out var query4) && queriers.TryQuery<T5>(context, out var query5))
                 {
                     query = new Query<All<T1, T2, T3, T4, T5>>(index => new All<T1, T2, T3, T4, T5>(query1.Get(index), query2.Get(index), query3.Get(index), query4.Get(index), query5.Get(index)), query1.Types, query2.Types, query3.Types, query4.Types, query5.Types);
                     return true;
@@ -203,9 +207,10 @@ namespace Entia.Queryables
     {
         sealed class Querier : Querier<All<T1, T2, T3, T4, T5, T6>>
         {
-            public override bool TryQuery(Segment segment, World world, out Query<All<T1, T2, T3, T4, T5, T6>> query)
+            public override bool TryQuery(in Context context, out Query<All<T1, T2, T3, T4, T5, T6>> query)
             {
-                if (world.Queriers().TryQuery<T1>(segment, out var query1) && world.Queriers().TryQuery<T2>(segment, out var query2) && world.Queriers().TryQuery<T3>(segment, out var query3) && world.Queriers().TryQuery<T4>(segment, out var query4) && world.Queriers().TryQuery<T5>(segment, out var query5) && world.Queriers().TryQuery<T6>(segment, out var query6))
+                var queriers = context.World.Queriers();
+                if (queriers.TryQuery<T1>(context, out var query1) && queriers.TryQuery<T2>(context, out var query2) && queriers.TryQuery<T3>(context, out var query3) && queriers.TryQuery<T4>(context, out var query4) && queriers.TryQuery<T5>(context, out var query5) && queriers.TryQuery<T6>(context, out var query6))
                 {
                     query = new Query<All<T1, T2, T3, T4, T5, T6>>(index => new All<T1, T2, T3, T4, T5, T6>(query1.Get(index), query2.Get(index), query3.Get(index), query4.Get(index), query5.Get(index), query6.Get(index)), query1.Types, query2.Types, query3.Types, query4.Types, query5.Types, query6.Types);
                     return true;
@@ -258,9 +263,10 @@ namespace Entia.Queryables
     {
         sealed class Querier : Querier<All<T1, T2, T3, T4, T5, T6, T7>>
         {
-            public override bool TryQuery(Segment segment, World world, out Query<All<T1, T2, T3, T4, T5, T6, T7>> query)
+            public override bool TryQuery(in Context context, out Query<All<T1, T2, T3, T4, T5, T6, T7>> query)
             {
-                if (world.Queriers().TryQuery<T1>(segment, out var query1) && world.Queriers().TryQuery<T2>(segment, out var query2) && world.Queriers().TryQuery<T3>(segment, out var query3) && world.Queriers().TryQuery<T4>(segment, out var query4) && world.Queriers().TryQuery<T5>(segment, out var query5) && world.Queriers().TryQuery<T6>(segment, out var query6) && world.Queriers().TryQuery<T7>(segment, out var query7))
+                var queriers = context.World.Queriers();
+                if (queriers.TryQuery<T1>(context, out var query1) && queriers.TryQuery<T2>(context, out var query2) && queriers.TryQuery<T3>(context, out var query3) && queriers.TryQuery<T4>(context, out var query4) && queriers.TryQuery<T5>(context, out var query5) && queriers.TryQuery<T6>(context, out var query6) && queriers.TryQuery<T7>(context, out var query7))
                 {
                     query = new Query<All<T1, T2, T3, T4, T5, T6, T7>>(index => new All<T1, T2, T3, T4, T5, T6, T7>(query1.Get(index), query2.Get(index), query3.Get(index), query4.Get(index), query5.Get(index), query6.Get(index), query7.Get(index)), query1.Types, query2.Types, query3.Types, query4.Types, query5.Types, query6.Types, query7.Types);
                     return true;

@@ -16,74 +16,23 @@ namespace Entia.Modules
     /// </summary>
     public sealed partial class Components : IModule, IResolvable, IEnumerable<IComponent>
     {
-        public bool Enable<T>(Entity entity) where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
-            Enable(entity, ComponentUtility.Abstract<T>.Data, GetEmitters(ComponentUtility.Abstract<T>.Data)) :
-            Enable(entity, ComponentUtility.Abstract<T>.Mask);
+        public bool Enable<T>(Entity entity) where T : IComponent =>
+            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Enable(entity, metadata) :
+            ComponentUtility.TryGetConcreteTypes<T>(out var types) && Enable(entity, types);
 
         public bool Enable(Entity entity, Type type) =>
-            ComponentUtility.TryGetMetadata(type, out var metadata) ? Enable(entity, metadata, GetEmitters(metadata)) :
-            ComponentUtility.TryGetConcrete(type, out var mask) && Enable(entity, mask);
+            ComponentUtility.TryGetMetadata(type, false, out var metadata) ? Enable(entity, metadata) :
+            ComponentUtility.TryGetConcreteTypes(type, out var types) && Enable(entity, types);
 
-        public bool Enable(Entity entity)
-        {
-            ref readonly var data = ref GetData(entity, out var success);
-            if (success && data.Transient is int transient)
-            {
-                ref readonly var slot = ref _transient.Slots.items[transient];
-                var segment = GetSegment(slot.Disabled);
-                return Enable(slot, segment.Types.data);
-            }
-            return false;
-        }
+        public bool Enable(Entity entity) => Remove(entity, typeof(IsDisabled<>));
 
-        bool Enable(Entity entity, in Metadata metadata, in Emitters emitters)
-        {
-            ref readonly var data = ref GetData(entity, out var success);
-            // NOTE: if the entity has no 'transient', then it can be assumed that no components have been disabled
-            if (success && data.Transient is int transient)
-            {
-                ref readonly var slot = ref _transient.Slots.items[transient];
-                return Enable(slot, metadata, emitters);
-            }
+        bool Enable(Entity entity, in Metadata metadata) => TryGetDelegates(metadata, out var delegates) && delegates.Enable(entity);
 
-            return false;
-        }
-
-        bool Enable(Entity entity, BitMask mask)
-        {
-            ref readonly var data = ref GetData(entity, out var success);
-            // NOTE: if the entity has no 'transient', then it can be assumed that no components have been disabled
-            if (success && data.Transient is int transient)
-            {
-                ref readonly var slot = ref _transient.Slots.items[transient];
-                var segment = GetSegment(mask);
-                return Enable(slot, segment.Types.data);
-            }
-
-            return false;
-        }
-
-        bool Enable(in Transient.Slot slot, Metadata[] types)
+        bool Enable(Entity entity, Metadata[] types)
         {
             var enabled = false;
-            for (var i = 0; i < types.Length; i++)
-            {
-                ref readonly var metadata = ref types[i];
-                enabled |= Enable(slot, metadata, GetEmitters(metadata));
-            }
+            for (var i = 0; i < types.Length; i++) enabled |= Enable(entity, types[i]);
             return enabled;
-        }
-
-        bool Enable(in Transient.Slot slot, in Metadata metadata, in Emitters emitters)
-        {
-            if (slot.Disabled.Remove(metadata.Index))
-            {
-                slot.Enabled.Add(metadata.Index);
-                emitters.OnEnable(slot.Entity);
-                return true;
-            }
-
-            return false;
         }
     }
 }

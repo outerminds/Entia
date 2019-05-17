@@ -19,9 +19,14 @@ namespace Entia.Modules
 
         public Queriers(World world) { _world = world; }
 
-        public bool TryQuery<T>(Segment segment, out Query<T> query) where T : struct, Queryables.IQueryable => Get<T>().TryQuery(segment, _world, out query);
-        public bool TryQuery<T>(Querier<T> querier, Segment segment, out Query<T> query) where T : struct, Queryables.IQueryable => querier.TryQuery(segment, _world, out query);
-        public bool TryQuery(IQuerier querier, Segment segment, out Query.Query query) => querier.TryQuery(segment, _world, out query);
+        public bool TryQuery<T>(in Context context, out Query<T> query, States? include = null) where T : struct, Queryables.IQueryable =>
+            Get<T>().TryQuery(context.With(include), out query);
+        public bool TryQuery(Type queryable, in Context context, out Query.Query query, States? include = null) =>
+            Get(queryable).TryQuery(context.With(include), out query);
+        public bool TryQuery<T>(Querier<T> querier, Segment segment, out Query<T> query, States include = States.All) where T : struct, Queryables.IQueryable =>
+            querier.TryQuery(new Context(segment, _world, include), out query);
+        public bool TryQuery(IQuerier querier, Segment segment, out Query.Query query, States include = States.All) =>
+            querier.TryQuery(new Context(segment, _world, include), out query);
 
         public Querier<T> Default<T>() where T : struct, Queryables.IQueryable =>
             _defaults.Default(typeof(T), typeof(Queryables.IQueryable<>), typeof(QuerierAttribute), _ => new Default<T>()) as Querier<T>;
@@ -34,21 +39,21 @@ namespace Entia.Modules
         public Querier<T> Get<T>() where T : struct, Queryables.IQueryable
         {
             if (_queriers.TryGetValue(typeof(T), out var querier) && querier is Querier<T> casted) return casted;
-            _queriers[typeof(T)] = casted = Querier.All(Default<T>(), Querier.From(typeof(T)));
+            _queriers[typeof(T)] = casted = Default<T>().All(typeof(T)).Include(typeof(T));
             return casted;
         }
 
         public Querier<T> Get<T>(MemberInfo member) where T : struct, Queryables.IQueryable
         {
             if (_queriers.TryGetValue(member, out var querier) && querier is Querier<T> casted) return casted;
-            _queriers[member] = casted = Querier.All(Default<T>(), Querier.From(typeof(T)), Querier.From(member));
+            _queriers[member] = casted = Default<T>().All(typeof(T), member).Include(member, typeof(T));
             return casted;
         }
 
         public IQuerier Get(Type queryable)
         {
             if (_queriers.TryGetValue(queryable, out var querier)) return querier;
-            return _queriers[queryable] = Querier.All(Default(queryable), Querier.From(queryable));
+            return _queriers[queryable] = Default(queryable).All(queryable).Include(queryable);
         }
 
         public IQuerier Get(MemberInfo member)
@@ -61,7 +66,7 @@ namespace Entia.Modules
                 (member as MethodInfo)?.ReturnType;
             return _queriers[member] =
                 queryable == null ? new False() :
-                Querier.All(Default(queryable), Querier.From(queryable), Querier.From(member));
+                Default(queryable).All(queryable, member).Include(member, queryable);
         }
 
         public bool Set<T>(Querier<T> querier) where T : struct, Queryables.IQueryable => _queriers.Set(typeof(T), querier);

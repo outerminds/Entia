@@ -29,23 +29,21 @@ namespace Entia.Modules
             ref var targetData = ref GetData(target, out var targetSuccess);
             if (sourceSuccess && targetSuccess)
             {
-                ref var slot = ref GetTransientSlot(target, ref targetData, Transient.Resolutions.None);
-                var (enabled, disabled) = GetTargetSegments(slot, include);
-                return Trim(sourceData, ref slot, enabled.Types.data) | Trim(sourceData, ref slot, disabled.Types.data);
+                ref var targetSlot = ref GetTransientSlot(target, ref targetData, Transient.Resolutions.None);
+                var segment = GetTargetSegment(targetSlot);
+                var types = segment.Types.data;
+                var trimmed = false;
+                for (int i = 0; i < types.Length; i++)
+                {
+                    ref readonly var metadata = ref types[i];
+                    trimmed |=
+                        TryGetDelegates(metadata, out var delegates) &&
+                        !Has(sourceData, metadata, delegates, States.All) &&
+                        Remove(ref targetSlot, metadata, delegates, include);
+                }
+                return trimmed;
             }
             return false;
-        }
-
-        bool Trim(in Data sourceData, ref Transient.Slot targetSlot, Metadata[] types)
-        {
-            var trimmed = false;
-            for (int i = 0; i < types.Length; i++)
-            {
-                ref readonly var metadata = ref types[i];
-                if (Has(sourceData, metadata.Index, States.All)) continue;
-                trimmed |= Remove(ref targetSlot, metadata, GetEmitters(metadata), States.All);
-            }
-            return trimmed;
         }
     }
 }

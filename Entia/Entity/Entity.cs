@@ -90,8 +90,9 @@ namespace Entia
 
         sealed class Querier : Querier<Entity>
         {
-            public override bool TryQuery(Segment segment, World world, out Query<Entity> query)
+            public override bool TryQuery(in Context context, out Query<Entity> query)
             {
+                var segment = context.Segment;
                 query = new Query<Entity>(index => segment.Entities.items[index]);
                 return true;
             }

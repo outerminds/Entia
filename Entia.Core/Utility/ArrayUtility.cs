@@ -59,7 +59,7 @@ namespace Entia.Core
             return resized;
         }
 
-        public static ref T Add<T>(ref T[] array, T item)
+        public static ref T Add<T>(ref T[] array, in T item)
         {
             var index = array.Length;
             Array.Resize(ref array, index + 1);

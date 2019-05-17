@@ -11,9 +11,23 @@ using Entia.Queryables;
 
 namespace Entia.Queriers
 {
+    public readonly struct Context
+    {
+        public readonly Segment Segment;
+        public readonly World World;
+        public readonly States Include;
+
+        public Context(Segment segment, World world, States include = States.All)
+        {
+            Segment = segment;
+            World = world;
+            Include = include;
+        }
+    }
+
     public interface IQuerier
     {
-        bool TryQuery(Segment segment, World world, out Query query);
+        bool TryQuery(in Context context, out Query query);
     }
 
     [AttributeUsage(ModuleUtility.AttributeUsage)]
@@ -21,10 +35,10 @@ namespace Entia.Queriers
 
     public abstract class Querier<T> : IQuerier where T : struct, Queryables.IQueryable
     {
-        public abstract bool TryQuery(Segment segment, World world, out Query<T> query);
-        bool IQuerier.TryQuery(Segment segment, World world, out Query query)
+        public abstract bool TryQuery(in Context context, out Query<T> query);
+        bool IQuerier.TryQuery(in Context context, out Query query)
         {
-            if (TryQuery(segment, world, out var casted))
+            if (TryQuery(context, out var casted))
             {
                 query = casted;
                 return true;
@@ -42,17 +56,18 @@ namespace Entia.Queriers
             .OrderBy(field => field.MetadataToken)
             .ToArray();
 
-        public override bool TryQuery(Segment segment, World world, out Query<T> query)
+        public override bool TryQuery(in Context context, out Query<T> query)
         {
             var attribute = Querier.All(typeof(T).GetCustomAttributes(true).OfType<IQuerier>().ToArray());
-            if (attribute.TryQuery(segment, world, out var query1))
+            if (attribute.TryQuery(context, out var query1))
             {
+                var queriers = context.World.Queriers();
                 var queries = new Query[_fields.Length];
                 for (int i = 0; i < _fields.Length; i++)
                 {
                     var field = _fields[i];
-                    var querier = world.Queriers().Get(field.FieldType);
-                    if (querier.TryQuery(segment, world, out var query2)) queries[i] = query2;
+                    var querier = queriers.Get(field.FieldType);
+                    if (querier.TryQuery(context, out var query2)) queries[i] = query2;
                     else
                     {
                         query = default;
@@ -85,7 +100,7 @@ namespace Entia.Queriers
     [ThreadSafe]
     public sealed class True : IQuerier
     {
-        public bool TryQuery(Segment segment, World world, out Query query)
+        public bool TryQuery(in Context context, out Query query)
         {
             query = Query.Empty;
             return true;
@@ -95,9 +110,9 @@ namespace Entia.Queriers
     [ThreadSafe]
     public sealed class False : IQuerier
     {
-        public bool TryQuery(Segment segment, World world, out Query query)
+        public bool TryQuery(in Context context, out Query query)
         {
-            query = Query.Empty;
+            query = default;
             return false;
         }
     }
@@ -107,19 +122,22 @@ namespace Entia.Queriers
     {
         sealed class Try : IQuerier
         {
-            readonly TryFunc<Segment, World, Query> _try;
-            public Try(TryFunc<Segment, World, Query> @try) { _try = @try; }
-            public bool TryQuery(Segment segment, World world, out Query query) => _try(segment, world, out query);
+            readonly TryInFunc<Context, Query> _try;
+            public Try(TryInFunc<Context, Query> @try) { _try = @try; }
+            public bool TryQuery(in Context context, out Query query) => _try(context, out query);
         }
 
         sealed class Try<T> : Querier<T> where T : struct, Queryables.IQueryable
         {
-            readonly TryFunc<Segment, World, Query<T>> _try;
-            public Try(TryFunc<Segment, World, Query<T>> @try) { _try = @try; }
-            public override bool TryQuery(Segment segment, World world, out Query<T> query) => _try(segment, world, out query);
+            readonly TryInFunc<Context, Query<T>> _try;
+            public Try(TryInFunc<Context, Query<T>> @try) { _try = @try; }
+            public override bool TryQuery(in Context context, out Query<T> query) => _try(context, out query);
         }
 
         public static IQuerier From(ICustomAttributeProvider provider) => All(provider.GetCustomAttributes(true).OfType<IQuerier>().ToArray());
+
+        public static IQuerier All(this IQuerier querier, params ICustomAttributeProvider[] providers) =>
+            All(providers.SelectMany(provider => provider.GetCustomAttributes(true)).OfType<IQuerier>().Prepend(querier).ToArray());
 
         public static IQuerier All(params IQuerier[] queriers)
         {
@@ -127,12 +145,12 @@ namespace Entia.Queriers
             return
                 queriers.Length == 0 ? new True() :
                 queriers.Length == 1 ? queriers[0] :
-                new Try((Segment segment, World world, out Query query) =>
+                new Try((in Context context, out Query query) =>
                 {
                     var queries = new Query[queriers.Length];
                     for (var i = 0; i < queriers.Length; i++)
                     {
-                        if (queriers[i].TryQuery(segment, world, out query)) queries[i] = query;
+                        if (queriers[i].TryQuery(context, out query)) queries[i] = query;
                         else return false;
                     }
 
@@ -144,15 +162,68 @@ namespace Entia.Queriers
                 });
         }
 
-        public static Querier<T> All<T>(Querier<T> querier, params IQuerier[] queriers) where T : struct, Queryables.IQueryable
+        public static Querier<T> All<T>(this Querier<T> querier, params ICustomAttributeProvider[] providers) where T : struct, Queryables.IQueryable =>
+            querier.All(providers.SelectMany(provider => provider.GetCustomAttributes(true)).OfType<IQuerier>().ToArray());
+
+        public static Querier<T> All<T>(this Querier<T> querier, params IQuerier[] queriers) where T : struct, Queryables.IQueryable
         {
             if (queriers.Length == 0) return querier;
 
             var merged = All(queriers);
             return
                 merged is True ? querier :
-                new Try<T>((Segment segment, World world, out Query<T> query) =>
-                    querier.TryQuery(segment, world, out query) && merged.TryQuery(segment, world, out _));
+                new Try<T>((in Context context, out Query<T> query) =>
+                    querier.TryQuery(context, out query) && merged.TryQuery(context, out _));
         }
+
+        public static Querier<T> Include<T>(this Querier<T> querier, params ICustomAttributeProvider[] providers) where T : struct, Queryables.IQueryable =>
+            querier.Include(Include(providers));
+
+        public static Querier<T> Include<T>(this Querier<T> querier, States include) where T : struct, Queryables.IQueryable =>
+            new Include<T>(include, querier);
+
+        public static IQuerier Include(this IQuerier querier, params ICustomAttributeProvider[] providers) =>
+            querier.Include(Include(providers));
+
+        public static IQuerier Include(this IQuerier querier, States include) => new Include(include, querier);
+
+        static States Include(params ICustomAttributeProvider[] providers) => providers
+            .SelectMany(provider => provider.GetCustomAttributes(true))
+            .OfType<IncludeAttribute>()
+            .Select(attribute => attribute.States)
+            .Append(States.Enabled)
+            .First();
+    }
+
+    public sealed class Include<T> : Querier<T> where T : struct, Queryables.IQueryable
+    {
+        public readonly States States;
+        public readonly Querier<T> Querier;
+
+        public Include(States states, Querier<T> querier)
+        {
+            States = states;
+            Querier = querier;
+        }
+
+        public override bool TryQuery(in Context context, out Query<T> query) =>
+            Querier.TryQuery(context.With(States), out query) &&
+            States.HasAny(context.World.Components().State(context.Segment.Mask));
+    }
+
+    public sealed class Include : IQuerier
+    {
+        public readonly States States;
+        public readonly IQuerier Querier;
+
+        public Include(States states, IQuerier querier)
+        {
+            States = states;
+            Querier = querier;
+        }
+
+        public bool TryQuery(in Context context, out Query query) =>
+            Querier.TryQuery(context.With(States), out query) &&
+            States.HasAny(context.World.Components().State(context.Segment.Mask));
     }
 }

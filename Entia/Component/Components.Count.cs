@@ -27,8 +27,13 @@ namespace Entia.Modules
             ref var data = ref GetData(entity, out var success);
             if (success)
             {
-                var (enabled, disabled) = GetTargetSegments(data, include);
-                return enabled.Types.data.Length + disabled.Types.data.Length;
+                var segment = GetTargetSegment(data);
+                var types = segment.Types.data;
+                if (include.HasAll(States.All)) return types.Length;
+
+                var count = 0;
+                for (int i = 0; i < types.Length; i++) if (Has(data, types[i], include)) count++;
+                return count;
             }
             return 0;
         }
@@ -39,9 +44,10 @@ namespace Entia.Modules
         /// <typeparam name="T">The component type.</typeparam>
         /// <returns>The number of components.</returns>
         [ThreadSafe]
-        public int Count<T>(States include = States.All) where T : IComponent => ComponentUtility.Abstract<T>.IsConcrete ?
-            Count(ComponentUtility.Abstract<T>.Data.Index, include) :
-            Count(ComponentUtility.Abstract<T>.Mask, include);
+        public int Count<T>(States include = States.All) where T : IComponent =>
+            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Count(metadata, include) :
+            ComponentUtility.TryGetConcrete<T>(out var mask, out var types) ? Count((mask, types), include) :
+            0;
 
         /// <summary>
         /// Counts all the components of provided <paramref name="type"/>.
@@ -51,23 +57,23 @@ namespace Entia.Modules
         /// <returns>The number of components.</returns>
         [ThreadSafe]
         public int Count(Type type, States include = States.All) =>
-            ComponentUtility.TryGetMetadata(type, out var metadata) ? Count(metadata.Index, include) :
-            ComponentUtility.TryGetConcrete(type, out var mask) ? Count(mask, include) :
+            ComponentUtility.TryGetMetadata(type, false, out var metadata) ? Count(metadata, include) :
+            ComponentUtility.TryGetConcrete(type, out var mask, out var types) ? Count((mask, types), include) :
             0;
 
         [ThreadSafe]
-        int Count(int index, States include)
+        int Count(in Metadata metadata, States include)
         {
             var count = 0;
-            foreach (ref var data in _data.Slice()) if (data.IsValid && Has(data, index, include)) count++;
+            foreach (ref var data in _data.Slice()) if (data.IsValid && Has(data, metadata, include)) count++;
             return count;
         }
 
         [ThreadSafe]
-        int Count(BitMask mask, States include)
+        int Count(in (BitMask mask, Metadata[] types) components, States include)
         {
             var count = 0;
-            foreach (ref var data in _data.Slice()) if (data.IsValid && Has(data, mask, include)) count++;
+            foreach (ref var data in _data.Slice()) if (data.IsValid && Has(data, components, include)) count++;
             return count;
         }
     }

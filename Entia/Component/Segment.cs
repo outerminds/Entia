@@ -1,3 +1,4 @@
+using Entia.Components;
 using Entia.Core;
 using Entia.Core.Documentation;
 using System;
@@ -38,11 +39,11 @@ namespace Entia.Modules.Component
             Index = index;
             Mask = mask;
 
-            var metadata = ComponentUtility.ToMetadata(mask);
-            Types = (metadata, metadata.Select(data => data.Index).FirstOrDefault(), metadata.Select(data => data.Index + 1).LastOrDefault());
+            var types = ComponentUtility.ToMetadata(mask);
+            Types = (types, types.Select(type => type.Index).FirstOrDefault(), types.Select(type => type.Index + 1).LastOrDefault());
             Entities = (new Entity[capacity], 0);
             _stores = new Array[Types.maximum - Types.minimum];
-            foreach (var datum in Types.data) _stores[GetStoreIndex(datum.Index)] = Array.CreateInstance(datum.Type, capacity);
+            foreach (var type in Types.data) _stores[GetStoreIndex(type.Index)] = Array.CreateInstance(type.Type, capacity);
         }
 
         /// <summary>
@@ -128,6 +129,6 @@ namespace Entia.Modules.Component
         int GetStoreIndex(int component) => component - Types.minimum;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [ThreadSafe]
-        int GetStoreIndex<T>() where T : struct, IComponent => GetStoreIndex(ComponentUtility.Concrete<T>.Data.Index);
+        int GetStoreIndex<T>() where T : struct, IComponent => GetStoreIndex(ComponentUtility.Cache<T>.Data.Index);
     }
 }
