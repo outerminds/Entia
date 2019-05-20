@@ -5,6 +5,7 @@ using Entia.Core;
 using Entia.Modules;
 using Entia.Modules.Message;
 using FsCheck;
+using System.Collections.Generic;
 
 namespace Entia.Test
 {
@@ -40,59 +41,70 @@ namespace Entia.Test
             value.Messages().Remove(onAdd);
             value.Messages().Remove(onAddT);
         }
-        public override Property Check(World value, Model model) =>
-            value.Components().Has<TConcrete>(_entity).Label("Components.Has<TConcrete>()")
-            .And(value.Components().Has<TAbstract>(_entity).Label("Components.Has<TAbstract>()"))
-            .And(value.Components().Has<IComponent>(_entity).Label("Components.Has<IComponent>()"))
-            .And(value.Components().Has(_entity, typeof(TConcrete)).Label("Components.Has(TConcrete)"))
-            .And(value.Components().Has(_entity, typeof(TAbstract)).Label("Components.Has(TAbstract)"))
-            .And(value.Components().Has(_entity, _abstract).Label("Components.Has(abstract)"))
-            .And(value.Components().Has(_entity, typeof(IComponent)).Label("Components.Has(IComponent)"))
+        public override Property Check(World value, Model model)
+        {
+            return PropertyUtility.All(Tests());
 
-            .And((value.Components().Count<TConcrete>() == value.Components().Count(typeof(TConcrete))).Label("Components.Count<TConcrete>() == Components.Count(TConcrete)"))
-            .And((value.Components().Count<TAbstract>() == value.Components().Count(typeof(TAbstract))).Label("Components.Count<TAbstract>() == Components.Count(TAbstract)"))
-            .And((value.Components().Count<IComponent>() == value.Components().Count(typeof(IComponent))).Label("Components.Count<IComponent>() == Components.Count(IComponent)"))
-            .And((value.Components().Count<TConcrete>() == model.Components.Count(pair => pair.Value.ContainsKey(typeof(TConcrete)))).Label("Components.Count<TConcrete>() == model.Components"))
-            .And((value.Components().Count<TConcrete>() == value.Entities().Count(entity => value.Components().Has<TConcrete>(entity))).Label("Components.Count<TConcrete>() == Entities.Components"))
-            .And((value.Components().Count<TAbstract>() == value.Entities().Count(entity => value.Components().Has<TAbstract>(entity))).Label("Components.Count<TAbstract>() == Entities.Components"))
-            .And((value.Components().Count<IComponent>() == value.Entities().Count(entity => value.Components().Has<IComponent>(entity))).Label("Components.Count<IComponent>() == Entities.Components"))
-            .And((value.Components().Count(typeof(TConcrete)) == model.Components.Count(pair => pair.Value.ContainsKey(typeof(TConcrete)))).Label("Components.Count(TConcrete) == model.Components"))
-            .And((value.Components().Count(typeof(TConcrete)) == value.Entities().Count(entity => value.Components().Has(entity, typeof(TConcrete)))).Label("Components.Count(TConcrete) == Entities.Components"))
-            .And((value.Components().Count(typeof(TAbstract)) == value.Entities().Count(entity => value.Components().Has(entity, typeof(TAbstract)))).Label("Components.Count(TAbstract) == Entities.Components"))
-            .And((value.Components().Count(_abstract) == value.Entities().Count(entity => value.Components().Has(entity, _abstract))).Label("Components.Count(abstract) == Entities.Components"))
-            .And((value.Components().Count(typeof(IComponent)) == value.Entities().Count(entity => value.Components().Has(entity, typeof(IComponent)))).Label("Components.Count(IComponent) == Entities.Components"))
+            IEnumerable<(bool test, string label)> Tests()
+            {
+                var entities = value.Entities();
+                var components = value.Components();
 
-            .And(value.Components().Get<TConcrete>().Any().Label("Components.Get<TConcrete>().Any()"))
-            .And(value.Components().Get(typeof(TConcrete)).Any().Label("Components.Get(TConcrete).Any()"))
-            .And(value.Components().Get(typeof(TAbstract)).None().Label("Components.Get(TAbstract).None()"))
-            .And(value.Components().Get(_abstract).None().Label("Components.Get(abstract).None()"))
-            .And(value.Components().Get(typeof(IComponent)).None().Label("Components.Get(IComponent).None()"))
-            .And((value.Components().Get<TConcrete>().Count() == value.Components().Get(typeof(TConcrete)).Count()).Label("Components.Get<TConcrete>().Count() == Components.Get(TConcrete).Count()"))
-            .And((value.Components().Get<TConcrete>().Count() == value.Entities().Count(entity => value.Components().Has<TConcrete>(entity))).Label("Components.Get<TConcrete>().Count()"))
-            .And((value.Components().Get<TConcrete>().Count() == model.Components.Count(pair => pair.Value.ContainsKey(typeof(TConcrete)))).Label("Components.Get<TConcrete>().Count() == model.Components"))
-            .And((value.Components().Get(typeof(TConcrete)).Count() == value.Entities().Count(entity => value.Components().Has(entity, typeof(TConcrete)))).Label("Components.Get(TConcrete).Count()"))
-            .And((value.Components().Get(typeof(TConcrete)).Count() == model.Components.Count(pair => pair.Value.ContainsKey(typeof(TConcrete)))).Label("Components.Get(TConcrete).Count() == model.Components"))
-            .And(value.Components().Get(_entity).OfType<TConcrete>().Any().Label("Components.Get().OfType<TConcrete>().Any()"))
-            .And(value.Components().Get(_entity).OfType<TAbstract>().Any().Label("Components.Get().OfType<TAbstract>().Any()"))
-            .And(value.Components().Get(_entity).OfType(_abstract, true, true).Any().Label("Components.Get().OfType(abstract).Any()"))
-            .And(value.Components().Get(_entity).OfType<IComponent>().Any().Label("Components.Get().OfType<IComponent>().Any()"))
-            .And((value.Components().Get<TConcrete>(_entity).Equals(_component)).Label("Components.Get<TConcrete>() == component"))
-            .And((value.Components().Get(_entity, typeof(TConcrete)).Equals(_component)).Label("Components.Get(TConcrete) == component"))
+                yield return (components.Has<TConcrete>(_entity), "Components.Has<TConcrete>()");
+                yield return (components.Has<TAbstract>(_entity), "Components.Has<TAbstract>()");
+                yield return (components.Has<IComponent>(_entity), "Components.Has<IComponent>()");
+                yield return (components.Has(_entity, typeof(TConcrete)), "Components.Has(TConcrete)");
+                yield return (components.Has(_entity, typeof(TAbstract)), "Components.Has(TAbstract)");
+                yield return (components.Has(_entity, _abstract), "Components.Has(abstract)");
+                yield return (components.Has(_entity, typeof(IComponent)), "Components.Has(IComponent)");
 
-            .And(value.Components().TryGet<TConcrete>(_entity, out _).Label("Components.TryGet<TConcrete>()"))
-            .And(value.Components().TryGet(_entity, typeof(TConcrete), out _).Label("Components.TryGet(TConcrete)"))
-            .And(value.Components().TryGet(_entity, typeof(TAbstract), out _).Not().Label("Components.TryGet<T>(TAbstract).Not()"))
-            .And(value.Components().TryGet(_entity, _abstract, out _).Not().Label("Components.TryGet<T>(abstract).Not()"))
-            .And(value.Components().TryGet(_entity, typeof(IComponent), out _).Not().Label("Components.TryGet<T>(IComponent).Not()"))
-            .And(value.Components().TryGet(_entity, typeof(void), out _).Not().Label("Components.TryGet<T>(void).Not()"))
+                yield return (components.Count<TConcrete>() == components.Count(typeof(TConcrete)), "Components.Count<TConcrete>() == Components.Count(TConcrete)");
+                yield return (components.Count<TAbstract>() == components.Count(typeof(TAbstract)), "Components.Count<TAbstract>() == Components.Count(TAbstract)");
+                yield return (components.Count<IComponent>() == components.Count(typeof(IComponent)), "Components.Count<IComponent>() == Components.Count(IComponent)");
+                yield return (components.Count<TConcrete>() == model.Components.Count(pair => pair.Value.ContainsKey(typeof(TConcrete))), "Components.Count<TConcrete>() == model.Components");
+                yield return (components.Count<TConcrete>() == entities.Count(entity => components.Has<TConcrete>(entity)), "Components.Count<TConcrete>() == Entities.Components");
+                yield return (components.Count<TAbstract>() == entities.Count(entity => components.Has<TAbstract>(entity)), "Components.Count<TAbstract>() == Entities.Components");
+                yield return (components.Count<IComponent>() == entities.Count(entity => components.Has<IComponent>(entity)), "Components.Count<IComponent>() == Entities.Components");
+                yield return (components.Count(typeof(TConcrete)) == model.Components.Count(pair => pair.Value.ContainsKey(typeof(TConcrete))), "Components.Count(TConcrete) == model.Components");
+                yield return (components.Count(typeof(TConcrete)) == entities.Count(entity => components.Has(entity, typeof(TConcrete))), "Components.Count(TConcrete) == Entities.Components");
+                yield return (components.Count(typeof(TAbstract)) == entities.Count(entity => components.Has(entity, typeof(TAbstract))), "Components.Count(TAbstract) == Entities.Components");
+                yield return (components.Count(_abstract) == entities.Count(entity => components.Has(entity, _abstract)), "Components.Count(abstract) == Entities.Components");
+                yield return (components.Count(typeof(IComponent)) == entities.Count(entity => components.Has(entity, typeof(IComponent))), "Components.Count(IComponent) == Entities.Components");
 
-            .And(value.Components().Set(_entity, (IComponent)_component).Not().Label("Components.Set(Entity, component).Not()"))
-            .And(value.Components().Set(_entity, _component).Not().Label("Components.Set<TConcrete>(Entity, component).Not()"))
-            .And(value.Components().Set(_entity, typeof(TConcrete)).Not().Label("Components.Set(Entity, TConcrete).Not()"))
-            .And(value.Components().Set<TConcrete>(_entity).Not().Label("Components.Set<TConcrete>(Entity).Not()"))
+                yield return (components.Get<TConcrete>().Any(), "Components.Get<TConcrete>().Any()");
+                yield return (components.Get(typeof(TConcrete)).Any(), "Components.Get(TConcrete).Any()");
+                yield return (components.Get(typeof(TAbstract)).None(), "Components.Get(TAbstract).None()");
+                yield return (components.Get(_abstract).None(), "Components.Get(abstract).None()");
+                yield return (components.Get(typeof(IComponent)).None(), "Components.Get(IComponent).None()");
+                yield return (components.Get<TConcrete>().Count() == components.Get(typeof(TConcrete)).Count(), "Components.Get<TConcrete>().Count() == Components.Get(TConcrete).Count()");
+                yield return (components.Get<TConcrete>().Count() == entities.Count(entity => components.Has<TConcrete>(entity)), "Components.Get<TConcrete>().Count()");
+                yield return (components.Get<TConcrete>().Count() == model.Components.Count(pair => pair.Value.ContainsKey(typeof(TConcrete))), "Components.Get<TConcrete>().Count() == model.Components");
+                yield return (components.Get(typeof(TConcrete)).Count() == entities.Count(entity => components.Has(entity, typeof(TConcrete))), "Components.Get(TConcrete).Count()");
+                yield return (components.Get(typeof(TConcrete)).Count() == model.Components.Count(pair => pair.Value.ContainsKey(typeof(TConcrete))), "Components.Get(TConcrete).Count() == model.Components");
+                yield return (components.Get(_entity).OfType<TConcrete>().Any(), "Components.Get().OfType<TConcrete>().Any()");
+                yield return (components.Get(_entity).OfType<TAbstract>().Any(), "Components.Get().OfType<TAbstract>().Any()");
+                yield return (components.Get(_entity).OfType(_abstract, true, true).Any(), "Components.Get().OfType(abstract).Any()");
+                yield return (components.Get(_entity).OfType<IComponent>().Any(), "Components.Get().OfType<IComponent>().Any()");
+                yield return (components.Get<TConcrete>(_entity).Equals(_component), "Components.Get<TConcrete>() == component");
+                yield return (components.Get(_entity, typeof(TConcrete)).Equals(_component), "Components.Get(TConcrete) == component");
 
-            .And((_onAdd.Length == 1 && _onAdd[0].Entity == _entity && _onAdd[0].Component.Type == typeof(TConcrete)).Label("OnAdd"))
-            .And((_onAddT.Length == 1 && _onAddT[0].Entity == _entity).Label("OnAddT"));
+                yield return (components.TryGet<TConcrete>(_entity, out _), "Components.TryGet<TConcrete>()");
+                yield return (components.TryGet(_entity, typeof(TConcrete), out _), "Components.TryGet(TConcrete)");
+                yield return (components.TryGet(_entity, typeof(TAbstract), out _).Not(), "Components.TryGet<T>(TAbstract).Not()");
+                yield return (components.TryGet(_entity, _abstract, out _).Not(), "Components.TryGet<T>(abstract).Not()");
+                yield return (components.TryGet(_entity, typeof(IComponent), out _).Not(), "Components.TryGet<T>(IComponent).Not()");
+                yield return (components.TryGet(_entity, typeof(void), out _).Not(), "Components.TryGet<T>(void).Not()");
+
+                yield return (components.Set(_entity, (IComponent)_component).Not(), "Components.Set(Entity, component).Not()");
+                yield return (components.Set(_entity, _component).Not(), "Components.Set<TConcrete>(Entity, component).Not()");
+                yield return (components.Set(_entity, typeof(TConcrete)).Not(), "Components.Set(Entity, TConcrete).Not()");
+                yield return (components.Set<TConcrete>(_entity).Not(), "Components.Set<TConcrete>(Entity).Not()");
+
+                yield return (_onAdd.Length == 1 && _onAdd[0].Entity == _entity && _onAdd[0].Component.Type == typeof(TConcrete), "OnAdd");
+                yield return (_onAddT.Length == 1 && _onAddT[0].Entity == _entity, "OnAddT");
+            }
+        }
+
         public override string ToString() => $"{GetType().Format()}({_entity}, {_abstract.Format()})";
     }
 }

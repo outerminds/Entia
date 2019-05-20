@@ -28,7 +28,7 @@ namespace Entia.Modules
             if (success)
             {
                 var segment = GetTargetSegment(data);
-                var types = segment.Types.data;
+                var types = segment.Types;
                 if (include.HasAll(States.All)) return types.Length;
 
                 var count = 0;

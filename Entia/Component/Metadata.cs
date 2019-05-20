@@ -11,6 +11,8 @@ namespace Entia.Modules.Component
     [ThreadSafe]
     public readonly struct Metadata : IEquatable<Metadata>
     {
+        public enum Kinds { Data, Tag }
+
         /// <summary>
         /// Implements the operator ==.
         /// </summary>
@@ -38,6 +40,10 @@ namespace Entia.Modules.Component
         /// The component index.
         /// </summary>
         public readonly int Index;
+        /// <summary>
+        /// The component kind.
+        /// </summary>
+        public readonly Kinds Kind;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Metadata"/> struct.
@@ -46,6 +52,7 @@ namespace Entia.Modules.Component
         {
             Data = data;
             Index = index;
+            Kind = data.InstanceFields.Length > 0 ? Kinds.Data : Kinds.Tag;
         }
 
         /// <inheritdoc cref="IEquatable{T}.Equals(T)"/>

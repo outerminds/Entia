@@ -26,7 +26,9 @@ namespace Entia.Modules
 
         public bool Enable(Entity entity) => Remove(entity, typeof(IsDisabled<>));
 
-        bool Enable(Entity entity, in Metadata metadata) => TryGetDelegates(metadata, out var delegates) && delegates.Enable(entity);
+        bool Enable(Entity entity, in Metadata metadata) =>
+            TryGetDelegates(metadata, out var delegates) &&
+            Remove(entity, delegates.IsDisabled.Value, States.All);
 
         bool Enable(Entity entity, Metadata[] types)
         {

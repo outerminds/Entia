@@ -53,7 +53,7 @@ namespace Entia.Core
 
             object GetDefault(Type current)
             {
-                try { return current.IsValueType ? Activator.CreateInstance(current) : null; }
+                try { return Array.CreateInstance(current, 1).GetValue(0); }
                 catch { return null; }
             }
 

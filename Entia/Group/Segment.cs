@@ -1,6 +1,8 @@
 using Entia.Core;
 using Entia.Core.Documentation;
+using Entia.Modules.Component;
 using Entia.Queryables;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -35,7 +37,7 @@ namespace Entia.Modules.Group
         public Component.Metadata[] Types
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _segment.Types.data;
+            get => _segment.Types;
         }
         /// <inheritdoc cref="Component.Segment.Entities"/>
         public Entity[] Entities
@@ -61,13 +63,25 @@ namespace Entia.Modules.Group
             Items = items;
         }
 
-        /// <inheritdoc cref="Component.Segment.Store{T}"/>
+        /// <inheritdoc cref="Component.Segment.Store(in Metadata)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TComponent[] Store<TComponent>() where TComponent : struct, IComponent => _segment.Store<TComponent>();
+        public TComponent[] Store<TComponent>() where TComponent : struct, IComponent =>
+            ComponentUtility.TryGetMetadata<TComponent>(false, out var metadata) ?
+            _segment.Store(metadata) as TComponent[] : default;
 
-        /// <inheritdoc cref="Component.Segment.TryStore{T}(out T[])"/>
+        /// <inheritdoc cref="Component.Segment.TryStore(in Metadata, out Array)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryStore<TComponent>(out TComponent[] store) where TComponent : struct, IComponent => _segment.TryStore(out store);
+        public bool TryStore<TComponent>(out TComponent[] store) where TComponent : struct, IComponent
+        {
+            if (ComponentUtility.TryGetMetadata<TComponent>(false, out var metadata) && _segment.TryStore(metadata, out var array))
+            {
+                store = array as TComponent[];
+                return store != null;
+            }
+
+            store = default;
+            return false;
+        }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -16,6 +16,7 @@ namespace Entia.Modules.Component
         public static class Cache<T> where T : struct, IComponent
         {
             public static readonly Metadata Data = GetMetadata(typeof(T));
+            public static readonly T[] Store = new T[1];
         }
 
         struct State

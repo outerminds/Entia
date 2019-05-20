@@ -66,8 +66,10 @@ namespace Entia.Modules
         [ThreadSafe]
         States State(BitMask mask, in Metadata metadata, in Delegates delegates)
         {
-            if (mask.Has(metadata.Index)) return IsDisabled(mask, delegates.IsDisabled.Value) ? States.Disabled : States.Enabled;
-            return States.None;
+            if (mask.Has(metadata.Index))
+                return delegates.IsDisabled.IsValueCreated && IsDisabled(mask, delegates.IsDisabled.Value) ? States.Disabled : States.Enabled;
+            else
+                return States.None;
         }
 
         [ThreadSafe]

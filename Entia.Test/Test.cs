@@ -229,22 +229,24 @@ namespace Entia.Test
             );
             var sequence = generator.ToSequence(
                 random => (new World(), new Model(random)),
-                (world, model) =>
-                    World.Instances().Contains(world).Label("World.Instances().Contains()")
-                    .And(World.TryInstance(world.Equals, out _).Label("World.TryInstance"))
-                    .And((world.Entities().Count == model.Entities.Count).Label("Entities.Count"))
-                    .And(world.Entities().All(model.Entities.Contains).Label("model.Entities.Contains()"))
-                    .And(model.Entities.All(world.Entities().Has)).Label("world.Entities().Has()")
-                    .And(world.Entities().Distinct().SequenceEqual(world.Entities())).Label("world.Entities().Distinct()")
+                (world, model) => PropertyUtility.All(Tests(world, model)));
 
-                    .And(world.Entities().All(_ => _).Label("Entities.All()"))
-                    .And(world.Entities().All(entity => world.Components().Get(entity).Count() == model.Components[entity].Count)
-                        .Label("world.Components().Get().Count()"))
-                    .And(world.Entities().All(entity => world.Components().Get(entity).All(component => model.Components[entity].ContainsKey(component.GetType())))
-                        .Label("model.Components.ContainsKey()"))
-                    .And(model.Components.All(pair => pair.Value.Keys.All(type => world.Components().Has(pair.Key, type)))
-                        .Label("world.Components().Has()"))
-                    .And((world.Groups().Count <= 15).Label("world.Groups().Count <= 15")));
+            IEnumerable<(bool test, string label)> Tests(World world, Model model)
+            {
+                var entities = world.Entities();
+                var components = world.Components();
+                yield return (World.Instances().Contains(world), "World.Instances().Contains()");
+                yield return (World.TryInstance(world.Equals, out _), "World.TryInstance");
+                yield return (entities.Count == model.Entities.Count, "Entities.Count");
+                yield return (entities.All(model.Entities.Contains), "model.Entities.Contains()");
+                yield return (model.Entities.All(entities.Has), "entities.Has()");
+                yield return (entities.Distinct().SequenceEqual(entities), "entities.Distinct()");
+                yield return (entities.All(_ => _), "Entities.All()");
+                yield return (entities.All(entity => components.Get(entity).Count() == model.Components[entity].Count), "components.Get().Count()");
+                yield return (entities.All(entity => components.Get(entity).All(component => model.Components[entity].ContainsKey(component.GetType()))), "model.Components.ContainsKey()");
+                yield return (model.Components.All(pair => pair.Value.Keys.All(type => components.Has(pair.Key, type))), "components.Has()");
+                yield return (world.Groups().Count <= 15, "world.Groups().Count <= 15");
+            }
 
             var parallel =
 #if DEBUG

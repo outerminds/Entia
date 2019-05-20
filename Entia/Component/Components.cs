@@ -25,16 +25,6 @@ namespace Entia.Modules
             public int? Transient;
         }
 
-        struct Delegates
-        {
-            public bool IsValid;
-            public Lazy<Metadata> IsDisabled;
-            public Action<Entity> OnAdd;
-            public Action<Entity> OnRemove;
-            public Func<Entity, bool> Enable;
-            public Func<Entity, bool> Disable;
-        }
-
         /// <summary>
         /// Gets all the component segments.
         /// </summary>
@@ -60,7 +50,8 @@ namespace Entia.Modules
         readonly Dictionary<BitMask, Segment> _maskToSegment;
         (Data[] items, int count) _data = (new Data[64], 0);
         (Segment[] items, int count) _segments;
-        (Delegates[] items, int count) _delegates = (new Delegates[8], 0);
+        (Array[] items, int count) _stores = (new Array[8], 0);
+        Delegates[] _delegates = new Delegates[8];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Components"/> class.
@@ -130,12 +121,14 @@ namespace Entia.Modules
                             {
                                 var enabled = GetSegment(slot.Mask);
                                 MoveTo((data.Segment, data.Index), enabled);
+                                data.Transient = default;
                                 break;
                             }
                         case Transient.Resolutions.Initialize:
                             {
                                 var segment = GetSegment(slot.Mask);
                                 CopyTo((data.Segment, data.Index), (segment, segment.Entities.count++));
+                                data.Transient = default;
                                 break;
                             }
                         case Transient.Resolutions.Dispose:
@@ -204,11 +197,11 @@ namespace Entia.Modules
             ref var data = ref _data.items[entity.Index];
             if (target.segment.Entities.Set(target.index, entity)) target.segment.Ensure();
 
-            var types = target.segment.Types.data;
+            var types = target.segment.Components;
             for (var i = 0; i < types.Length; i++)
             {
                 ref readonly var metadata = ref types[i];
-                var targetStore = target.segment.Store(metadata.Index);
+                var targetStore = target.segment.Store(metadata);
 
                 if (TryGetStore(data, metadata, States.All, out var sourceStore, out var sourceIndex))
                 {
@@ -277,64 +270,5 @@ namespace Entia.Modules
             _onCreate.Emit(new Entia.Messages.Segment.OnCreate { Segment = segment });
             return segment;
         }
-
-        ref readonly Delegates GetDelegates<T>() where T : struct, IComponent
-        {
-            var index = ComponentUtility.Cache<T>.Data.Index;
-            _delegates.Ensure(ComponentUtility.Cache<T>.Data.Index + 1);
-            ref var delegates = ref _delegates.items[index];
-            if (!delegates.IsValid) delegates = CreateDelegates<T>();
-            return ref delegates;
-        }
-
-        ref readonly Delegates GetDelegates(in Metadata metadata)
-        {
-            _delegates.Ensure(metadata.Index + 1);
-            ref var delegates = ref _delegates.items[metadata.Index];
-            if (!delegates.IsValid) delegates = CreateDelegates(metadata);
-            return ref delegates;
-        }
-
-        [ThreadSafe]
-        bool TryGetDelegates(in Metadata metadata, out Delegates delegates) =>
-            _delegates.TryGet(metadata.Index, out delegates) && delegates.IsValid;
-
-        Delegates CreateDelegates<T>() where T : struct, IComponent
-        {
-            var metadata = ComponentUtility.Cache<T>.Data;
-            var onAdd = _messages.Emitter<OnAdd<T>>();
-            var onRemove = _messages.Emitter<OnRemove<T>>();
-            var recusive = typeof(T).Is<IsDisabled>() || typeof(T).Is(typeof(IsDisabled<>), definition: true);
-            return new Delegates
-            {
-                IsValid = true,
-                IsDisabled = new Lazy<Metadata>(recusive ?
-                    new Func<Metadata>(() => default) :
-                    new Func<Metadata>(() => ComponentUtility.GetMetadata<IsDisabled<T>>())),
-                OnAdd = entity =>
-                {
-                    onAdd.Emit(new OnAdd<T> { Entity = entity });
-                    _onAdd.Emit(new OnAdd { Entity = entity, Component = metadata });
-                },
-                OnRemove = entity =>
-                {
-                    onRemove.Emit(new OnRemove<T> { Entity = entity });
-                    _onRemove.Emit(new OnRemove { Entity = entity, Component = metadata });
-                },
-                Enable = recusive ?
-                    new Func<Entity, bool>(_ => false) :
-                    new Func<Entity, bool>(entity => Remove<IsDisabled<T>>(entity)),
-                Disable = recusive ?
-                    new Func<Entity, bool>(_ => false) :
-                    new Func<Entity, bool>(entity => Set<IsDisabled<T>>(entity)),
-            };
-        }
-
-        Delegates CreateDelegates(in Metadata metadata) => (Delegates)GetType()
-            .InstanceMethods()
-            .First(method => method.Name == nameof(CreateDelegates) && method.IsGenericMethod)
-            .MakeGenericMethod(metadata.Type)
-            .Invoke(this, Array.Empty<object>());
-
     }
 }

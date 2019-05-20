@@ -71,18 +71,32 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
+        Array GetTagStore(in Metadata metadata)
+        {
+            // NOTE: while this is not strictly thread safe, the worst case senario is the generation of a bit of garbage
+            _stores.Ensure(metadata.Index + 1);
+            return _stores.items[metadata.Index] ?? (_stores.items[metadata.Index] = Array.CreateInstance(metadata.Type, 1));
+        }
+
+        [ThreadSafe]
         bool TryGetStore(in Data data, in Metadata metadata, States include, out Array store, out int adjusted)
         {
+            if (metadata.Kind == Metadata.Kinds.Tag)
+            {
+                adjusted = 0;
+                store = GetTagStore(metadata);
+                return Has(data, metadata, include);
+            }
+
             adjusted = data.Index;
-            data.Segment.TryStore(metadata.Index, out store);
+            data.Segment.TryStore(metadata, out store);
 
             if (data.Transient is int transient)
             {
                 // NOTE: prioritize the segment store
                 if (store == null) _transient.TryStore(transient, metadata, out store, out adjusted);
-                ref readonly var slot = ref _transient.Slots.items[transient];
                 // NOTE: if the slot has the component, then the store must not be null
-                return Has(slot, metadata, include);
+                return Has(_transient.Slots.items[transient], metadata, include);
             }
 
             return store != null;
@@ -90,8 +104,15 @@ namespace Entia.Modules
 
         bool GetStore(ref Data data, in Metadata metadata, out Array store, out int adjusted)
         {
+            if (metadata.Kind == Metadata.Kinds.Tag)
+            {
+                adjusted = 0;
+                store = GetTagStore(metadata);
+                return true;
+            }
+
             adjusted = data.Index;
-            if (data.Segment.TryStore(metadata.Index, out store)) return true;
+            if (data.Segment.TryStore(metadata, out store)) return true;
             else if (data.Transient is int transient)
             {
                 // NOTE: prioritize the segment store
@@ -102,17 +123,15 @@ namespace Entia.Modules
             return false;
         }
 
-        bool GetStore<T>(ref Data data, out T[] store, out int adjusted) where T : struct, IComponent
+        bool GetStore<T>(ref Data data, in Metadata metadata, out T[] store, out int adjusted) where T : struct, IComponent
         {
-            adjusted = data.Index;
-            if (data.Segment.TryStore<T>(out store)) return true;
-            else if (data.Transient is int transient)
+            if (GetStore(ref data, metadata, out var array, out adjusted))
             {
-                // NOTE: prioritize the segment store
-                store = _transient.Store<T>(transient, out adjusted);
-                return true;
+                store = array as T[];
+                return store != null;
             }
 
+            store = default;
             return false;
         }
     }

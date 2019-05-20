@@ -23,12 +23,16 @@ namespace Entia.Modules.Component
         /// <summary>
         /// The selection of component types that are stored in this segment with the minimum and maximum indices of those types.
         /// </summary>
-        public readonly (Metadata[] data, int minimum, int maximum) Types;
+        public readonly Metadata[] Types;
+        public readonly Metadata[] Components;
+        public readonly Metadata[] Tags;
         /// <summary>
         /// The entities.
         /// </summary>
         public (Entity[] items, int count) Entities;
 
+        int _minimum;
+        int _maximum;
         Array[] _stores;
 
         /// <summary>
@@ -39,44 +43,28 @@ namespace Entia.Modules.Component
             Index = index;
             Mask = mask;
 
-            var types = ComponentUtility.ToMetadata(mask);
-            Types = (types, types.Select(type => type.Index).FirstOrDefault(), types.Select(type => type.Index + 1).LastOrDefault());
+            Types = ComponentUtility.ToMetadata(mask);
+            Components = Types.Where(type => type.Kind == Metadata.Kinds.Data).ToArray();
+            Tags = Types.Where(type => type.Kind == Metadata.Kinds.Tag).ToArray();
             Entities = (new Entity[capacity], 0);
-            _stores = new Array[Types.maximum - Types.minimum];
-            foreach (var type in Types.data) _stores[GetStoreIndex(type.Index)] = Array.CreateInstance(type.Type, capacity);
+
+            _minimum = Components.Select(type => type.Index).FirstOrDefault();
+            _maximum = Components.Select(type => type.Index + 1).LastOrDefault();
+            _stores = new Array[_maximum - _minimum];
+            foreach (var type in Components) _stores[GetStoreIndex(type)] = Array.CreateInstance(type.Type, capacity);
         }
 
         /// <summary>
-        /// Tries the get the component store of type <typeparamref name="T"/>.
+        /// Tries the get the component store of provided component <paramref name="type"/>.
         /// </summary>
-        /// <typeparam name="T">The component type.</typeparam>
-        /// <param name="store">The store.</param>
-        /// <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
-        [ThreadSafe]
-        public bool TryStore<T>(out T[] store) where T : struct, IComponent
-        {
-            var index = GetStoreIndex<T>();
-            if (index >= 0 && index < _stores.Length && _stores[index] is T[] array)
-            {
-                store = array;
-                return true;
-            }
-
-            store = default;
-            return false;
-        }
-
-        /// <summary>
-        /// Tries the get the component store of provided component type <paramref name="index"/>.
-        /// </summary>
-        /// <param name="index">The component type index.</param>
+        /// <param name="type">The component type.</param>
         /// <param name="store">The component store.</param>
         /// <returns>Returns <c>true</c> if a component store was found; otherwise, <c>false</c>.</returns>
         [ThreadSafe]
-        public bool TryStore(int index, out Array store)
+        public bool TryStore(in Metadata type, out Array store)
         {
-            var storeIndex = GetStoreIndex(index);
-            if (storeIndex >= 0 && storeIndex < _stores.Length && _stores[storeIndex] is Array array)
+            var index = GetStoreIndex(type);
+            if (index >= 0 && index < _stores.Length && _stores[index] is Array array)
             {
                 store = array;
                 return true;
@@ -85,27 +73,16 @@ namespace Entia.Modules.Component
             store = default;
             return false;
         }
-
         /// <summary>
-        /// Gets the component store of type <typeparamref name="T"/>.
+        /// Gets the component store of provided component <paramref name="type"/>.
         /// If the store doesn't exist, an <see cref="IndexOutOfRangeException"/> may be thrown or a <c>null</c> will be returned.
-        /// Use <see cref="TryStore{T}(out T[])"/> if you are unsure if the store exists.
+        /// Use <see cref="TryStore(in Metadata, out Array)"/> if you are unsure if the store exists.
         /// </summary>
-        /// <typeparam name="T">The component type.</typeparam>
+        /// <param name="type">The component type.</param>
         /// <returns>The component store.</returns>
         [ThreadSafe]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T[] Store<T>() where T : struct, IComponent => (T[])_stores[GetStoreIndex<T>()];
-        /// <summary>
-        /// Gets the component store of provided component type <paramref name="index"/>.
-        /// If the store doesn't exist, an <see cref="IndexOutOfRangeException"/> may be thrown or a <c>null</c> will be returned.
-        /// Use <see cref="TryStore(int, out Array)"/> if you are unsure if the store exists.
-        /// </summary>
-        /// <param name="index">The component type index.</param>
-        /// <returns>The component store.</returns>
-        [ThreadSafe]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Array Store(int index) => _stores[GetStoreIndex(index)];
+        public Array Store(in Metadata type) => _stores[GetStoreIndex(type)];
         /// <summary>
         /// Ensures that all component stores are at least of the same size as the <see cref="Entities"/> array.
         /// If a component store not large enough, it is resized.
@@ -114,10 +91,10 @@ namespace Entia.Modules.Component
         public bool Ensure()
         {
             var resized = false;
-            for (int i = 0; i < Types.data.Length; i++)
+            for (int i = 0; i < Components.Length; i++)
             {
-                ref readonly var metadata = ref Types.data[i];
-                var index = GetStoreIndex(metadata.Index);
+                ref readonly var metadata = ref Components[i];
+                var index = GetStoreIndex(metadata);
                 ref var store = ref _stores[index];
                 resized |= ArrayUtility.Ensure(ref store, metadata.Type, Entities.count);
             }
@@ -126,9 +103,6 @@ namespace Entia.Modules.Component
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [ThreadSafe]
-        int GetStoreIndex(int component) => component - Types.minimum;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [ThreadSafe]
-        int GetStoreIndex<T>() where T : struct, IComponent => GetStoreIndex(ComponentUtility.Cache<T>.Data.Index);
+        int GetStoreIndex(in Metadata metadata) => metadata.Index - _minimum;
     }
 }

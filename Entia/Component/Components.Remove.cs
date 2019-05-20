@@ -83,7 +83,7 @@ namespace Entia.Modules
         {
             if (Has(slot, metadata, delegates, include))
             {
-                RemoveDisabled(slot, delegates.IsDisabled.Value);
+                if (delegates.IsDisabled.IsValueCreated) RemoveDisabled(slot, delegates.IsDisabled.Value);
                 delegates.OnRemove(slot.Entity);
                 slot.Mask.Remove(metadata.Index);
                 slot.Resolution.Set(Transient.Resolutions.Move);

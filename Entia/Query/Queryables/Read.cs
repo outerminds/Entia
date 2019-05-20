@@ -22,11 +22,14 @@ namespace Entia.Queryables
         {
             public override bool TryQuery(in Context context, out Query<Read<T>> query)
             {
-                ref readonly var metadata = ref ComponentUtility.Cache<T>.Data;
                 var segment = context.Segment;
-                if (context.World.Components().Has(segment.Mask, metadata, context.Include))
+                if (ComponentUtility.TryGetMetadata<T>(false, out var metadata) &&
+                    context.World.Components().Has(segment.Mask, metadata, context.Include))
                 {
-                    query = new Query<Read<T>>(index => new Read<T>(segment.Store<T>(), index), metadata);
+                    var store = ComponentUtility.Cache<T>.Store;
+                    query = metadata.Kind == Metadata.Kinds.Tag ?
+                        new Query<Read<T>>(_ => new Read<T>(store, 0)) :
+                        new Query<Read<T>>(index => new Read<T>(segment.Store(metadata) as T[], index), metadata);
                     return true;
                 }
 

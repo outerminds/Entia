@@ -175,7 +175,7 @@ namespace Entia.Modules
         IEnumerable<IComponent> Get(Data data, States include)
         {
             var segment = GetTargetSegment(data);
-            var types = segment.Types.data;
+            var types = segment.Types;
             for (var i = 0; i < types.Length; i++)
             {
                 if (TryGetStore(data, types[i], include, out var store, out var index))

@@ -56,7 +56,7 @@ namespace Entia.Modules
             if (sourceSuccess && targetSuccess)
             {
                 var segment = GetTargetSegment(sourceData);
-                var types = segment.Types.data;
+                var types = segment.Types;
                 ref var slot = ref GetTransientSlot(target, ref targetData, Transient.Resolutions.Move);
                 for (var i = 0; i < types.Length; i++)
                 {

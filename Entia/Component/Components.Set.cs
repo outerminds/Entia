@@ -36,17 +36,7 @@ namespace Entia.Modules
         public bool Set<T>(Entity entity, in T component) where T : struct, IComponent
         {
             ref var data = ref GetData(entity, out var success);
-            if (success)
-            {
-                ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
-                if (slot.Resolution == Transient.Resolutions.Dispose) return false;
-
-                GetStore<T>(ref data, out var store, out var adjusted);
-                store[adjusted] = component;
-                return Set(ref slot, ComponentUtility.Cache<T>.Data, GetDelegates<T>());
-            }
-
-            return false;
+            return success && Set(entity, component, ref data, ComponentUtility.Cache<T>.Data);
         }
 
         /// <summary>
@@ -68,19 +58,41 @@ namespace Entia.Modules
         public bool Set(Entity entity, IComponent component)
         {
             if (component == null) return false;
-
             ref var data = ref GetData(entity, out var success);
-            if (success && ComponentUtility.TryGetMetadata(component.GetType(), true, out var metadata))
-            {
-                ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
-                if (slot.Resolution == Transient.Resolutions.Dispose) return false;
+            return success && ComponentUtility.TryGetMetadata(component.GetType(), true, out var metadata) && Set(entity, component, ref data, metadata);
+        }
 
+        bool Set<T>(Entity entity, in T component, ref Data data, in Metadata metadata) where T : struct, IComponent
+        {
+            if (metadata.Kind == Metadata.Kinds.Data)
+            {
+                GetStore<T>(ref data, metadata, out var store, out var adjusted);
+                store[adjusted] = component;
+            }
+            return Set(entity, ref data, metadata, GetDelegates<T>(metadata));
+        }
+
+        bool Set(Entity entity, IComponent component, ref Data data, Metadata metadata)
+        {
+            if (metadata.Kind == Metadata.Kinds.Data)
+            {
                 GetStore(ref data, metadata, out var store, out var adjusted);
                 store.SetValue(component, adjusted);
-                return Set(ref slot, metadata, GetDelegates(metadata));
             }
 
-            return false;
+            return Set(entity, ref data, metadata, GetDelegates(metadata));
+        }
+
+        bool Set(Entity entity, in Metadata metadata, in Delegates delegates)
+        {
+            ref var data = ref GetData(entity, out var success);
+            return success && Set(entity, ref data, metadata, delegates);
+        }
+
+        bool Set(Entity entity, ref Data data, in Metadata metadata, in Delegates delegates)
+        {
+            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
+            return slot.Resolution < Transient.Resolutions.Dispose && Set(ref slot, metadata, delegates);
         }
 
         bool Set(ref Transient.Slot slot, in Metadata metadata, in Delegates delegates)

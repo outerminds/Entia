@@ -26,21 +26,35 @@ namespace Entia.Modules
 
         public bool Disable(Entity entity)
         {
-            ref readonly var data = ref GetData(entity, out var success);
+            ref var data = ref GetData(entity, out var success);
             if (success)
             {
                 var segment = GetTargetSegment(data);
-                return Disable(entity, segment.Types.data);
+                return Disable(entity, ref data, segment.Types);
             }
             return false;
         }
 
-        bool Disable(Entity entity, in Metadata metadata) => TryGetDelegates(metadata, out var delegates) && delegates.Disable(entity);
+        bool Disable(Entity entity, in Metadata metadata)
+        {
+            ref var data = ref GetData(entity, out var success);
+            return success && Disable(entity, ref data, metadata);
+        }
+
+        bool Disable(Entity entity, ref Data data, in Metadata metadata) =>
+            TryGetDelegates(metadata, out var delegates) &&
+            Set(entity, ref data, metadata, GetDelegates(delegates.IsDisabled.Value));
 
         bool Disable(Entity entity, Metadata[] types)
         {
+            ref var data = ref GetData(entity, out var success);
+            return success && Disable(entity, ref data, types);
+        }
+
+        bool Disable(Entity entity, ref Data data, Metadata[] types)
+        {
             var disabled = false;
-            for (var i = 0; i < types.Length; i++) disabled |= Disable(entity, types[i]);
+            for (var i = 0; i < types.Length; i++) disabled |= Disable(entity, ref data, types[i]);
             return disabled;
         }
     }

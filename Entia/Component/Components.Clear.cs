@@ -87,7 +87,7 @@ namespace Entia.Modules
         bool Clear(ref Transient.Slot slot, States include)
         {
             var segment = GetTargetSegment(slot);
-            return Remove(ref slot, (segment.Mask, segment.Types.data), include);
+            return Remove(ref slot, (segment.Mask, segment.Types), include);
         }
     }
 }

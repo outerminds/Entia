@@ -1,4 +1,11 @@
 Sample:
+- lazy IsDisabled<T> index attribution
+- empty get/set should not reserve/retrieve from a store
+- segments could return a shared store for empty components
+- segments could not consider empty components in their 'min/max' indices
+- segments could maintain seperatly an array of 'data component types' and 'tag component types' 
+	- this should make moving/copying entities faster
+
 - some usages of 'ComponentUtility.Cache<T>.Data' can still be removed
 - separate component indices from tag indices
 	- this will reduce the cost of using lots of tags
