@@ -22,15 +22,18 @@ namespace Entia.Queryables
         {
             public override bool TryQuery(in Context context, out Query<Read<T>> query)
             {
-                var segment = context.Segment;
-                if (ComponentUtility.TryGetMetadata<T>(false, out var metadata) &&
-                    context.World.Components().Has(segment.Mask, metadata, context.Include))
+                if (ComponentUtility.TryGetMetadata<T>(false, out var metadata))
                 {
-                    var store = ComponentUtility.Cache<T>.Store;
-                    query = metadata.Kind == Metadata.Kinds.Tag ?
-                        new Query<Read<T>>(_ => new Read<T>(store, 0)) :
-                        new Query<Read<T>>(index => new Read<T>(segment.Store(metadata) as T[], index), metadata);
-                    return true;
+                    var segment = context.Segment;
+                    var state = context.World.Components().State(segment.Mask, metadata);
+                    if (context.Include.HasAny(state))
+                    {
+                        var store = ComponentUtility.Cache<T>.Store;
+                        query = metadata.Kind == Metadata.Kinds.Tag ?
+                            new Query<Read<T>>(_ => new Read<T>(0, store, state)) :
+                            new Query<Read<T>>(index => new Read<T>(index, segment.Store(metadata) as T[], state), metadata);
+                        return true;
+                    }
                 }
 
                 query = default;
@@ -57,14 +60,17 @@ namespace Entia.Queryables
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref _array[_index];
         }
+        public readonly States State;
 
-        readonly T[] _array;
         readonly int _index;
+        readonly T[] _array;
 
-        public Read(T[] array, int index)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Read(int index, T[] array, States state)
         {
-            _array = array;
             _index = index;
+            _array = array;
+            State = state;
         }
     }
 }

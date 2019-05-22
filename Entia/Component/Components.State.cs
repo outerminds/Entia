@@ -67,8 +67,8 @@ namespace Entia.Modules
             slot.Resolution == Transient.Resolutions.Dispose ? States.None : State(slot.Mask, metadata);
 
         [ThreadSafe]
-        States State(BitMask mask, in Metadata metadata) => TryGetDelegates(metadata, out var delegates) ?
-            State(mask, metadata, delegates) : States.None;
+        internal States State(BitMask mask, in Metadata metadata) =>
+            TryGetDelegates(metadata, out var delegates) ? State(mask, metadata, delegates) : States.None;
 
         [ThreadSafe]
         States State(BitMask mask, in Metadata metadata, in Delegates delegates) => mask.Has(metadata.Index) ?
