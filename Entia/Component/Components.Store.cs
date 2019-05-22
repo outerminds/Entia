@@ -87,52 +87,44 @@ namespace Entia.Modules
                 store = GetTagStore(metadata);
                 return Has(data, metadata, include);
             }
-
-            adjusted = data.Index;
-            data.Segment.TryStore(metadata, out store);
-
-            if (data.Transient is int transient)
+            else if (data.Segment.TryStore(metadata, out store))
+            {
+                adjusted = data.Index;
+                return Has(data, metadata, include);
+            }
+            else if (data.Transient is int transient)
             {
                 // NOTE: prioritize the segment store
-                if (store == null) _transient.TryStore(transient, metadata, out store, out adjusted);
+                _transient.TryStore(transient, metadata, out store, out adjusted);
                 // NOTE: if the slot has the component, then the store must not be null
                 return Has(_transient.Slots.items[transient], metadata, include);
             }
 
-            return store != null;
+            adjusted = default;
+            return false;
         }
 
-        bool GetStore(ref Data data, in Metadata metadata, out Array store, out int adjusted)
+        Array GetStore(Entity entity, ref Data data, in Metadata metadata, out int adjusted)
         {
             if (metadata.Kind == Metadata.Kinds.Tag)
             {
                 adjusted = 0;
-                store = GetTagStore(metadata);
-                return true;
+                return GetTagStore(metadata);
             }
-
-            adjusted = data.Index;
-            if (data.Segment.TryStore(metadata, out store)) return true;
-            else if (data.Transient is int transient)
+            else if (data.Segment.TryStore(metadata, out var store))
             {
-                // NOTE: prioritize the segment store
-                store = _transient.Store(transient, metadata, out adjusted);
-                return true;
+                adjusted = data.Index;
+                return store;
             }
-
-            return false;
+            else if (data.Transient is int transient) return _transient.Store(transient, metadata, out adjusted);
+            else
+            {
+                data.Transient = transient = _transient.Reserve(entity, Transient.Resolutions.None, data.Segment.Mask);
+                return _transient.Store(transient, metadata, out adjusted);
+            }
         }
 
-        bool GetStore<T>(ref Data data, in Metadata metadata, out T[] store, out int adjusted) where T : struct, IComponent
-        {
-            if (GetStore(ref data, metadata, out var array, out adjusted))
-            {
-                store = array as T[];
-                return store != null;
-            }
-
-            store = default;
-            return false;
-        }
+        T[] GetStore<T>(Entity entity, ref Data data, in Metadata metadata, out int adjusted) where T : struct, IComponent =>
+            (T[])GetStore(entity, ref data, metadata, out adjusted);
     }
 }

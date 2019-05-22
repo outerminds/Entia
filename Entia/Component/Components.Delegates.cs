@@ -18,12 +18,22 @@ namespace Entia.Modules
     {
         struct Delegates
         {
+            public static readonly Delegates Empty = new Delegates
+            {
+                IsValid = true,
+                IsDisabled = new Lazy<Metadata>(() => default),
+                OnAdd = _ => { },
+                OnRemove = _ => { },
+                OnEnable = _ => { },
+                OnDisable = _ => { },
+            };
+
             public bool IsValid;
             public Lazy<Metadata> IsDisabled;
             public Action<Entity> OnAdd;
             public Action<Entity> OnRemove;
-            public Func<Entity, bool> Enable;
-            public Func<Entity, bool> Disable;
+            public Action<Entity> OnEnable;
+            public Action<Entity> OnDisable;
         }
 
         ref readonly Delegates GetDelegates<T>(in Metadata metadata) where T : struct, IComponent
@@ -52,16 +62,17 @@ namespace Entia.Modules
 
         Delegates CreateDelegates<T>() where T : struct, IComponent
         {
+            if (typeof(T).Is(typeof(Disabled<>), definition: true)) return Delegates.Empty;
+
             var metadata = ComponentUtility.Cache<T>.Data;
             var onAdd = _messages.Emitter<OnAdd<T>>();
             var onRemove = _messages.Emitter<OnRemove<T>>();
-            var recusive = typeof(T).Is<IsDisabled>() || typeof(T).Is(typeof(IsDisabled<>), definition: true);
+            var onEnable = _messages.Emitter<OnEnable<T>>();
+            var onDisable = _messages.Emitter<OnDisable<T>>();
             return new Delegates
             {
                 IsValid = true,
-                IsDisabled = new Lazy<Metadata>(recusive ?
-                    new Func<Metadata>(() => default) :
-                    new Func<Metadata>(() => ComponentUtility.Cache<IsDisabled<T>>.Data)),
+                IsDisabled = new Lazy<Metadata>(() => ComponentUtility.Cache<Disabled<T>>.Data),
                 OnAdd = entity =>
                 {
                     onAdd.Emit(new OnAdd<T> { Entity = entity });
@@ -71,6 +82,16 @@ namespace Entia.Modules
                 {
                     onRemove.Emit(new OnRemove<T> { Entity = entity });
                     _onRemove.Emit(new OnRemove { Entity = entity, Component = metadata });
+                },
+                OnEnable = entity =>
+                {
+                    onEnable.Emit(new OnEnable<T> { Entity = entity });
+                    _onEnable.Emit(new OnEnable { Entity = entity, Component = metadata });
+                },
+                OnDisable = entity =>
+                {
+                    onDisable.Emit(new OnDisable<T> { Entity = entity });
+                    _onDisable.Emit(new OnDisable { Entity = entity, Component = metadata });
                 }
             };
         }

@@ -27,12 +27,7 @@ namespace Entia.Modules
         public bool Disable(Entity entity)
         {
             ref var data = ref GetData(entity, out var success);
-            if (success)
-            {
-                var segment = GetTargetSegment(data);
-                return Disable(entity, ref data, segment.Types);
-            }
-            return false;
+            return success && Disable(entity, ref data, GetTargetTypes(data));
         }
 
         bool Disable(Entity entity, in Metadata metadata)
@@ -41,9 +36,24 @@ namespace Entia.Modules
             return success && Disable(entity, ref data, metadata);
         }
 
-        bool Disable(Entity entity, ref Data data, in Metadata metadata) =>
-            TryGetDelegates(metadata, out var delegates) &&
-            Set(entity, ref data, metadata, GetDelegates(delegates.IsDisabled.Value));
+        bool Disable(Entity entity, ref Data data, in Metadata metadata)
+        {
+            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
+            return slot.Resolution < Transient.Resolutions.Dispose && Disable(ref slot, metadata);
+        }
+
+        bool Disable(ref Transient.Slot slot, in Metadata metadata) =>
+            TryGetDelegates(metadata, out var delegates) && Disable(ref slot, metadata, delegates);
+
+        bool Disable(ref Transient.Slot slot, in Metadata metadata, in Delegates delegates)
+        {
+            if (Has(slot.Mask, metadata, delegates, States.All) && SetDisabled(ref slot, delegates))
+            {
+                delegates.OnDisable(slot.Entity);
+                return true;
+            }
+            return false;
+        }
 
         bool Disable(Entity entity, Metadata[] types)
         {
@@ -53,8 +63,9 @@ namespace Entia.Modules
 
         bool Disable(Entity entity, ref Data data, Metadata[] types)
         {
+            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
             var disabled = false;
-            for (var i = 0; i < types.Length; i++) disabled |= Disable(entity, ref data, types[i]);
+            for (var i = 0; i < types.Length; i++) disabled |= Disable(ref slot, types[i]);
             return disabled;
         }
     }

@@ -66,7 +66,7 @@ namespace Entia.Modules
         {
             if (metadata.Kind == Metadata.Kinds.Data)
             {
-                GetStore<T>(ref data, metadata, out var store, out var adjusted);
+                var store = GetStore<T>(entity, ref data, metadata, out var adjusted);
                 store[adjusted] = component;
             }
             return Set(entity, ref data, metadata, GetDelegates<T>(metadata));
@@ -76,7 +76,7 @@ namespace Entia.Modules
         {
             if (metadata.Kind == Metadata.Kinds.Data)
             {
-                GetStore(ref data, metadata, out var store, out var adjusted);
+                var store = GetStore(entity, ref data, metadata, out var adjusted);
                 store.SetValue(component, adjusted);
             }
 
@@ -103,6 +103,17 @@ namespace Entia.Modules
                 delegates.OnAdd(slot.Entity);
                 return true;
             }
+            return false;
+        }
+
+        bool SetDisabled(ref Transient.Slot slot, in Delegates delegates)
+        {
+            if (delegates.IsDisabled.Value.IsValid && slot.Mask.Add(delegates.IsDisabled.Value.Index))
+            {
+                slot.Resolution.Set(Transient.Resolutions.Move);
+                return true;
+            }
+
             return false;
         }
     }

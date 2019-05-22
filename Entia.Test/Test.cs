@@ -1,4 +1,5 @@
-﻿using Entia.Core;
+﻿using Entia.Components;
+using Entia.Core;
 using Entia.Injectables;
 using Entia.Modules;
 using Entia.Modules.Query;
@@ -135,7 +136,7 @@ namespace Entia.Test
             public void Dispose() { _values.Clear(); }
         }
 
-        public static void Run(int count = 1600, int size = 1600, int? seed = null)
+        public static void Run(int count = 8192, int size = 512, int? seed = null)
         {
             Console.Clear();
 
@@ -152,29 +153,40 @@ namespace Entia.Test
                 (20, Gen.Fresh(() => new AddComponent<ComponentA, IComponentA>(typeof(IComponentC)).ToAction())),
                 (20, Gen.Fresh(() => new AddComponent<ComponentB, IComponentC>(typeof(IComponentA)).ToAction())),
                 (20, Gen.Fresh(() => new AddComponent<ComponentC<Unit>, IComponentB>(typeof(ComponentC<>)).ToAction())),
+                (20, Gen.Fresh(() => new AddComponent<ComponentC<int>, IComponentB>(typeof(ComponentC<>)).ToAction())),
+
                 (15, Gen.Fresh(() => new RemoveComponent<ComponentA>().ToAction())),
                 (15, Gen.Fresh(() => new RemoveComponent<ComponentB>().ToAction())),
                 (15, Gen.Fresh(() => new RemoveComponent<ComponentC<Unit>>().ToAction())),
+                (15, Gen.Fresh(() => new RemoveComponent<ComponentC<int>>().ToAction())),
+                (15, Gen.Fresh(() => new RemoveComponent(typeof(IComponentA)).ToAction())),
+                (15, Gen.Fresh(() => new RemoveComponent(typeof(IComponentB)).ToAction())),
                 (15, Gen.Fresh(() => new RemoveComponent(typeof(IComponentC)).ToAction())),
                 (15, Gen.Fresh(() => new RemoveComponent(typeof(ComponentC<>)).ToAction())),
-                (5, Gen.Fresh(() => new TrimComponents().ToAction())),
 
-                (10, Gen.Fresh(() => new EnableComponent<ComponentA>().ToAction())),
-                (10, Gen.Fresh(() => new EnableComponent<ComponentB>().ToAction())),
-                (10, Gen.Fresh(() => new EnableComponent<ComponentC<Unit>>().ToAction())),
-                (10, Gen.Fresh(() => new EnableComponent(typeof(IComponentC)).ToAction())),
-                (10, Gen.Fresh(() => new EnableComponent(typeof(ComponentC<>)).ToAction())),
+                (5, Gen.Fresh(() => new EnableComponent<ComponentA>().ToAction())),
+                (5, Gen.Fresh(() => new EnableComponent<ComponentB>().ToAction())),
+                (5, Gen.Fresh(() => new EnableComponent<ComponentC<Unit>>().ToAction())),
+                (5, Gen.Fresh(() => new EnableComponent<ComponentC<int>>().ToAction())),
+                (5, Gen.Fresh(() => new EnableComponent(typeof(IComponentA)).ToAction())),
+                (5, Gen.Fresh(() => new EnableComponent(typeof(IComponentB)).ToAction())),
+                (5, Gen.Fresh(() => new EnableComponent(typeof(IComponentC)).ToAction())),
+                (5, Gen.Fresh(() => new EnableComponent(typeof(ComponentC<>)).ToAction())),
 
-                (10, Gen.Fresh(() => new DisableComponent<ComponentA>().ToAction())),
-                (10, Gen.Fresh(() => new DisableComponent<ComponentB>().ToAction())),
-                (10, Gen.Fresh(() => new DisableComponent<ComponentC<Unit>>().ToAction())),
-                (10, Gen.Fresh(() => new DisableComponent(typeof(IComponentC)).ToAction())),
-                (10, Gen.Fresh(() => new DisableComponent(typeof(ComponentC<>)).ToAction())),
+                (5, Gen.Fresh(() => new DisableComponent<ComponentA>().ToAction())),
+                (5, Gen.Fresh(() => new DisableComponent<ComponentB>().ToAction())),
+                (5, Gen.Fresh(() => new DisableComponent<ComponentC<Unit>>().ToAction())),
+                (5, Gen.Fresh(() => new DisableComponent<ComponentC<int>>().ToAction())),
+                (5, Gen.Fresh(() => new DisableComponent(typeof(IComponentA)).ToAction())),
+                (5, Gen.Fresh(() => new DisableComponent(typeof(IComponentB)).ToAction())),
+                (5, Gen.Fresh(() => new DisableComponent(typeof(IComponentC)).ToAction())),
+                (5, Gen.Fresh(() => new DisableComponent(typeof(ComponentC<>)).ToAction())),
 
                 (4, Gen.Fresh(() => new CopyComponents().ToAction())),
                 (2, Gen.Fresh(() => new CopyComponent<ComponentA>().ToAction())),
                 (2, Gen.Fresh(() => new CopyComponent<ComponentB>().ToAction())),
                 (2, Gen.Fresh(() => new CopyComponent<ComponentC<Unit>>().ToAction())),
+                (2, Gen.Fresh(() => new CopyComponent<ComponentC<int>>().ToAction())),
                 (2, Gen.Fresh(() => new CopyComponent<IComponentA>().ToAction())),
                 (2, Gen.Fresh(() => new CopyComponent<IComponentB>().ToAction())),
                 (2, Gen.Fresh(() => new CopyComponent<IComponentC>().ToAction())),
@@ -184,16 +196,22 @@ namespace Entia.Test
                 (2, Gen.Fresh(() => new CopyComponent(typeof(IComponentC)).ToAction())),
                 (2, Gen.Fresh(() => new CopyComponent(typeof(IComponent)).ToAction())),
 
+                (5, Gen.Fresh(() => new TrimComponents().ToAction())),
+
                 (1, Gen.Fresh(() => new ClearComponent<ComponentA>().ToAction())),
                 (1, Gen.Fresh(() => new ClearComponent<ComponentB>().ToAction())),
                 (1, Gen.Fresh(() => new ClearComponent<ComponentC<Unit>>().ToAction())),
+                (1, Gen.Fresh(() => new ClearComponent<ComponentC<int>>().ToAction())),
+                (1, Gen.Fresh(() => new ClearComponent(typeof(IComponentA)).ToAction())),
                 (1, Gen.Fresh(() => new ClearComponent(typeof(IComponentB)).ToAction())),
+                (1, Gen.Fresh(() => new ClearComponent(typeof(IComponentC)).ToAction())),
+                (1, Gen.Fresh(() => new ClearComponent(typeof(ComponentC<>)).ToAction())),
 
                 // Group
                 (1, Gen.Fresh(() => new GetGroup<Read<ComponentA>>().ToAction())),
                 (1, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<ComponentC<Unit>>>>().ToAction())),
                 (1, Gen.Fresh(() => new GetGroup<Maybe<Read<ComponentA>>>().ToAction())),
-                (1, Gen.Fresh(() => new GetGroup<Read<ComponentC<Unit>>>(typeof(ProviderA)).ToAction())),
+                (1, Gen.Fresh(() => new GetGroup<Read<ComponentC<int>>>(typeof(ProviderA)).ToAction())),
                 (1, Gen.Fresh(() => new GetGroup<QueryA>().ToAction())),
                 (1, Gen.Fresh(() => new GetGroup<QueryB>().ToAction())),
                 (1, Gen.Fresh(() => new GetGroup<QueryC>().ToAction())),
@@ -210,7 +228,7 @@ namespace Entia.Test
                 (1, Gen.Fresh(() => new Inject(_injectables).ToAction())),
                 (1, Gen.Fresh(() => new Inject<Components<ComponentA>>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Components<ComponentB>.Read>().ToAction())),
-                (1, Gen.Fresh(() => new Inject<Components<ComponentC<Unit>>.Write>().ToAction())),
+                (1, Gen.Fresh(() => new Inject<Components<ComponentC<int>>.Write>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Emitter<MessageA>>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Reaction<MessageB>>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Receiver<MessageC>>().ToAction())),
@@ -223,7 +241,7 @@ namespace Entia.Test
                 (1, Gen.Fresh(() => new Query(_queryables).ToAction())),
 
                 // Resolvables
-                (1, Gen.Fresh(() => new Resolve().ToAction()))
+                (5, Gen.Fresh(() => new Resolve().ToAction()))
 
             // Add non generic component actions
             );
@@ -235,17 +253,50 @@ namespace Entia.Test
             {
                 var entities = world.Entities();
                 var components = world.Components();
+
+                #region World
                 yield return (World.Instances().Contains(world), "World.Instances().Contains()");
                 yield return (World.TryInstance(world.Equals, out _), "World.TryInstance");
+                #endregion
+
+                #region Entities
                 yield return (entities.Count == model.Entities.Count, "Entities.Count");
+                yield return (entities.All(_ => _), "Entities.All()");
                 yield return (entities.All(model.Entities.Contains), "model.Entities.Contains()");
                 yield return (model.Entities.All(entities.Has), "entities.Has()");
                 yield return (entities.Distinct().SequenceEqual(entities), "entities.Distinct()");
-                yield return (entities.All(_ => _), "Entities.All()");
+                #endregion
+
+                #region Components
+                IEnumerable<(bool test, string label)> WithInclude(States include)
+                {
+                    yield return (components.Count<IComponent>(include) >= entities.Count(entity => components.Has<IComponent>(entity, include)), $"components.Count(IComponent, {include}) >= entities.Components");
+                    yield return (components.Count(typeof(IComponent), include) >= entities.Count(entity => components.Has(entity, typeof(IComponent), include)), $"components.Count(IComponent, {include}) >= entities.Components");
+                    yield return (components.Count(include) == components.Count<IComponent>(include), $"components.Count({include}) == components.Count<IComponent>({include})");
+                    yield return (components.Count<IComponent>(include) == components.Count(typeof(IComponent), include), $"Components.Count<IComponent>({include}) == Components.Count(IComponent, {include})");
+
+                    yield return (entities.All(entity => components.Get(entity, include).All(component => components.Has(entity, component.GetType(), include))), $"entities.All(components.Has({include}))");
+                    yield return (entities.All(entity => components.Get(entity, include).All(component => components.TryGet(entity, component.GetType(), out _, include))), $"entities.All(components.TryGet({include}))");
+                    yield return (entities.All(entity => components.Get(entity, include).Count() == components.Count(entity, include)), $"entities.All(components.Get({include}).Count() == components.Count(Enabled))");
+                    yield return (entities.Sum(entity => components.Count(entity, include)) == components.Count(include), $"entities.Sum({include}) == components.Count({include})");
+                }
+
+                foreach (var pair in WithInclude(States.All)) yield return pair;
+                foreach (var pair in WithInclude(States.None)) yield return pair;
+                foreach (var pair in WithInclude(States.Enabled)) yield return pair;
+                foreach (var pair in WithInclude(States.Disabled)) yield return pair;
+
+                yield return (entities.All(entity => components.Get(entity, States.Enabled).None(component => components.Enable(entity, component.GetType()))), "entities.None(components.Enable())");
+                yield return (entities.All(entity => components.Get(entity, States.Disabled).None(component => components.Disable(entity, component.GetType()))), "entities.None(components.Disable())");
                 yield return (entities.All(entity => components.Get(entity).Count() == model.Components[entity].Count), "components.Get().Count()");
-                yield return (entities.All(entity => components.Get(entity).All(component => model.Components[entity].ContainsKey(component.GetType()))), "model.Components.ContainsKey()");
-                yield return (model.Components.All(pair => pair.Value.Keys.All(type => components.Has(pair.Key, type))), "components.Has()");
+                yield return (entities.All(entity => components.Get(entity).All(component => model.Components[entity].Contains(component.GetType()))), "model.Components.ContainsKey()");
+
+                yield return (model.Components.All(pair => pair.Value.All(type => components.Has(pair.Key, type))), "components.Has()");
+                #endregion
+
+                #region Groups
                 yield return (world.Groups().Count <= 15, "world.Groups().Count <= 15");
+                #endregion
             }
 
             var parallel =

@@ -55,8 +55,7 @@ namespace Entia.Modules
             ref var targetData = ref GetData(target, out var targetSuccess);
             if (sourceSuccess && targetSuccess)
             {
-                var segment = GetTargetSegment(sourceData);
-                var types = segment.Types;
+                var types = GetTargetTypes(sourceData);
                 ref var slot = ref GetTransientSlot(target, ref targetData, Transient.Resolutions.Move);
                 for (var i = 0; i < types.Length; i++)
                 {
@@ -104,18 +103,16 @@ namespace Entia.Modules
 
         bool Copy(in Data source, ref Data target, ref Transient.Slot slot, in Metadata metadata, in Delegates delegates, States include)
         {
-            if (TryGetStore(source, metadata, include, out var sourceStore, out var sourceIndex) &&
-                GetStore(ref target, metadata, out var targetStore, out var targetIndex))
+            if (metadata.Kind == Metadata.Kinds.Tag)
+                // NOTE: must check 'Has' in case the component has been removed on the source
+                return Has(source, metadata, delegates, include) && Set(ref slot, metadata, delegates);
+            else if (TryGetStore(source, metadata, include, out var sourceStore, out var sourceIndex))
             {
+                var targetStore = GetStore(slot.Entity, ref target, metadata, out var targetIndex);
                 Array.Copy(sourceStore, sourceIndex, targetStore, targetIndex, 1);
-                if (slot.Mask.Add(metadata.Index))
-                {
-                    slot.Resolution.Set(Transient.Resolutions.Move);
-                    delegates.OnAdd(slot.Entity);
-                    return true;
-                }
+                return Set(ref slot, metadata, delegates);
             }
-            return false;
+            else return false;
         }
     }
 }

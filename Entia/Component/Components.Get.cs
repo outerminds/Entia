@@ -90,19 +90,15 @@ namespace Entia.Modules
         /// Tries to get a component of provided <paramref name="type"/> associated with the <paramref name="entity"/>.
         /// </summary>
         /// <param name="entity">The entity.</param>
-        /// <param name="type">The concrete component type.</param>
+        /// <param name="type">The component type.</param>
         /// <param name="component">The component.</param>
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
         /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
         [ThreadSafe]
         public bool TryGet(Entity entity, Type type, out IComponent component, States include = States.All)
         {
-            if (TryStore(entity, type, out var store, out var index, include))
-            {
-                component = (IComponent)store.GetValue(index);
-                return true;
-            }
-
+            if (ComponentUtility.TryGetMetadata(type, false, out var metadata)) return TryGet(entity, metadata, out component, include);
+            else if (ComponentUtility.TryGetConcreteTypes(type, out var types)) return TryGet(entity, types, out component, include);
             component = default;
             return false;
         }
@@ -112,7 +108,7 @@ namespace Entia.Modules
         /// If the component is missing, a <see cref="OnException"/> message will be emitted.
         /// </summary>
         /// <param name="entity">The entity associated with the component.</param>
-        /// <param name="type">The concrete component type.</param>
+        /// <param name="type">The component type.</param>
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
         /// <returns>The component or null if the component is missing.</returns>
         [ThreadSafe]
@@ -156,31 +152,79 @@ namespace Entia.Modules
         /// <summary>
         /// Gets all entity-component pairs that have a component of provided <paramref name="type"/>.
         /// </summary>
-        /// <param name="type">The concrete component type.</param>
+        /// <param name="type">The component type.</param>
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
         /// <returns>The entity-component pairs.</returns>
         [ThreadSafe]
-        public IEnumerable<(Entity entity, IComponent component)> Get(Type type, States include = States.All)
+        public IEnumerable<(Entity entity, IComponent component)> Get(Type type, States include = States.All) =>
+            ComponentUtility.TryGetMetadata(type, false, out var metadata) ? Get(metadata, include) :
+            ComponentUtility.TryGetConcreteTypes(type, out var types) ? Get(types, include) :
+            Array.Empty<(Entity, IComponent)>();
+
+        [ThreadSafe]
+        IEnumerable<IComponent> Get(Data data, States include)
         {
-            if (ComponentUtility.TryGetMetadata(type, false, out var metadata))
+            var types = GetTargetTypes(data);
+            foreach (var metadata in types)
             {
-                foreach (var data in _data.Slice())
-                {
-                    if (data.IsValid && TryGetStore(data, metadata, include, out var store, out var index))
-                        yield return (data.Segment.Entities.items[data.Index], (IComponent)store.GetValue(index));
-                }
+                if (TryGetStore(data, metadata, include, out var store, out var index))
+                    yield return (IComponent)store.GetValue(index);
             }
         }
 
-        IEnumerable<IComponent> Get(Data data, States include)
+        [ThreadSafe]
+        IEnumerable<(Entity entity, IComponent component)> Get(Metadata[] types, States include = States.All)
         {
-            var segment = GetTargetSegment(data);
-            var types = segment.Types;
-            for (var i = 0; i < types.Length; i++)
+            foreach (var type in types) foreach (var pair in Get(type, include)) yield return pair;
+        }
+
+        [ThreadSafe]
+        IEnumerable<(Entity entity, IComponent component)> Get(Metadata metadata, States include = States.All)
+        {
+            foreach (var data in _data.Slice())
             {
-                if (TryGetStore(data, types[i], include, out var store, out var index))
-                    yield return (IComponent)store.GetValue(index);
+                if (data.IsValid && TryGetStore(data, metadata, include, out var store, out var index))
+                    yield return (data.Segment.Entities.items[data.Index], (IComponent)store.GetValue(index));
             }
+        }
+
+        [ThreadSafe]
+        bool TryGet(Entity entity, in Metadata metadata, out IComponent component, States include)
+        {
+            ref readonly var data = ref GetData(entity, out var success);
+            if (success && TryGet(data, metadata, out component, include)) return true;
+            component = default;
+            return false;
+        }
+
+        [ThreadSafe]
+        bool TryGet(in Data data, in Metadata metadata, out IComponent component, States include)
+        {
+            if (TryGetStore(data, metadata, include, out var store, out var index))
+            {
+                component = (IComponent)store.GetValue(index);
+                return true;
+            }
+
+            component = default;
+            return false;
+        }
+
+        [ThreadSafe]
+        bool TryGet(Entity entity, Metadata[] types, out IComponent component, States include)
+        {
+            ref readonly var data = ref GetData(entity, out var success);
+            if (success && TryGet(data, types, out component, include)) return true;
+            component = default;
+            return false;
+        }
+
+        [ThreadSafe]
+        bool TryGet(in Data data, Metadata[] types, out IComponent component, States include)
+        {
+            for (int i = 0; i < types.Length; i++) if (TryGet(data, types[i], out component, include)) return true;
+            component = default;
+            return false;
         }
     }
 }

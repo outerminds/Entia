@@ -241,10 +241,12 @@ namespace Entia.Modules
             }
         }
 
-        Segment GetTargetSegment(in Data data) => data.Transient is int transient ?
-            GetTargetSegment(_transient.Slots.items[transient]) : data.Segment;
+        [ThreadSafe]
+        Metadata[] GetTargetTypes(in Data data) => data.Transient is int transient ?
+            GetTargetTypes(_transient.Slots.items[transient]) : data.Segment.Types;
 
-        Segment GetTargetSegment(in Transient.Slot slot) => GetSegment(slot.Mask);
+        [ThreadSafe]
+        Metadata[] GetTargetTypes(in Transient.Slot slot) => ComponentUtility.GetConcreteTypes(slot.Mask);
 
         ref Transient.Slot GetTransientSlot(Entity entity, ref Data data, Transient.Resolutions resolution)
         {

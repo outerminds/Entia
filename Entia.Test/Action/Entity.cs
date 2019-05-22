@@ -14,14 +14,13 @@ namespace Entia.Test
         Entity _entity;
         OnCreate[] _onCreate;
 
-        public override bool Pre(World value, Model model) => true;
         public override void Do(World value, Model model)
         {
             var onCreate = value.Messages().Receiver<OnCreate>();
             {
                 _entity = value.Entities().Create();
                 model.Entities.Add(_entity);
-                model.Components.Add(_entity, new Dictionary<Type, IComponent>());
+                model.Components.Add(_entity, new ComponentModel());
             }
             _onCreate = onCreate.Pop().ToArray();
             value.Messages().Remove(onCreate);

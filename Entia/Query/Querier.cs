@@ -206,9 +206,7 @@ namespace Entia.Queriers
             Querier = querier;
         }
 
-        public override bool TryQuery(in Context context, out Query<T> query) =>
-            Querier.TryQuery(context.With(States), out query) &&
-            States.HasAny(context.World.Components().State(context.Segment.Mask));
+        public override bool TryQuery(in Context context, out Query<T> query) => Querier.TryQuery(context.With(States), out query);
     }
 
     public sealed class Include : IQuerier
@@ -222,8 +220,6 @@ namespace Entia.Queriers
             Querier = querier;
         }
 
-        public bool TryQuery(in Context context, out Query query) =>
-            Querier.TryQuery(context.With(States), out query) &&
-            States.HasAny(context.World.Components().State(context.Segment.Mask));
+        public bool TryQuery(in Context context, out Query query) => Querier.TryQuery(context.With(States), out query);
     }
 }

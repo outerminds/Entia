@@ -22,20 +22,11 @@ namespace Entia.Modules
         /// <param name="entity">The entity.</param>
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
         /// <returns>The number of components.</returns>
+        [ThreadSafe]
         public int Count(Entity entity, States include = States.All)
         {
             ref var data = ref GetData(entity, out var success);
-            if (success)
-            {
-                var segment = GetTargetSegment(data);
-                var types = segment.Types;
-                if (include.HasAll(States.All)) return types.Length;
-
-                var count = 0;
-                for (int i = 0; i < types.Length; i++) if (Has(data, types[i], include)) count++;
-                return count;
-            }
-            return 0;
+            return success ? Count(data, GetTargetTypes(data), include) : 0;
         }
 
         /// <summary>
@@ -46,7 +37,7 @@ namespace Entia.Modules
         [ThreadSafe]
         public int Count<T>(States include = States.All) where T : IComponent =>
             ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Count(metadata, include) :
-            ComponentUtility.TryGetConcrete<T>(out var mask, out var types) ? Count((mask, types), include) :
+            ComponentUtility.TryGetConcreteTypes<T>(out var types) ? Count(types, include) :
             0;
 
         /// <summary>
@@ -58,8 +49,21 @@ namespace Entia.Modules
         [ThreadSafe]
         public int Count(Type type, States include = States.All) =>
             ComponentUtility.TryGetMetadata(type, false, out var metadata) ? Count(metadata, include) :
-            ComponentUtility.TryGetConcrete(type, out var mask, out var types) ? Count((mask, types), include) :
+            ComponentUtility.TryGetConcreteTypes(type, out var types) ? Count(types, include) :
             0;
+
+        /// <summary>
+        /// Counts all the components.
+        /// </summary>
+        /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
+        /// <returns>The number of components.</returns>
+        [ThreadSafe]
+        public int Count(States include = States.All)
+        {
+            var count = 0;
+            foreach (ref var data in _data.Slice()) if (data.IsValid) count += Count(data, GetTargetTypes(data), include);
+            return count;
+        }
 
         [ThreadSafe]
         int Count(in Metadata metadata, States include)
@@ -70,10 +74,17 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
-        int Count(in (BitMask mask, Metadata[] types) components, States include)
+        int Count(Metadata[] types, States include)
         {
             var count = 0;
-            foreach (ref var data in _data.Slice()) if (data.IsValid && Has(data, components, include)) count++;
+            foreach (ref var data in _data.Slice()) if (data.IsValid) count += Count(data, types, include);
+            return count;
+        }
+
+        int Count(in Data data, Metadata[] types, States include)
+        {
+            var count = 0;
+            for (int i = 0; i < types.Length; i++) if (Has(data, types[i], include)) count++;
             return count;
         }
     }

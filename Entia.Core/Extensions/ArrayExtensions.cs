@@ -44,7 +44,7 @@ namespace Entia.Core
 
         public static void Clear<T>(this T[] array) => Array.Clear(array, 0, array.Length);
 
-        public static bool TryGet<T>(ref this (T[] items, int count) array, int index, out T item)
+        public static bool TryGet<T>(in this (T[] items, int count) array, int index, out T item)
         {
             if (index < array.count)
             {

@@ -5,6 +5,8 @@ using Entia.Modules.Message;
 using Entia.Core;
 using FsCheck;
 using System;
+using Entia.Components;
+using System.Collections.Generic;
 
 namespace Entia.Test
 {
@@ -12,105 +14,144 @@ namespace Entia.Test
     {
         Type _type;
         Entity _entity;
+        bool _success;
         OnDisable[] _onDisable;
 
         public DisableComponent(Type type) { _type = type; }
 
         public override bool Pre(World value, Model model)
         {
-            if (value.Entities().Count <= 0) return false;
-            var entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count));
-            if (value.Components().Has(entity, _type, States.Enabled))
-            {
-                _entity = entity;
-                return true;
-            }
-            return false;
+            var entities = value.Entities();
+            if (entities.Count <= 0) return false;
+            _entity = model.Random.NextEntity(entities);
+            return true;
         }
         public override void Do(World value, Model model)
         {
-            var onDisable = value.Messages().Receiver<OnDisable>();
-            {
-                value.Components().Disable(_entity, _type);
-            }
+            var messages = value.Messages();
+            var onDisable = messages.Receiver<OnDisable>();
+            _success = value.Components().Disable(_entity, _type);
+            model.Components[_entity].Disable(_type);
             _onDisable = onDisable.Pop().ToArray();
-            value.Messages().Remove(onDisable);
+            messages.Remove(onDisable);
         }
-        public override Property Check(World value, Model model) =>
-            value.Components().Has(_entity, _type, States.Disabled).Label("Components.Has(Type, Disabled)")
-            .And(value.Components().Has(_entity, _type, States.Enabled).Not().Label("Components.Has(Type, Enabled).Not()"))
-            .And(value.Components().Has(_entity, _type).Label("Components.Has(Type)"))
+        public override Property Check(World value, Model model)
+        {
+            return PropertyUtility.All(Tests());
 
-            .And((value.Components().Count(_entity, States.Disabled) > 0).Label("Components.Count(Disabled)"))
-            .And((value.Components().Count(_entity) > 0).Label("Components.Count()"))
+            IEnumerable<(bool test, string label)> Tests()
+            {
+                var components = value.Components();
 
-            .And(value.Components().Get(_entity, States.Disabled).OfType(_type, true, true).Any().Label("Components.Get(Disabled).Any()"))
-            .And(value.Components().TryGet(_entity, _type, out _, States.Enabled).Not().Label("Components.TryGet(Type, Enabled).Not()"))
-            .And(value.Components().Get(_entity, States.Enabled).OfType(_type, true, true).None().Label("Components.Get(Enabled).None()"))
-            .And(value.Components().Get(_entity).OfType(_type, true, true).Any().Label("Components.Get().Any()"))
+                yield return (components.Get(_entity, States.Enabled).OfType(_type, true, true).None(), "Components.Get(Enabled).None()");
+                yield return (components.TryGet(_entity, _type, out _, States.Enabled).Not(), "Components.TryGet(Type, Enabled).Not()");
+                yield return (components.Has(_entity, _type, States.Enabled).Not(), "Components.Has(Type, Enabled).Not()");
+                yield return (_onDisable.All(message => message.Entity == _entity && message.Component.Type.Is(_type, true, true)), "onDisable.All()");
 
-            .And(value.Components().Disable(_entity, _type).Not().Label("Components.Disable(Type).Not()"))
-            .And((_onDisable.Length >= 1 && _onDisable.All(message => message.Entity == _entity && message.Component.Type.Is(_type, true, true))).Label("OnEnable"));
-        public override string ToString() => $"{GetType().Format()}({_entity}, {_type.Format()})";
+                if (_success)
+                {
+                    yield return (components.Has(_entity, _type, States.Disabled), "Components.Has(Type, Disabled)");
+                    yield return (components.Has(_entity, _type), "Components.Has(Type)");
+
+                    yield return (components.Count(_entity, States.Disabled) > 0, "Components.Count(Disabled)");
+                    yield return (components.Count(_entity) > 0, "Components.Count()");
+
+                    yield return (components.Get(_entity, States.Disabled).OfType(_type, true, true).Any(), "Components.Get(Disabled).Any()");
+                    yield return (components.Get(_entity).OfType(_type, true, true).Any(), "Components.Get().Any()");
+
+                    yield return (components.TryGet(_entity, _type, out _), "Components.TryGet()");
+                    yield return (components.TryGet(_entity, _type, out _, States.Disabled), "Components.TryGet(Disabled)");
+
+                    yield return (_onDisable.Length > 0, "onDisable.Length > 0");
+                }
+                else
+                {
+                    yield return (_onDisable.Length == 0, "onDisable.Length == 0");
+                }
+
+                yield return (components.Disable(_entity, _type).Not(), "Components.Disable(Type).Not()");
+            }
+        }
+        public override string ToString() => $"{GetType().Format()}({_entity}, {_type.Format()}, {_success})";
     }
 
     public class DisableComponent<T> : Action<World, Model> where T : struct, IComponent
     {
         Entity _entity;
+        bool _success;
         OnDisable[] _onDisable;
         OnDisable<T>[] _onDisableT;
 
         public override bool Pre(World value, Model model)
         {
-            if (value.Entities().Count <= 0) return false;
-            var entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count));
-            if (value.Components().Has<T>(entity, States.Enabled))
-            {
-                _entity = entity;
-                return true;
-            }
-            return false;
+            var entities = value.Entities();
+            if (entities.Count <= 0) return false;
+            _entity = model.Random.NextEntity(entities);
+            return true;
         }
         public override void Do(World value, Model model)
         {
-            var onDisable = value.Messages().Receiver<OnDisable>();
-            var onDisableT = value.Messages().Receiver<OnDisable<T>>();
-            {
-                value.Components().Disable<T>(_entity);
-            }
+            var messages = value.Messages();
+            var onDisable = messages.Receiver<OnDisable>();
+            var onDisableT = messages.Receiver<OnDisable<T>>();
+            _success = value.Components().Disable<T>(_entity);
+            model.Components[_entity].Disable(typeof(T));
             _onDisable = onDisable.Pop().ToArray();
             _onDisableT = onDisableT.Pop().ToArray();
-            value.Messages().Remove(onDisable);
-            value.Messages().Remove(onDisableT);
+            messages.Remove(onDisable);
+            messages.Remove(onDisableT);
         }
-        public override Property Check(World value, Model model) =>
-            (value.Components().State<T>(_entity) == States.Disabled).Label("Components.State<T>()")
-            .And((value.Components().State(_entity, typeof(T)) == States.Disabled).Label("Components.State()"))
+        public override Property Check(World value, Model model)
+        {
+            return PropertyUtility.All(Tests());
 
-            .And(value.Components().Has<T>(_entity, States.Disabled).Label("Components.Has<T>(Disabled)"))
-            .And(value.Components().Has(_entity, typeof(T), States.Disabled).Label("Components.Has(Type, Disabled)"))
-            .And(value.Components().Has<T>(_entity, States.Enabled).Not().Label("Components.Has<T>(Enabled).Not()"))
-            .And(value.Components().Has(_entity, typeof(T), States.Enabled).Not().Label("Components.Has(Type, Enabled).Not()"))
-            .And(value.Components().Has<T>(_entity).Label("Components.Has<T>()"))
-            .And(value.Components().Has(_entity, typeof(T)).Label("Components.Has(Type)"))
+            IEnumerable<(bool test, string label)> Tests()
+            {
+                var components = value.Components();
 
-            .And((value.Components().Count(_entity, States.Disabled) > 0).Label("Components.Count(Disabled)"))
-            .And((value.Components().Count(_entity) > 0).Label("Components.Count()"))
+                yield return (components.Get(_entity, States.Enabled).OfType<T>().None(), "Components.Get(Enabled).None()");
+                yield return (components.TryGet<T>(_entity, out _, States.Enabled).Not(), "Components.TryGet<T>(Enabled).Not()");
+                yield return (components.TryGet(_entity, typeof(T), out _, States.Enabled).Not(), "Components.TryGet(Type, Enabled).Not()");
+                yield return (components.Has<T>(_entity, States.Enabled).Not(), "Components.Has<T>(Enabled).Not()");
+                yield return (components.Has(_entity, typeof(T), States.Enabled).Not(), "Components.Has(Type, Enabled).Not()");
 
-            .And(value.Components().TryGet<T>(_entity, out _, States.Disabled).Label("Components.TryGet<T>(Disabled)"))
-            .And(value.Components().TryGet(_entity, typeof(T), out _, States.Disabled).Label("Components.TryGet(Type, Disabled)"))
-            .And(value.Components().Get(_entity, States.Disabled).OfType<T>().Any().Label("Components.Get(Disabled).Any()"))
-            .And(value.Components().TryGet<T>(_entity, out _, States.Enabled).Not().Label("Components.TryGet<T>(Enabled).Not()"))
-            .And(value.Components().TryGet(_entity, typeof(T), out _, States.Enabled).Not().Label("Components.TryGet(Type, Enabled).Not()"))
-            .And(value.Components().Get(_entity, States.Enabled).OfType<T>().None().Label("Components.Get(Enabled).None()"))
-            .And(value.Components().TryGet<T>(_entity, out _).Label("Components.TryGet<T>()"))
-            .And(value.Components().TryGet(_entity, typeof(T), out _).Label("Components.TryGet(Type)"))
-            .And(value.Components().Get(_entity).OfType<T>().Any().Label("Components.Get().Any()"))
+                yield return (_onDisable.All(message => message.Entity == _entity && message.Component.Type.Is<T>()), "onDisable.All()");
+                yield return (_onDisableT.All(message => message.Entity == _entity), "onDisableT.All()");
 
-            .And(value.Components().Disable<T>(_entity).Not().Label("Components.Disable<T>().Not()"))
-            .And(value.Components().Disable(_entity, typeof(T)).Not().Label("Components.Disable(Type).Not()"))
-            .And((_onDisable.Length == 1 && _onDisable[0].Entity == _entity && _onDisable[0].Component.Type == typeof(T)).Label("OnDisable"))
-            .And((_onDisableT.Length == 1 && _onDisableT[0].Entity == _entity).Label("OnDisableT"));
-        public override string ToString() => $"{GetType().Format()}({_entity})";
+                if (_success)
+                {
+                    yield return (components.State<T>(_entity) == States.Disabled, "Components.State<T>()");
+                    yield return (components.State(_entity, typeof(T)) == States.Disabled, "Components.State()");
+
+                    yield return (components.Has<T>(_entity, States.Disabled), "Components.Has<T>(Disabled)");
+                    yield return (components.Has(_entity, typeof(T), States.Disabled), "Components.Has(Type, Disabled)");
+                    yield return (components.Has<T>(_entity), "Components.Has<T>()");
+                    yield return (components.Has(_entity, typeof(T)), "Components.Has(Type)");
+
+                    yield return (components.Count(_entity, States.Disabled) > 0, "Components.Count(Disabled)");
+                    yield return (components.Count(_entity) > 0, "Components.Count()");
+
+                    yield return (components.Get(_entity, States.Disabled).OfType<T>().Any(), "Components.Get(Disabled).Any()");
+                    yield return (components.Get(_entity).OfType<T>().Any(), "Components.Get().Any()");
+
+                    yield return (components.TryGet<T>(_entity, out _, States.Disabled), "Components.TryGet<T>(Disabled)");
+                    yield return (components.TryGet(_entity, typeof(T), out _, States.Disabled), "Components.TryGet(Type, Disabled)");
+                    yield return (components.TryGet<T>(_entity, out _), "Components.TryGet<T>()");
+                    yield return (components.TryGet(_entity, typeof(T), out _), "Components.TryGet(Type)");
+
+                    yield return (_onDisable.Length > 0, "onDisable.Length > 0");
+                    yield return (_onDisableT.Length > 0, "onDisable.Length > 0");
+                }
+                else
+                {
+                    yield return (_onDisable.Length == 0, "onDisable.Length == 0");
+                    yield return (_onDisableT.Length == 0, "onDisableT.Length == 0");
+                }
+
+                yield return (components.Disable<T>(_entity).Not(), "Components.Disable<T>().Not()");
+                yield return (components.Disable(_entity, typeof(T)).Not(), "Components.Disable(Type).Not()");
+            }
+        }
+        public override string ToString() => $"{GetType().Format()}({_entity}, {_success})";
     }
 }

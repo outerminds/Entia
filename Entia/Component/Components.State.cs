@@ -31,26 +31,6 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
-        public States State(Entity entity)
-        {
-            ref readonly var data = ref GetData(entity, out var success);
-            return success ? State(data) : States.None;
-        }
-
-        [ThreadSafe]
-        States State(in Data data)
-        {
-            ref readonly var metadata = ref ComponentUtility.Cache<IsDisabled>.Data;
-            if (data.Transient is int transient)
-            {
-                ref readonly var slot = ref _transient.Slots.items[transient];
-                if (slot.Resolution == Transient.Resolutions.Dispose) return States.None;
-                return State(slot.Mask);
-            }
-            else return State(data.Segment.Mask);
-        }
-
-        [ThreadSafe]
         States State(in Data data, in Metadata metadata) => data.Transient is int transient ?
             State(_transient.Slots.items[transient], metadata) :
             State(data.Segment.Mask, metadata);
@@ -71,12 +51,6 @@ namespace Entia.Modules
             else
                 return States.None;
         }
-
-        [ThreadSafe]
-        internal States State(BitMask mask) => IsDisabled(mask) ? States.Disabled : States.Enabled;
-
-        [ThreadSafe]
-        bool IsDisabled(BitMask mask) => mask.Has(ComponentUtility.Cache<IsDisabled>.Data.Index);
 
         [ThreadSafe]
         bool IsDisabled(BitMask mask, in Metadata disabled) => disabled.IsValid && mask.Has(disabled.Index);
