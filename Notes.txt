@@ -50,15 +50,16 @@ Documentation:
 		: added error message
 
 Frictions:
-- faire '.Value' sur les 'Resource<T>'
-- trop de using non nécessaire dans les templates de création de script dans Unity
+- lots of '.Value' when using 'Resource<T>'
+- too many useless usings in the Unity script templates
 - OnAdd<T> receivers can be unreliable if the 'T' component was removed before the receiver consumed the message
 	- can also happen with OnRemove<T>
-- add tests similar to 'Inject' that scans assemblies but for other elements (such as components)
-- make a type builder for generic types to make tests even more generative
+	: reactions are guaranteed reliability since the addition of a 'lock mask'
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- add tests similar to 'Inject' that scans assemblies but for other elements (such as components)
+- make a type builder for generic types to make tests even more generative
 - remove Entia.Components.IsDisabled in favor of 'Activated/Deactivated' states
 - add builtin messages OnDestroy<T> where T : struct, IComponent
 	- is sent when a removal of a component is part of the destruction of an entity
@@ -76,16 +77,9 @@ Features:
 - Consider using Travis CI https://travis-ci.org/ for automated testing.
 - make Components.Set / Components.Remove / Entities.Create / Entities.Destroy thread safe?
 	- this might be very hard or impossible to accomplish without locking
-- improve better removal actions in tests by querying all removable entities from the world and choosing from that query
-	- currently, a random entity is chosen from the world and if it is not removable, the action is considered invalid
-	- this makes removal actions much less often successful, thus it reduces the overall effectiveness of the sequences
-	- it also skews the chosen probabilities in favor of add actions
 - run tests on device with IL2CPP build
 
 Bugs:
-- If a 'OnRemove' reaction removes a component, it may cause an infinite loop.
-	- As it is, the 'OnRemove' message is emitted before the 'BitMask' has its bit unset to allow a reaction to retrieve the removed component.
-	- A 'Removed' mask could be used in 'Transient.Slot' to prevent from reentering the message emit.
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
 
 Optimization:
@@ -101,7 +95,6 @@ Optimization:
 	- could be done using a tuple type rather than a bagillion overloads
 		- ex: Components.HasAll<(Boba, Fett)>()
 		- I need the 'ITuple' interface to appropriately constrain the generic argument, but it exists only in .Net Standard 2.1 which is not yet supported by Unity
-- do not reserve a store for empty components
 
 Questions:
 - should system methods be implemented explicitly by convention?
