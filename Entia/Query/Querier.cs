@@ -17,7 +17,7 @@ namespace Entia.Queriers
         public readonly World World;
         public readonly States Include;
 
-        public Context(Segment segment, World world, States include = States.All)
+        public Context(Segment segment, World world, States include = States.Enabled)
         {
             Segment = segment;
             World = world;
@@ -58,42 +58,34 @@ namespace Entia.Queriers
 
         public override bool TryQuery(in Context context, out Query<T> query)
         {
-            var attribute = Querier.All(typeof(T).GetCustomAttributes(true).OfType<IQuerier>().ToArray());
-            if (attribute.TryQuery(context, out var query1))
+            var queriers = context.World.Queriers();
+            var queries = new Query[_fields.Length];
+            for (int i = 0; i < _fields.Length; i++)
             {
-                var queriers = context.World.Queriers();
-                var queries = new Query[_fields.Length];
-                for (int i = 0; i < _fields.Length; i++)
+                var field = _fields[i];
+                if (queriers.TryQuery(field, context, out var result)) queries[i] = result;
+                else
                 {
-                    var field = _fields[i];
-                    var querier = queriers.Get(field.FieldType);
-                    if (querier.TryQuery(context, out var query2)) queries[i] = query2;
-                    else
-                    {
-                        query = default;
-                        return false;
-                    }
+                    query = default;
+                    return false;
                 }
-
-                query = new Query<T>(
-                    index =>
-                    {
-                        var queryable = default(T);
-                        var pointer = UnsafeUtility.Cast<T>.ToPointer(ref queryable);
-                        for (int i = 0; i < queries.Length; i++)
-                        {
-                            var current = queries[i];
-                            current.Fill(pointer, index);
-                            pointer += current.Size;
-                        }
-                        return queryable;
-                    },
-                    queries.Append(query1).SelectMany(current => current.Types));
-                return true;
             }
 
-            query = default;
-            return false;
+            query = new Query<T>(
+                index =>
+                {
+                    var queryable = default(T);
+                    var pointer = UnsafeUtility.Cast<T>.ToPointer(ref queryable);
+                    for (int i = 0; i < queries.Length; i++)
+                    {
+                        var current = queries[i];
+                        current.Fill(pointer, index);
+                        pointer += current.Size;
+                    }
+                    return queryable;
+                },
+                queries.SelectMany(current => current.Types));
+            return true;
         }
     }
 
@@ -179,20 +171,20 @@ namespace Entia.Queriers
         public static Querier<T> Include<T>(this Querier<T> querier, params ICustomAttributeProvider[] providers) where T : struct, Queryables.IQueryable =>
             querier.Include(Include(providers));
 
-        public static Querier<T> Include<T>(this Querier<T> querier, States include) where T : struct, Queryables.IQueryable =>
-            new Include<T>(include, querier);
+        public static Querier<T> Include<T>(this Querier<T> querier, States? include) where T : struct, Queryables.IQueryable =>
+            include is States state ? new Include<T>(state, querier) : querier;
 
         public static IQuerier Include(this IQuerier querier, params ICustomAttributeProvider[] providers) =>
             querier.Include(Include(providers));
 
-        public static IQuerier Include(this IQuerier querier, States include) => new Include(include, querier);
+        public static IQuerier Include(this IQuerier querier, States? include) =>
+            include is States state ? new Include(state, querier) : querier;
 
-        static States Include(params ICustomAttributeProvider[] providers) => providers
+        static States? Include(params ICustomAttributeProvider[] providers) => providers
             .SelectMany(provider => provider.GetCustomAttributes(true))
             .OfType<IncludeAttribute>()
-            .Select(attribute => attribute.States)
-            .Append(States.Enabled)
-            .First();
+            .Select(attribute => Core.Nullable.Value(attribute.States))
+            .FirstOrDefault();
     }
 
     public sealed class Include<T> : Querier<T> where T : struct, Queryables.IQueryable

@@ -23,6 +23,8 @@ namespace Entia.Modules
             Get<T>().TryQuery(context.With(include), out query);
         public bool TryQuery(Type queryable, in Context context, out Query.Query query, States? include = null) =>
             Get(queryable).TryQuery(context.With(include), out query);
+        public bool TryQuery(FieldInfo field, in Context context, out Query.Query query, States? include = null) =>
+            Get(field).TryQuery(context.With(include), out query);
         public bool TryQuery<T>(Querier<T> querier, Segment segment, out Query<T> query, States include = States.All) where T : struct, Queryables.IQueryable =>
             querier.TryQuery(new Context(segment, _world, include), out query);
         public bool TryQuery(IQuerier querier, Segment segment, out Query.Query query, States include = States.All) =>
