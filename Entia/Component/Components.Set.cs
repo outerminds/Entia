@@ -97,10 +97,11 @@ namespace Entia.Modules
 
         bool Set(ref Transient.Slot slot, in Metadata metadata, in Delegates delegates)
         {
-            if (slot.Mask.Add(metadata.Index))
+            if (slot.Mask.Add(metadata.Index) && slot.Lock.Add(metadata.Index))
             {
-                slot.Resolution.Set(Transient.Resolutions.Move);
                 delegates.OnAdd(slot.Entity);
+                slot.Resolution.Set(Transient.Resolutions.Move);
+                slot.Lock.Remove(metadata.Index);
                 return true;
             }
             return false;

@@ -96,7 +96,7 @@ namespace Entia.Modules
 
         [ThreadSafe]
         bool Has(BitMask mask, in Metadata metadata, in Delegates delegates, States include) =>
-            include.HasAll(States.All) ? mask.Has(metadata.Index) :
+            delegates.Enabled || include.HasAll(States.All) ? mask.Has(metadata.Index) :
             include.HasAny(States.All) && include.HasAny(State(mask, metadata, delegates));
     }
 }

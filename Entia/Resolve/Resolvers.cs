@@ -75,9 +75,9 @@ namespace Entia.Modules
         }
 
         public void Defer(Action @do) => Defer(@do, action => action());
+        public void Defer(Action<World> @do) => Defer(_world, @do);
         public void Defer<T>(in T state, Action<T> @do) => Defer(new Do<T>(state, @do));
         public void Defer<T>(in T state, Action<T, World> @do) => Defer((state, world: _world, @do), input => input.@do(input.state, input.world));
-        public void Defer<T>(Action<World> @do) => Defer(_world, @do);
 
         public Resolver<T> Default<T>() where T : struct, Resolvables.IResolvable =>
             _defaults.Default(typeof(T), typeof(Resolvables.IResolvable<>), typeof(ResolverAttribute), _ => new Default<T>()) as Resolver<T>;

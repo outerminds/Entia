@@ -241,6 +241,10 @@ namespace Entia.Modules
             }
         }
 
+        BitMask GetTargetMask(in Data data) => data.Transient is int transient ?
+            _transient.Slots.items[transient].Mask :
+            data.Segment.Mask;
+
         [ThreadSafe]
         Metadata[] GetTargetTypes(in Data data) => data.Transient is int transient ?
             GetTargetTypes(_transient.Slots.items[transient]) : data.Segment.Types;

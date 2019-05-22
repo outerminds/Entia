@@ -7,6 +7,7 @@ using FsCheck;
 using System;
 using Entia.Components;
 using System.Collections.Generic;
+using Entia.Modules.Component;
 
 namespace Entia.Test
 {
@@ -50,6 +51,9 @@ namespace Entia.Test
 
                 if (_success)
                 {
+                    yield return (components.State(_entity).HasAny(States.Disabled), "Components.State()");
+                    yield return (components.State(_entity, _type).HasAny(States.Disabled), "Components.State()");
+
                     yield return (components.Has(_entity, _type, States.Disabled), "Components.Has(Type, Disabled)");
                     yield return (components.Has(_entity, _type), "Components.Has(Type)");
 
@@ -120,8 +124,9 @@ namespace Entia.Test
 
                 if (_success)
                 {
-                    yield return (components.State<T>(_entity) == States.Disabled, "Components.State<T>()");
-                    yield return (components.State(_entity, typeof(T)) == States.Disabled, "Components.State()");
+                    yield return (components.State(_entity).HasAny(States.Disabled), "Components.State()");
+                    yield return (components.State<T>(_entity).HasAny(States.Disabled), "Components.State<T>()");
+                    yield return (components.State(_entity, typeof(T)).HasAny(States.Disabled), "Components.State()");
 
                     yield return (components.Has<T>(_entity, States.Disabled), "Components.Has<T>(Disabled)");
                     yield return (components.Has(_entity, typeof(T), States.Disabled), "Components.Has(Type, Disabled)");

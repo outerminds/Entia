@@ -17,17 +17,44 @@ namespace Entia.Modules
     public sealed partial class Components : IModule, IResolvable, IEnumerable<IComponent>
     {
         [ThreadSafe]
-        public States State<T>(Entity entity) where T : struct, IComponent
+        public States State<T>(Entity entity) where T : struct, IComponent =>
+            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? State(entity, metadata) :
+            ComponentUtility.TryGetConcreteTypes<T>(out var types) ? State(entity, types) :
+            States.None;
+
+        [ThreadSafe]
+        public States State(Entity entity, Type type) =>
+            ComponentUtility.TryGetMetadata(type, false, out var metadata) ? State(entity, metadata) :
+            ComponentUtility.TryGetConcreteTypes(type, out var types) ? State(entity, types) :
+            States.None;
+
+        [ThreadSafe]
+        public States State(Entity entity)
         {
             ref readonly var data = ref GetData(entity, out var success);
-            return success && ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? State(data, metadata) : States.None;
+            return success ? State(data, GetTargetTypes(data)) : States.None;
         }
 
         [ThreadSafe]
-        public States State(Entity entity, Type type)
+        States State(Entity entity, in Metadata metadata)
         {
             ref readonly var data = ref GetData(entity, out var success);
-            return success && ComponentUtility.TryGetMetadata(type, false, out var metadata) ? State(data, metadata) : States.None;
+            return success ? State(data, metadata) : States.None;
+        }
+
+        [ThreadSafe]
+        States State(Entity entity, Metadata[] types)
+        {
+            ref readonly var data = ref GetData(entity, out var success);
+            return success ? State(data, types) : States.None;
+        }
+
+        [ThreadSafe]
+        States State(in Data data, Metadata[] types)
+        {
+            var state = States.None;
+            for (int i = 0; i < types.Length; i++) state |= State(data, types[i]);
+            return state;
         }
 
         [ThreadSafe]
@@ -44,13 +71,13 @@ namespace Entia.Modules
             State(mask, metadata, delegates) : States.None;
 
         [ThreadSafe]
-        States State(BitMask mask, in Metadata metadata, in Delegates delegates)
-        {
-            if (mask.Has(metadata.Index))
-                return delegates.IsDisabled.IsValueCreated && IsDisabled(mask, delegates.IsDisabled.Value) ? States.Disabled : States.Enabled;
-            else
-                return States.None;
-        }
+        States State(BitMask mask, in Metadata metadata, in Delegates delegates) => mask.Has(metadata.Index) ?
+            IsDisabled(mask, delegates) ? States.Disabled : States.Enabled :
+            States.None;
+
+        [ThreadSafe]
+        bool IsDisabled(BitMask mask, in Delegates delegates) =>
+            delegates.IsDisabled.IsValueCreated && IsDisabled(mask, delegates.IsDisabled.Value);
 
         [ThreadSafe]
         bool IsDisabled(BitMask mask, in Metadata disabled) => disabled.IsValid && mask.Has(disabled.Index);

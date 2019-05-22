@@ -12,6 +12,7 @@ namespace Entia.Modules.Component
         {
             public Entity Entity;
             public BitMask Mask;
+            public BitMask Lock;
             public Resolutions Resolution;
         }
 
@@ -26,12 +27,14 @@ namespace Entia.Modules.Component
             Slots.Ensure();
 
             ref var slot = ref Slots.items[index];
-            if (slot.Mask == null) slot = new Slot { Entity = entity, Mask = new BitMask(), Resolution = resolution };
+            if (slot.Mask == null || slot.Lock == null)
+                slot = new Slot { Entity = entity, Mask = new BitMask(), Lock = new BitMask(), Resolution = resolution };
             else
             {
                 slot.Entity = entity;
                 slot.Resolution = resolution;
                 slot.Mask.Clear();
+                slot.Lock.Clear();
             }
 
             if (mask != null) slot.Mask.Add(mask);

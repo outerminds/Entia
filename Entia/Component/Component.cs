@@ -7,8 +7,12 @@
 
     namespace Components
     {
-        public struct Debug : IComponent { public string Name; }
+        public interface ISilent : IComponent { }
+        public interface ISilent<T> : IComponent where T : struct, IMessage { }
+        public interface IEnabled : IComponent { }
 
-        struct Disabled<T> : IComponent where T : struct, IComponent { }
+        public struct Debug : IEnabled, ISilent { public string Name; }
+
+        readonly struct IsDisabled<T> : IEnabled, ISilent where T : struct, IComponent { }
     }
 }

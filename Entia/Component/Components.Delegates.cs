@@ -29,6 +29,8 @@ namespace Entia.Modules
             };
 
             public bool IsValid;
+            public bool Enabled;
+            public bool Silent;
             public Lazy<Metadata> IsDisabled;
             public Action<Entity> OnAdd;
             public Action<Entity> OnRemove;
@@ -62,38 +64,53 @@ namespace Entia.Modules
 
         Delegates CreateDelegates<T>() where T : struct, IComponent
         {
-            if (typeof(T).Is(typeof(Disabled<>), definition: true)) return Delegates.Empty;
+            var delegates = Delegates.Empty;
+            delegates.Enabled = typeof(T).Is<IEnabled>();
+            delegates.Silent = typeof(T).Is<ISilent>();
 
-            var metadata = ComponentUtility.Cache<T>.Data;
-            var onAdd = _messages.Emitter<OnAdd<T>>();
-            var onRemove = _messages.Emitter<OnRemove<T>>();
-            var onEnable = _messages.Emitter<OnEnable<T>>();
-            var onDisable = _messages.Emitter<OnDisable<T>>();
-            return new Delegates
+            if (!delegates.Enabled) delegates.IsDisabled = new Lazy<Metadata>(() => ComponentUtility.Cache<IsDisabled<T>>.Data);
+
+            if (!delegates.Silent)
             {
-                IsValid = true,
-                IsDisabled = new Lazy<Metadata>(() => ComponentUtility.Cache<Disabled<T>>.Data),
-                OnAdd = entity =>
+                var metadata = ComponentUtility.Cache<T>.Data;
+                // OnAdd
+                if (!typeof(T).Is<ISilent<OnAdd<T>>>())
                 {
-                    onAdd.Emit(new OnAdd<T> { Entity = entity });
-                    _onAdd.Emit(new OnAdd { Entity = entity, Component = metadata });
-                },
-                OnRemove = entity =>
-                {
-                    onRemove.Emit(new OnRemove<T> { Entity = entity });
-                    _onRemove.Emit(new OnRemove { Entity = entity, Component = metadata });
-                },
-                OnEnable = entity =>
-                {
-                    onEnable.Emit(new OnEnable<T> { Entity = entity });
-                    _onEnable.Emit(new OnEnable { Entity = entity, Component = metadata });
-                },
-                OnDisable = entity =>
-                {
-                    onDisable.Emit(new OnDisable<T> { Entity = entity });
-                    _onDisable.Emit(new OnDisable { Entity = entity, Component = metadata });
+                    var onAdd = _messages.Emitter<OnAdd<T>>();
+                    delegates.OnAdd += entity => onAdd.Emit(new OnAdd<T> { Entity = entity });
                 }
-            };
+                if (!typeof(T).Is<ISilent<OnAdd>>())
+                    delegates.OnAdd += entity => _onAdd.Emit(new OnAdd { Entity = entity, Component = metadata });
+
+                // OnRemove
+                if (!typeof(T).Is<ISilent<OnRemove<T>>>())
+                {
+                    var onRemove = _messages.Emitter<OnRemove<T>>();
+                    delegates.OnRemove += entity => onRemove.Emit(new OnRemove<T> { Entity = entity });
+                }
+                if (!typeof(T).Is<ISilent<OnRemove>>())
+                    delegates.OnRemove += entity => _onRemove.Emit(new OnRemove { Entity = entity, Component = metadata });
+
+                // OnEnable
+                if (!typeof(T).Is<ISilent<OnEnable<T>>>())
+                {
+                    var onEnable = _messages.Emitter<OnEnable<T>>();
+                    delegates.OnEnable += entity => onEnable.Emit(new OnEnable<T> { Entity = entity });
+                }
+                if (!typeof(T).Is<ISilent<OnEnable>>())
+                    delegates.OnEnable += entity => _onEnable.Emit(new OnEnable { Entity = entity, Component = metadata });
+
+                // OnDisable
+                if (!typeof(T).Is<ISilent<OnDisable<T>>>())
+                {
+                    var onDisable = _messages.Emitter<OnDisable<T>>();
+                    delegates.OnDisable += entity => onDisable.Emit(new OnDisable<T> { Entity = entity });
+                }
+                if (!typeof(T).Is<ISilent<OnDisable>>())
+                    delegates.OnDisable += entity => _onDisable.Emit(new OnDisable { Entity = entity, Component = metadata });
+            }
+
+            return delegates;
         }
 
         Delegates CreateDelegates(in Metadata metadata) => (Delegates)GetType()

@@ -81,12 +81,13 @@ namespace Entia.Modules
 
         bool Remove(ref Transient.Slot slot, in Metadata metadata, in Delegates delegates, States include)
         {
-            if (Has(slot, metadata, delegates, include))
+            if (Has(slot, metadata, delegates, include) && slot.Lock.Add(metadata.Index))
             {
-                RemoveDisabled(ref slot, delegates);
                 delegates.OnRemove(slot.Entity);
-                slot.Mask.Remove(metadata.Index);
+                RemoveDisabled(ref slot, delegates);
                 slot.Resolution.Set(Transient.Resolutions.Move);
+                slot.Mask.Remove(metadata.Index);
+                slot.Lock.Remove(metadata.Index);
                 return true;
             }
             return false;
@@ -94,7 +95,9 @@ namespace Entia.Modules
 
         bool RemoveDisabled(ref Transient.Slot slot, in Delegates delegates)
         {
-            if (delegates.IsDisabled.IsValueCreated && delegates.IsDisabled.Value.IsValid && slot.Mask.Remove(delegates.IsDisabled.Value.Index))
+            if (delegates.IsDisabled.IsValueCreated &&
+                delegates.IsDisabled.Value.IsValid &&
+                slot.Mask.Remove(delegates.IsDisabled.Value.Index))
             {
                 slot.Resolution.Set(Transient.Resolutions.Move);
                 return true;
