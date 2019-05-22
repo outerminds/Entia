@@ -1,26 +1,5 @@
 Sample:
-- are disabled component actually excluded from groups?
-- lazy IsDisabled<T> index attribution
-- empty get/set should not reserve/retrieve from a store
-- segments could return a shared store for empty components
-- segments could not consider empty components in their 'min/max' indices
-- segments could maintain seperatly an array of 'data component types' and 'tag component types' 
-	- this should make moving/copying entities faster
-
-- some usages of 'ComponentUtility.Cache<T>.Data' can still be removed
-- separate component indices from tag indices
-	- this will reduce the cost of using lots of tags
-	- this will reduce memory usage in stores
-	- this should make moving/copying entities faster
-	- adding/removing tags will be ~as fast as setting a bit in a mask
-	- Metadata will have a boolean to select between components and tags
-- [Include(States)] attribute for Group<T> that will add filters
-	- States.Enabled -> type => [None(IsDisabled<type>)]
-	- States.Disabled -> type => [All(IsDisabled<type>)]
-	- States.All -> ...
-	- if no [Include] is found, States.Enabled will be used
 - make Components.IsDisable (not generic) a framework component?
-- Groups should exlude disable components
 - should a parent EntityReference that is disposed want to propagate the dispose to its children?
 - how to spawn A LOT of prefabs without the overhead of Unity objects while still designing them in the editor?
 - add an injectable for Unity components that acts as a shorthand for all 'Unity<T>' operations
@@ -80,6 +59,7 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- remove Entia.Components.IsDisabled in favor of 'Activated/Deactivated' states
 - add builtin messages OnDestroy<T> where T : struct, IComponent
 	- is sent when a removal of a component is part of the destruction of an entity
 	- is sent after the OnRemove<T>
