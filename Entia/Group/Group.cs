@@ -366,7 +366,7 @@ namespace Entia.Modules.Group
         {
             if (_components.TrySegment(entity, out var pair) && Has(pair.segment))
             {
-                item = _indexToQuery[pair.segment.Index].Get(pair.index);
+                item = _segments[_indexToSegment[pair.segment.Index]].Items[pair.index];
                 return true;
             }
 

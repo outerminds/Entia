@@ -11,6 +11,7 @@ namespace Entia.Modules.Message
     public interface IReaction : IEnumerable<Delegate>
     {
         Type Type { get; }
+        Delegate React { get; }
         bool Add(Delegate reaction);
         bool Remove(Delegate reaction);
         bool Clear();
@@ -23,22 +24,13 @@ namespace Entia.Modules.Message
 
         public InAction<T> React => _reaction;
 
+        Delegate IReaction.React => _reaction;
         Type IReaction.Type => typeof(T);
 
-        event InAction<T> _reaction = _empty;
+        InAction<T> _reaction = _empty;
 
-        public bool Add(InAction<T> reaction)
-        {
-            var before = _reaction;
-            _reaction += reaction;
-            return before != _reaction;
-        }
-        public bool Remove(InAction<T> reaction)
-        {
-            var before = _reaction;
-            _reaction -= reaction;
-            return before != _reaction;
-        }
+        public bool Add(InAction<T> reaction) => _reaction != Concurrent.Mutate(ref _reaction, reaction, (previous, current) => previous + current);
+        public bool Remove(InAction<T> reaction) => _reaction != Concurrent.Mutate(ref _reaction, reaction, (previous, current) => previous - current);
         public bool Clear() => _reaction != Concurrent.Mutate(ref _reaction, _ => _empty);
 
         public IEnumerator<Delegate> GetEnumerator() => _reaction.GetInvocationList().Slice().GetEnumerator();
