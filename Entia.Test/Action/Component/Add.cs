@@ -54,13 +54,20 @@ namespace Entia.Test
                 var components = value.Components();
 
                 yield return (_has != _success, "Has != Add");
-                yield return (components.Has<TConcrete>(_entity), "Components.Has<TConcrete>()");
-                yield return (components.Has<TAbstract>(_entity), "Components.Has<TAbstract>()");
-                yield return (components.Has<IComponent>(_entity), "Components.Has<IComponent>()");
-                yield return (components.Has(_entity, typeof(TConcrete)), "Components.Has(TConcrete)");
-                yield return (components.Has(_entity, typeof(TAbstract)), "Components.Has(TAbstract)");
-                yield return (components.Has(_entity, _abstract), "Components.Has(abstract)");
-                yield return (components.Has(_entity, typeof(IComponent)), "Components.Has(IComponent)");
+                yield return (components.Has<TConcrete>(), "Components.Has<TConcrete>()");
+                yield return (components.Has<TAbstract>(), "Components.Has<TAbstract>()");
+                yield return (components.Has<IComponent>(), "Components.Has<IComponent>()");
+                yield return (components.Has(typeof(TConcrete)), "Components.Has(TConcrete)");
+                yield return (components.Has(typeof(TAbstract)), "Components.Has(TAbstract)");
+                yield return (components.Has(typeof(IComponent)), "Components.Has(IComponent)");
+                yield return (components.Has(_abstract), "Components.Has(abstract)");
+                yield return (components.Has<TConcrete>(_entity), "Components.Has<TConcrete>(Entity)");
+                yield return (components.Has<TAbstract>(_entity), "Components.Has<TAbstract>(Entity)");
+                yield return (components.Has<IComponent>(_entity), "Components.Has<IComponent>(Entity)");
+                yield return (components.Has(_entity, typeof(TConcrete)), "Components.Has(Entity, TConcrete)");
+                yield return (components.Has(_entity, typeof(TAbstract)), "Components.Has(Entity, TAbstract)");
+                yield return (components.Has(_entity, _abstract), "Components.Has(Entity, abstract)");
+                yield return (components.Has(_entity, typeof(IComponent)), "Components.Has(Entity, IComponent)");
 
                 yield return (components.Count<TConcrete>() == components.Count(typeof(TConcrete)), "Components.Count<TConcrete>() == Components.Count(TConcrete)");
                 yield return (components.Count<TAbstract>() == components.Count(typeof(TAbstract)), "Components.Count<TAbstract>() == Components.Count(TAbstract)");

@@ -40,6 +40,39 @@ namespace Entia.Modules
             ComponentUtility.TryGetMetadata(type, false, out var metadata) ? Has(entity, metadata, include) :
             ComponentUtility.TryGetConcrete(type, out var mask, out var types) && Has(entity, (mask, types), include);
 
+        /// <summary>
+        /// Determines whether at least one entity has a component of type <typeparamref name="T"/>.
+        /// </summary>
+        /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
+        /// <returns>Returns <c>true</c> if a component was found; otherwise, <c>false</c>.</returns>
+        [ThreadSafe]
+        public bool Has<T>(States include = States.All) where T : IComponent =>
+            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Has(metadata, include) :
+            ComponentUtility.TryGetConcrete<T>(out var mask, out var types) && Has((mask, types), include);
+
+        /// <summary>
+        /// Determines whether at least one entity has a component of provided <paramref name="type"/>.
+        /// </summary>
+        /// <param name="type">The component type.</param>
+        /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
+        /// <returns>Returns <c>true</c> if a component was found; otherwise, <c>false</c>.</returns>
+        [ThreadSafe]
+        public bool Has(Type type, States include = States.All) =>
+            ComponentUtility.TryGetMetadata(type, false, out var metadata) ? Has(metadata, include) :
+            ComponentUtility.TryGetConcrete(type, out var mask, out var types) && Has((mask, types), include);
+
+        bool Has(in Metadata metadata, States include)
+        {
+            foreach (ref var data in _data.Slice()) if (data.IsValid && Has(data, metadata, include)) return true;
+            return false;
+        }
+
+        bool Has(in (BitMask mask, Metadata[] types) components, States include)
+        {
+            foreach (ref var data in _data.Slice()) if (data.IsValid && Has(data, components, include)) return true;
+            return false;
+        }
+
         [ThreadSafe]
         bool Has(Entity entity, in Metadata metadata, States include)
         {

@@ -51,6 +51,7 @@ namespace Entia.Test
                 var entities = value.Entities();
                 var components = value.Components();
 
+                yield return (components.Has(_type, _include).Not(), "Components.Has().Not()");
                 yield return (components.Get(_type, _include).None(), "Components.Get().None()");
                 yield return (components.Count(_type, _include) == 0, "Components.Count() == 0");
                 yield return (entities.None(entity => components.Has(entity, _type, _include)), "Entities.None(Components.Has())");
@@ -119,6 +120,8 @@ namespace Entia.Test
                 var entities = value.Entities();
                 var components = value.Components();
 
+                yield return (components.Has<T>(_include).Not(), "Components.Has<T>().Not()");
+                yield return (components.Has(typeof(T), _include).Not(), "Components.Has().Not()");
                 yield return (components.Get<T>(_include).None(), "Components.Get<T>().None()");
                 yield return (components.Get(typeof(T), _include).None(), "Components.Get().None()");
                 yield return (components.Count<T>(_include) == 0, "Components.Count<T>() == 0");
