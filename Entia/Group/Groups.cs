@@ -21,13 +21,18 @@ namespace Entia.Modules
         public int Count => _groups.Count;
 
         readonly World _world;
+        readonly Queriers _queriers;
         readonly Dictionary<IQuerier, IGroup> _groups = new Dictionary<IQuerier, IGroup>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Groups"/> class.
         /// </summary>
         /// <param name="world">The world.</param>
-        public Groups(World world) { _world = world; }
+        public Groups(World world)
+        {
+            _world = world;
+            _queriers = world.Queriers();
+        }
 
         /// <summary>
         /// Gets or creates a group associated with the provided <paramref name="querier"/>.
@@ -43,18 +48,23 @@ namespace Entia.Modules
         }
 
         /// <summary>
+        /// Gets or creates a group associated with the provided query of type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The query type.</typeparam>
+        /// <returns>The group.</returns>
+        public Group<T> Get<T>() where T : struct, IQueryable => Get(_queriers.Get<T>());
+
+        /// <summary>
         /// Determines whether the provided <paramref name="group"/> already exists.
         /// </summary>
         /// <param name="group">The group.</param>
-        /// <returns>
-        ///   <c>true</c> if [has] [the specified group]; otherwise, <c>false</c>.
-        /// </returns>
+        /// <returns>Returns <c>true</c> if the group was found; otherwise, <c>false</c>. </returns>
         public bool Has(IGroup group) => _groups.TryGetValue(group.Querier, out var other) && group == other;
 
         /// <summary>
         /// Clears all existing groups.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Returns <c>true</c> if at least one group was cleared; otherwise, <c>false</c>. </returns>
         public bool Clear() => _groups.TryClear();
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
