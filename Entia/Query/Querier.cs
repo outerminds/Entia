@@ -49,37 +49,6 @@ namespace Entia.Queriers
         }
     }
 
-    public unsafe sealed class Pointer<T> : IQuerier where T : struct, IComponent
-    {
-        public bool TryQuery(in Context context, out Query query)
-        {
-            if (ComponentUtility.TryGetMetadata<T>(false, out var metadata))
-            {
-                var segment = context.Segment;
-                var state = context.World.Components().State(segment.Mask, metadata);
-                if (context.Include.HasAny(state))
-                {
-                    query = metadata.Kind == Metadata.Kinds.Tag ?
-                        new Query((pointer, _) =>
-                        {
-                            var target = (IntPtr*)pointer;
-                            *target = UnsafeUtility.AsPointer(ref Dummy<T>.Value);
-                        }, metadata) :
-                        new Query((pointer, index) =>
-                        {
-                            var store = segment.Store(metadata) as T[];
-                            var target = (IntPtr*)pointer;
-                            *target = UnsafeUtility.AsPointer(ref store[index]);
-                        }, metadata);
-                    return true;
-                }
-            }
-
-            query = default;
-            return false;
-        }
-    }
-
     [ThreadSafe]
     public sealed class Default<T> : Querier<T> where T : struct, Queryables.IQueryable
     {

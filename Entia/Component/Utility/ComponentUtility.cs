@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Queriers;
 
 namespace Entia.Modules.Component
 {
@@ -16,10 +15,10 @@ namespace Entia.Modules.Component
         [ThreadSafe]
         public static class Cache<T> where T : struct, IComponent
         {
-            public static readonly Metadata Data = GetMetadata(typeof(T));
-
             [Preserve]
-            static readonly Pointer<T> _querier = new Pointer<T>();
+            public static readonly Metadata Data = GetMetadata(typeof(T));
+            [Preserve]
+            public static readonly Pointer<T> Pointer = new Pointer<T>();
         }
 
         struct State
@@ -158,6 +157,18 @@ namespace Entia.Modules.Component
         public static bool IsValid(Type type) => !IsInvalid(type);
         public static bool IsConcrete(Type type) => GetKind(type) == Kinds.Concrete;
         public static bool IsAbstract(Type type) => GetKind(type) == Kinds.Abstract;
+
+        public static bool TryAsPointer(this Type type, out Type pointer)
+        {
+            if (type.IsPointer && type.GetElementType() is Type element && IsConcrete(element))
+            {
+                pointer = typeof(Pointer<>).MakeGenericType(element);
+                return true;
+            }
+
+            pointer = default;
+            return false;
+        }
 
         public static BitMask[] GetMasks(params Type[] types)
         {

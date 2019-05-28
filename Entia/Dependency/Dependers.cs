@@ -2,6 +2,7 @@
 using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependers;
+using Entia.Modules.Component;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -66,7 +67,9 @@ namespace Entia.Modules
         }
 
         public IDepender Default<T>() where T : struct, IDependable => _defaults.TryGet<T>(out var depender, false, false) ? depender : Default(typeof(T));
-        public IDepender Default(Type dependable) => _defaults.Default(dependable, typeof(IDependable<>), typeof(DependerAttribute), _ => new Default());
+        public IDepender Default(Type dependable) =>
+            dependable.TryAsPointer(out var pointer) ? Default(pointer) :
+            _defaults.Default(dependable, typeof(IDependable<>), typeof(DependerAttribute), _ => new Default());
         public bool Has<T>() where T : struct, IDependable => _dependers.Has<T>(true, false);
         public bool Has(Type dependable) => _dependers.Has(dependable, true, false);
         public IDepender Get<T>() where T : struct, IDependable => _dependers.TryGet<T>(out var depender, true, false) ? depender : Default<T>();
