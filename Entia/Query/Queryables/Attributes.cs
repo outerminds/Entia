@@ -63,7 +63,7 @@ namespace Entia.Queryables
                     return false;
             }
 
-            query = new Query(query.Size, query.Fill, all);
+            query = new Query(query.Fill, all);
             return true;
         }
     }
@@ -90,7 +90,7 @@ namespace Entia.Queryables
             {
                 if (QueryUtility.TryMatch(context.Segment.Mask, Components[i], context.World, include, out var metadata))
                 {
-                    query = new Query(query.Size, query.Fill, metadata);
+                    query = new Query(query.Fill, metadata);
                     return true;
                 }
             }

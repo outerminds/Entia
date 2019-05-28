@@ -80,6 +80,7 @@ Features:
 - run tests on device with IL2CPP build
 
 Bugs:
+- Add dependencies for pointers in query structs.
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
 
 Optimization:

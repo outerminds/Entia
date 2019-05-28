@@ -14,11 +14,12 @@ namespace Entia.Injectors
             switch (member)
             {
                 case Type type:
+                    var injectors = world.Injectors();
                     return Result
                         .Cast<ISystem>(DefaultUtility.Default(type))
                         .Bind(instance => type.InstanceFields()
                             .Where(field => field.IsPublic)
-                            .Select(field => world.Injectors().Inject(field).Do(current => field.SetValue(instance, current)))
+                            .Select(field => injectors.Inject(field).Do(current => field.SetValue(instance, current)))
                             .All()
                             .Return(instance));
                 case FieldInfo field: return Inject(field.FieldType, world);

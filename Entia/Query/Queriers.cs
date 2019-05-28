@@ -33,6 +33,9 @@ namespace Entia.Modules
         public Querier<T> Default<T>() where T : struct, Queryables.IQueryable =>
             _defaults.Default(typeof(T), typeof(Queryables.IQueryable<>), typeof(QuerierAttribute), _ => new Default<T>()) as Querier<T>;
         public IQuerier Default(Type queryable) =>
+            queryable.IsPointer ?
+                _defaults.TryGet(queryable, out var querier) ? querier :
+                _defaults[queryable] = Activator.CreateInstance(typeof(Pointer<>).MakeGenericType(queryable.GetElementType())) as IQuerier :
             _defaults.Default(queryable, typeof(Queryables.IQueryable<>), typeof(QuerierAttribute), typeof(Default<>));
 
         public bool Has<T>() where T : struct, Queryables.IQueryable => Has(typeof(T));

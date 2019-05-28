@@ -22,7 +22,7 @@ namespace Entia.Injectables
     public sealed class Group<T> : IInjectable, IEnumerable<Modules.Group.Group<T>.Enumerator, T> where T : struct, IQueryable
     {
         [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T>(world.Groups().Get(world.Queriers().Get<T>(member))));
+        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T>(world.Groups().Get<T>(member)));
         [Depender]
         static IDepender Depender => Dependers.Depender.From<T>(new Dependencies.Read(typeof(Entity)));
 
@@ -59,7 +59,7 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2>>.Enumerator, All<T1, T2>> where T1 : struct, IQueryable where T2 : struct, IQueryable
     {
         [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2>(world.Groups().Get(world.Queriers().Get<All<T1, T2>>(member))));
+        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2>(world.Groups().Get<All<T1, T2>>(member)));
         [Depender]
         static IDepender Depender => Dependers.Depender.From<All<T1, T2>>(new Dependencies.Read(typeof(Entity)));
 
@@ -96,7 +96,7 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2, T3> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3>>.Enumerator, All<T1, T2, T3>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable
     {
         [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3>>(member))));
+        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3>(world.Groups().Get<All<T1, T2, T3>>(member)));
         [Depender]
         static IDepender Depender => Dependers.Depender.From<All<T1, T2, T3>>(new Dependencies.Read(typeof(Entity)));
 
@@ -133,7 +133,7 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2, T3, T4> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4>>.Enumerator, All<T1, T2, T3, T4>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable
     {
         [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4>>(member))));
+        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4>(world.Groups().Get<All<T1, T2, T3, T4>>(member)));
         [Depender]
         static IDepender Depender => Dependers.Depender.From<All<T1, T2, T3, T4>>(new Dependencies.Read(typeof(Entity)));
 
@@ -170,7 +170,7 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2, T3, T4, T5> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4, T5>>.Enumerator, All<T1, T2, T3, T4, T5>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable
     {
         [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4, T5>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4, T5>>(member))));
+        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4, T5>(world.Groups().Get<All<T1, T2, T3, T4, T5>>(member)));
         [Depender]
         static IDepender Depender => Dependers.Depender.From<All<T1, T2, T3, T4, T5>>(new Dependencies.Read(typeof(Entity)));
 
@@ -207,7 +207,7 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2, T3, T4, T5, T6> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.Enumerator, All<T1, T2, T3, T4, T5, T6>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable
     {
         [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4, T5, T6>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4, T5, T6>>(member))));
+        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4, T5, T6>(world.Groups().Get<All<T1, T2, T3, T4, T5, T6>>(member)));
         [Depender]
         static IDepender Depender => Dependers.Depender.From<All<T1, T2, T3, T4, T5, T6>>(new Dependencies.Read(typeof(Entity)));
 
@@ -244,7 +244,7 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2, T3, T4, T5, T6, T7> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.Enumerator, All<T1, T2, T3, T4, T5, T6, T7>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable
     {
         [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4, T5, T6, T7>(world.Groups().Get(world.Queriers().Get<All<T1, T2, T3, T4, T5, T6, T7>>(member))));
+        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<T1, T2, T3, T4, T5, T6, T7>(world.Groups().Get<All<T1, T2, T3, T4, T5, T6, T7>>(member)));
         [Depender]
         static IDepender Depender => Dependers.Depender.From<All<T1, T2, T3, T4, T5, T6, T7>>(new Dependencies.Read(typeof(Entity)));
 

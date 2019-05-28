@@ -26,7 +26,7 @@ $@"    /// <summary>
     public sealed class Group<{parameters}> : IInjectable, IEnumerable<{groupType}.Enumerator, {itemType}> {constraints}
     {{
         [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<{parameters}>(world.Groups().Get(world.Queriers().Get<{itemType}>(member))));
+        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<{parameters}>(world.Groups().Get<{itemType}>(member)));
         [Depender]
         static IDepender Depender => Dependers.Depender.From<{itemType}>(new Dependencies.Read(typeof(Entity)));
 

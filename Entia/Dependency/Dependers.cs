@@ -33,6 +33,9 @@ namespace Entia.Modules
                     switch (current)
                     {
                         case Type type:
+                            if (type.GetElementType() is Type element)
+                                foreach (var dependency in Next(element)) yield return dependency;
+
                             foreach (var dependency in type.Hierarchy().SelectMany(child => Get(child).Depend(type, _world)))
                                 yield return dependency;
                             break;

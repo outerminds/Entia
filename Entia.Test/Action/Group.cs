@@ -5,6 +5,7 @@ using Entia.Modules.Group;
 using Entia.Modules.Query;
 using Entia.Queriers;
 using FsCheck;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -36,22 +37,30 @@ namespace Entia.Test
             return true;
         }
         public override void Do(World value, Model model) => _group = value.Groups().Get(_querier);
-        public override Property Check(World value, Model model) =>
-            (_group.Count == _entities.Length).Label("Group.Count")
-            .And((_group.Count == _group.Count()).Label("Group.Count()"))
-            .And((_group.ToArray().Length == _group.Count).Label("Group.ToArray()"))
-            .And((value.Groups().Get(_querier) == _group).Label("Groups.Get()"))
-            .And(_group.Querier.Equals(_querier).Label("Group.Query"))
-            .And(_group.Entities.OrderBy(_ => _).SequenceEqual(_entities.OrderBy(_ => _)).Label("Group.Entities"))
-            .And((_group.Entities.Count() == _group.Count).Label("Group.Entities.Count()"))
-            .And(_group.Entities.All(_group.Has).Label("Group.Entities.Has()"))
-            .And(_group.Entities.All(entity => _group.TryGet(entity, out _)).Label("Group.Entities.TryGet()"))
-            .And(_group.Split(0).None().Label("Group.Split(0).None()"))
-            .And(_group.Split(1).SelectMany(_ => _).SequenceEqual(_group).Label("Group.Split(1).SequenceEqual()"))
-            .And(_group.Split(2).SelectMany(_ => _).SequenceEqual(_group).Label("Group.Split(2).SequenceEqual()"))
-            .And(_group.Split(3).SelectMany(_ => _).SequenceEqual(_group).Label("Group.Split(3).SequenceEqual()"))
-            .And(_entities.All(entity => _group.Has(entity)).Label("Group.Has()"))
-            .And(_entities.All(entity => _group.TryGet(entity, out _)).Label("Group.TryGet()"));
+        public override Property Check(World value, Model model)
+        {
+            return PropertyUtility.All(Tests());
+
+            IEnumerable<(bool test, string label)> Tests()
+            {
+                yield return (_group.Count == _entities.Length, "Group.Count");
+                yield return (_group.Count == _group.Count(), "Group.Count()");
+                yield return (_group.ToArray().Length == _group.Count, "Group.ToArray()");
+                yield return (value.Groups().Get(_querier) == _group, "Groups.Get()");
+                yield return (_group.Querier.Equals(_querier), "Group.Query");
+                yield return (_group.Entities.OrderBy(_ => _).SequenceEqual(_entities.OrderBy(_ => _)), "Group.Entities");
+                yield return (_group.Entities.Count() == _group.Count, "Group.Entities.Count()");
+                yield return (_group.Entities.All(_group.Has), "Group.Entities.Has()");
+                yield return (_group.Entities.All(entity => _group.TryGet(entity, out _)), "Group.Entities.TryGet()");
+                yield return (_group.Split(0).None(), "Group.Split(0).None()");
+                for (int i = 1; i < 5; i++) yield return (_group.Split(i).Sum(split => split.Count()) == _group.Count, $"Group.Split({i}).Count()");
+                for (int i = 1; i < 5; i++) yield return (_group.Split(i).Sum(split => split.Count) == _group.Count, $"Group.Split({i}).Count");
+                yield return (_group.Segments.Sum(segment => segment.Count) == _group.Count, $"Group.Segments.Count");
+                yield return (_group.Segments.Sum(segment => segment.Count()) == _group.Count, $"Group.Segments.Count");
+                yield return (_entities.All(entity => _group.Has(entity)), "Group.Has()");
+                yield return (_entities.All(entity => _group.TryGet(entity, out _)), "Group.TryGet()");
+            }
+        }
 
         public override string ToString() => GetType().Format();
     }

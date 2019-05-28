@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Entia.Core;
 using Entia.Core.Documentation;
+using Entia.Queriers;
 
 namespace Entia.Modules.Component
 {
@@ -16,7 +17,9 @@ namespace Entia.Modules.Component
         public static class Cache<T> where T : struct, IComponent
         {
             public static readonly Metadata Data = GetMetadata(typeof(T));
-            public static readonly T[] Store = new T[1];
+
+            [Preserve]
+            static readonly Pointer<T> _querier = new Pointer<T>();
         }
 
         struct State

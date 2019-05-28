@@ -2,6 +2,6 @@
 
 namespace Entia.Core
 {
-    [AttributeUsage(AttributeTargets.All)]
+    [AttributeUsage(AttributeTargets.All, Inherited = true, AllowMultiple = false)]
     public class PreserveAttribute : Attribute { }
 }

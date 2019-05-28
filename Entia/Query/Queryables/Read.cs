@@ -28,9 +28,8 @@ namespace Entia.Queryables
                     var state = context.World.Components().State(segment.Mask, metadata);
                     if (context.Include.HasAny(state))
                     {
-                        var store = ComponentUtility.Cache<T>.Store;
                         query = metadata.Kind == Metadata.Kinds.Tag ?
-                            new Query<Read<T>>(_ => new Read<T>(0, store, state)) :
+                            new Query<Read<T>>(_ => new Read<T>(0, Dummy<T>.Array.One, state)) :
                             new Query<Read<T>>(index => new Read<T>(index, segment.Store(metadata) as T[], state), metadata);
                         return true;
                     }

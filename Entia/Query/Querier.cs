@@ -49,21 +49,49 @@ namespace Entia.Queriers
         }
     }
 
+    public unsafe sealed class Pointer<T> : IQuerier where T : struct, IComponent
+    {
+        public bool TryQuery(in Context context, out Query query)
+        {
+            if (ComponentUtility.TryGetMetadata<T>(false, out var metadata))
+            {
+                var segment = context.Segment;
+                var state = context.World.Components().State(segment.Mask, metadata);
+                if (context.Include.HasAny(state))
+                {
+                    query = metadata.Kind == Metadata.Kinds.Tag ?
+                        new Query((pointer, _) =>
+                        {
+                            var target = (IntPtr*)pointer;
+                            *target = UnsafeUtility.AsPointer(ref Dummy<T>.Value);
+                        }, metadata) :
+                        new Query((pointer, index) =>
+                        {
+                            var store = segment.Store(metadata) as T[];
+                            var target = (IntPtr*)pointer;
+                            *target = UnsafeUtility.AsPointer(ref store[index]);
+                        }, metadata);
+                    return true;
+                }
+            }
+
+            query = default;
+            return false;
+        }
+    }
+
     [ThreadSafe]
     public sealed class Default<T> : Querier<T> where T : struct, Queryables.IQueryable
     {
-        static readonly FieldInfo[] _fields = TypeUtility.Cache<T>.Data.InstanceFields
-            .OrderBy(field => field.MetadataToken)
-            .ToArray();
-
         public override bool TryQuery(in Context context, out Query<T> query)
         {
+            var layout = UnsafeUtility.Layout<T>();
             var queriers = context.World.Queriers();
-            var queries = new Query[_fields.Length];
-            for (int i = 0; i < _fields.Length; i++)
+            var queries = new (Query query, int offset)[layout.Length];
+            for (int i = 0; i < layout.Length; i++)
             {
-                var field = _fields[i];
-                if (queriers.TryQuery(field, context, out var result)) queries[i] = result;
+                var (field, offset) = layout[i];
+                if (queriers.TryQuery(field, context, out var result)) queries[i] = (result, offset);
                 else
                 {
                     query = default;
@@ -75,16 +103,15 @@ namespace Entia.Queriers
                 index =>
                 {
                     var queryable = default(T);
-                    var pointer = UnsafeUtility.Cast<T>.ToPointer(ref queryable);
+                    var pointer = UnsafeUtility.AsPointer(ref queryable);
                     for (int i = 0; i < queries.Length; i++)
                     {
                         var current = queries[i];
-                        current.Fill(pointer, index);
-                        pointer += current.Size;
+                        current.query.Fill(pointer + current.offset, index);
                     }
                     return queryable;
                 },
-                queries.SelectMany(current => current.Types));
+                queries.SelectMany(current => current.query.Types));
             return true;
         }
     }
@@ -147,7 +174,6 @@ namespace Entia.Queriers
                     }
 
                     query = new Query(
-                        queries.Sum(current => current.Size),
                         (pointer, index) => { for (int i = 0; i < queries.Length; i++) queries[i].Fill(pointer, index); },
                         queries.SelectMany(current => current.Types).ToArray());
                     return true;

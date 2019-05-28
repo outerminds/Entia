@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Entia.Test
@@ -86,20 +87,32 @@ namespace Entia.Test
         [All(typeof(IComponentA))]
         [None(typeof(ComponentB))]
         public struct ProviderC { }
-        public struct QueryA : Queryables.IQueryable
+        public unsafe struct QueryA : Queryables.IQueryable
         {
+            public ComponentA* P1;
             public Entity Entity;
+            public ComponentB* P2;
             public Read<ComponentB> A;
+            public ComponentB* P3;
         }
         public struct QueryB : Queryables.IQueryable
         {
             public All<Read<ComponentB>, Write<ComponentA>> A;
             public Maybe<Write<ComponentC<Unit>>> B;
         }
-        public struct QueryC : Queryables.IQueryable
+        public unsafe struct QueryC : Queryables.IQueryable
         {
+            public ComponentA* P1;
+            public ComponentB* P2;
+            public ComponentB* P3;
             public QueryA A;
+            public ComponentB* P4;
+            public ComponentA* P5;
+            public ComponentB* P6;
+            public Entity Entity;
             public Any<Read<ComponentB>, Write<ComponentA>> B;
+            public ComponentA* P7;
+            public ComponentB* P8;
         }
 
         public struct Injectable : IDispose
@@ -121,6 +134,8 @@ namespace Entia.Test
             public readonly Reaction<MessageB> ReactionB;
             public readonly Receiver<MessageC> ReceiverC;
             public readonly Defer Defer;
+            public readonly Defer.Components DeferComponents;
+            public readonly Defer.Entities DeferEntities;
             [All(typeof(IComponentA))]
             [None(typeof(ComponentB))]
             public readonly Group<QueryA> GroupA;

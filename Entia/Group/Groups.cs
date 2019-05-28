@@ -4,6 +4,7 @@ using Entia.Queriers;
 using Entia.Queryables;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Entia.Modules
 {
@@ -53,6 +54,14 @@ namespace Entia.Modules
         /// <typeparam name="T">The query type.</typeparam>
         /// <returns>The group.</returns>
         public Group<T> Get<T>() where T : struct, IQueryable => Get(_queriers.Get<T>());
+
+        /// <summary>
+        /// Gets or creates a group associated with the provided query of type <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The query type.</typeparam>
+        /// <param name="member">The member that holds the group.</param>
+        /// <returns>The group.</returns>
+        public Group<T> Get<T>(MemberInfo member) where T : struct, IQueryable => Get(_queriers.Get<T>(member));
 
         /// <summary>
         /// Determines whether the provided <paramref name="group"/> already exists.

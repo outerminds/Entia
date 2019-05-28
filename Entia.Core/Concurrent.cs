@@ -5,6 +5,19 @@ namespace Entia.Core
 {
     public static class Concurrent
     {
+        public static T Mutate<T>(ref T location, in T value) where T : class
+        {
+            T initial, comparand, mutated;
+            do
+            {
+                comparand = location;
+                mutated = value;
+                initial = Interlocked.CompareExchange(ref location, mutated, comparand);
+            }
+            while (initial != comparand);
+            return mutated;
+        }
+
         public static T Mutate<T>(ref T location, Func<T, T> mutate) where T : class
         {
             T initial, comparand, mutated;

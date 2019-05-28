@@ -7,7 +7,10 @@ using Entia.Core;
 
 namespace Entia.Experiment.Next
 {
-    public static class Component
+    public interface IComponent<T> : IComponent { }
+    public sealed class Position : IComponent<Vector2> { }
+
+    public readonly struct Component
     {
         static int _counter;
 
@@ -15,10 +18,15 @@ namespace Entia.Experiment.Next
             new Component<T>(Interlocked.Increment(ref _counter), @default);
         public static Component<T> Create<T>(T @default) => Create(() => @default);
         public static Component<Unit> Create() => Create<Unit>();
+
+        public readonly Type Name;
+        public readonly Type Data;
     }
 
     public readonly struct Component<T>
     {
+        public static implicit operator Component(in Component<T> component) => throw null;
+
         public readonly int Index;
         public readonly Func<T> Default;
 
@@ -27,6 +35,11 @@ namespace Entia.Experiment.Next
             Index = index;
             Default = @default ?? (() => default);
         }
+    }
+
+    public readonly struct Component<TName, TData>
+    {
+        public static implicit operator Component(in Component<TName, TData> component) => throw null;
     }
 
     public readonly struct Read<T>
@@ -56,7 +69,6 @@ namespace Entia.Experiment.Next
 
     public static class Query
     {
-        public static Query<(T1, T2)> Create<T1, T2>(in (Query<T1>, Query<T2>) query) => throw null;
         public static Query<Read<T>> Read<T>(Component<T> component) => throw null;
         public static Query<Write<T>> Write<T>(Component<T> component) => throw null;
         public static Query<Maybe<T>> Maybe<T>(Query<T> query) => throw null;
@@ -139,9 +151,12 @@ namespace Entia.Experiment.Next
 
         public sealed class Components
         {
-            public ref T Get<T>(Entity entity, Component<T> component) => throw null;
-            public bool Set<T>(Entity entity, Component<T> component, in T data) => throw null;
-            public bool Remove<T>(Entity entity, Component<T> component) => throw null;
+            public ref TData Get<TName, TData>(Entity entity) => throw null;
+            public ref TData Get<TName, TData>(Entity entity, in Component<TName, TData> type) => throw null;
+            public ref T Get<T>(Entity entity, IComponent<T> type) => throw null;
+            public ref T Get<T>(Entity entity, in Component<T> component) => throw null;
+            public bool Set<T>(Entity entity, in Component<T> component, in T data) => throw null;
+            public bool Remove<T>(Entity entity, in Component<T> component) => throw null;
         }
 
         public sealed class Groups
@@ -163,6 +178,18 @@ namespace Entia.Experiment.Next
         public static readonly Component<(float duration, float counter)> Lifetime = Component.Create((5f, 0f));
         public static readonly Component<(Vector2 source, Vector2 target, float duration, float counter)> ScaleTo =
             Component.Create((Vector2.One, Vector2.One, 0f, 0f));
+
+        public static readonly Component<Position, Vector2> P;
+
+        public static partial class D2
+        {
+            public static readonly Component<Position, Vector2> Position;
+        }
+
+        public static partial class D3
+        {
+            public static readonly Component<Position, Vector3> Position;
+        }
     }
 
     public static partial class Phases
@@ -189,6 +216,8 @@ namespace Entia.Experiment.Next
         {
             var query = Query.All(Query.Write(Components.Position), Query.Read(Components.Velocity));
             var group = world.Groups.Get(query);
+            world.Components.Get(default, Components.D2.Position);
+            world.Components.Get(default, Components.D3.Position);
 
             void Initialize() { }
 

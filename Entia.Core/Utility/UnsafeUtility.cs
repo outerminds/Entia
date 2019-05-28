@@ -1,71 +1,133 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Entia.Core
 {
-    public static class UnsafeUtility
+    public unsafe static class UnsafeUtility
     {
-        public delegate IntPtr Return(IntPtr pointer);
-        public delegate ref TTarget Return<TSource, TTarget>(ref TSource reference);
+        public delegate IntPtr PointerReturn(IntPtr pointer);
+        public delegate ref TTarget ReferenceReturn<TSource, TTarget>(ref TSource reference);
         public delegate ref T ReferenceReturn<T>(IntPtr pointer);
         public delegate IntPtr PointerReturn<T>(ref T reference);
+        public delegate IntPtr PointerOffset(IntPtr pointer, int offset);
+        public delegate ref T ReferenceOffset<T>(ref T reference, int offset);
 
-        public static class Size<T>
+        static class Cache
+        {
+            public static readonly PointerReturn<Unit> AsPointer = (ref Unit _) => throw new NotImplementedException();
+
+            static Cache() { Copy(_return, AsPointer); }
+        }
+
+        static class Cache<T>
         {
             [StructLayout(LayoutKind.Sequential)]
-            struct Layout
+            struct Pair
             {
                 public T Value;
                 public Unit End;
             }
 
-            public static readonly int Value = IntPtr.Size;
+            // NOTE: these function are replaced in the constructor.
+            public static readonly ReferenceReturn<T> As = _ => throw new NotImplementedException();
+            public static readonly PointerReturn<T> AsPointer = (ref T _) => throw new NotImplementedException();
+            public static readonly ReferenceOffset<T> Offset = (ref T _, int __) => throw new NotImplementedException();
+            public static readonly int Size = IntPtr.Size;
+            public static readonly (FieldInfo field, int offset)[] Layout = { };
+            public static readonly FieldInfo[] Fields = typeof(T).InstanceFields();
 
-            static Size()
+            static Cache()
             {
+                Copy(_return, As);
+                Copy(_return, AsPointer);
+                Copy(_offset, Offset);
+
                 if (typeof(T).IsValueType)
                 {
-                    var pair = default(Layout);
-                    var head = Cast<T>.ToPointer(ref pair.Value);
-                    var tail = Cast<Unit>.ToPointer(ref pair.End);
-                    Value = (int)(tail.ToInt64() - head.ToInt64());
+                    var pair = default(Pair);
+                    var head = AsPointer(ref pair.Value);
+                    var tail = Cache.AsPointer(ref pair.End);
+                    Size = (int)(tail.ToInt64() - head.ToInt64());
                 }
-            }
-        }
 
-        public static class Cast<T>
-        {
-            // NOTE: these function pointers are replaced by the one in '_return'.
-            public static readonly ReferenceReturn<T> ToReference = _ => throw new NotImplementedException();
-            public static readonly PointerReturn<T> ToPointer = (ref T _) => throw new NotImplementedException();
-
-            static Cast()
-            {
-                foreach (var field in typeof(Delegate).InstanceFields())
+                var bytes = new byte[Size];
+                bytes.Fill(byte.MaxValue);
+                Layout = new (FieldInfo field, int offset)[Fields.Length];
+                for (int i = 0; i < Fields.Length; i++)
                 {
-                    var value = field.GetValue(_return);
-                    field.SetValue(ToReference, value);
-                    field.SetValue(ToPointer, value);
+                    var field = Fields[i];
+                    object box = UnsafeUtility.As<byte, T>(ref bytes[0]);
+                    field.SetValue(box, default);
+                    var unbox = (T)box;
+                    var offset = IndexOf(UnsafeUtility.AsPointer(ref unbox), Size);
+                    Layout[i] = (field, offset);
                 }
+                Array.Sort(Layout, (a, b) => a.offset.CompareTo(b.offset));
             }
-        }
 
-        public static class Cast<TSource, TTarget>
-        {
-            // NOTE: this function pointer is replaced by the one in '_return'.
-            public static readonly Return<TSource, TTarget> To = (ref TSource _) => throw new NotImplementedException();
-
-            static Cast()
+            static int IndexOf(IntPtr pointer, int size)
             {
-                foreach (var field in typeof(Delegate).InstanceFields())
-                {
-                    var value = field.GetValue(_return);
-                    field.SetValue(To, value);
-                }
+                var bytes = (byte*)pointer;
+                for (int i = 0; i < size; i++) if (bytes[i] == 0) return i;
+                return -1;
             }
         }
 
-        static readonly Return _return = _ => _;
+        static class Cache<TSource, TTarget>
+        {
+            // NOTE: this function is replaced in the constructor.
+            public static readonly ReferenceReturn<TSource, TTarget> As = (ref TSource _) => throw new NotImplementedException();
+
+            static Cache() { Copy(_return, As); }
+        }
+
+        static readonly PointerReturn _return = _ => _;
+        static readonly PointerOffset _offset = (pointer, offset) => pointer + offset;
+        static readonly FieldInfo[] _fields = typeof(Delegate).InstanceFields();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int Size<T>() => Cache<T>.Size;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref TTarget As<TSource, TTarget>(ref TSource reference) => ref Cache<TSource, TTarget>.As(ref reference);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T As<T>(IntPtr pointer) => ref Cache<T>.As(pointer);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static IntPtr AsPointer<T>(ref T reference) => Cache<T>.AsPointer(ref reference);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static IntPtr Unbox(ref object box) => *(IntPtr*)AsPointer(ref box) + IntPtr.Size;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T Unbox<T>(ref object box) => ref As<T>(Unbox(ref box));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T Offset<T>(ref T reference, int offset) => ref Cache<T>.Offset(ref reference, offset);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static (FieldInfo field, int offset)[] Layout<T>() => Cache<T>.Layout;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static byte[] ToArray<T>(ref T reference) => ToArray<T, byte>(ref reference);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static byte[] ToArray(IntPtr pointer, int size) => ToArray<byte>(pointer, size);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TTarget[] ToArray<TSource, TTarget>(ref TSource reference) => ToArray<TTarget>(AsPointer(ref reference), Size<TSource>());
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T[] ToArray<T>(IntPtr pointer, int size)
+        {
+            var sizes = (source: size, target: Size<T>());
+            var count = sizes.source % sizes.target == 0 ? sizes.source / sizes.target : sizes.source / sizes.target + 1;
+            var targets = new T[count];
+            Copy(pointer, AsPointer(ref targets[0]), size);
+            return targets;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Copy(IntPtr source, IntPtr target, int count)
+        {
+            for (int i = 0; i < count; i++) ((byte*)target)[i] = ((byte*)source)[i];
+        }
+
+        static void Copy(Delegate source, Delegate target)
+        {
+            foreach (var field in _fields) field.SetValue(target, field.GetValue(source));
+        }
     }
 }

@@ -10,6 +10,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -396,9 +397,60 @@ namespace Entia.Experiment
             while (true) { }
         }
 
+        public unsafe struct QueryC : Queryables.IQueryable
+        {
+            public Velocity* P2;
+            public Position* P1;
+            public Velocity* P3;
+            public byte A1, A2, A3;
+            public Position* P4;
+            public ushort B1, B2;
+            public Velocity* P5;
+            public uint C1, C2, C3;
+            public Position* P6;
+            public Entity Entity;
+            public Any<Read<Position>, Write<Velocity>> Any;
+            public bool D1, D2, D3;
+            public Velocity* P7;
+            public Position* P8;
+        }
+        static unsafe void Layout()
+        {
+            int IndexOf(IntPtr pointer, int size)
+            {
+                var bytes = (byte*)pointer;
+                for (int i = 0; i < size; i++) if (bytes[i] == 0) return i;
+                return -1;
+            }
+
+            (FieldInfo, int)[] For<T>()
+            {
+                var fields = typeof(T).InstanceFields();
+                var size = UnsafeUtility.Size<T>();
+                var count = size / sizeof(uint);
+                var bytes = new byte[size];
+                bytes.Fill(byte.MaxValue);
+                var instance = UnsafeUtility.As<byte, T>(ref bytes[0]);
+                var layout = new (FieldInfo field, int offset)[fields.Length];
+                for (int i = 0; i < fields.Length; i++)
+                {
+                    var field = fields[i];
+                    object box = instance;
+                    field.SetValue(box, default);
+                    var offset = IndexOf(UnsafeUtility.Unbox(ref box), size);
+                    layout[i] = (field, offset);
+                }
+                Array.Sort(layout, (a, b) => a.offset.CompareTo(b.offset));
+                return layout;
+            }
+
+            For<QueryC>();
+        }
+
         static void Main()
         {
-            Performance();
+            // Performance();
+            Layout();
             // DebugView();
             // ComponentTest.Run();
             // ParallelTest.Run();
@@ -415,13 +467,13 @@ namespace Entia.Experiment
             // Group2Test.Benchmark(1_000_000);
 
             // TestLaPool();
-            for (int i = 0; i < 100; i++)
-            {
-                GroupTest.Benchmark(1_000);
-                GroupTest.Benchmark(10_000);
-                GroupTest.Benchmark(100_000);
-                GroupTest.Benchmark(1_000_000);
-            }
+            // for (int i = 0; i < 100; i++)
+            // {
+            //     GroupTest.Benchmark(1_000);
+            //     GroupTest.Benchmark(10_000);
+            //     GroupTest.Benchmark(100_000);
+            //     GroupTest.Benchmark(1_000_000);
+            // }
         }
 
         public readonly struct BobaData : ISystem
