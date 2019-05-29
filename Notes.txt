@@ -1,5 +1,4 @@
 Sample:
-- make sure pointers in query structs are not moved by the GC
 - make Components.IsDisable (not generic) a framework component?
 - should a parent EntityReference that is disposed want to propagate the dispose to its children?
 - how to spawn A LOT of prefabs without the overhead of Unity objects while still designing them in the editor?
