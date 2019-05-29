@@ -1,4 +1,5 @@
 Sample:
+- make sure pointers in query structs are not moved by the GC
 - make Components.IsDisable (not generic) a framework component?
 - should a parent EntityReference that is disposed want to propagate the dispose to its children?
 - how to spawn A LOT of prefabs without the overhead of Unity objects while still designing them in the editor?
@@ -80,7 +81,6 @@ Features:
 - run tests on device with IL2CPP build
 
 Bugs:
-- Add dependencies for pointers in query structs.
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
 
 Optimization:

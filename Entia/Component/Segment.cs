@@ -4,6 +4,7 @@ using Entia.Core.Documentation;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Entia.Modules.Component
 {
@@ -31,14 +32,15 @@ namespace Entia.Modules.Component
         /// </summary>
         public (Entity[] items, int count) Entities;
 
-        int _minimum;
-        int _maximum;
-        Array[] _stores;
+        readonly int _minimum;
+        readonly int _maximum;
+        readonly Array[] _stores;
+        readonly (GCHandle handle, IntPtr address)[] _handles;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Segment"/> class.
         /// </summary>
-        public Segment(int index, BitMask mask, int capacity = 8)
+        public Segment(int index, BitMask mask, int capacity = 4)
         {
             Index = index;
             Mask = mask;
@@ -51,7 +53,18 @@ namespace Entia.Modules.Component
             _minimum = Components.Select(type => type.Index).FirstOrDefault();
             _maximum = Components.Select(type => type.Index + 1).LastOrDefault();
             _stores = new Array[_maximum - _minimum];
+            _handles = new (GCHandle handle, IntPtr address)[_maximum - _minimum];
             foreach (var type in Components) _stores[GetStoreIndex(type)] = Array.CreateInstance(type.Type, capacity);
+        }
+
+        ~Segment()
+        {
+            for (int i = 0; i < Components.Length; i++)
+            {
+                var index = GetStoreIndex(Components[i]);
+                ref var pair = ref _handles[index];
+                if (pair.handle.IsAllocated) pair.handle.Free();
+            }
         }
 
         /// <summary>
@@ -96,9 +109,33 @@ namespace Entia.Modules.Component
                 ref readonly var metadata = ref Components[i];
                 var index = GetStoreIndex(metadata);
                 ref var store = ref _stores[index];
-                resized |= ArrayUtility.Ensure(ref store, metadata.Type, Entities.count);
+                if (ArrayUtility.Ensure(ref store, metadata.Type, Entities.count))
+                {
+                    resized = true;
+                    ref var pair = ref _handles[index];
+                    if (pair.handle.IsAllocated)
+                    {
+                        pair.handle.Free();
+                        var handle = GCHandle.Alloc(store, GCHandleType.Pinned);
+                        var address = handle.AddrOfPinnedObject();
+                        pair = (handle, address);
+                    }
+                }
             }
             return resized;
+        }
+
+        public (Array store, IntPtr address) Fixed(in Metadata type)
+        {
+            var index = GetStoreIndex(type);
+            var store = _stores[index];
+            ref var pair = ref _handles[index];
+            if (pair.handle.IsAllocated) return (store, pair.address);
+
+            var handle = GCHandle.Alloc(store, GCHandleType.Pinned);
+            var address = handle.AddrOfPinnedObject();
+            pair = (handle, address);
+            return (store, address);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -208,7 +208,7 @@ namespace Entia.Modules
                     Array.Copy(sourceStore, sourceIndex, targetStore, target.index, 1);
                     // NOTE: clearing is not strictly needed, but is done when the component type contains managed references in order to allow
                     // them to be collected by the garbage collector
-                    if (!metadata.Data.IsPlain) Array.Clear(sourceStore, sourceIndex, 1);
+                    if (!metadata.Data.IsBlittable) Array.Clear(sourceStore, sourceIndex, 1);
                 }
             }
 

@@ -232,6 +232,8 @@ namespace Entia.Test
                 (1, Gen.Fresh(() => new GetGroup<QueryC>().ToAction())),
                 (1, Gen.Fresh(() => new GetEntityGroup(typeof(ProviderB)).ToAction())),
                 (1, Gen.Fresh(() => new GetEntityGroup(typeof(ProviderC)).ToAction())),
+                (1, Gen.Fresh(() => new GetPointerGroup(typeof(ProviderA)).ToAction())),
+                (1, Gen.Fresh(() => new GetPointerGroup().ToAction())),
                 (1, Gen.Fresh(() => new GetGroup<Any<Write<ComponentC<Unit>>, Read<ComponentB>>>().ToAction())),
 
                 // Message
@@ -310,7 +312,7 @@ namespace Entia.Test
                 #endregion
 
                 #region Groups
-                yield return (world.Groups().Count <= 15, "world.Groups().Count <= 15");
+                yield return (world.Groups().Count <= 30, "world.Groups().Count <= 30");
                 #endregion
             }
 

@@ -36,7 +36,7 @@ namespace Entia.Modules.Component
                             }, metadata) :
                             new Query.Query((pointer, index) =>
                             {
-                                var store = segment.Store(metadata) as T[];
+                                var store = segment.Fixed(metadata).store as T[];
                                 var target = (IntPtr*)pointer;
                                 *target = UnsafeUtility.AsPointer(ref store[index]);
                             }, metadata);

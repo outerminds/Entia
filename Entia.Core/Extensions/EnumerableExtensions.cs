@@ -68,10 +68,19 @@ namespace Entia.Core
 
         public static bool Contains<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, in TItem value, IEqualityComparer<TItem> comparer = null) where TEnumerator : IEnumerator<TItem>
         {
+            comparer = comparer ?? EqualityComparer<TItem>.Default;
             using (var enumerator = source.GetEnumerator())
             {
-                comparer = comparer ?? EqualityComparer<TItem>.Default;
                 while (enumerator.MoveNext()) if (comparer.Equals(value, enumerator.Current)) return true;
+                return false;
+            }
+        }
+
+        public static bool Contains<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, in TItem value, Func<TItem, TItem, bool> equals) where TEnumerator : IEnumerator<TItem>
+        {
+            using (var enumerator = source.GetEnumerator())
+            {
+                while (enumerator.MoveNext()) if (equals(value, enumerator.Current)) return true;
                 return false;
             }
         }
@@ -96,14 +105,52 @@ namespace Entia.Core
             }
         }
 
-        public static bool SequenceEqual<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> first, IEnumerable<TEnumerator, TItem> second, Func<TItem, TItem, bool> comparer) where TEnumerator : IEnumerator<TItem>
+        public static bool Same<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, Func<TItem, TItem, bool> equals) where TEnumerator : IEnumerator<TItem>
+        {
+            using (var enumerator = source.GetEnumerator())
+            {
+                if (enumerator.MoveNext())
+                {
+                    var previous = enumerator.Current;
+                    while (enumerator.MoveNext())
+                    {
+                        var current = enumerator.Current;
+                        if (equals(previous, current)) previous = current;
+                        else return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        public static bool Same<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> source, IEqualityComparer<TItem> comparer) where TEnumerator : IEnumerator<TItem>
+        {
+            using (var enumerator = source.GetEnumerator())
+            {
+                if (enumerator.MoveNext())
+                {
+                    var previous = enumerator.Current;
+                    while (enumerator.MoveNext())
+                    {
+                        var current = enumerator.Current;
+                        if (comparer.Equals(previous, current)) previous = current;
+                        else return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        public static bool SequenceEqual<TEnumerator, TItem>(this IEnumerable<TEnumerator, TItem> first, IEnumerable<TEnumerator, TItem> second, Func<TItem, TItem, bool> equals) where TEnumerator : IEnumerator<TItem>
         {
             using (var enumerator1 = first.GetEnumerator())
             using (var enumerator2 = second.GetEnumerator())
             {
                 while (enumerator1.MoveNext())
                 {
-                    if (enumerator2.MoveNext() && comparer(enumerator1.Current, enumerator2.Current)) continue;
+                    if (enumerator2.MoveNext() && equals(enumerator1.Current, enumerator2.Current)) continue;
                     return false;
                 }
                 if (enumerator2.MoveNext()) return false;
@@ -111,14 +158,14 @@ namespace Entia.Core
             }
         }
 
-        public static bool SequenceEqual<TEnumerator, TItem1, TItem2>(this IEnumerable<TEnumerator, TItem1> first, IEnumerable<TItem2> second, Func<TItem1, TItem2, bool> comparer) where TEnumerator : IEnumerator<TItem1>
+        public static bool SequenceEqual<TEnumerator, TItem1, TItem2>(this IEnumerable<TEnumerator, TItem1> first, IEnumerable<TItem2> second, Func<TItem1, TItem2, bool> equals) where TEnumerator : IEnumerator<TItem1>
         {
             using (var enumerator1 = first.GetEnumerator())
             using (var enumerator2 = second.GetEnumerator())
             {
                 while (enumerator1.MoveNext())
                 {
-                    if (enumerator2.MoveNext() && comparer(enumerator1.Current, enumerator2.Current)) continue;
+                    if (enumerator2.MoveNext() && equals(enumerator1.Current, enumerator2.Current)) continue;
                     return false;
                 }
                 if (enumerator2.MoveNext()) return false;

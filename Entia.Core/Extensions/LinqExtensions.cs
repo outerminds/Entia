@@ -293,6 +293,31 @@ namespace Entia.Core
             }
         }
 
+        public static bool Same<T>(this IEnumerable<T> source, Func<T, T, bool> equals)
+        {
+            using (var enumerator = source.GetEnumerator())
+            {
+                if (enumerator.MoveNext())
+                {
+                    var previous = enumerator.Current;
+                    while (enumerator.MoveNext())
+                    {
+                        var current = enumerator.Current;
+                        if (equals(previous, current)) previous = current;
+                        else return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        public static bool Same<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
+        {
+            comparer = comparer ?? EqualityComparer<T>.Default;
+            return source.Same(comparer.Equals);
+        }
+
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed)
         {
             var random = new Random(seed);
