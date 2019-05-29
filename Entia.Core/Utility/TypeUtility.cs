@@ -79,7 +79,7 @@ namespace Entia.Core
 
             bool GetIsBlittable(Type current, FieldInfo[] fields)
             {
-                if (current.IsPrimitive) return true;
+                if (current.IsPrimitive || current.IsPointer) return true;
                 if (current.IsValueType)
                 {
                     foreach (var field in fields)
