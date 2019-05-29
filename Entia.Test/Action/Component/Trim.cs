@@ -39,14 +39,13 @@ namespace Entia.Test
         {
             var components = value.Components();
             var messages = value.Messages();
-            var onRemove = messages.Receiver<OnRemove>();
+            using (var onRemove = messages.Receive<OnRemove>())
             {
                 _success = components.Trim(_source, _target, _include);
                 _trimmed = components.Get(_target, _include).ToArray();
                 foreach (var type in _exceeding) model.Components[_target].Remove(type, _include);
+                _onRemove = onRemove.Pop().ToArray();
             }
-            _onRemove = onRemove.Pop().ToArray();
-            messages.Remove(onRemove);
         }
         public override Property Check(World value, Model model)
         {

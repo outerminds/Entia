@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Entia.Core;
 using Entia.Core.Documentation;
@@ -24,6 +25,26 @@ namespace Entia.Modules.Message
     [ThreadSafe]
     public sealed class Emitter<T> : IEmitter where T : struct, IMessage
     {
+        public struct Disposable : IDisposable
+        {
+            public int Count => _receiver.Count;
+
+            readonly Emitter<T> _emitter;
+            readonly Receiver<T> _receiver;
+
+            public bool TryPop(out T message) => _receiver.TryPop(out message);
+            public Receiver<T>.Enumerable Pop() => _receiver.Pop();
+
+            public Disposable(Emitter<T> emitter, int capacity = -1)
+            {
+                _emitter = emitter;
+                _receiver = new Receiver<T>(capacity);
+                _emitter.Add(_receiver);
+            }
+
+            public void Dispose() => _emitter.Remove(_receiver);
+        }
+
         public Reaction<T> Reaction { get; } = new Reaction<T>();
         public Receiver<T>[] Receivers => _receivers.Read(receivers => receivers.ToArray());
 
@@ -41,6 +62,8 @@ namespace Entia.Modules.Message
             using (var read = _receivers.Read())
                 for (var i = 0; i < read.Value.count; i++) read.Value.items[i].Receive(message);
         }
+
+        public Disposable Receive(int capacity = -1) => new Disposable(this);
 
         public bool Add(Receiver<T> receiver)
         {

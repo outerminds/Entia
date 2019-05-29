@@ -39,14 +39,13 @@ namespace Entia.Test
         {
             var components = value.Components();
             var messages = value.Messages();
-            var onAdd = messages.Receiver<OnAdd>();
+            using (var onAdd = messages.Receive<OnAdd>())
             {
                 _success = components.Copy<T>(_source, _target, _include);
                 _copies = components.Get(_target).Where(Is).ToArray();
                 foreach (var component in _copies) model.Components[_target].Set(component.GetType());
+                _onAdd = onAdd.Pop().ToArray();
             }
-            _onAdd = onAdd.Pop().ToArray();
-            messages.Remove(onAdd);
         }
         public override Property Check(World value, Model model)
         {
@@ -113,14 +112,13 @@ namespace Entia.Test
         {
             var components = value.Components();
             var messages = value.Messages();
-            var onAdd = messages.Receiver<OnAdd>();
+            using (var onAdd = messages.Receive<OnAdd>())
             {
                 _success = components.Copy(_source, _target, _type, _include);
                 _copies = components.Get(_target).Where(Is).ToArray();
                 foreach (var component in _copies) model.Components[_target].Set(component.GetType());
+                _onAdd = onAdd.Pop().ToArray();
             }
-            _onAdd = onAdd.Pop().ToArray();
-            messages.Remove(onAdd);
         }
         public override Property Check(World value, Model model)
         {
@@ -183,14 +181,13 @@ namespace Entia.Test
         {
             var components = value.Components();
             var messages = value.Messages();
-            var onAdd = messages.Receiver<OnAdd>();
+            using (var onAdd = messages.Receive<OnAdd>())
             {
                 _success = components.Copy(_source, _target, _include);
                 _copies = components.Get(_target).ToArray();
                 foreach (var component in _copies) model.Components[_target].Set(component.GetType());
+                _onAdd = onAdd.Pop().ToArray();
             }
-            _onAdd = onAdd.Pop().ToArray();
-            messages.Remove(onAdd);
         }
         public override Property Check(World value, Model model)
         {

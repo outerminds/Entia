@@ -36,7 +36,7 @@ namespace Entia.Injectables
         readonly Modules.Group.Group<T> _group;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Group{T}"/> struct.
+        /// Initializes a new instance of the <see cref="Group{T}"/> class.
         /// </summary>
         /// <param name="group">The group.</param>
         public Group(Modules.Group.Group<T> group) { _group = group; }
@@ -73,7 +73,7 @@ namespace Entia.Injectables
         readonly Modules.Group.Group<All<T1, T2>> _group;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Group{T1, T2}"/> struct.
+        /// Initializes a new instance of the <see cref="Group{T1, T2}"/> class.
         /// </summary>
         /// <param name="group">The group.</param>
         public Group(Modules.Group.Group<All<T1, T2>> group) { _group = group; }
@@ -110,7 +110,7 @@ namespace Entia.Injectables
         readonly Modules.Group.Group<All<T1, T2, T3>> _group;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Group{T1, T2, T3}"/> struct.
+        /// Initializes a new instance of the <see cref="Group{T1, T2, T3}"/> class.
         /// </summary>
         /// <param name="group">The group.</param>
         public Group(Modules.Group.Group<All<T1, T2, T3>> group) { _group = group; }
@@ -147,7 +147,7 @@ namespace Entia.Injectables
         readonly Modules.Group.Group<All<T1, T2, T3, T4>> _group;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Group{T1, T2, T3, T4}"/> struct.
+        /// Initializes a new instance of the <see cref="Group{T1, T2, T3, T4}"/> class.
         /// </summary>
         /// <param name="group">The group.</param>
         public Group(Modules.Group.Group<All<T1, T2, T3, T4>> group) { _group = group; }
@@ -184,7 +184,7 @@ namespace Entia.Injectables
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5>> _group;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Group{T1, T2, T3, T4, T5}"/> struct.
+        /// Initializes a new instance of the <see cref="Group{T1, T2, T3, T4, T5}"/> class.
         /// </summary>
         /// <param name="group">The group.</param>
         public Group(Modules.Group.Group<All<T1, T2, T3, T4, T5>> group) { _group = group; }
@@ -221,7 +221,7 @@ namespace Entia.Injectables
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>> _group;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Group{T1, T2, T3, T4, T5, T6}"/> struct.
+        /// Initializes a new instance of the <see cref="Group{T1, T2, T3, T4, T5, T6}"/> class.
         /// </summary>
         /// <param name="group">The group.</param>
         public Group(Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>> group) { _group = group; }
@@ -258,7 +258,7 @@ namespace Entia.Injectables
         readonly Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>> _group;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Group{T1, T2, T3, T4, T5, T6, T7}"/> struct.
+        /// Initializes a new instance of the <see cref="Group{T1, T2, T3, T4, T5, T6, T7}"/> class.
         /// </summary>
         /// <param name="group">The group.</param>
         public Group(Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>> group) { _group = group; }

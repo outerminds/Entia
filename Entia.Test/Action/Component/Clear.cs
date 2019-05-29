@@ -34,13 +34,12 @@ namespace Entia.Test
         {
             var components = value.Components();
             var messages = value.Messages();
-            var onRemove = messages.Receiver<OnRemove>();
+            using (var onRemove = messages.Receive<OnRemove>())
             {
                 _success = components.Clear(_type, _include);
                 foreach (var entity in _entities) model.Components[entity].Remove(_type, _include);
+                _onRemove = onRemove.Pop().ToArray();
             }
-            _onRemove = onRemove.Pop().ToArray();
-            messages.Remove(onRemove);
         }
         public override Property Check(World value, Model model)
         {
@@ -100,16 +99,14 @@ namespace Entia.Test
         }
         public override void Do(World value, Model model)
         {
-            var onRemove = value.Messages().Receiver<OnRemove>();
-            var onRemoveT = value.Messages().Receiver<OnRemove<T>>();
+            using (var onRemove = value.Messages().Receive<OnRemove>())
+            using (var onRemoveT = value.Messages().Receive<OnRemove<T>>())
             {
                 _success = value.Components().Clear<T>(_include);
                 foreach (var entity in _entities) model.Components[entity].Remove(typeof(T), _include);
+                _onRemove = onRemove.Pop().ToArray();
+                _onRemoveT = onRemoveT.Pop().ToArray();
             }
-            _onRemove = onRemove.Pop().ToArray();
-            _onRemoveT = onRemoveT.Pop().ToArray();
-            value.Messages().Remove(onRemove);
-            value.Messages().Remove(onRemoveT);
         }
         public override Property Check(World value, Model model)
         {

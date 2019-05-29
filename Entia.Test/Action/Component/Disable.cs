@@ -30,11 +30,12 @@ namespace Entia.Test
         public override void Do(World value, Model model)
         {
             var messages = value.Messages();
-            var onDisable = messages.Receiver<OnDisable>();
-            _success = value.Components().Disable(_entity, _type);
-            model.Components[_entity].Disable(_type);
-            _onDisable = onDisable.Pop().ToArray();
-            messages.Remove(onDisable);
+            using (var onDisable = messages.Receive<OnDisable>())
+            {
+                _success = value.Components().Disable(_entity, _type);
+                model.Components[_entity].Disable(_type);
+                _onDisable = onDisable.Pop().ToArray();
+            }
         }
         public override Property Check(World value, Model model)
         {
@@ -96,14 +97,14 @@ namespace Entia.Test
         public override void Do(World value, Model model)
         {
             var messages = value.Messages();
-            var onDisable = messages.Receiver<OnDisable>();
-            var onDisableT = messages.Receiver<OnDisable<T>>();
-            _success = value.Components().Disable<T>(_entity);
-            model.Components[_entity].Disable(typeof(T));
-            _onDisable = onDisable.Pop().ToArray();
-            _onDisableT = onDisableT.Pop().ToArray();
-            messages.Remove(onDisable);
-            messages.Remove(onDisableT);
+            using (var onDisable = messages.Receive<OnDisable>())
+            using (var onDisableT = messages.Receive<OnDisable<T>>())
+            {
+                _success = value.Components().Disable<T>(_entity);
+                model.Components[_entity].Disable(typeof(T));
+                _onDisable = onDisable.Pop().ToArray();
+                _onDisableT = onDisableT.Pop().ToArray();
+            }
         }
         public override Property Check(World value, Model model)
         {

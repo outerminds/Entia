@@ -12,9 +12,15 @@ IEnumerable<string> Generate(int depth)
 
     for (var i = 1; i <= depth; i++)
     {
-        var generics = GenericParameters(i);
-        var parameters = string.Join(", ", generics);
-        var itemType = i == 1 ? parameters : $"All<{string.Join(", ", generics)}>";
+        var generics = GenericParameters(i).ToArray();
+        var parameters = generics.Length == 0 ? "" : $"<{string.Join(", ", generics)}>";
+        var itemType =
+            generics.Length == 0 ? "Entity" :
+            generics.Length == 1 ? string.Join(", ", generics) :
+            $"All<{string.Join(", ", generics)}>";
+        var documentationType =
+            generics.Length == 0 ? "Group" :
+            $"Group{{{string.Join(", ", generics)}}}";
         var groupType = $"Modules.Group.Group<{itemType}>";
         var constraints = string.Join(" ", generics.Select(generic => $"where {generic} : struct, IQueryable"));
 
@@ -23,10 +29,10 @@ $@"    /// <summary>
     /// Gives access to group operations.
     /// </summary>
     [ThreadSafe]
-    public sealed class Group<{parameters}> : IInjectable, IEnumerable<{groupType}.Enumerator, {itemType}> {constraints}
+    public sealed class Group{parameters} : IInjectable, IEnumerable<{groupType}.Enumerator, {itemType}> {constraints}
     {{
         [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group<{parameters}>(world.Groups().Get<{itemType}>(member)));
+        static Injector<object> Injector => Injectors.Injector.From<object>((member, world) => new Group{parameters}(world.Groups().Get<{itemType}>(member)));
         [Depender]
         static IDepender Depender => Dependers.Depender.From<{itemType}>(new Dependencies.Read(typeof(Entity)));
 
@@ -40,7 +46,7 @@ $@"    /// <summary>
         readonly {groupType} _group;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref=""Group{{{parameters}}}""/> struct.
+        /// Initializes a new instance of the <see cref=""{documentationType}""/> class.
         /// </summary>
         /// <param name=""group"">The group.</param>
         public Group({groupType} group) {{ _group = group; }}

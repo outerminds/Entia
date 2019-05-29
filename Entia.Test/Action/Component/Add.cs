@@ -33,16 +33,15 @@ namespace Entia.Test
         }
         public override void Do(World value, Model model)
         {
-            var onAdd = value.Messages().Receiver<OnAdd>();
-            var onAddT = value.Messages().Receiver<OnAdd<TConcrete>>();
+            var messages = value.Messages();
+            using (var onAdd = messages.Receive<OnAdd>())
+            using (var onAddT = messages.Receive<OnAdd<TConcrete>>())
             {
                 _success = value.Components().Set(_entity, _component);
                 model.Components[_entity].Set(typeof(TConcrete));
+                _onAdd = onAdd.Pop().ToArray();
+                _onAddT = onAddT.Pop().ToArray();
             }
-            _onAdd = onAdd.Pop().ToArray();
-            _onAddT = onAddT.Pop().ToArray();
-            value.Messages().Remove(onAdd);
-            value.Messages().Remove(onAddT);
         }
         public override Property Check(World value, Model model)
         {

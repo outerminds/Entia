@@ -77,6 +77,8 @@ namespace Entia.Modules
 
         public bool Emit(IMessage message) => TryEmitter(message.GetType(), out var emitter) && emitter.Emit(message);
 
+        public Emitter<T>.Disposable Receive<T>(int capacity = -1) where T : struct, IMessage => Emitter<T>().Receive(capacity);
+
         public Receiver<T> Receiver<T>(int capacity = -1) where T : struct, IMessage
         {
             var receiver = new Receiver<T>(capacity);

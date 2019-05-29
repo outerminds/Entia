@@ -38,6 +38,7 @@ Documentation:
 	- mention: In almost all cases, there is a Unity template that will prevent you from forgetting the _interface_.
 	
 - Gotchas:
+	- having to run 'Controller.Run<Initialize>()' and 'Controller.Run<React.Initialize>()' (same for disposal)
 	- structural operations are deferred (Add/Remove/Create/Destroy) for groups
 	- trying to query a component type directly rather than using 'Read<T>' or 'Write<T>'
 	- forgetting to put a 'ref' on a parameter that mutates a component or resource
@@ -80,6 +81,8 @@ Features:
 - run tests on device with IL2CPP build
 
 Bugs:
+- 'Modules.Messages' is not truly '[ThreadSafe]'
+	- 'Receiver<T>()' might add a receiver to a removed emitter
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
 
 Optimization:
