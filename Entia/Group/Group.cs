@@ -406,9 +406,15 @@ namespace Entia.Modules.Group
                 ArrayUtility.Set(ref _indexToQuery, query, segment.Index);
                 ArrayUtility.Set(ref _indexToSegment, _segments.Length, segment.Index);
 
-                var items = new T[segment.Entities.items.Length];
-                for (var i = 0; i < items.Length; i++) items[i] = query.Get(i);
-                ArrayUtility.Add(ref _segments, new Segment<T>(segment, items));
+                // NOTE: less maintenance is required for the special case 'Group<Entity>'
+                if (typeof(T) == typeof(Entity))
+                    ArrayUtility.Add(ref _segments, new Segment<T>(segment, segment.Entities.items as T[]));
+                else
+                {
+                    var items = new T[segment.Entities.items.Length];
+                    for (var i = 0; i < items.Length; i++) items[i] = query.Get(i);
+                    ArrayUtility.Add(ref _segments, new Segment<T>(segment, items));
+                }
                 return true;
             }
 
@@ -420,27 +426,39 @@ namespace Entia.Modules.Group
             var has = (source: Has(source.segment), target: Has(target.segment));
             Count += (has.source ? -1 : 0) + (has.target ? 1 : 0);
 
-            if (has.source)
+            // NOTE: less maintenance is required for the special case 'Group<Entity>'
+            if (typeof(T) == typeof(Entity))
             {
-                ref var segment = ref _segments[_indexToSegment[source.segment.Index]];
-                var query = _indexToQuery[source.segment.Index];
-                segment.Items[source.index] = query.Get(source.index);
-            }
-
-            if (has.target)
-            {
-                ref var segment = ref _segments[_indexToSegment[target.segment.Index]];
-                var query = _indexToQuery[target.segment.Index];
-                var items = segment.Items;
-                var count = items.Length;
-                if (ArrayUtility.Ensure(ref items, segment.Count))
+                if (has.target)
                 {
-                    // NOTE: update all items since existing items are pointing to an old stores
-                    for (var i = 0; i < segment.Count; i++) items[i] = query.Get(i);
-                    segment = new Segment<T>(target.segment, items);
+                    ref var segment = ref _segments[_indexToSegment[target.segment.Index]];
+                    if (segment.Items.Length != segment.Entities.Length) segment = new Segment<T>(target.segment, target.segment.Entities.items as T[]);
                 }
-                // NOTE: do this step after ensuring that the 'items' array is large enough
-                items[target.index] = query.Get(target.index);
+            }
+            else
+            {
+                if (has.source)
+                {
+                    ref var segment = ref _segments[_indexToSegment[source.segment.Index]];
+                    var query = _indexToQuery[source.segment.Index];
+                    segment.Items[source.index] = query.Get(source.index);
+                }
+
+                if (has.target)
+                {
+                    ref var segment = ref _segments[_indexToSegment[target.segment.Index]];
+                    var query = _indexToQuery[target.segment.Index];
+                    var items = segment.Items;
+                    var count = items.Length;
+                    if (ArrayUtility.Ensure(ref items, segment.Count))
+                    {
+                        // NOTE: update all items since existing items are pointing to an old stores
+                        for (var i = 0; i < segment.Count; i++) items[i] = query.Get(i);
+                        segment = new Segment<T>(target.segment, items);
+                    }
+                    // NOTE: do this step after ensuring that the 'items' array is large enough
+                    items[target.index] = query.Get(target.index);
+                }
             }
         }
     }
