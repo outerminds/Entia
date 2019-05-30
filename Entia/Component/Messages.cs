@@ -33,7 +33,7 @@ namespace Entia.Messages
     }
 
     /// <summary>
-    /// Message emitted after a component has been removed from an entity.
+    /// Message emitted before a component will be removed from an entity.
     /// </summary>
     /// <seealso cref="IMessage" />
     public struct OnRemove : IMessage
@@ -49,7 +49,7 @@ namespace Entia.Messages
     }
 
     /// <summary>
-    /// Message emitted after a component of type <typeparamref name="T"/> has been removed from an entity.
+    /// Message emitted before a component of type <typeparamref name="T"/> will be removed from an entity.
     /// </summary>
     /// <typeparam name="T">The component type.</typeparam>
     /// <seealso cref="IMessage" />
