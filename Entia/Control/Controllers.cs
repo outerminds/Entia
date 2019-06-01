@@ -44,6 +44,12 @@ namespace Entia.Modules
                 .Map(pair => _controllers[node] = new Controller((root, pair.right), _world, nodes, runners, states));
         }
 
+        public bool TryGet(Node node, out Controller controller) => _controllers.TryGetValue(node, out controller);
+        public bool Has(Node node) => _controllers.ContainsKey(node);
+        public bool Has(Controller controller) => _controllers.ContainsValue(controller);
+        public bool Remove(Node node) => _controllers.Remove(node);
+        public bool Clear() => _controllers.TryClear();
+
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<Controller> GetEnumerator() => _controllers.Values.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
