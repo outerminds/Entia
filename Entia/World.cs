@@ -13,7 +13,7 @@ using System.Reflection;
 
 namespace Entia
 {
-    public sealed class World : IInjectable, IEnumerable<TypeMap<IModule, IModule>.ValueEnumerator, IModule>
+    public sealed class World : IClearable, IInjectable, IEnumerable<TypeMap<IModule, IModule>.ValueEnumerator, IModule>
     {
         struct State
         {
@@ -106,8 +106,9 @@ namespace Entia
         }
         public bool Clear()
         {
-            _resolvables = Array.Empty<IResolvable>();
-            return _modules.Clear();
+            var cleared = false;
+            foreach (var module in _modules.Values) if (module is IClearable clearable) cleared |= clearable.Clear();
+            return cleared;
         }
         public bool Resolve()
         {

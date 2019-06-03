@@ -11,7 +11,7 @@ namespace Entia.Modules
 {
     public delegate bool Resolve<T>(in T resolvable);
 
-    public sealed class Resolvers : IModule, Modules.IResolvable, IEnumerable<IResolver>
+    public sealed class Resolvers : IModule, IClearable, Modules.IResolvable, IEnumerable<IResolver>
     {
         struct Data
         {

@@ -10,7 +10,7 @@ using System.Reflection;
 
 namespace Entia.Modules
 {
-    public sealed class Injectors : IModule, IEnumerable<IInjector>
+    public sealed class Injectors : IModule, IClearable, IEnumerable<IInjector>
     {
         readonly World _world;
         readonly TypeMap<IInjectable, IInjector> _defaults = new TypeMap<IInjectable, IInjector>();

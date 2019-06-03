@@ -11,7 +11,7 @@ namespace Entia.Modules
     /// <summary>
     /// Module that manages groups.
     /// </summary>
-    public sealed class Groups : IModule, IEnumerable<IGroup>
+    public sealed class Groups : IModule, IClearable, IEnumerable<IGroup>
     {
         /// <summary>
         /// Gets the current group count.

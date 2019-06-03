@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace Entia.Modules
 {
-    public sealed class Schedulers : IModule, IEnumerable<IScheduler>
+    public sealed class Schedulers : IModule, IClearable, IEnumerable<IScheduler>
     {
         sealed class Comparer : IEqualityComparer<(ISchedulable, Controller)>
         {

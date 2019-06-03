@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 namespace Entia.Modules
 {
-    public sealed class Controllers : IModule, IEnumerable<Controller>
+    public sealed class Controllers : IModule, IClearable, IEnumerable<Controller>
     {
         readonly World _world;
         readonly Dictionary<Node, Controller> _controllers = new Dictionary<Node, Controller>();
@@ -18,7 +18,7 @@ namespace Entia.Modules
 
         public Result<Controller> Control(Node node)
         {
-            if (_controllers.TryGetValue(node, out var controller)) return controller;
+            if (TryGet(node, out var controller)) return controller;
 
             var count = 0;
             var nodes = new Dictionary<Node, IRunner>();

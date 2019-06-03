@@ -9,7 +9,7 @@ using System.Linq;
 namespace Entia.Modules
 {
     [ThreadSafe]
-    public sealed class Messages : IModule, IEnumerable<IEmitter>
+    public sealed class Messages : IModule, IClearable, IEnumerable<IEmitter>
     {
         readonly Concurrent<TypeMap<IMessage, IEmitter>> _emitters = new TypeMap<IMessage, IEmitter>();
 

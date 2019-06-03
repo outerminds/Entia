@@ -12,7 +12,7 @@ namespace Entia.Modules
     /// <summary>
     /// Module that manages entities.
     /// </summary>
-    public sealed class Entities : IModule, IResolvable, IEnumerable<Entities.Enumerator, Entity>
+    public sealed class Entities : IModule, IClearable, IResolvable, IEnumerable<Entities.Enumerator, Entity>
     {
         /// <summary>
         /// An enumerator that enumerates over all existing entities.

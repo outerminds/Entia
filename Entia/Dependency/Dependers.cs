@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace Entia.Modules
 {
-    public sealed class Dependers : IModule, IEnumerable<IDepender>
+    public sealed class Dependers : IModule, IClearable, IEnumerable<IDepender>
     {
         readonly World _world;
         readonly TypeMap<IDependable, IDepender> _defaults = new TypeMap<IDependable, IDepender>();

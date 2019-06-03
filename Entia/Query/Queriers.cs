@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace Entia.Modules
 {
-    public sealed class Queriers : IModule, IEnumerable<IQuerier>
+    public sealed class Queriers : IModule, IClearable, IEnumerable<IQuerier>
     {
         readonly World _world;
         readonly TypeMap<Queryables.IQueryable, IQuerier> _defaults = new TypeMap<Queryables.IQueryable, IQuerier>();

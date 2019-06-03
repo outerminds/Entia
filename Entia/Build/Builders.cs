@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace Entia.Modules
 {
-    public sealed class Builders : IModule, IEnumerable<IBuilder>
+    public sealed class Builders : IModule, IClearable, IEnumerable<IBuilder>
     {
         readonly World _world;
         readonly TypeMap<IBuildable, IBuilder> _defaults = new TypeMap<IBuildable, IBuilder>();

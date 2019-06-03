@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace Entia.Modules
 {
-    public sealed class Resources : IModule, IEnumerable<IResource>
+    public sealed class Resources : IModule, IClearable, IEnumerable<IResource>
     {
         public TypeMap<IResource, IBox>.ValueEnumerable Boxes => _boxes.Values;
 
