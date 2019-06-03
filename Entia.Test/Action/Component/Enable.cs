@@ -55,14 +55,24 @@ namespace Entia.Test
                     yield return (components.State(_entity).HasAny(States.Enabled), "Components.State()");
                     yield return (components.State(_entity, _type).HasAny(States.Enabled), "Components.State()");
 
-                    yield return (components.Has(_entity, _type, States.Enabled), "Components.Has(Type, Enabled)");
-                    yield return (components.Has(_entity, _type), "Components.Has(Type)");
+                    yield return (components.Has(States.Enabled), "Components.Has<T>(Enabled)");
+                    yield return (components.Has(), "Components.Has<T>()");
+                    yield return (components.Has(_type, States.Enabled), "Components.Has(type, Enabled)");
+                    yield return (components.Has(_type), "Components.Has(type)");
+                    yield return (components.Has(_entity, _type, States.Enabled), "Components.Has(entity, Type, Enabled)");
+                    yield return (components.Has(_entity, _type), "Components.Has(entity, Type)");
 
-                    yield return (components.Count(_entity, States.Enabled) > 0, "Components.Count(Enabled)");
-                    yield return (components.Count(_entity) > 0, "Components.Count()");
+                    yield return (components.Count(States.Enabled) > 0, "Components.Count(Enabled)");
+                    yield return (components.Count() > 0, "Components.Count()");
+                    yield return (components.Count(_type) > 0, "Components.Count(type)");
+                    yield return (components.Count(_type, States.Enabled) > 0, "Components.Count(type, Enabled)");
+                    yield return (components.Count(_entity, States.Enabled) > 0, "Components.Count(entity, Enabled)");
+                    yield return (components.Count(_entity) > 0, "Components.Count(entity)");
 
-                    yield return (components.Get(_entity, States.Enabled).OfType(_type, true, true).Any(), "Components.Get(Enabled).Any()");
-                    yield return (components.Get(_entity).OfType(_type, true, true).Any(), "Components.Get().Any()");
+                    yield return (components.Get().OfType(_type, true, true).Any(), "Components.Get().Any()");
+                    yield return (components.Get(States.Enabled).OfType(_type, true, true).Any(), "Components.Get(Enabled).Any()");
+                    yield return (components.Get(_entity, States.Enabled).OfType(_type, true, true).Any(), "Components.Get(entity, Enabled).Any()");
+                    yield return (components.Get(_entity).OfType(_type, true, true).Any(), "Components.Get(entity).Any()");
 
                     yield return (components.TryGet(_entity, _type, out _), "Components.TryGet()");
                     yield return (components.TryGet(_entity, _type, out _, States.Enabled), "Components.TryGet(Enabled)");
@@ -129,16 +139,30 @@ namespace Entia.Test
                     yield return (components.State<T>(_entity).HasAny(States.Enabled), "Components.State<T>()");
                     yield return (components.State(_entity, typeof(T)).HasAny(States.Enabled), "Components.State()");
 
-                    yield return (components.Has<T>(_entity, States.Enabled), "Components.Has<T>(Enabled)");
-                    yield return (components.Has(_entity, typeof(T), States.Enabled), "Components.Has(Type, Enabled)");
-                    yield return (components.Has<T>(_entity), "Components.Has<T>()");
-                    yield return (components.Has(_entity, typeof(T)), "Components.Has(Type)");
+                    yield return (components.Has(States.Enabled), "Components.Has<T>(Enabled)");
+                    yield return (components.Has(), "Components.Has<T>()");
+                    yield return (components.Has<T>(States.Enabled), "Components.Has<T>(Enabled)");
+                    yield return (components.Has<T>(), "Components.Has<T>()");
+                    yield return (components.Has(typeof(T), States.Enabled), "Components.Has(type, Enabled)");
+                    yield return (components.Has(typeof(T)), "Components.Has(type)");
+                    yield return (components.Has<T>(_entity, States.Enabled), "Components.Has<T>(entity, Enabled)");
+                    yield return (components.Has(_entity, typeof(T), States.Enabled), "Components.Has(entity, Type, Enabled)");
+                    yield return (components.Has<T>(_entity), "Components.Has<T>(entity)");
+                    yield return (components.Has(_entity, typeof(T)), "Components.Has(entity, Type)");
 
-                    yield return (components.Count(_entity, States.Enabled) > 0, "Components.Count(Enabled)");
-                    yield return (components.Count(_entity) > 0, "Components.Count()");
+                    yield return (components.Count(States.Enabled) > 0, "Components.Count(Enabled)");
+                    yield return (components.Count() > 0, "Components.Count()");
+                    yield return (components.Count<T>() > 0, "Components.Count<T>()");
+                    yield return (components.Count<T>(States.Enabled) > 0, "Components.Count<T>(Enabled)");
+                    yield return (components.Count(typeof(T)) > 0, "Components.Count(type)");
+                    yield return (components.Count(typeof(T), States.Enabled) > 0, "Components.Count(type, Enabled)");
+                    yield return (components.Count(_entity, States.Enabled) > 0, "Components.Count(entity, Enabled)");
+                    yield return (components.Count(_entity) > 0, "Components.Count(entity)");
 
-                    yield return (components.Get(_entity, States.Enabled).OfType<T>().Any(), "Components.Get(Enabled).Any()");
-                    yield return (components.Get(_entity).OfType<T>().Any(), "Components.Get().Any()");
+                    yield return (components.Get().OfType<T>().Any(), "Components.Get().Any()");
+                    yield return (components.Get(States.Enabled).OfType<T>().Any(), "Components.Get(Enabled).Any()");
+                    yield return (components.Get(_entity, States.Enabled).OfType<T>().Any(), "Components.Get(entity, Enabled).Any()");
+                    yield return (components.Get(_entity).OfType<T>().Any(), "Components.Get(entity).Any()");
 
                     yield return (components.TryGet<T>(_entity, out _, States.Enabled), "Components.TryGet<T>(Enabled)");
                     yield return (components.TryGet(_entity, typeof(T), out _, States.Enabled), "Components.TryGet(Type, Enabled)");

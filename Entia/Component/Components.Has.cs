@@ -11,11 +11,33 @@ using System.Linq;
 
 namespace Entia.Modules
 {
-    /// <summary>
-    /// Module that stores and manages components.
-    /// </summary>
-    public sealed partial class Components : IModule, IResolvable, IEnumerable<IComponent>
+    public sealed partial class Components
     {
+        /// <summary>
+        /// Determines whether a component exists.
+        /// </summary>
+        /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
+        /// <returns>Returns <c>true</c> if a component was found; otherwise, <c>false</c>.</returns>
+        [ThreadSafe]
+        public bool Has(States include = States.All)
+        {
+            foreach (ref var data in _data.Slice()) if (data.IsValid && Has(data, GetTargetData(data), include)) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Determines whether the <paramref name="entity"/> has any component.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
+        /// <returns>Returns <c>true</c> if a component was found; otherwise, <c>false</c>.</returns>
+        [ThreadSafe]
+        public bool Has(Entity entity, States include = States.All)
+        {
+            ref var data = ref GetData(entity, out var success);
+            return success && Has(data, GetTargetData(data), include);
+        }
+
         /// <summary>
         /// Determines whether the <paramref name="entity"/> has a component of type <typeparamref name="T"/>.
         /// </summary>

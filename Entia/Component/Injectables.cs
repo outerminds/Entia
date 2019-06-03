@@ -46,12 +46,22 @@ namespace Entia.Injectables
             public bool TryGet<T>(Entity entity, out T component, States include = States.All) where T : struct, IComponent => _components.TryGet(entity, out component, include);
             /// <inheritdoc cref="Modules.Components.TryGet(Entity, Type, out IComponent, States)"/>
             public bool TryGet(Entity entity, Type type, out IComponent component, States include = States.All) => _components.TryGet(entity, type, out component, include);
+            /// <inheritdoc cref="Modules.Components.Get(States)"/>
+            public IEnumerable<IComponent> Get(States include = States.All) => _components.Get(include);
             /// <inheritdoc cref="Modules.Components.Get(Entity, States)"/>
             public IEnumerable<IComponent> Get(Entity entity, States include = States.All) => _components.Get(entity, include);
             /// <inheritdoc cref="Modules.Components.Get{T}(States)"/>
-            public IEnumerable<(Entity entity, T component)> Get<T>(States include = States.All) where T : struct, IComponent => _components.Get<T>(include);
+            public IEnumerable<T> Get<T>(States include = States.All) where T : struct, IComponent => _components.Get<T>(include);
             /// <inheritdoc cref="Modules.Components.Get(Type, States)"/>
-            public IEnumerable<(Entity entity, IComponent component)> Get(Type type, States include = States.All) => _components.Get(type, include);
+            public IEnumerable<IComponent> Get(Type type, States include = States.All) => _components.Get(type, include);
+            /// <inheritdoc cref="Modules.Components.Has(States)"/>
+            public bool Has(States include = States.All) => _components.Has(include);
+            /// <inheritdoc cref="Modules.Components.Has{T}(States)"/>
+            public bool Has<T>(States include = States.All) where T : IComponent => _components.Has<T>(include);
+            /// <inheritdoc cref="Modules.Components.Has(Type, States)"/>
+            public bool Has(Type type, States include = States.All) => _components.Has(type, include);
+            /// <inheritdoc cref="Modules.Components.Has(Entity, States)"/>
+            public bool Has(Entity entity, States include = States.All) => _components.Has(entity, include);
             /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
             public bool Has<T>(Entity entity, States include = States.All) where T : IComponent => _components.Has<T>(entity, include);
             /// <inheritdoc cref="Modules.Components.Has(Entity, Type, States)"/>
@@ -64,6 +74,8 @@ namespace Entia.Injectables
             public int Count(Type type, States include = States.All) => _components.Count(type, include);
             /// <inheritdoc cref="Modules.Components.Count(States)"/>
             public int Count(States include = States.All) => _components.Count(include);
+            /// <inheritdoc cref="Modules.Components.State(Entity)"/>
+            public States State(Entity entity) => _components.State(entity);
             /// <inheritdoc cref="Modules.Components.State{T}(Entity)"/>
             public States State<T>(Entity entity) where T : struct, IComponent => _components.State<T>(entity);
             /// <inheritdoc cref="Modules.Components.State(Entity, Type)"/>
@@ -103,12 +115,22 @@ namespace Entia.Injectables
             public bool TryGet<T>(Entity entity, out T component, States include = States.All) where T : struct, IComponent => _components.TryGet(entity, out component, include);
             /// <inheritdoc cref="Modules.Components.TryGet(Entity, Type, out IComponent, States)"/>
             public bool TryGet(Entity entity, Type type, out IComponent component, States include = States.All) => _components.TryGet(entity, type, out component, include);
+            /// <inheritdoc cref="Modules.Components.Get(States)"/>
+            public IEnumerable<IComponent> Get(States include = States.All) => _components.Get(include);
             /// <inheritdoc cref="Modules.Components.Get(Entity, States)"/>
             public IEnumerable<IComponent> Get(Entity entity, States include = States.All) => _components.Get(entity, include);
             /// <inheritdoc cref="Modules.Components.Get{T}(States)"/>
-            public IEnumerable<(Entity entity, T component)> Get<T>(States include = States.All) where T : struct, IComponent => _components.Get<T>(include);
+            public IEnumerable<T> Get<T>(States include = States.All) where T : struct, IComponent => _components.Get<T>(include);
             /// <inheritdoc cref="Modules.Components.Get(Type, States)"/>
-            public IEnumerable<(Entity entity, IComponent component)> Get(Type type, States include = States.All) => _components.Get(type, include);
+            public IEnumerable<IComponent> Get(Type type, States include = States.All) => _components.Get(type, include);
+            /// <inheritdoc cref="Modules.Components.Has(States)"/>
+            public bool Has(States include = States.All) => _components.Has(include);
+            /// <inheritdoc cref="Modules.Components.Has{T}(States)"/>
+            public bool Has<T>(States include = States.All) where T : IComponent => _components.Has<T>(include);
+            /// <inheritdoc cref="Modules.Components.Has(Type, States)"/>
+            public bool Has(Type type, States include = States.All) => _components.Has(type, include);
+            /// <inheritdoc cref="Modules.Components.Has(Entity, States)"/>
+            public bool Has(Entity entity, States include = States.All) => _components.Has(entity, include);
             /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
             public bool Has<T>(Entity entity, States include = States.All) where T : IComponent => _components.Has<T>(entity, include);
             /// <inheritdoc cref="Modules.Components.Has(Entity, Type, States)"/>
@@ -121,6 +143,8 @@ namespace Entia.Injectables
             public int Count(Type type, States include = States.All) => _components.Count(type, include);
             /// <inheritdoc cref="Modules.Components.Count(States)"/>
             public int Count(States include = States.All) => _components.Count(include);
+            /// <inheritdoc cref="Modules.Components.State(Entity)"/>
+            public States State(Entity entity) => _components.State(entity);
             /// <inheritdoc cref="Modules.Components.State{T}(Entity)"/>
             public States State<T>(Entity entity) where T : struct, IComponent => _components.State<T>(entity);
             /// <inheritdoc cref="Modules.Components.State(Entity, Type)"/>
@@ -173,15 +197,30 @@ namespace Entia.Injectables
         /// <inheritdoc cref="Modules.Components.TryGet(Entity, Type, out IComponent, States)"/>
         [ThreadSafe]
         public bool TryGet(Entity entity, Type type, out IComponent component, States include = States.All) => _components.TryGet(entity, type, out component, include);
+        /// <inheritdoc cref="Modules.Components.Get(States)"/>
+        [ThreadSafe]
+        public IEnumerable<IComponent> Get(States include = States.All) => _components.Get(include);
         /// <inheritdoc cref="Modules.Components.Get(Entity, States)"/>
         [ThreadSafe]
         public IEnumerable<IComponent> Get(Entity entity, States include = States.All) => _components.Get(entity, include);
         /// <inheritdoc cref="Modules.Components.Get{T}(States)"/>
         [ThreadSafe]
-        public IEnumerable<(Entity entity, T component)> Get<T>(States include = States.All) where T : struct, IComponent => _components.Get<T>(include);
+        public IEnumerable<T> Get<T>(States include = States.All) where T : struct, IComponent => _components.Get<T>(include);
         /// <inheritdoc cref="Modules.Components.Get(Type, States)"/>
         [ThreadSafe]
-        public IEnumerable<(Entity entity, IComponent component)> Get(Type type, States include = States.All) => _components.Get(type, include);
+        public IEnumerable<IComponent> Get(Type type, States include = States.All) => _components.Get(type, include);
+        /// <inheritdoc cref="Modules.Components.Has(States)"/>
+        [ThreadSafe]
+        public bool Has(States include = States.All) => _components.Has(include);
+        /// <inheritdoc cref="Modules.Components.Has{T}(States)"/>
+        [ThreadSafe]
+        public bool Has<T>(States include = States.All) where T : IComponent => _components.Has<T>(include);
+        /// <inheritdoc cref="Modules.Components.Has(Type, States)"/>
+        [ThreadSafe]
+        public bool Has(Type type, States include = States.All) => _components.Has(type, include);
+        /// <inheritdoc cref="Modules.Components.Has(Entity, States)"/>
+        [ThreadSafe]
+        public bool Has(Entity entity, States include = States.All) => _components.Has(entity, include);
         /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
         [ThreadSafe]
         public bool Has<T>(Entity entity, States include = States.All) where T : IComponent => _components.Has<T>(entity, include);
@@ -200,6 +239,9 @@ namespace Entia.Injectables
         /// <inheritdoc cref="Modules.Components.Count(States)"/>
         [ThreadSafe]
         public int Count(States include = States.All) => _components.Count(include);
+        /// <inheritdoc cref="Modules.Components.State(Entity)"/>
+        [ThreadSafe]
+        public States State(Entity entity) => _components.State(entity);
         /// <inheritdoc cref="Modules.Components.State{T}(Entity)"/>
         [ThreadSafe]
         public States State<T>(Entity entity) where T : struct, IComponent => _components.State<T>(entity);
@@ -255,11 +297,11 @@ namespace Entia.Injectables
     /// <summary>
     /// Gives access to component operations for type <typeparamref name="T"/>.
     /// </summary>
-    public readonly struct Components<T> : IInjectable, IEnumerable<(Entity entity, T component)> where T : struct, IComponent
+    public readonly struct Components<T> : IInjectable, IEnumerable<T> where T : struct, IComponent
     {
         /// <inheritdoc cref="Components{T}"/>
         [ThreadSafe]
-        public readonly struct Write : IInjectable, IEnumerable<(Entity entity, T component)>
+        public readonly struct Write : IInjectable, IEnumerable<T>
         {
             [Injector]
             static Injector<Write> Injector => Injectors.Injector.From(world => new Write(world.Components()));
@@ -284,6 +326,10 @@ namespace Entia.Injectables
             public bool TryGet(Entity entity, out T component, States include = States.All) => _components.TryGet(entity, out component, include);
             /// <inheritdoc cref="Modules.Components.Get{T}(Entity, States)"/>
             public ref T Get(Entity entity, States include = States.All) => ref _components.Get<T>(entity, include);
+            /// <inheritdoc cref="Modules.Components.Get{T}(States)"/>
+            public IEnumerable<T> Get(States include = States.All) => _components.Get<T>(include);
+            /// <inheritdoc cref="Modules.Components.Has{T}(States)"/>
+            public bool Has(States include = States.All) => _components.Has<T>(include);
             /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
             public bool Has(Entity entity, States include = States.All) => _components.Has<T>(entity, include);
             /// <inheritdoc cref="Modules.Components.Count{T}(States)"/>
@@ -291,13 +337,13 @@ namespace Entia.Injectables
             /// <inheritdoc cref="Modules.Components.State{T}(Entity)"/>
             public States State(Entity entity) => _components.State<T>(entity);
             /// <inheritdoc cref="Modules.Components.GetEnumerator()"/>
-            public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>(States.All).GetEnumerator();
+            public IEnumerator<T> GetEnumerator() => _components.Get<T>(States.All).GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
         /// <inheritdoc cref="Components{T}"/>
         [ThreadSafe]
-        public readonly struct Read : IInjectable, IEnumerable<(Entity entity, T component)>
+        public readonly struct Read : IInjectable, IEnumerable<T>
         {
             [Injector]
             static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Components()));
@@ -322,6 +368,10 @@ namespace Entia.Injectables
             public bool TryGet(Entity entity, out T component, States include = States.All) => _components.TryGet(entity, out component, include);
             /// <inheritdoc cref="Modules.Components.Get{T}(Entity, States)"/>
             public ref readonly T Get(Entity entity, States include = States.All) => ref _components.Get<T>(entity, include);
+            /// <inheritdoc cref="Modules.Components.Get{T}(States)"/>
+            public IEnumerable<T> Get(States include = States.All) => _components.Get<T>(include);
+            /// <inheritdoc cref="Modules.Components.Has{T}(States)"/>
+            public bool Has(States include = States.All) => _components.Has<T>(include);
             /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
             public bool Has(Entity entity, States include = States.All) => _components.Has<T>(entity, include);
             /// <inheritdoc cref="Modules.Components.Count{T}(States)"/>
@@ -329,7 +379,7 @@ namespace Entia.Injectables
             /// <inheritdoc cref="Modules.Components.State{T}(Entity)"/>
             public States State(Entity entity) => _components.State<T>(entity);
             /// <inheritdoc cref="Modules.Components.GetEnumerator()"/>
-            public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>(States.All).GetEnumerator();
+            public IEnumerator<T> GetEnumerator() => _components.Get<T>(States.All).GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
@@ -370,6 +420,12 @@ namespace Entia.Injectables
         /// <inheritdoc cref="Modules.Components.Get{T}(Entity, States)"/>
         [ThreadSafe]
         public ref T Get(Entity entity, States include = States.All) => ref _components.Get<T>(entity, include);
+        /// <inheritdoc cref="Modules.Components.Get{T}(States)"/>
+        [ThreadSafe]
+        public IEnumerable<T> Get(States include = States.All) => _components.Get<T>(include);
+        /// <inheritdoc cref="Modules.Components.Has{T}(States)"/>
+        [ThreadSafe]
+        public bool Has(States include = States.All) => _components.Has<T>(include);
         /// <inheritdoc cref="Modules.Components.Has{T}(Entity, States)"/>
         [ThreadSafe]
         public bool Has(Entity entity, States include = States.All) => _components.Has<T>(entity, include);
@@ -395,7 +451,7 @@ namespace Entia.Injectables
         public bool Disable(Entity entity) => _components.Disable<T>(entity);
         /// <inheritdoc cref="Modules.Components.GetEnumerator()"/>
         [ThreadSafe]
-        public IEnumerator<(Entity entity, T component)> GetEnumerator() => _components.Get<T>(States.All).GetEnumerator();
+        public IEnumerator<T> GetEnumerator() => _components.Get<T>(States.All).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

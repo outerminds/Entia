@@ -11,10 +11,7 @@ using System.Linq;
 
 namespace Entia.Modules
 {
-    /// <summary>
-    /// Module that stores and manages components.
-    /// </summary>
-    public sealed partial class Components : IModule, IResolvable, IEnumerable<IComponent>
+    public sealed partial class Components
     {
         /// <summary>
         /// Gets a component of type <typeref name="T"/> associated with the entity <paramref name="entity"/>.
@@ -132,34 +129,43 @@ namespace Entia.Modules
         }
 
         /// <summary>
-        /// Gets all entity-component pairs that have a component of type <typeparamref name="T"/>.
+        /// Gets all components of type <typeparamref name="T"/>.
         /// </summary>
         /// <typeparam name="T">The concrete component type.</typeparam>
-        /// <returns>The entity-component pairs.</returns>
+        /// <returns>The components.</returns>
         [ThreadSafe]
-        public IEnumerable<(Entity entity, T component)> Get<T>(States include = States.All) where T : struct, IComponent
+        public IEnumerable<T> Get<T>(States include = States.All) where T : struct, IComponent
         {
             if (ComponentUtility.TryGetMetadata<T>(false, out var metadata))
             {
                 foreach (var data in _data.Slice())
-                {
-                    if (data.IsValid && TryGetStore<T>(data, metadata, include, out var store, out var index))
-                        yield return (data.Segment.Entities.items[data.Index], store[index]);
-                }
+                    if (data.IsValid && TryGetStore<T>(data, metadata, include, out var store, out var index)) yield return store[index];
             }
         }
 
         /// <summary>
-        /// Gets all entity-component pairs that have a component of provided <paramref name="type"/>.
+        /// Gets all components of provided <paramref name="type"/>.
         /// </summary>
         /// <param name="type">The component type.</param>
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
-        /// <returns>The entity-component pairs.</returns>
+        /// <returns>The components.</returns>
         [ThreadSafe]
-        public IEnumerable<(Entity entity, IComponent component)> Get(Type type, States include = States.All) =>
+        public IEnumerable<IComponent> Get(Type type, States include = States.All) =>
             ComponentUtility.TryGetMetadata(type, false, out var metadata) ? Get(metadata, include) :
             ComponentUtility.TryGetConcreteTypes(type, out var types) ? Get(types, include) :
-            Array.Empty<(Entity, IComponent)>();
+            Array.Empty<IComponent>();
+
+        /// <summary>
+        /// Gets all components.
+        /// </summary>
+        /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
+        /// <returns>The components.</returns>
+        [ThreadSafe]
+        public IEnumerable<IComponent> Get(States include = States.All)
+        {
+            foreach (var data in _data.Slice())
+                if (data.IsValid) foreach (var component in Get(data, include)) yield return component;
+        }
 
         [ThreadSafe]
         IEnumerable<IComponent> Get(Data data, States include)
@@ -173,18 +179,18 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
-        IEnumerable<(Entity entity, IComponent component)> Get(Metadata[] types, States include = States.All)
+        IEnumerable<IComponent> Get(Metadata[] types, States include = States.All)
         {
-            foreach (var type in types) foreach (var pair in Get(type, include)) yield return pair;
+            foreach (var type in types) foreach (var component in Get(type, include)) yield return component;
         }
 
         [ThreadSafe]
-        IEnumerable<(Entity entity, IComponent component)> Get(Metadata metadata, States include = States.All)
+        IEnumerable<IComponent> Get(Metadata metadata, States include = States.All)
         {
             foreach (var data in _data.Slice())
             {
                 if (data.IsValid && TryGetStore(data, metadata, include, out var store, out var index))
-                    yield return (data.Segment.Entities.items[data.Index], (IComponent)store.GetValue(index));
+                    yield return (IComponent)store.GetValue(index);
             }
         }
 

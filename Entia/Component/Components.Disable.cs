@@ -11,10 +11,7 @@ using System.Linq;
 
 namespace Entia.Modules
 {
-    /// <summary>
-    /// Module that stores and manages components.
-    /// </summary>
-    public sealed partial class Components : IModule, IResolvable, IEnumerable<IComponent>
+    public sealed partial class Components
     {
         public bool Disable<T>(Entity entity) where T : IComponent =>
             ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Disable(entity, metadata) :

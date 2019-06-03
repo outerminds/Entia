@@ -6,6 +6,7 @@ using Entia.Modules;
 using Entia.Modules.Message;
 using FsCheck;
 using System.Collections.Generic;
+using Entia.Modules.Component;
 
 namespace Entia.Test
 {
@@ -63,6 +64,8 @@ namespace Entia.Test
                 yield return (components.Has<TConcrete>(_entity), "Components.Has<TConcrete>(Entity)");
                 yield return (components.Has<TAbstract>(_entity), "Components.Has<TAbstract>(Entity)");
                 yield return (components.Has<IComponent>(_entity), "Components.Has<IComponent>(Entity)");
+                yield return (components.Has(), "Components.Has()");
+                yield return (components.Has(_entity), "Components.Has(entity)");
                 yield return (components.Has(_entity, typeof(TConcrete)), "Components.Has(Entity, TConcrete)");
                 yield return (components.Has(_entity, typeof(TAbstract)), "Components.Has(Entity, TAbstract)");
                 yield return (components.Has(_entity, _abstract), "Components.Has(Entity, abstract)");
@@ -78,7 +81,10 @@ namespace Entia.Test
                 yield return (components.Count<TAbstract>() >= entities.Count(entity => components.Has<TAbstract>(entity)), "Components.Count<TAbstract>() == Entities.Components");
                 yield return (components.Count(typeof(TAbstract)) >= entities.Count(entity => components.Has(entity, typeof(TAbstract))), "Components.Count(TAbstract) >= Entities.Components");
                 yield return (components.Count(_abstract) >= entities.Count(entity => components.Has(entity, _abstract)), "Components.Count(abstract) >= Entities.Components");
+                yield return (components.Count() > 0, "Components.Count() >= 0");
+                yield return (components.Count(_entity) > 0, "Components.Count(entity) >= 0");
 
+                yield return (components.Get().Any(), "Components.Get().Any()");
                 yield return (components.Get<TConcrete>().Any(), "Components.Get<TConcrete>().Any()");
                 yield return (components.Get(typeof(TConcrete)).Any(), "Components.Get(TConcrete).Any()");
                 yield return (components.Get(typeof(TAbstract)).Any(), "Components.Get(TAbstract).Any()");
@@ -89,6 +95,7 @@ namespace Entia.Test
                 yield return (components.Get<TConcrete>().Count() == model.Components.Count(pair => pair.Value.Contains(typeof(TConcrete))), "Components.Get<TConcrete>().Count() == model.Components");
                 yield return (components.Get(typeof(TConcrete)).Count() == entities.Count(entity => components.Has(entity, typeof(TConcrete))), "Components.Get(TConcrete).Count()");
                 yield return (components.Get(typeof(TConcrete)).Count() == model.Components.Count(pair => pair.Value.Contains(typeof(TConcrete))), "Components.Get(TConcrete).Count() == model.Components");
+                yield return (components.Get(_entity).Any(), "Components.Get(entity).Any()");
                 yield return (components.Get(_entity).OfType<TConcrete>().Any(), "Components.Get().OfType<TConcrete>().Any()");
                 yield return (components.Get(_entity).OfType<TAbstract>().Any(), "Components.Get().OfType<TAbstract>().Any()");
                 yield return (components.Get(_entity).OfType(_abstract, true, true).Any(), "Components.Get().OfType(abstract).Any()");
@@ -108,6 +115,7 @@ namespace Entia.Test
 
                 if (_success)
                 {
+                    yield return (components.State(_entity).HasAny(States.Enabled), "Components.State<T>()");
                     yield return (components.State<TConcrete>(_entity) == States.Enabled, "Components.State<T>()");
                     yield return (components.State(_entity, typeof(TConcrete)) == States.Enabled, "Components.State(Type)");
                     yield return (components.Enable<TConcrete>(_entity).Not(), "Components.Enable<T>()");

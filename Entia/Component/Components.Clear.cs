@@ -11,10 +11,7 @@ using System.Linq;
 
 namespace Entia.Modules
 {
-    /// <summary>
-    /// Module that stores and manages components.
-    /// </summary>
-    public sealed partial class Components : IModule, IResolvable, IEnumerable<IComponent>
+    public sealed partial class Components
     {
         /// <summary>
         /// Clears all components of type <typeparamref name="T"/>.
@@ -55,7 +52,8 @@ namespace Entia.Modules
         public bool Clear(States include = States.All)
         {
             var cleared = false;
-            foreach (ref var data in _data.Slice()) cleared |= Clear(data.Segment.Entities.items[data.Index], ref data, include);
+            foreach (ref var data in _data.Slice())
+                cleared |= data.IsValid && Clear(data.Segment.Entities.items[data.Index], ref data, include);
             return cleared;
         }
 

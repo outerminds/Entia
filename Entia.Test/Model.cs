@@ -61,6 +61,12 @@ namespace Entia.Test
             }
         }
 
+        public void Clear(States include = States.All)
+        {
+            if (include.HasAny(States.Enabled)) Enabled.Clear();
+            if (include.HasAny(States.Disabled)) Disabled.Clear();
+        }
+
         public Type[] ToArray(States include = States.All)
         {
             var types = new List<Type>();

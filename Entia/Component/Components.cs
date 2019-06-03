@@ -95,11 +95,7 @@ namespace Entia.Modules
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
-        public IEnumerator<IComponent> GetEnumerator()
-        {
-            foreach (var data in _data.Slice())
-                if (data.IsValid) foreach (var component in Get(data, States.All)) yield return component;
-        }
+        public IEnumerator<IComponent> GetEnumerator() => Get(States.All).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         bool IResolvable.Resolve()
@@ -241,9 +237,16 @@ namespace Entia.Modules
             }
         }
 
+        [ThreadSafe]
+        (BitMask mask, Metadata[] types) GetTargetData(in Data data) => data.Transient is int transient ?
+            GetTargetData(_transient.Slots.items[transient]) : (data.Segment.Mask, data.Segment.Types);
+
+        [ThreadSafe]
+        (BitMask mask, Metadata[] types) GetTargetData(in Transient.Slot slot) => (slot.Mask, ComponentUtility.GetConcreteTypes(slot.Mask));
+
+        [ThreadSafe]
         BitMask GetTargetMask(in Data data) => data.Transient is int transient ?
-            _transient.Slots.items[transient].Mask :
-            data.Segment.Mask;
+            _transient.Slots.items[transient].Mask : data.Segment.Mask;
 
         [ThreadSafe]
         Metadata[] GetTargetTypes(in Data data) => data.Transient is int transient ?

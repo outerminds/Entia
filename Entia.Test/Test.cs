@@ -156,15 +156,17 @@ namespace Entia.Test
             Console.Clear();
 
             var generator = Generator.Frequency(
-                // World
+            #region World
                 (10, Gen.Fresh(() => new ResolveWorld().ToAction())),
+            #endregion
 
-                // Entity
+            #region Entities
                 (100, Gen.Fresh(() => new CreateEntity().ToAction())),
                 (10, Gen.Fresh(() => new DestroyEntity().ToAction())),
                 (1, Gen.Fresh(() => new ClearEntities().ToAction())),
+            #endregion
 
-                // Component
+            #region Components
                 (20, Gen.Fresh(() => new AddComponent<ComponentA, IComponentA>(typeof(IComponentC)).ToAction())),
                 (20, Gen.Fresh(() => new AddComponent<ComponentB, IComponentC>(typeof(IComponentA)).ToAction())),
                 (20, Gen.Fresh(() => new AddComponent<ComponentC<Unit>, IComponentB>(typeof(ComponentC<>)).ToAction())),
@@ -221,8 +223,10 @@ namespace Entia.Test
                 (1, Gen.Fresh(() => new ClearComponent(typeof(IComponentB)).ToAction())),
                 (1, Gen.Fresh(() => new ClearComponent(typeof(IComponentC)).ToAction())),
                 (1, Gen.Fresh(() => new ClearComponent(typeof(ComponentC<>)).ToAction())),
+                (1, Gen.Fresh(() => new ClearComponents().ToAction())),
+            #endregion
 
-                // Group
+            #region Groups
                 (1, Gen.Fresh(() => new GetGroup<Read<ComponentA>>().ToAction())),
                 (1, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<ComponentC<Unit>>>>().ToAction())),
                 (1, Gen.Fresh(() => new GetGroup<Maybe<Read<ComponentA>>>().ToAction())),
@@ -235,13 +239,15 @@ namespace Entia.Test
                 (1, Gen.Fresh(() => new GetPointerGroup(typeof(ProviderA)).ToAction())),
                 (1, Gen.Fresh(() => new GetPointerGroup().ToAction())),
                 (1, Gen.Fresh(() => new GetGroup<Any<Write<ComponentC<Unit>>, Read<ComponentB>>>().ToAction())),
+            #endregion
 
-                // Message
+            #region Messages
                 (1, Gen.Fresh(() => new EmitMessage<MessageA>().ToAction())),
                 (1, Gen.Fresh(() => new EmitMessage<MessageB>().ToAction())),
                 (1, Gen.Fresh(() => new EmitMessage<MessageC>().ToAction())),
+            #endregion
 
-                // Injectables
+            #region Injectables
                 (1, Gen.Fresh(() => new Inject(_injectables).ToAction())),
                 (1, Gen.Fresh(() => new Inject<Components<ComponentA>>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Components<ComponentB>.Read>().ToAction())),
@@ -253,12 +259,15 @@ namespace Entia.Test
                 (1, Gen.Fresh(() => new Inject<Resource<ResourceA>>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Resource<ResourceB>.Read>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Injectable>().ToAction())),
+            #endregion
 
-                // Queryables
+            #region Queryables
                 (1, Gen.Fresh(() => new Query(_queryables).ToAction())),
+            #endregion
 
-                // Resolvables
+            #region Resolvables
                 (5, Gen.Fresh(() => new Resolve().ToAction()))
+            #endregion
 
             // Add non generic component actions
             );
@@ -287,6 +296,10 @@ namespace Entia.Test
                 #region Components
                 IEnumerable<(bool test, string label)> WithInclude(States include)
                 {
+                    yield return (components.Get(include).Count() == components.Count(include), $"Components.Get({include}).Count() == Components.Count({include})");
+                    yield return (components.Get(include).Any() == components.Has(include), $"Components.Get({include}).Any() == Components.Has({include})");
+                    yield return (components.Count(include) > 0 == components.Has(include), $"Components.Count({include}) > 0 == Components.Has({include})");
+
                     yield return (components.Count<IComponent>(include) >= entities.Count(entity => components.Has<IComponent>(entity, include)), $"components.Count(IComponent, {include}) >= entities.Components");
                     yield return (components.Count(typeof(IComponent), include) >= entities.Count(entity => components.Has(entity, typeof(IComponent), include)), $"components.Count(IComponent, {include}) >= entities.Components");
                     yield return (components.Count(include) == components.Count<IComponent>(include), $"components.Count({include}) == components.Count<IComponent>({include})");
@@ -305,7 +318,8 @@ namespace Entia.Test
 
                 yield return (entities.All(entity => components.Get(entity, States.Enabled).None(component => components.Enable(entity, component.GetType()))), "entities.None(components.Enable())");
                 yield return (entities.All(entity => components.Get(entity, States.Disabled).None(component => components.Disable(entity, component.GetType()))), "entities.None(components.Disable())");
-                yield return (entities.All(entity => components.Get(entity).Count() == model.Components[entity].Count), "components.Get().Count()");
+                yield return (entities.All(entity => components.Get(entity).Count() == model.Components[entity].Count), "components.Get(entity).Count()");
+                yield return (entities.All(entity => components.Count(entity) == model.Components[entity].Count), "components.Count(entity)");
                 yield return (entities.All(entity => components.Get(entity).All(component => model.Components[entity].Contains(component.GetType()))), "model.Components.ContainsKey()");
 
                 yield return (model.Components.All(pair => pair.Value.All(type => components.Has(pair.Key, type))), "components.Has()");

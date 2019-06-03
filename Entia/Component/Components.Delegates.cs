@@ -11,10 +11,7 @@ using System.Linq;
 
 namespace Entia.Modules
 {
-    /// <summary>
-    /// Module that stores and manages components.
-    /// </summary>
-    public sealed partial class Components : IModule, IResolvable, IEnumerable<IComponent>
+    public sealed partial class Components
     {
         struct Delegates
         {
