@@ -92,24 +92,29 @@ namespace Entia
             module = default;
             return false;
         }
+
         public bool Set<T>(T module) where T : IModule
         {
             Remove<T>();
             if (module is IResolvable resolvable) ArrayUtility.Add(ref _resolvables, resolvable);
             return _modules.Set<T>(module);
         }
+
         public bool Has<T>() where T : IModule => _modules.Has<T>(false, false);
+
         public bool Remove<T>() where T : IModule
         {
             if (_modules.TryGet<T>(out var module, false, false) && module is IResolvable resolvable) ArrayUtility.Remove(ref _resolvables, resolvable);
             return _modules.Remove<T>(false, false);
         }
+
         public bool Clear()
         {
             var cleared = false;
             foreach (var module in _modules.Values) if (module is IClearable clearable) cleared |= clearable.Clear();
             return cleared;
         }
+
         public bool Resolve()
         {
             var resolved = false;
