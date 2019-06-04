@@ -112,7 +112,7 @@ namespace Entia
         {
             var cleared = false;
             foreach (var module in _modules.Values) if (module is IClearable clearable) cleared |= clearable.Clear();
-            return cleared;
+            return _modules.Clear() || cleared;
         }
 
         public bool Resolve()
