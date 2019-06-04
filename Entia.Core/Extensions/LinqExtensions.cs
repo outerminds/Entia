@@ -5,8 +5,14 @@ using System.Linq;
 
 namespace Entia.Core
 {
-    public static class LinqExtensions
+    public static partial class LinqExtensions
     {
+        static class Cache<T>
+        {
+            public static Func<T, T, bool> Equal = EqualityComparer<T>.Default.Equals;
+            public static Comparison<T> Compare = Comparer<T>.Default.Compare;
+        }
+
         public static bool All<T>(this IEnumerable<T> source, Func<T, int, bool> predicate)
         {
             var index = 0;
@@ -60,6 +66,48 @@ namespace Entia.Core
             var head = new List<T>(source);
             var tail = head.Pop();
             return (head.ToArray(), tail);
+        }
+
+        public static int MaxIndex<T>(this IEnumerable<T> source, IComparer<T> comparer = null) =>
+            source.MaxIndex(comparer == null ? Cache<T>.Compare : comparer.Compare);
+
+        public static int MaxIndex<T>(this IEnumerable<T> source, Comparison<T> compare)
+        {
+            var enumerator = source.GetEnumerator();
+            if (enumerator.MoveNext())
+            {
+                var maximum = (value: enumerator.Current, index: 0);
+                var index = 0;
+                while (enumerator.MoveNext())
+                {
+                    index++;
+                    var current = enumerator.Current;
+                    if (compare(current, maximum.value) > 0) maximum = (current, index);
+                }
+                return index;
+            }
+            return -1;
+        }
+
+        public static int MinIndex<T>(this IEnumerable<T> source, IComparer<T> comparer = null) =>
+            source.MinIndex(comparer == null ? Cache<T>.Compare : comparer.Compare);
+
+        public static int MinIndex<T>(this IEnumerable<T> source, Comparison<T> compare)
+        {
+            var enumerator = source.GetEnumerator();
+            if (enumerator.MoveNext())
+            {
+                var minimum = (value: enumerator.Current, index: 0);
+                var index = 0;
+                while (enumerator.MoveNext())
+                {
+                    index++;
+                    var current = enumerator.Current;
+                    if (compare(current, minimum.value) < 0) minimum = (current, index);
+                }
+                return index;
+            }
+            return -1;
         }
 
         public static IEnumerable<T> Separate<T>(this IEnumerable<T> source, T separator) => source.Separate(() => separator);
@@ -312,11 +360,8 @@ namespace Entia.Core
             }
         }
 
-        public static bool Same<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null)
-        {
-            comparer = comparer ?? EqualityComparer<T>.Default;
-            return source.Same(comparer.Equals);
-        }
+        public static bool Same<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null) =>
+            source.Same(comparer == null ? Cache<T>.Equal : comparer.Equals);
 
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed)
         {
