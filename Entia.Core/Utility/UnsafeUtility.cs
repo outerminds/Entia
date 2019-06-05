@@ -35,9 +35,10 @@ namespace Entia.Core
             public static readonly ReferenceReturn<T> As = _ => throw new NotImplementedException();
             public static readonly PointerReturn<T> AsPointer = (ref T _) => throw new NotImplementedException();
             public static readonly ReferenceOffset<T> Offset = (ref T _, int __) => throw new NotImplementedException();
+            public static readonly FieldInfo[] Fields = typeof(T).InstanceFields();
+
             public static readonly int Size = IntPtr.Size;
             public static readonly (FieldInfo field, int offset)[] Layout = { };
-            public static readonly FieldInfo[] Fields = typeof(T).InstanceFields();
 
             static Cache()
             {
@@ -51,21 +52,22 @@ namespace Entia.Core
                     var head = AsPointer(ref pair.Value);
                     var tail = Cache.AsPointer(ref pair.End);
                     Size = (int)(tail.ToInt64() - head.ToInt64());
-                }
 
-                var bytes = new byte[Size];
-                bytes.Fill(byte.MaxValue);
-                Layout = new (FieldInfo field, int offset)[Fields.Length];
-                for (int i = 0; i < Fields.Length; i++)
-                {
-                    var field = Fields[i];
-                    object box = UnsafeUtility.As<byte, T>(ref bytes[0]);
-                    field.SetValue(box, default);
-                    var unbox = (T)box;
-                    var offset = IndexOf(UnsafeUtility.AsPointer(ref unbox), Size);
-                    Layout[i] = (field, offset);
+                    // NOTE: layout as it is won't work for reference types
+                    var bytes = new byte[Size];
+                    bytes.Fill(byte.MaxValue);
+                    Layout = new (FieldInfo field, int offset)[Fields.Length];
+                    for (int i = 0; i < Fields.Length; i++)
+                    {
+                        var field = Fields[i];
+                        object box = UnsafeUtility.As<byte, T>(ref bytes[0]);
+                        field.SetValue(box, default);
+                        var unbox = (T)box;
+                        var offset = IndexOf(UnsafeUtility.AsPointer(ref unbox), Size);
+                        Layout[i] = (field, offset);
+                    }
+                    Array.Sort(Layout, (a, b) => a.offset.CompareTo(b.offset));
                 }
-                Array.Sort(Layout, (a, b) => a.offset.CompareTo(b.offset));
             }
 
             static int IndexOf(IntPtr pointer, int size)
