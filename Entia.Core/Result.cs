@@ -284,6 +284,9 @@ namespace Entia.Core
         public static T Or<T>(in this Result<T> result, in T value) => result.TryValue(out var current) ? current : value;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T OrDefault<T>(in this Result<T> result) => result.Or(default(T));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Success<Unit> Ignore<T>(in this Success<T> success) => success;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
