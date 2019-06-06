@@ -63,7 +63,7 @@ namespace Entia.Modules.Message
                 for (var i = 0; i < read.Value.count; i++) read.Value.items[i].Receive(message);
         }
 
-        public Disposable Receive(int capacity = -1) => new Disposable(this);
+        public Disposable Receive(int capacity = -1) => new Disposable(this, capacity);
 
         public bool Add(Receiver<T> receiver)
         {

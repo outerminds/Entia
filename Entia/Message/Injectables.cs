@@ -27,9 +27,8 @@ namespace Entia.Injectables
         public bool Emit<T>(in T message) where T : struct, IMessage => _messages.Emit(message);
         public bool Emit(IMessage message) => _messages.Emit(message);
         public bool Emit(Type message) => _messages.Emit(message);
-        public bool Remove<T>() where T : struct, IMessage => _messages.Remove<T>();
-        public bool Remove(Type type) => _messages.Remove(type);
-        public bool Clear() => _messages.Clear();
+
+        // NOTE: do not give easy access to 'Remove/Clear' methods since they may have unwanted side-effects (such as Emitter<OnPreDestroy>.Clear())
     }
 
     [ThreadSafe]
@@ -44,6 +43,8 @@ namespace Entia.Injectables
         public Emitter(Modules.Message.Emitter<T> emitter) { _emitter = emitter; }
         public void Emit() => _emitter.Emit();
         public void Emit(in T message) => _emitter.Emit(message);
+
+        // NOTE: do not give easy access to 'Remove/Clear' methods since they may have unwanted side-effects (such as Emitter<OnPreDestroy>.Clear())
     }
 
     [ThreadSafe]
@@ -60,6 +61,7 @@ namespace Entia.Injectables
         readonly Modules.Message.Receiver<T> _receiver;
         public Receiver(Modules.Message.Receiver<T> receiver) { _receiver = receiver; }
         public bool TryPop(out T message) => _receiver.TryPop(out message);
+        public Modules.Message.Receiver<T>.Enumerable Pop(int count = int.MaxValue) => _receiver.Pop(count);
         public bool Clear() => _receiver.Clear();
     }
 

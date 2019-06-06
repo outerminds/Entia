@@ -12,6 +12,7 @@ using System.Reflection;
 
 namespace Entia.Injectables
 {
+    [ThreadSafe]
     public readonly struct AllResources : IInjectable, IEnumerable<IResource>
     {
         [ThreadSafe]
@@ -25,6 +26,10 @@ namespace Entia.Injectables
             readonly Modules.Resources _resources;
             public Read(Modules.Resources resources) { _resources = resources; }
 
+            /// <inheritdoc cref="Modules.Resources.Get{T}()"/>
+            public ref readonly T Get<T>() where T : struct, IResource => ref _resources.Get<T>();
+            /// <inheritdoc cref="Modules.Resources.Get(Type)"/>
+            public IResource Get(Type type) => _resources.Get(type);
             /// <inheritdoc cref="Modules.Resources.TryGet{T}(out T)"/>
             public bool TryGet<T>(out T resource) where T : struct, IResource => _resources.TryGet<T>(out resource);
             /// <inheritdoc cref="Modules.Resources.TryGet(Type, out IResource)"/>
@@ -44,10 +49,8 @@ namespace Entia.Injectables
         public AllResources(Modules.Resources resources) { _resources = resources; }
 
         /// <inheritdoc cref="Modules.Resources.TryGet{T}(out T)"/>
-        [ThreadSafe]
         public bool TryGet<T>(out T resource) where T : struct, IResource => _resources.TryGet<T>(out resource);
         /// <inheritdoc cref="Modules.Resources.TryGet(Type, out IResource)"/>
-        [ThreadSafe]
         public bool TryGet(Type type, out IResource resource) => _resources.TryGet(type, out resource);
         /// <inheritdoc cref="Modules.Resources.Get{T}()"/>
         public ref T Get<T>() where T : struct, IResource => ref _resources.Get<T>();
@@ -58,22 +61,18 @@ namespace Entia.Injectables
         /// <inheritdoc cref="Modules.Resources.Set(IResource)"/>
         public void Set(IResource resource) => _resources.Set(resource);
         /// <inheritdoc cref="Modules.Resources.Has{T}()"/>
-        [ThreadSafe]
         public bool Has<T>() where T : struct, IResource => _resources.Has<T>();
         /// <inheritdoc cref="Modules.Resources.Has(Type)"/>
-        [ThreadSafe]
         public bool Has(Type type) => _resources.Has(type);
-        /// <inheritdoc cref="Modules.Resources.Remove{T}()"/>
-        public bool Remove<T>() where T : struct, IResource => _resources.Remove<T>();
-        /// <inheritdoc cref="Modules.Resources.Remove(Type)"/>
-        public bool Remove(Type type) => _resources.Remove(type);
-        /// <inheritdoc cref="Modules.Resources.Clear()"/>
-        public bool Clear() => _resources.Clear();
+
+        // NOTE: do not give easy access to 'Remove/Clear' methods since they may have unwanted side-effects (such as invalidating other 'Resource<T>')
+
         /// <inheritdoc cref="Modules.Resources.GetEnumerator()"/>
         public IEnumerator<IResource> GetEnumerator() => _resources.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => _resources.GetEnumerator();
     }
 
+    [ThreadSafe]
     public readonly struct Resource<T> : IInjectable where T : struct, IResource
     {
         [ThreadSafe]
@@ -84,11 +83,11 @@ namespace Entia.Injectables
             [Depender]
             static IDepender Depender => Dependers.Depender.From<T>(new Dependencies.Read(typeof(T)));
 
-            public ref readonly T Value => ref _box.Value;
+            public ref readonly T Value => ref _box[0];
 
-            readonly Box<T> _box;
+            readonly T[] _box;
 
-            public Read(Box<T> box) { _box = box; }
+            public Read(T[] box) { _box = box; }
         }
 
         [Injector]
@@ -96,10 +95,10 @@ namespace Entia.Injectables
         [Depender]
         static IDepender Depender => Dependers.Depender.From<T>(new Dependencies.Write(typeof(T)));
 
-        public ref T Value => ref _box.Value;
+        public ref T Value => ref _box[0];
 
-        readonly Box<T> _box;
+        readonly T[] _box;
 
-        public Resource(Box<T> box) { _box = box; }
+        public Resource(T[] box) { _box = box; }
     }
 }

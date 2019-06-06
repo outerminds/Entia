@@ -29,10 +29,16 @@ namespace Entia.Modules.Message
         [ThreadSafe]
         public readonly struct Enumerable : IEnumerable<Enumerator, T>
         {
+            readonly int _count;
             readonly Receiver<T> _receiver;
-            public Enumerable(Receiver<T> receiver) { _receiver = receiver; }
 
-            public Enumerator GetEnumerator() => new Enumerator(_receiver);
+            public Enumerable(int count, Receiver<T> receiver)
+            {
+                _count = count;
+                _receiver = receiver;
+            }
+
+            public Enumerator GetEnumerator() => new Enumerator(_count, _receiver);
             IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
@@ -47,18 +53,22 @@ namespace Entia.Modules.Message
             }
             object IEnumerator.Current => Current;
 
+            int _count;
             Receiver<T> _receiver;
+            int _index;
             T _current;
 
-            public Enumerator(Receiver<T> receiver)
+            public Enumerator(int count, Receiver<T> receiver)
             {
                 _receiver = receiver;
+                _count = count;
+                _index = -1;
                 _current = default;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool MoveNext() => _receiver._messages.TryDequeue(out _current);
-            public void Reset() => throw new NotSupportedException();
+            public bool MoveNext() => ++_index < _count && _receiver._messages.TryDequeue(out _current);
+            public void Reset() => _index = -1;
             public void Dispose() => _receiver = default;
         }
 
@@ -81,7 +91,7 @@ namespace Entia.Modules.Message
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryPop(out T message) => _messages.TryDequeue(out message);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerable Pop() => new Enumerable(this);
+        public Enumerable Pop(int count = int.MaxValue) => new Enumerable(count, this);
 
         public bool Receive(in T message)
         {

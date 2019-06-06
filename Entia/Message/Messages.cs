@@ -27,16 +27,16 @@ namespace Entia.Modules
             }
         }
 
-        public IEmitter Emitter(Type message)
+        public IEmitter Emitter(Type type)
         {
             using (var read = _emitters.Read(true))
             {
-                if (read.Value.TryGet(message, out var emitter, false, false)) return emitter;
+                if (read.Value.TryGet(type, out var emitter, false, false)) return emitter;
                 using (var write = _emitters.Write())
                 {
-                    if (write.Value.TryGet(message, out emitter, false, false)) return emitter;
-                    var type = typeof(Emitter<>).MakeGenericType(message);
-                    write.Value.Set(message, emitter = Activator.CreateInstance(type) as IEmitter);
+                    if (write.Value.TryGet(type, out emitter, false, false)) return emitter;
+                    var generic = typeof(Emitter<>).MakeGenericType(type);
+                    write.Value.Set(type, emitter = Activator.CreateInstance(generic) as IEmitter);
                     return emitter;
                 }
             }
@@ -64,9 +64,9 @@ namespace Entia.Modules
             return false;
         }
 
-        public bool Emit(Type message)
+        public bool Emit(Type type)
         {
-            if (TryEmitter(message, out var emitter))
+            if (TryEmitter(type, out var emitter))
             {
                 emitter.Emit();
                 return true;
@@ -86,27 +86,27 @@ namespace Entia.Modules
             return receiver;
         }
 
-        public IReceiver Receiver(Type message, int capacity = -1)
+        public IReceiver Receiver(Type type, int capacity = -1)
         {
-            var type = typeof(Receiver<>).MakeGenericType(message);
-            var receiver = Activator.CreateInstance(type, capacity) as IReceiver;
-            Emitter(message).Add(receiver);
+            var generic = typeof(Receiver<>).MakeGenericType(type);
+            var receiver = Activator.CreateInstance(generic, capacity) as IReceiver;
+            Emitter(type).Add(receiver);
             return receiver;
         }
 
         public Reaction<T> Reaction<T>() where T : struct, IMessage => Emitter<T>().Reaction;
-        public IReaction Reaction(Type message) => Emitter(message).Reaction;
+        public IReaction Reaction(Type type) => Emitter(type).Reaction;
         public void React<T>(InAction<T> reaction) where T : struct, IMessage => Reaction<T>().Add(reaction);
-        public bool React(Type message, Delegate reaction) => Reaction(message).Add(reaction);
+        public bool React(Type type, Delegate reaction) => Reaction(type).Add(reaction);
 
         public bool Has<T>() where T : struct, IMessage
         {
             using (var read = _emitters.Read()) return read.Value.Has<T>(false, false);
         }
 
-        public bool Has(Type message)
+        public bool Has(Type type)
         {
-            using (var read = _emitters.Read()) return read.Value.Has(message, false, false);
+            using (var read = _emitters.Read()) return read.Value.Has(type, false, false);
         }
 
         public bool Has(IEmitter emitter)
@@ -160,9 +160,9 @@ namespace Entia.Modules
         public bool Remove<T>(Receiver<T> receiver) where T : struct, IMessage => TryEmitter<T>(out var emitter) && emitter.Remove(receiver);
         public bool Remove(IReceiver receiver) => TryEmitter(receiver.Type, out var emitter) && emitter.Remove(receiver);
         public bool Remove<T>(InAction<T> reaction) where T : struct, IMessage => TryEmitter<T>(out var emitter) && emitter.Reaction.Remove(reaction);
-        public bool Remove(Type message, Delegate reaction) => TryEmitter(message, out var emitter) && emitter.Reaction.Remove(reaction);
+        public bool Remove(Type type, Delegate reaction) => TryEmitter(type, out var emitter) && emitter.Reaction.Remove(reaction);
         public bool Remove<T>() where T : struct, IMessage => TryEmitter<T>(out var emitter) && Remove(emitter);
-        public bool Remove(Type message) => TryEmitter(message, out var emitter) && Remove(emitter);
+        public bool Remove(Type type) => TryEmitter(type, out var emitter) && Remove(emitter);
 
         public bool Clear()
         {
@@ -195,9 +195,9 @@ namespace Entia.Modules
             }
         }
 
-        bool TryEmitter(Type message, out IEmitter emitter)
+        bool TryEmitter(Type type, out IEmitter emitter)
         {
-            using (var read = _emitters.Read()) return read.Value.TryGet(message, out emitter, false, false);
+            using (var read = _emitters.Read()) return read.Value.TryGet(type, out emitter, false, false);
         }
     }
 }

@@ -10,7 +10,6 @@ namespace Entia.Core
         public static Ref<T> Dummy<T>() => From(ref Core.Dummy<T>.Value);
         public static Ref<T> From<T>(ref T reference) => new Ref<T>(ref reference);
         public static Ref<T> From<T>(T[] array, int index) => new Ref<T>(ref array[index]);
-        public static Ref<T> From<T>(Box<T> box) => new Ref<T>(ref box.Value);
     }
 
     public unsafe readonly struct Ref<T> : IEquatable<Ref<T>>

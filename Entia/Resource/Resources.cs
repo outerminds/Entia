@@ -8,18 +8,16 @@ using System.Linq;
 
 namespace Entia.Modules
 {
+    [ThreadSafe]
     public sealed class Resources : IModule, IClearable, IEnumerable<IResource>
     {
-        public TypeMap<IResource, IBox>.ValueEnumerable Boxes => _boxes.Values;
+        readonly Concurrent<TypeMap<IResource, Array>> _boxes = new TypeMap<IResource, Array>();
 
-        readonly TypeMap<IResource, IBox> _boxes = new TypeMap<IResource, IBox>();
-
-        [ThreadSafe]
         public bool TryGet<T>(out T resource) where T : struct, IResource
         {
             if (TryGetBox<T>(out var box))
             {
-                resource = box.Value;
+                resource = box[0];
                 return true;
             }
 
@@ -27,85 +25,102 @@ namespace Entia.Modules
             return false;
         }
 
-        [ThreadSafe]
         public bool TryGet(Type type, out IResource resource)
         {
             if (TryGetBox(type, out var box))
             {
-                resource = (IResource)box.Value;
-                return true;
+                resource = box.GetValue(0) as IResource;
+                return resource != null;
             }
 
             resource = default;
             return false;
         }
 
-        public ref T Get<T>() where T : struct, IResource => ref GetBox<T>().Value;
-        public IResource Get(Type resource) => (IResource)GetBox(resource).Value;
-        public void Set<T>(in T resource) where T : struct, IResource => GetBox<T>().Value = resource;
-        public void Set(IResource resource) => GetBox(resource.GetType()).Value = resource;
-        [ThreadSafe]
-        public bool Has<T>() where T : struct, IResource => _boxes.Has<T>(false, false);
-        [ThreadSafe]
-        public bool Has(Type resource) => _boxes.Has(resource, false, false);
+        public ref T Get<T>() where T : struct, IResource => ref GetBox<T>()[0];
+        public IResource Get(Type type) => GetBox(type).GetValue(0) as IResource;
+        public void Set<T>(in T resource) where T : struct, IResource => GetBox<T>()[0] = resource;
+        public void Set(IResource resource) => GetBox(resource.GetType()).SetValue(resource, 0);
+
+        public bool Has<T>() where T : struct, IResource
+        {
+            using (var read = _boxes.Read()) return read.Value.Has<T>(false, false);
+        }
+
+        public bool Has(Type type)
+        {
+            using (var read = _boxes.Read()) return read.Value.Has(type, false, false);
+        }
 
         public bool Remove<T>() where T : struct, IResource
         {
-            if (TryGetBox<T>(out var box))
+            using (var write = _boxes.Write()) return write.Value.Remove<T>(false, false);
+        }
+
+        public bool Remove(Type type)
+        {
+            using (var write = _boxes.Write()) return write.Value.Remove(type, false, false);
+        }
+
+        public bool TryGetBox(Type type, out Array box)
+        {
+            using (var read = _boxes.Read()) return read.Value.TryGet(type, out box, false, false);
+        }
+
+        public bool TryGetBox<T>(out T[] box) where T : struct, IResource
+        {
+            using (var read = _boxes.Read())
             {
-                box.Value = default;
-                return true;
-            }
+                if (read.Value.TryGet<T>(out var value, false, false) && value is T[] casted)
+                {
+                    box = casted;
+                    return true;
+                }
 
-            return false;
+                box = default;
+                return false;
+            }
         }
 
-        public bool Remove(Type resource)
+        public Array GetBox(Type type)
         {
-            if (TryGetBox(resource, out var box))
+            using (var read = _boxes.Read(true))
             {
-                box.Value = null;
-                return true;
+                if (read.Value.TryGet(type, out var box, false, false)) return box;
+                using (var write = _boxes.Write())
+                {
+                    if (write.Value.TryGet(type, out box, false, false)) return box;
+                    write.Value.Set(type, box = Array.CreateInstance(type, 1));
+                    box.SetValue(DefaultUtility.Default(type), 0);
+                    return box;
+                }
             }
-
-            return false;
         }
 
-        [ThreadSafe]
-        public bool TryGetBox(Type resource, out IBox box) => _boxes.TryGet(resource, out box, false, false);
-
-        [ThreadSafe]
-        public bool TryGetBox<T>(out Box<T> box) where T : struct, IResource
+        public T[] GetBox<T>() where T : struct, IResource
         {
-            if (_boxes.TryGet<T>(out var value, false, false) && value is Box<T> casted)
+            using (var read = _boxes.Read(true))
             {
-                box = casted;
-                return true;
+                if (read.Value.TryGet<T>(out var box, false, false) && box is T[] casted1) return casted1;
+                using (var write = _boxes.Write())
+                {
+                    if (write.Value.TryGet<T>(out box, false, false) && box is T[] casted2) return casted2;
+                    write.Value.Set<T>(casted2 = new T[] { DefaultUtility.Default<T>() });
+                    return casted2;
+                }
             }
-
-            box = default;
-            return false;
         }
 
-        public IBox GetBox(Type resource)
+        public bool Clear()
         {
-            if (TryGetBox(resource, out var box)) return box;
-            var type = typeof(Box<>).MakeGenericType(resource);
-            _boxes.Set(resource, box = Activator.CreateInstance(type) as IBox);
-            box.Value = DefaultUtility.Default(resource);
-            return box;
+            using (var write = _boxes.Write()) return write.Value.Clear();
         }
 
-        public Box<T> GetBox<T>() where T : struct, IResource
-        {
-            if (TryGetBox<T>(out var box)) return box;
-            _boxes.Set<T>(box = new Box<T> { Value = DefaultUtility.Default<T>() });
-            return box;
-        }
-
-        public bool Clear() => _boxes.Clear();
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator()"/>
-        public IEnumerator<IResource> GetEnumerator() => _boxes.Values.Select(pair => pair.Value).OfType<IResource>().GetEnumerator();
+        public IEnumerator<IResource> GetEnumerator() => _boxes.Read(boxes => boxes.Values.ToArray())
+            .Select(pair => pair.GetValue(0))
+            .OfType<IResource>()
+            .GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
