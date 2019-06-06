@@ -84,6 +84,56 @@ Bugs:
 - 'Modules.Messages' is not truly '[ThreadSafe]'
 	- 'Receiver<T>()' might add a receiver to a removed emitter
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.
+- struct systems can't use callbacks since the runtime will copy the struct
+	Allow class systems:
+	PROS
+	- field initializers
+	- empty contrustor (removes the need for [Default])
+	- can use lambdas and access 'this' members
+	- callback methods will not get a copy of 'this'
+	- iterator methods will not get a copy of 'this'
+	- async methods will not get a copy of 'this'
+	- there may be other weird cases where C# copies the struct
+
+	CONS
+	- struct systems will essentially become obsolete
+	- allows for inheritance
+	- facilitates the use of private state
+	- allows inheritance of systems
+
+	Use class Box<T>:
+	PROS
+	- systems can remain structs (less temptation for encapsulation/inheritance)
+	- discourages private state in systems
+	- minimal change
+	- callback methods will not get a copy of the boxed value
+	- iterator methods will not get a copy of the boxed value
+	- async methods will not get a copy of the boxed value
+
+	CONS
+	- more verbose (requires '.Value') but can use tuples to combine state
+	- lambdas can't access 'this' members
+	- requires users to be very aware of the copying behavior of structs in order to know when to use a 'Box<T>'
+	- increases generic nesting (should not be a real issue)
+
+	Use struct State<T> or Cache<T>:
+	PROS
+	- coherent with the rest of the framework
+	- systems can remain structs (less temptation for encapsulation/inheritance)
+	- discourages private state in systems
+	- minimal change
+	- callback methods will not get a copy of the boxed value
+	- iterator methods will not get a copy of the boxed value
+	- async methods will not get a copy of the boxed value
+	- can remove the 'specialness' of public/private fields (only public fields are injected) since all fields will be injected
+	- system state can be centralized in a module
+	- makes systems easier to serialize
+
+	CONS
+	- more verbose (requires '.Value') but can use tuples to combine state
+	- lambdas can't access 'this' members
+	- requires users to be very aware of the copying behavior of structs in order to know when to use a 'Box<T>'
+	- increases generic nesting (should not be a real issue)
 
 Optimization:
 - Shrink component segment stores by half when the 'count < capacity / 4'

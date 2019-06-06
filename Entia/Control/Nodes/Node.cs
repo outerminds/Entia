@@ -26,7 +26,7 @@ namespace Entia.Nodes
         public static Node Parallel(string name, params Node[] nodes) => From<Parallel>(name, nodes);
         public static Node Automatic(params Node[] nodes) => Automatic("", nodes);
         public static Node Automatic(string name, params Node[] nodes) => From<Automatic>(name, nodes);
-        public static Node System(Type system) => From(system.Format(), new System(system));
+        public static Node System(Type type) => From(type.Format(), new System(type));
         public static Node System<T>() where T : struct, ISystem => System(typeof(T));
         public static Node[] Systems(Assembly assembly) => assembly.GetTypes().Where(type => type.IsValueType && type.Is<ISystem>()).Select(System).ToArray();
 

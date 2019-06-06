@@ -106,6 +106,7 @@ namespace Entia.Core
                 catch { }
             }
 
+            if (data.Default is null) return () => null;
             return () => CloneUtility.Shallow(data.Default);
         }
     }
