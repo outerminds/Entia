@@ -33,7 +33,7 @@ namespace Entia.Modules
         /// <returns>The number of components.</returns>
         [ThreadSafe]
         public int Count<T>(States include = States.All) where T : IComponent =>
-            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Count(metadata, include) :
+            ComponentUtility.Abstract<T>.TryConcrete(out var metadata) ? Count(metadata, include) :
             ComponentUtility.TryGetConcreteTypes<T>(out var types) ? Count(types, include) :
             0;
 

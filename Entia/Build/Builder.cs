@@ -21,7 +21,7 @@ namespace Entia.Builders
         Result<IRunner> IBuilder.Build(Node node, Node root, World world) => Build(node, root, world).Cast<IRunner>();
     }
 
-    [AttributeUsage(ModuleUtility.AttributeUsage)]
+    [AttributeUsage(ModuleUtility.AttributeUsage, Inherited = true, AllowMultiple = false)]
     public sealed class BuilderAttribute : PreserveAttribute { }
 
     public sealed class Default : IBuilder

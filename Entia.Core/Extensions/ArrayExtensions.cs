@@ -171,5 +171,8 @@ namespace Entia.Core
             Array.Clear(array.items, 0, array.count);
             return array.count.Change(0);
         }
+
+        public static (T[] items, int count) Clone<T>(in this (T[] items, int count) array) =>
+            (array.items.Clone() as T[], array.count);
     }
 }

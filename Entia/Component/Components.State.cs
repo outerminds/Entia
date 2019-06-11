@@ -14,8 +14,8 @@ namespace Entia.Modules
     public sealed partial class Components
     {
         [ThreadSafe]
-        public States State<T>(Entity entity) where T : struct, IComponent =>
-            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? State(entity, metadata) :
+        public States State<T>(Entity entity) where T : IComponent =>
+            ComponentUtility.Abstract<T>.TryConcrete(out var metadata) ? State(entity, metadata) :
             ComponentUtility.TryGetConcreteTypes<T>(out var types) ? State(entity, types) :
             States.None;
 
@@ -74,7 +74,7 @@ namespace Entia.Modules
 
         [ThreadSafe]
         bool IsDisabled(BitMask mask, in Delegates delegates) =>
-            delegates.IsDisabled.IsValueCreated && IsDisabled(mask, delegates.IsDisabled.Value);
+            !delegates.Enabled && delegates.IsDisabled.IsValueCreated && IsDisabled(mask, delegates.IsDisabled.Value);
 
         [ThreadSafe]
         bool IsDisabled(BitMask mask, in Metadata disabled) => disabled.IsValid && mask.Has(disabled.Index);

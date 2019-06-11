@@ -22,7 +22,7 @@ namespace Entia.Modules
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
         /// <returns>Returns <c>true</c> if the cloning was successful; otherwise, <c>false</c>.</returns>
         public bool Copy<T>(Entity source, Entity target, States include = States.All) where T : IComponent =>
-            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Copy(source, target, metadata, include) :
+            ComponentUtility.Abstract<T>.TryConcrete(out var metadata) ? Copy(source, target, metadata, include) :
             ComponentUtility.TryGetConcreteTypes<T>(out var types) && Copy(source, target, types, include);
 
         /// <summary>

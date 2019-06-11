@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using Entia.Components;
 using Entia.Core;
 using Entia.Core.Documentation;
 
@@ -13,12 +15,28 @@ namespace Entia.Modules.Component
         public enum Kinds { Invalid, Abstract, Concrete }
 
         [ThreadSafe]
-        public static class Cache<T> where T : struct, IComponent
+        public static class Concrete<T> where T : struct, IComponent
         {
             [Preserve]
             public static readonly Metadata Data = GetMetadata(typeof(T));
             [Preserve]
+            public static readonly Lazy<Metadata> Disabled = new Lazy<Metadata>(() => Concrete<IsDisabled<T>>.Data);
+            [Preserve]
             public static readonly Pointer<T> Pointer = new Pointer<T>();
+        }
+
+        [ThreadSafe]
+        public static class Abstract<T> where T : IComponent
+        {
+            public static readonly Kinds Kind = GetKind(typeof(T));
+            public static readonly Metadata Data = GetMetadata(typeof(T));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static bool TryConcrete(out Metadata data)
+            {
+                data = Data;
+                return Kind == Kinds.Concrete;
+            }
         }
 
         struct State
@@ -40,16 +58,6 @@ namespace Entia.Modules.Component
             AbstractToMetadata = new TypeMap<IComponent, Metadata[]>(),
             MaskToMetadata = new Dictionary<BitMask, Metadata[]>()
         };
-
-        public static bool TryGetMetadata<T>(bool create, out Metadata data) where T : IComponent
-        {
-            using (var read = _state.Read(create))
-            {
-                if (read.Value.ConcreteToMetadata.TryGet<T>(out data)) return data.IsValid;
-                if (create) data = CreateMetadata(typeof(T));
-                return data.IsValid;
-            }
-        }
 
         public static bool TryGetMetadata(Type type, bool create, out Metadata data)
         {

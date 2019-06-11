@@ -3,6 +3,7 @@ using Entia.Core.Documentation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Entia.Modules.Message
@@ -22,7 +23,11 @@ namespace Entia.Modules.Message
     {
         static readonly InAction<T> _empty = (in T _) => { };
 
-        public InAction<T> React => _reaction;
+        public InAction<T> React
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _reaction;
+        }
 
         Delegate IReaction.React => _reaction;
         Type IReaction.Type => typeof(T);

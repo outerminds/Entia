@@ -33,7 +33,7 @@ namespace Entia.Modules
         public bool Set<T>(Entity entity, in T component) where T : struct, IComponent
         {
             ref var data = ref GetData(entity, out var success);
-            return success && Set(entity, component, ref data, ComponentUtility.Cache<T>.Data);
+            return success && Set(entity, component, ref data, ComponentUtility.Concrete<T>.Data);
         }
 
         /// <summary>

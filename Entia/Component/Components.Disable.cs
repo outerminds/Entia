@@ -14,7 +14,7 @@ namespace Entia.Modules
     public sealed partial class Components
     {
         public bool Disable<T>(Entity entity) where T : IComponent =>
-            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Disable(entity, metadata) :
+            ComponentUtility.Abstract<T>.TryConcrete(out var metadata) ? Disable(entity, metadata) :
             ComponentUtility.TryGetConcreteTypes<T>(out var types) && Disable(entity, types);
 
         public bool Disable(Entity entity, Type type) =>

@@ -16,7 +16,7 @@ namespace Entia.Injectors
         Result<object> IInjector.Inject(MemberInfo member, World world) => Inject(member, world).Box();
     }
 
-    [AttributeUsage(ModuleUtility.AttributeUsage)]
+    [AttributeUsage(ModuleUtility.AttributeUsage, Inherited = true, AllowMultiple = false)]
     public sealed class InjectorAttribute : PreserveAttribute { }
 
     public sealed class Default : Injector<object>

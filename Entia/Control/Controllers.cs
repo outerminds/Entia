@@ -39,9 +39,9 @@ namespace Entia.Modules
                 .Descend(child => child.Wrap(new Map(runner => nodes[child] = runner)));
             states = new Controller.States[count];
 
-            return Result
-                .And(_world.Analyzers().Analyze(root, root), _world.Builders().Build(root, root))
-                .Map(pair => _controllers[node] = new Controller((root, pair.right), _world, nodes, runners, states));
+            // TODO: put analysis back in when it works properly
+            return _world.Builders().Build(root, root)
+                .Map(runner => _controllers[node] = new Controller((root, runner), _world, nodes, runners, states));
         }
 
         public bool TryGet(Node node, out Controller controller) => _controllers.TryGetValue(node, out controller);

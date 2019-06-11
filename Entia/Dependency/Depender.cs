@@ -13,7 +13,7 @@ namespace Entia.Dependers
         IEnumerable<IDependency> Depend(MemberInfo member, World world);
     }
 
-    [AttributeUsage(ModuleUtility.AttributeUsage)]
+    [AttributeUsage(ModuleUtility.AttributeUsage, Inherited = true, AllowMultiple = false)]
     public sealed class DependerAttribute : PreserveAttribute { }
 
     public sealed class Default : IDepender

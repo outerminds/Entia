@@ -66,14 +66,14 @@ namespace Entia.Modules.Group
         /// <inheritdoc cref="Component.Segment.Store(in Metadata)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TComponent[] Store<TComponent>() where TComponent : struct, IComponent =>
-            ComponentUtility.TryGetMetadata<TComponent>(false, out var metadata) ?
+            ComponentUtility.Abstract<TComponent>.TryConcrete(out var metadata) ?
             _segment.Store(metadata) as TComponent[] : default;
 
         /// <inheritdoc cref="Component.Segment.TryStore(in Metadata, out Array)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryStore<TComponent>(out TComponent[] store) where TComponent : struct, IComponent
         {
-            if (ComponentUtility.TryGetMetadata<TComponent>(false, out var metadata) && _segment.TryStore(metadata, out var array))
+            if (ComponentUtility.Abstract<TComponent>.TryConcrete(out var metadata) && _segment.TryStore(metadata, out var array))
             {
                 store = array as TComponent[];
                 return store != null;

@@ -15,7 +15,7 @@ namespace Entia.Resolvers
         bool IResolver.Resolve(IResolvable resolvable) => resolvable is T casted && Resolve(casted);
     }
 
-    [AttributeUsage(Modules.ModuleUtility.AttributeUsage)]
+    [AttributeUsage(Modules.ModuleUtility.AttributeUsage, Inherited = true, AllowMultiple = false)]
     public sealed class ResolverAttribute : PreserveAttribute { }
 
     public sealed class Default<T> : Resolver<T> where T : struct, IResolvable

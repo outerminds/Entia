@@ -20,7 +20,7 @@ namespace Entia.Modules
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
         /// <returns>Returns <c>true</c> if components were cleared; otherwise, <c>false</c>.</returns>
         public bool Clear<T>(States include = States.All) where T : IComponent =>
-            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Clear(metadata, include) :
+            ComponentUtility.Abstract<T>.TryConcrete(out var metadata) ? Clear(metadata, include) :
             ComponentUtility.TryGetConcrete<T>(out var mask, out var types) && Clear((mask, types), include);
 
         /// <summary>

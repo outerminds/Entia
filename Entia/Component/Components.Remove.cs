@@ -21,7 +21,7 @@ namespace Entia.Modules
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
         /// <returns>Returns <c>true</c> if the component was removed; otherwise, <c>false</c>.</returns>
         public bool Remove<T>(Entity entity, States include = States.All) where T : IComponent =>
-            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Remove(entity, metadata, include) :
+            ComponentUtility.Abstract<T>.TryConcrete(out var metadata) ? Remove(entity, metadata, include) :
             ComponentUtility.TryGetConcrete<T>(out var mask, out var types) && Remove(entity, (mask, types), include);
 
         /// <summary>

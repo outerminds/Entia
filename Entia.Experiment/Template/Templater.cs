@@ -15,7 +15,7 @@ namespace Entia.Templaters
         Result<(IInstantiator instantiator, IInitializer initializer)> Template(in Context context, World world);
     }
 
-    [System.AttributeUsage(ModuleUtility.AttributeUsage)]
+    [System.AttributeUsage(ModuleUtility.AttributeUsage, Inherited = true, AllowMultiple = false)]
     public sealed class TemplaterAttribute : PreserveAttribute { }
 
     public sealed class Default : ITemplater

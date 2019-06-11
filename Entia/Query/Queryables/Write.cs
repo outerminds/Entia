@@ -22,7 +22,7 @@ namespace Entia.Queryables
         {
             public override bool TryQuery(in Context context, out Query<Write<T>> query)
             {
-                if (ComponentUtility.TryGetMetadata<T>(false, out var metadata))
+                if (ComponentUtility.Abstract<T>.TryConcrete(out var metadata))
                 {
                     var segment = context.Segment;
                     var state = context.World.Components().State(segment.Mask, metadata);

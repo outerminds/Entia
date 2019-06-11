@@ -13,6 +13,14 @@ namespace Entia.Modules
 {
     public sealed partial class Components
     {
+        [ThreadSafe]
+        static Array GetTagStore(in Metadata metadata)
+        {
+            // NOTE: while this is not strictly thread safe, the worst case senario is the generation of a bit of garbage
+            ArrayUtility.Ensure(ref _tags, metadata.Index + 1);
+            return _tags[metadata.Index] ?? (_tags[metadata.Index] = Array.CreateInstance(metadata.Type, 1));
+        }
+
         /// <summary>
         /// Tries to get the component store of type <typeparamref name="T"/> associated with the <paramref name="entity"/>.
         /// </summary>
@@ -26,8 +34,7 @@ namespace Entia.Modules
         public bool TryStore<T>(Entity entity, out T[] store, out int index, States include = States.All) where T : struct, IComponent
         {
             ref readonly var data = ref GetData(entity, out var success);
-            if (success && ComponentUtility.TryGetMetadata<T>(false, out var metadata))
-                return TryGetStore(data, metadata, include, out store, out index);
+            if (success) return TryGetStore(data, ComponentUtility.Concrete<T>.Data, include, out store, out index);
             store = default;
             index = default;
             return false;
@@ -65,14 +72,6 @@ namespace Entia.Modules
 
             store = default;
             return false;
-        }
-
-        [ThreadSafe]
-        Array GetTagStore(in Metadata metadata)
-        {
-            // NOTE: while this is not strictly thread safe, the worst case senario is the generation of a bit of garbage
-            _stores.Ensure(metadata.Index + 1);
-            return _stores.items[metadata.Index] ?? (_stores.items[metadata.Index] = Array.CreateInstance(metadata.Type, 1));
         }
 
         [ThreadSafe]
@@ -122,6 +121,6 @@ namespace Entia.Modules
         }
 
         T[] GetStore<T>(Entity entity, ref Data data, in Metadata metadata, out int adjusted) where T : struct, IComponent =>
-            (T[])GetStore(entity, ref data, metadata, out adjusted);
+            GetStore(entity, ref data, metadata, out adjusted) as T[];
     }
 }

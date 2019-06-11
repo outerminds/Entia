@@ -23,7 +23,7 @@ namespace Entia.Nodes
             public Option<Run<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
                 var run = default(Run<T>);
-                foreach (var child in Children) if (child.Specialize<T>(controller).TryValue(out var special)) run += special;
+                foreach (var child in Children) if (child.Specialize<T>(controller).TryValue(out var @delegate)) run += @delegate;
                 if (run == null) return Option.None();
                 return run;
             }

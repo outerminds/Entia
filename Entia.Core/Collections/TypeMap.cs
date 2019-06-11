@@ -313,7 +313,9 @@ namespace Entia.Core
         public bool TryGet(Type type, out TValue value, bool super = false, bool sub = false)
         {
             if (TryGetIndices(type, out var indices))
-                return TryGet(indices.index, out value) || (super && TryGet(indices.super, out value)) || (sub && TryGet(indices.sub, out value));
+                return TryGet(indices.index, out value) ||
+                    (super && TryGet(indices.super, out value)) ||
+                    (sub && TryGet(indices.sub, out value));
 
             value = default;
             return false;

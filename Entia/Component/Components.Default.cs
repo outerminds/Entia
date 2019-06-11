@@ -31,14 +31,8 @@ namespace Entia.Modules
         [ThreadSafe]
         public bool TryDefault(Type type, out IComponent component)
         {
-            if (ComponentUtility.IsConcrete(type) && DefaultUtility.Default(type) is IComponent casted)
-            {
-                component = casted;
-                return true;
-            }
-
-            component = default;
-            return false;
+            component = DefaultUtility.Default(type) as IComponent;
+            return component != null;
         }
     }
 }

@@ -1,13 +1,43 @@
+using Entia.Cloners;
 using Entia.Components;
 using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Messages;
+using Entia.Modules;
 using Entia.Modules.Component;
 using Entia.Modules.Message;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
+namespace Entia.Cloneables
+{
+    public interface ICloneable { }
+    public interface ICloneable<T> where T : ICloner { }
+}
+
+namespace Entia.Cloners
+{
+    public interface ICloner
+    {
+        object Clone(object instance, World world);
+    }
+
+    public abstract class Cloner<T> : ICloner
+    {
+        public abstract T Clone(T instance, World world);
+        object ICloner.Clone(object instance, World world) => instance is T casted ? Clone(casted, world) : CloneUtility.Shallow(instance);
+    }
+
+    public sealed class Default : ICloner
+    {
+        public object Clone(object instance, World world) => CloneUtility.Shallow(instance);
+    }
+
+    [AttributeUsage(ModuleUtility.AttributeUsage, Inherited = true, AllowMultiple = false)]
+    public sealed class ClonerAttribute : Attribute { }
+}
 
 namespace Entia.Modules
 {
@@ -16,14 +46,48 @@ namespace Entia.Modules
     /// </summary>
     public sealed partial class Components : IModule, IClearable, IResolvable, IEnumerable<IComponent>
     {
+        sealed class Cloner : Cloner<Components>
+        {
+            public override Components Clone(Components instance, World world)
+            {
+                // NOTE: resolving ensures that the transient operations are completed
+                instance.Resolve();
+
+                // TODO: BUG: if entities/messages are not cloned, these reference will be broken
+                var messages = world.Messages();
+
+                var segments = new Segment[instance._segments.Length];
+                for (int i = 0; i < segments.Length; i++) segments[i] = instance._segments[i].Clone();
+
+                // NOTE: setting segments by index will work since no entity is in the special 'created/destroyed' segments
+                var data = instance._data.Clone();
+                for (int i = 0; i < data.count; i++)
+                {
+                    ref var datum = ref data.items[i];
+                    if (datum.IsValid) datum.Segment = segments[datum.Segment.Index];
+                }
+
+                // NOTE: many component operations assume that the delegates are initialized
+                var delegates = new Delegates[instance._delegates.Length];
+                for (int i = 0; i < delegates.Length; i++)
+                {
+                    ref readonly var current = ref instance._delegates[i];
+                    if (current.IsValid) delegates[i] = current.Clone(messages);
+                }
+
+                return new Components(messages, data, segments, delegates);
+            }
+        }
+
         struct Data
         {
-            public bool IsValid => Segment != null;
-
+            public bool IsValid;
             public int Index;
             public Segment Segment;
             public int? Transient;
         }
+
+        static Array[] _tags = new Array[8];
 
         /// <summary>
         /// Gets all the component segments.
@@ -32,47 +96,47 @@ namespace Entia.Modules
         /// The segments.
         /// </value>
         [ThreadSafe]
-        public Slice<Segment>.Read Segments => _segments.Slice();
+        public Segment[] Segments => _segments;
 
-        readonly Entities _entities;
         readonly Messages _messages;
         readonly Emitter<OnException> _onException;
-        readonly Emitter<OnAdd> _onAdd;
-        readonly Emitter<OnRemove> _onRemove;
-        readonly Emitter<OnEnable> _onEnable;
-        readonly Emitter<OnDisable> _onDisable;
         readonly Emitter<Entia.Messages.Segment.OnCreate> _onCreate;
         readonly Emitter<Entia.Messages.Segment.OnMove> _onMove;
         readonly Transient _transient = new Transient();
         readonly Segment _created = new Segment(int.MaxValue, new BitMask());
         readonly Segment _destroyed = new Segment(int.MaxValue, new BitMask(), 1);
-        readonly Segment _empty = new Segment(0, new BitMask());
         readonly Dictionary<BitMask, Segment> _maskToSegment;
-        (Data[] items, int count) _data = (new Data[64], 0);
-        (Segment[] items, int count) _segments;
-        (Array[] items, int count) _stores = (new Array[8], 0);
-        Delegates[] _delegates = new Delegates[8];
+        readonly Segment _empty;
+        (Data[] items, int count) _data;
+        Segment[] _segments;
+        Delegates[] _delegates;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Components"/> class.
         /// </summary>
-        public Components(Entities entities, Messages messages)
+        public Components(Entities entities, Messages messages, int capacity = 64) :
+            this(messages, (new Data[capacity], 0), new[] { new Segment(0, new BitMask()) }, new Delegates[8])
         {
-            _entities = entities;
+            foreach (var entity in entities) Initialize(entity);
+        }
+
+        // NOTE: this constructor is meant for cloning and serialization
+        Components(Messages messages, in (Data[] items, int count) data, Segment[] segments, Delegates[] delegates)
+        {
             _messages = messages;
+            _data = data;
+            _segments = segments;
+            _delegates = delegates;
+            _empty = segments[0];
+            _maskToSegment = new Dictionary<BitMask, Segment>(segments.Length);
+            foreach (var segment in segments) _maskToSegment[segment.Mask] = segment;
+
             _onException = _messages.Emitter<OnException>();
-            _onAdd = _messages.Emitter<OnAdd>();
-            _onRemove = _messages.Emitter<OnRemove>();
-            _onEnable = _messages.Emitter<OnEnable>();
-            _onDisable = _messages.Emitter<OnDisable>();
             _onCreate = _messages.Emitter<Entia.Messages.Segment.OnCreate>();
             _onMove = _messages.Emitter<Entia.Messages.Segment.OnMove>();
-            // NOTE: do not include '_created' and '_destroyed' here
-            _segments = (new Segment[] { _empty }, 1);
-            _maskToSegment = new Dictionary<BitMask, Segment> { { _empty.Mask, _empty } };
+
             _messages.React((in OnCreate message) => Initialize(message.Entity));
             _messages.React((in OnPostDestroy message) => Dispose(message.Entity));
-            foreach (var entity in entities) Initialize(entity);
         }
 
         /// <summary>
@@ -98,7 +162,7 @@ namespace Entia.Modules
         public IEnumerator<IComponent> GetEnumerator() => Get(States.All).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        bool IResolvable.Resolve()
+        public bool Resolve()
         {
             for (int i = 0; i < _transient.Slots.count; i++)
             {
@@ -147,9 +211,9 @@ namespace Entia.Modules
             if (entity.Index < _data.count)
             {
                 ref var data = ref _data.items[entity.Index];
-                if (data.Segment is Segment segment)
+                if (data.IsValid)
                 {
-                    ref var entities = ref segment.Entities;
+                    ref var entities = ref data.Segment.Entities;
                     success = data.Index < entities.count && entities.items[data.Index] == entity;
                     return ref data;
                 }
@@ -223,7 +287,7 @@ namespace Entia.Modules
             var index = segment.Entities.count++;
             segment.Entities.Ensure();
             segment.Entities.items[index] = entity;
-            _data.Set(entity.Index, new Data { Segment = segment, Index = index, Transient = transient });
+            _data.Set(entity.Index, new Data { IsValid = true, Segment = segment, Index = index, Transient = transient });
         }
 
         void Dispose(Entity entity)
@@ -275,7 +339,7 @@ namespace Entia.Modules
             if (mask.IsEmpty) return _empty;
             if (_maskToSegment.TryGetValue(mask, out var segment)) return segment;
             var clone = new BitMask { mask };
-            segment = _maskToSegment[clone] = _segments.Push(new Segment(_segments.count, clone));
+            segment = _maskToSegment[clone] = ArrayUtility.Add(ref _segments, new Segment(_segments.Length, clone));
             _onCreate.Emit(new Entia.Messages.Segment.OnCreate { Segment = segment });
             return segment;
         }

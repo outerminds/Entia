@@ -77,7 +77,7 @@ namespace Entia.Injectables
             /// <inheritdoc cref="Modules.Components.State(Entity)"/>
             public States State(Entity entity) => _components.State(entity);
             /// <inheritdoc cref="Modules.Components.State{T}(Entity)"/>
-            public States State<T>(Entity entity) where T : struct, IComponent => _components.State<T>(entity);
+            public States State<T>(Entity entity) where T : IComponent => _components.State<T>(entity);
             /// <inheritdoc cref="Modules.Components.State(Entity, Type)"/>
             public States State(Entity entity, Type type) => _components.State(entity, type);
             /// <inheritdoc cref="Modules.Components.GetEnumerator()"/>
@@ -146,7 +146,7 @@ namespace Entia.Injectables
             /// <inheritdoc cref="Modules.Components.State(Entity)"/>
             public States State(Entity entity) => _components.State(entity);
             /// <inheritdoc cref="Modules.Components.State{T}(Entity)"/>
-            public States State<T>(Entity entity) where T : struct, IComponent => _components.State<T>(entity);
+            public States State<T>(Entity entity) where T : IComponent => _components.State<T>(entity);
             /// <inheritdoc cref="Modules.Components.State(Entity, Type)"/>
             public States State(Entity entity, Type type) => _components.State(entity, type);
             /// <inheritdoc cref="Modules.Components.GetEnumerator()"/>
@@ -244,7 +244,7 @@ namespace Entia.Injectables
         public States State(Entity entity) => _components.State(entity);
         /// <inheritdoc cref="Modules.Components.State{T}(Entity)"/>
         [ThreadSafe]
-        public States State<T>(Entity entity) where T : struct, IComponent => _components.State<T>(entity);
+        public States State<T>(Entity entity) where T : IComponent => _components.State<T>(entity);
         /// <inheritdoc cref="Modules.Components.State(Entity, Type)"/>
         [ThreadSafe]
         public States State(Entity entity, Type type) => _components.State(entity, type);
@@ -277,13 +277,13 @@ namespace Entia.Injectables
         /// <inheritdoc cref="Modules.Components.Trim(Entity, Entity, States)"/>
         public bool Trim(Entity source, Entity target, States include = States.All) => _components.Trim(source, target, include);
         /// <inheritdoc cref="Modules.Components.Enable{T}(Entity)"/>
-        public bool Enable<T>(Entity entity) where T : struct, IComponent => _components.Enable<T>(entity);
+        public bool Enable<T>(Entity entity) where T : IComponent => _components.Enable<T>(entity);
         /// <inheritdoc cref="Modules.Components.Enable(Entity, Type)"/>
         public bool Enable(Entity entity, Type type) => _components.Enable(entity, type);
         /// <inheritdoc cref="Modules.Components.Enable(Entity)"/>
         public bool Enable(Entity entity) => _components.Enable(entity);
         /// <inheritdoc cref="Modules.Components.Disable{T}(Entity)"/>
-        public bool Disable<T>(Entity entity) where T : struct, IComponent => _components.Disable<T>(entity);
+        public bool Disable<T>(Entity entity) where T : IComponent => _components.Disable<T>(entity);
         /// <inheritdoc cref="Modules.Components.Disable(Entity, Type)"/>
         public bool Disable(Entity entity, Type type) => _components.Disable(entity, type);
         /// <inheritdoc cref="Modules.Components.Disable(Entity)"/>

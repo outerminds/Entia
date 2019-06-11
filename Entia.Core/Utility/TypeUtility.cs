@@ -11,6 +11,7 @@ namespace Entia.Core
         public readonly Type Type;
         public Type Element => _element.Value;
         public MemberInfo[] StaticMembers => _staticMembers.Value;
+        public MethodInfo[] StaticMethods => _staticMethods.Value;
         public MemberInfo[] InstanceMembers => _instanceMembers.Value;
         public FieldInfo[] InstanceFields => _instanceFields.Value;
         public PropertyInfo[] InstanceProperties => _instanceProperties.Value;
@@ -24,6 +25,7 @@ namespace Entia.Core
 
         readonly Lazy<Type> _element;
         readonly Lazy<MemberInfo[]> _staticMembers;
+        readonly Lazy<MethodInfo[]> _staticMethods;
         readonly Lazy<MemberInfo[]> _instanceMembers;
         readonly Lazy<FieldInfo[]> _instanceFields;
         readonly Lazy<PropertyInfo[]> _instanceProperties;
@@ -97,6 +99,7 @@ namespace Entia.Core
             _bases = new Lazy<Type[]>(() => GetBases(Type).ToArray());
             _element = new Lazy<Type>(() => GetElement(Type, Interfaces));
             _staticMembers = new Lazy<MemberInfo[]>(() => Type.GetMembers(TypeUtility.Static));
+            _staticMethods = new Lazy<MethodInfo[]>(() => StaticMembers.OfType<MethodInfo>().ToArray());
             _instanceMembers = new Lazy<MemberInfo[]>(() => GetMembers(Type, Bases));
             _instanceFields = new Lazy<FieldInfo[]>(() => InstanceMembers.OfType<FieldInfo>().ToArray());
             _instanceProperties = new Lazy<PropertyInfo[]>(() => InstanceMembers.OfType<PropertyInfo>().ToArray());
@@ -239,6 +242,7 @@ namespace Entia.Core
         public static bool IsDefault(object value) => value is null || value.Equals(GetData(value.GetType()).Default);
         public static bool IsPrimitive(object value) => value is null || value.GetType().IsPrimitive;
         public static MemberInfo[] StaticMembers(this Type type) => GetData(type).StaticMembers;
+        public static MethodInfo[] StaticMethods(this Type type) => GetData(type).StaticMethods;
         public static MemberInfo[] InstanceMembers(this Type type) => GetData(type).InstanceMembers;
         public static FieldInfo[] InstanceFields(this Type type) => GetData(type).InstanceFields;
         public static PropertyInfo[] InstanceProperties(this Type type) => GetData(type).InstanceProperties;

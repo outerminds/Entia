@@ -136,11 +136,8 @@ namespace Entia.Modules
         [ThreadSafe]
         public IEnumerable<T> Get<T>(States include = States.All) where T : struct, IComponent
         {
-            if (ComponentUtility.TryGetMetadata<T>(false, out var metadata))
-            {
-                foreach (var data in _data.Slice())
-                    if (data.IsValid && TryGetStore<T>(data, metadata, include, out var store, out var index)) yield return store[index];
-            }
+            foreach (var data in _data.Slice())
+                if (data.IsValid && TryGetStore<T>(data, ComponentUtility.Concrete<T>.Data, include, out var store, out var index)) yield return store[index];
         }
 
         /// <summary>

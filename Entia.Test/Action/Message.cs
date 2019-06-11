@@ -51,7 +51,7 @@ namespace Entia.Test
 
             .And(_emitter.Has(_receiver).Label("emitter.Has(Receiver<T>)"))
             .And((_emitter.Reaction == _reaction).Label("emitter.Reaction == reaction"))
-            .And(_emitter.Receivers.Contains(_receiver).Label("emitter.Receivers.Contains()"))
+            .And(_emitter.Contains(_receiver).Label("emitter.Receivers.Contains()"))
             .And(_emitter.Add(_receiver).Not().Label("emitter.Has(Receiver<T>)"))
 
             .And((_local == 6).Label("local == 6"))

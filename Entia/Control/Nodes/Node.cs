@@ -46,17 +46,14 @@ namespace Entia.Nodes
         public bool Equals(Node other)
         {
             if (ReferenceEquals(this, other)) return true;
-            return
-                GetHashCode() == other.GetHashCode() &&
-                (Name, Value) == (other.Name, other.Value) &&
-                Children.SequenceEqual(other.Children);
+            if (other == null) return false;
+            return Equals(Name, other.Name) && Equals(Value, other.Value) && Children.SequenceEqual(other.Children);
         }
         public override bool Equals(object obj) => obj is Node node && Equals(node);
         public override int GetHashCode()
         {
             if (_hash is int hash) return hash;
-            hash = (Name, Value).GetHashCode() ^ ArrayUtility.GetHashCode(Children);
-            _hash = hash;
+            _hash = hash = (Name, Value).GetHashCode() ^ ArrayUtility.GetHashCode(Children);
             return hash;
         }
         public override string ToString() => string.IsNullOrWhiteSpace(Name) ? $"[{string.Join(", ", Children.AsEnumerable())}]" : Name;

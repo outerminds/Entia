@@ -30,7 +30,7 @@ namespace Entia.Queriers
         bool TryQuery(in Context context, out Query query);
     }
 
-    [AttributeUsage(ModuleUtility.AttributeUsage)]
+    [AttributeUsage(ModuleUtility.AttributeUsage, Inherited = true, AllowMultiple = false)]
     public sealed class QuerierAttribute : PreserveAttribute { }
 
     public abstract class Querier<T> : IQuerier where T : struct, Queryables.IQueryable

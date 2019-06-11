@@ -13,6 +13,13 @@ namespace Entia.Modules.Component
     /// </summary>
     public sealed class Segment
     {
+        static (GCHandle handle, IntPtr address) Fix(Array store)
+        {
+            var handle = GCHandle.Alloc(store, GCHandleType.Pinned);
+            var address = handle.AddrOfPinnedObject();
+            return (handle, address);
+        }
+
         /// <summary>
         /// The index of the segment.
         /// </summary>
@@ -34,27 +41,38 @@ namespace Entia.Modules.Component
 
         readonly int _minimum;
         readonly int _maximum;
-        readonly Array[] _stores;
-        readonly (GCHandle handle, IntPtr address)[] _handles;
+        Array[] _stores;
+        (GCHandle handle, IntPtr address)[] _handles;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Segment"/> class.
         /// </summary>
-        public Segment(int index, BitMask mask, int capacity = 4)
+        public Segment(int index, BitMask mask, int capacity = 4) : this(index, mask, ComponentUtility.ToMetadata(mask), capacity) { }
+
+        Segment(int index, BitMask mask, Metadata[] types, int capacity = 4) : this(
+            index,
+            mask,
+            types,
+            types.Where(type => type.Kind == Metadata.Kinds.Data).ToArray(),
+            types.Where(type => type.Kind == Metadata.Kinds.Tag).ToArray(),
+            (new Entity[capacity], 0))
+        { }
+
+        Segment(int index, BitMask mask, Metadata[] types, Metadata[] components, Metadata[] tags, in (Entity[] items, int count) entities)
         {
             Index = index;
             Mask = mask;
 
-            Types = ComponentUtility.ToMetadata(mask);
-            Components = Types.Where(type => type.Kind == Metadata.Kinds.Data).ToArray();
-            Tags = Types.Where(type => type.Kind == Metadata.Kinds.Tag).ToArray();
-            Entities = (new Entity[capacity], 0);
+            Types = types;
+            Components = components;
+            Tags = tags;
+            Entities = entities;
 
             _minimum = Components.Select(type => type.Index).FirstOrDefault();
             _maximum = Components.Select(type => type.Index + 1).LastOrDefault();
             _stores = new Array[_maximum - _minimum];
             _handles = new (GCHandle handle, IntPtr address)[_maximum - _minimum];
-            foreach (var type in Components) _stores[GetStoreIndex(type)] = Array.CreateInstance(type.Type, capacity);
+            foreach (var type in Components) _stores[GetStoreIndex(type)] = Array.CreateInstance(type.Type, entities.items.Length);
         }
 
         ~Segment()
@@ -65,6 +83,23 @@ namespace Entia.Modules.Component
                 ref var pair = ref _handles[index];
                 if (pair.handle.IsAllocated) pair.handle.Free();
             }
+        }
+
+        public Segment Clone()
+        {
+            var clone = new Segment(Index, Mask, Types, Components, Tags, Entities.Clone());
+            if (Entities.count > 0)
+            {
+                for (int j = 0; j < Components.Length; j++)
+                {
+                    ref readonly var type = ref Components[j];
+                    var index = GetStoreIndex(type);
+                    var source = _stores[index];
+                    var target = clone._stores[index];
+                    Array.Copy(source, target, Entities.count);
+                }
+            }
+            return clone;
         }
 
         /// <summary>
@@ -106,19 +141,17 @@ namespace Entia.Modules.Component
             var resized = false;
             for (int i = 0; i < Components.Length; i++)
             {
-                ref readonly var metadata = ref Components[i];
-                var index = GetStoreIndex(metadata);
+                ref readonly var type = ref Components[i];
+                var index = GetStoreIndex(type);
                 ref var store = ref _stores[index];
-                if (ArrayUtility.Ensure(ref store, metadata.Type, Entities.count))
+                if (ArrayUtility.Ensure(ref store, type.Type, Entities.count))
                 {
                     resized = true;
                     ref var pair = ref _handles[index];
                     if (pair.handle.IsAllocated)
                     {
                         pair.handle.Free();
-                        var handle = GCHandle.Alloc(store, GCHandleType.Pinned);
-                        var address = handle.AddrOfPinnedObject();
-                        pair = (handle, address);
+                        pair = Fix(store);
                     }
                 }
             }
@@ -131,11 +164,8 @@ namespace Entia.Modules.Component
             var store = _stores[index];
             ref var pair = ref _handles[index];
             if (pair.handle.IsAllocated) return (store, pair.address);
-
-            var handle = GCHandle.Alloc(store, GCHandleType.Pinned);
-            var address = handle.AddrOfPinnedObject();
-            pair = (handle, address);
-            return (store, address);
+            pair = Fix(store);
+            return (store, pair.address);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

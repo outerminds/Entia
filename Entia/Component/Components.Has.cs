@@ -47,7 +47,7 @@ namespace Entia.Modules
         /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
         [ThreadSafe]
         public bool Has<T>(Entity entity, States include = States.All) where T : IComponent =>
-            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Has(entity, metadata, include) :
+            ComponentUtility.Abstract<T>.TryConcrete(out var metadata) ? Has(entity, metadata, include) :
             ComponentUtility.TryGetConcrete<T>(out var mask, out var types) && Has(entity, (mask, types), include);
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace Entia.Modules
         /// <returns>Returns <c>true</c> if a component was found; otherwise, <c>false</c>.</returns>
         [ThreadSafe]
         public bool Has<T>(States include = States.All) where T : IComponent =>
-            ComponentUtility.TryGetMetadata<T>(false, out var metadata) ? Has(metadata, include) :
+            ComponentUtility.Abstract<T>.TryConcrete(out var metadata) ? Has(metadata, include) :
             ComponentUtility.TryGetConcrete<T>(out var mask, out var types) && Has((mask, types), include);
 
         /// <summary>
