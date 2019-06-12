@@ -54,6 +54,8 @@ $@"    /// <summary>
         public bool Has(Entity entity) => _group.Has(entity);
         /// <inheritdoc cref=""Modules.Group.Group{{T}}.TryGet(Entity, out T)""/>
         public bool TryGet(Entity entity, out {itemType} item) => _group.TryGet(entity, out item);
+        /// <inheritdoc cref=""Modules.Group.Group{{T}}.Get(Entity, out bool)""/>
+        public ref readonly {itemType} Get(Entity entity, out bool success) => ref _group.Get(entity, out success);
         /// <inheritdoc cref=""Modules.Group.Group{{T}}.Split(int)""/>
         public {groupType}.SplitEnumerable Split(int count) => _group.Split(count);
         /// <inheritdoc cref=""Modules.Group.Group{{T}}.GetEnumerator""/>

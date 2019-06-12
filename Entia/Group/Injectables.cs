@@ -44,6 +44,8 @@ namespace Entia.Injectables
         public bool Has(Entity entity) => _group.Has(entity);
         /// <inheritdoc cref="Modules.Group.Group{T}.TryGet(Entity, out T)"/>
         public bool TryGet(Entity entity, out T item) => _group.TryGet(entity, out item);
+        /// <inheritdoc cref="Modules.Group.Group{T}.Get(Entity, out bool)"/>
+        public ref readonly T Get(Entity entity, out bool success) => ref _group.Get(entity, out success);
         /// <inheritdoc cref="Modules.Group.Group{T}.Split(int)"/>
         public Modules.Group.Group<T>.SplitEnumerable Split(int count) => _group.Split(count);
         /// <inheritdoc cref="Modules.Group.Group{T}.GetEnumerator"/>
@@ -81,6 +83,8 @@ namespace Entia.Injectables
         public bool Has(Entity entity) => _group.Has(entity);
         /// <inheritdoc cref="Modules.Group.Group{T}.TryGet(Entity, out T)"/>
         public bool TryGet(Entity entity, out All<T1, T2> item) => _group.TryGet(entity, out item);
+        /// <inheritdoc cref="Modules.Group.Group{T}.Get(Entity, out bool)"/>
+        public ref readonly All<T1, T2> Get(Entity entity, out bool success) => ref _group.Get(entity, out success);
         /// <inheritdoc cref="Modules.Group.Group{T}.Split(int)"/>
         public Modules.Group.Group<All<T1, T2>>.SplitEnumerable Split(int count) => _group.Split(count);
         /// <inheritdoc cref="Modules.Group.Group{T}.GetEnumerator"/>
@@ -118,6 +122,8 @@ namespace Entia.Injectables
         public bool Has(Entity entity) => _group.Has(entity);
         /// <inheritdoc cref="Modules.Group.Group{T}.TryGet(Entity, out T)"/>
         public bool TryGet(Entity entity, out All<T1, T2, T3> item) => _group.TryGet(entity, out item);
+        /// <inheritdoc cref="Modules.Group.Group{T}.Get(Entity, out bool)"/>
+        public ref readonly All<T1, T2, T3> Get(Entity entity, out bool success) => ref _group.Get(entity, out success);
         /// <inheritdoc cref="Modules.Group.Group{T}.Split(int)"/>
         public Modules.Group.Group<All<T1, T2, T3>>.SplitEnumerable Split(int count) => _group.Split(count);
         /// <inheritdoc cref="Modules.Group.Group{T}.GetEnumerator"/>
@@ -155,6 +161,8 @@ namespace Entia.Injectables
         public bool Has(Entity entity) => _group.Has(entity);
         /// <inheritdoc cref="Modules.Group.Group{T}.TryGet(Entity, out T)"/>
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4> item) => _group.TryGet(entity, out item);
+        /// <inheritdoc cref="Modules.Group.Group{T}.Get(Entity, out bool)"/>
+        public ref readonly All<T1, T2, T3, T4> Get(Entity entity, out bool success) => ref _group.Get(entity, out success);
         /// <inheritdoc cref="Modules.Group.Group{T}.Split(int)"/>
         public Modules.Group.Group<All<T1, T2, T3, T4>>.SplitEnumerable Split(int count) => _group.Split(count);
         /// <inheritdoc cref="Modules.Group.Group{T}.GetEnumerator"/>
@@ -192,6 +200,8 @@ namespace Entia.Injectables
         public bool Has(Entity entity) => _group.Has(entity);
         /// <inheritdoc cref="Modules.Group.Group{T}.TryGet(Entity, out T)"/>
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5> item) => _group.TryGet(entity, out item);
+        /// <inheritdoc cref="Modules.Group.Group{T}.Get(Entity, out bool)"/>
+        public ref readonly All<T1, T2, T3, T4, T5> Get(Entity entity, out bool success) => ref _group.Get(entity, out success);
         /// <inheritdoc cref="Modules.Group.Group{T}.Split(int)"/>
         public Modules.Group.Group<All<T1, T2, T3, T4, T5>>.SplitEnumerable Split(int count) => _group.Split(count);
         /// <inheritdoc cref="Modules.Group.Group{T}.GetEnumerator"/>
@@ -229,6 +239,8 @@ namespace Entia.Injectables
         public bool Has(Entity entity) => _group.Has(entity);
         /// <inheritdoc cref="Modules.Group.Group{T}.TryGet(Entity, out T)"/>
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5, T6> item) => _group.TryGet(entity, out item);
+        /// <inheritdoc cref="Modules.Group.Group{T}.Get(Entity, out bool)"/>
+        public ref readonly All<T1, T2, T3, T4, T5, T6> Get(Entity entity, out bool success) => ref _group.Get(entity, out success);
         /// <inheritdoc cref="Modules.Group.Group{T}.Split(int)"/>
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.SplitEnumerable Split(int count) => _group.Split(count);
         /// <inheritdoc cref="Modules.Group.Group{T}.GetEnumerator"/>
@@ -266,6 +278,8 @@ namespace Entia.Injectables
         public bool Has(Entity entity) => _group.Has(entity);
         /// <inheritdoc cref="Modules.Group.Group{T}.TryGet(Entity, out T)"/>
         public bool TryGet(Entity entity, out All<T1, T2, T3, T4, T5, T6, T7> item) => _group.TryGet(entity, out item);
+        /// <inheritdoc cref="Modules.Group.Group{T}.Get(Entity, out bool)"/>
+        public ref readonly All<T1, T2, T3, T4, T5, T6, T7> Get(Entity entity, out bool success) => ref _group.Get(entity, out success);
         /// <inheritdoc cref="Modules.Group.Group{T}.Split(int)"/>
         public Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.SplitEnumerable Split(int count) => _group.Split(count);
         /// <inheritdoc cref="Modules.Group.Group{T}.GetEnumerator"/>
