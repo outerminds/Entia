@@ -40,19 +40,10 @@ namespace Entia.Queryables
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                yield return new Read(typeof(T));
-                foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
-            }
-        }
-
         [Querier]
         static readonly Querier _querier = new Querier();
         [Depender]
-        static readonly Depender _depender = new Depender();
+        static readonly IDepender _depender = Depender.From<T>(new Read(typeof(T)));
 
         public ref readonly T Value
         {

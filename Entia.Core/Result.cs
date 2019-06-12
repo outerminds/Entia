@@ -137,16 +137,9 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<TOut> Try<TIn, TOut>(Func<TIn, TOut> @try, TIn input)
+        public static Result<T> Try<TState, T>(in TState state, Func<TState, T> @try)
         {
-            try { return @try(input); }
-            catch (Exception exception) { return Failure(exception.ToString()); }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<TOut> Try<TIn1, TIn2, TOut>(Func<TIn1, TIn2, TOut> @try, TIn1 input1, TIn2 input2)
-        {
-            try { return @try(input1, input2); }
+            try { return @try(state); }
             catch (Exception exception) { return Failure(exception.ToString()); }
         }
 
@@ -158,16 +151,9 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<Unit> Try<T>(Action<T> @try, T input)
+        public static Result<Unit> Try<TState>(in TState input, Action<TState> @try)
         {
             try { @try(input); return default(Unit); }
-            catch (Exception exception) { return Failure(exception.ToString()); }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<Unit> Try<T1, T2>(Action<T1, T2> @try, T1 input1, T2 input2)
-        {
-            try { @try(input1, input2); return default(Unit); }
             catch (Exception exception) { return Failure(exception.ToString()); }
         }
 
@@ -267,7 +253,7 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> Do<T, TState>(in this Result<T> result, Action<T, TState> @do, TState state)
+        public static Result<T> Do<T, TState>(in this Result<T> result, in TState state, Action<T, TState> @do)
         {
             if (result.TryValue(out var value)) @do(value, state);
             return result;
@@ -304,7 +290,7 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<TOut> Map<TIn, TOut, TState>(in this Result<TIn> result, Func<TIn, TState, TOut> map, in TState state)
+        public static Result<TOut> Map<TIn, TOut, TState>(in this Result<TIn> result, in TState state, Func<TIn, TState, TOut> map)
         {
             if (result.TryValue(out var value)) return map(value, state);
             else if (result.TryFailure(out var failure)) return failure;
@@ -380,7 +366,7 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<TOut> Bind<TIn, TOut, TState>(in this Result<TIn> result, Func<TIn, TState, Result<TOut>> bind, in TState state)
+        public static Result<TOut> Bind<TIn, TOut, TState>(in this Result<TIn> result, in TState state, Func<TIn, TState, Result<TOut>> bind)
         {
             if (result.TryValue(out var value)) return bind(value, state);
             else if (result.TryFailure(out var failure)) return failure;
@@ -475,8 +461,8 @@ namespace Entia.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> As<T>(in this Result<T> result, Type type, bool hierarchy = false, bool definition = false) => result.Bind(
-            (value, state) => As(value, state.type, state.hierarchy, state.definition),
-            (type, hierarchy, definition));
+            (type, hierarchy, definition),
+            (value, state) => As(value, state.type, state.hierarchy, state.definition));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> As<T>(in T value, Type type, bool hierarchy = false, bool definition = false) =>

@@ -22,7 +22,7 @@ namespace Entia.Modules
         public Result<Template<T>> Template<T>(object value, Type type)
         {
             var context = new Context(value, type);
-            return Template(context).Map((_, state) => new Template<T>(state.Pairs.ToArray()), context);
+            return Template(context).Map(context, (_, state) => new Template<T>(state.Pairs.ToArray()));
         }
 
         public Result<Reference> Template(in Context context)
@@ -36,7 +36,7 @@ namespace Entia.Modules
 
             return Get(context.Type)
                 .Template(new Context(index, context), _world)
-                .Map((pair, state) => new Reference(state.index, state.context.Pairs[state.index] = pair), (context, index));
+                .Map((context, index), (pair, state) => new Reference(state.index, state.context.Pairs[state.index] = pair));
         }
 
         public ITemplater Default<T>() => _defaults.TryGet<T>(out var templater, false, false) ? templater : Default(typeof(T));

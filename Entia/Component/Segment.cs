@@ -13,11 +13,18 @@ namespace Entia.Modules.Component
     /// </summary>
     public sealed class Segment
     {
-        static (GCHandle handle, IntPtr address) Fix(Array store)
+        static (GCHandle handle, IntPtr address) Fix(Array store, TypeData element)
         {
-            var handle = GCHandle.Alloc(store, GCHandleType.Pinned);
-            var address = handle.AddrOfPinnedObject();
-            return (handle, address);
+            if (element.IsBlittable)
+            {
+                var handle = GCHandle.Alloc(store, GCHandleType.Pinned);
+                var address = handle.AddrOfPinnedObject();
+                return (handle, address);
+            }
+            // NOTE: C# will not prevent users from taking a pointer to a non-blittable type such as 'bool';
+            // depending on the platform, 'GCHandle.Alloc' will throw the exception, but 'Mono' seems to be more permissive;
+            // as such, this exception is thrown to ensure consistency between platforms
+            throw new ArgumentException($"Cannot fix store because type '{element.Type.FullFormat()}' is not blittable.");
         }
 
         /// <summary>
@@ -29,10 +36,16 @@ namespace Entia.Modules.Component
         /// </summary>
         public readonly BitMask Mask;
         /// <summary>
-        /// The selection of component types that are stored in this segment with the minimum and maximum indices of those types.
+        /// The selection of types that are stored in this segment.
         /// </summary>
         public readonly Metadata[] Types;
+        /// <summary>
+        /// The selection of component types that are stored in this segment.
+        /// </summary>
         public readonly Metadata[] Components;
+        /// <summary>
+        /// The selection of tag types that are stored in this segment.
+        /// </summary>
         public readonly Metadata[] Tags;
         /// <summary>
         /// The entities.
@@ -88,16 +101,15 @@ namespace Entia.Modules.Component
         public Segment Clone()
         {
             var clone = new Segment(Index, Mask, Types, Components, Tags, Entities.Clone());
-            if (Entities.count > 0)
+            if (Entities.count == 0) return clone;
+
+            for (int j = 0; j < Components.Length; j++)
             {
-                for (int j = 0; j < Components.Length; j++)
-                {
-                    ref readonly var type = ref Components[j];
-                    var index = GetStoreIndex(type);
-                    var source = _stores[index];
-                    var target = clone._stores[index];
-                    Array.Copy(source, target, Entities.count);
-                }
+                ref readonly var type = ref Components[j];
+                var index = GetStoreIndex(type);
+                var source = _stores[index];
+                var target = clone._stores[index];
+                Array.Copy(source, target, Entities.count);
             }
             return clone;
         }
@@ -141,30 +153,30 @@ namespace Entia.Modules.Component
             var resized = false;
             for (int i = 0; i < Components.Length; i++)
             {
-                ref readonly var type = ref Components[i];
-                var index = GetStoreIndex(type);
+                ref readonly var metadata = ref Components[i];
+                var index = GetStoreIndex(metadata);
                 ref var store = ref _stores[index];
-                if (ArrayUtility.Ensure(ref store, type.Type, Entities.count))
+                if (ArrayUtility.Ensure(ref store, metadata.Type, Entities.count))
                 {
                     resized = true;
                     ref var pair = ref _handles[index];
                     if (pair.handle.IsAllocated)
                     {
                         pair.handle.Free();
-                        pair = Fix(store);
+                        pair = Fix(store, metadata.Data);
                     }
                 }
             }
             return resized;
         }
 
-        public (Array store, IntPtr address) Fixed(in Metadata type)
+        public (Array store, IntPtr address) Fixed(in Metadata metadata)
         {
-            var index = GetStoreIndex(type);
+            var index = GetStoreIndex(metadata);
             var store = _stores[index];
             ref var pair = ref _handles[index];
             if (pair.handle.IsAllocated) return (store, pair.address);
-            pair = Fix(store);
+            pair = Fix(store, metadata.Data);
             return (store, pair.address);
         }
 

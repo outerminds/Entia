@@ -23,7 +23,7 @@ namespace Entia.Templaters
         public Result<(IInstantiator instantiator, IInitializer initializer)> Template(in Context context, World world)
         {
             var staticType = TypeUtility.GetData(context.Type);
-            if (staticType.IsBlittable || TypeUtility.IsPrimitive(context.Value)) return (new Constant(context.Value), new Identity());
+            if (staticType.IsPlain || TypeUtility.IsPrimitive(context.Value)) return (new Constant(context.Value), new Identity());
 
             var dynamicType = TypeUtility.GetData(context.Value.GetType());
             var templaters = world.Templaters();
@@ -31,7 +31,7 @@ namespace Entia.Templaters
             {
                 case System.Array array:
                     var elementType = TypeUtility.GetData(dynamicType.Element);
-                    if (elementType.IsBlittable) return (new Clone(array), new Identity());
+                    if (elementType.IsPlain) return (new Clone(array), new Identity());
 
                     var items = new List<(int index, int reference)>(array.Length);
                     for (var i = 0; i < array.Length; i++)
@@ -49,14 +49,14 @@ namespace Entia.Templaters
                     var instantiator = staticType.Type.IsValueType ?
                         new Constant(context.Value) as IInstantiator :
                         new Clone(context.Value);
-                    if (dynamicType.IsBlittable) return (instantiator, new Identity());
+                    if (dynamicType.IsPlain) return (instantiator, new Identity());
 
                     var fields = new List<(FieldInfo field, int reference)>(dynamicType.InstanceFields.Length);
                     for (int i = 0; i < dynamicType.InstanceFields.Length; i++)
                     {
                         var field = dynamicType.InstanceFields[i];
                         var fieldType = TypeUtility.GetData(field.FieldType);
-                        if (fieldType.IsBlittable) continue;
+                        if (fieldType.IsPlain) continue;
 
                         var value = field.GetValue(context.Value);
                         if (TypeUtility.IsPrimitive(value)) continue;

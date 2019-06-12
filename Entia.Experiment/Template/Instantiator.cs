@@ -25,7 +25,7 @@ namespace Entia.Instantiators
     {
         public readonly int Index;
         public Reference(int index) { Index = index; }
-        public Result<object> Instantiate(object[] instances) => Result.Try(state => state.instances[state.index], (index: Index, instances));
+        public Result<object> Instantiate(object[] instances) => Result.Try((index: Index, instances), state => state.instances[state.index]);
     }
 
     public sealed class Clone : IInstantiator

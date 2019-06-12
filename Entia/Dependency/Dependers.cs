@@ -46,6 +46,9 @@ namespace Entia.Modules
                         case PropertyInfo property:
                             foreach (var dependency in Next(property.PropertyType)) yield return dependency;
                             break;
+                        case EventInfo @event:
+                            foreach (var dependency in Next(@event.EventHandlerType)) yield return dependency;
+                            break;
                         case MethodInfo method:
                             foreach (var dependency in method.GetParameters()
                                 .Select(parameter => parameter.ParameterType)

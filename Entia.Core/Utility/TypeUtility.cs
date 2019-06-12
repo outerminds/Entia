@@ -20,6 +20,7 @@ namespace Entia.Core
         public Type[] Interfaces => _interfaces.Value;
         public Type[] Declaring => _declaring.Value;
         public Type[] Bases => _bases.Value;
+        public bool IsPlain => _isPlain.Value;
         public bool IsBlittable => _isBlittable.Value;
         public object Default => _default.Value;
 
@@ -34,6 +35,7 @@ namespace Entia.Core
         readonly Lazy<Type[]> _interfaces;
         readonly Lazy<Type[]> _declaring;
         readonly Lazy<Type[]> _bases;
+        readonly Lazy<bool> _isPlain;
         readonly Lazy<bool> _isBlittable;
         readonly Lazy<object> _default;
 
@@ -79,9 +81,25 @@ namespace Entia.Core
                 }
             }
 
-            bool GetIsBlittable(Type current, FieldInfo[] fields)
+            bool GetIsPlain(Type current, FieldInfo[] fields)
             {
                 if (current.IsPrimitive || current.IsPointer) return true;
+                if (current.IsValueType)
+                {
+                    foreach (var field in fields)
+                    {
+                        if (GetIsPlain(field.FieldType, field.FieldType.InstanceFields())) continue;
+                        else return false;
+                    }
+                    return true;
+                }
+                return false;
+            }
+
+            bool GetIsBlittable(Type current, FieldInfo[] fields)
+            {
+                if (current.IsPrimitive || current.IsPointer)
+                    return current != typeof(bool) && current != typeof(char) && current != typeof(decimal);
                 if (current.IsValueType)
                 {
                     foreach (var field in fields)
@@ -106,7 +124,8 @@ namespace Entia.Core
             _instanceMethods = new Lazy<MethodInfo[]>(() => InstanceMembers.OfType<MethodInfo>().ToArray());
             _instanceConstructors = new Lazy<ConstructorInfo[]>(() => InstanceMembers.OfType<ConstructorInfo>().ToArray());
             _declaring = new Lazy<Type[]>(() => GetDeclaring(Type).ToArray());
-            _isBlittable = new Lazy<bool>(() => GetIsBlittable(Type, InstanceFields));
+            _isPlain = new Lazy<bool>(() => GetIsPlain(Type, InstanceFields));
+            _isBlittable = new Lazy<bool>(() => GetIsBlittable(Type.IsArray ? Type.GetElementType() : Type, InstanceFields));
             _default = new Lazy<object>(() => GetDefault(Type));
         }
     }
@@ -238,7 +257,9 @@ namespace Entia.Core
         }
 
         public static bool IsBlittable(this Type type) => GetData(type).IsBlittable;
-        public static bool IsBlittable(object value) => value is null || GetData(value.GetType()).IsBlittable;
+        public static bool IsBlittable(object value) => value is null || IsBlittable(value.GetType());
+        public static bool IsPlain(this Type type) => GetData(type).IsPlain;
+        public static bool IsPlain(object value) => value is null || IsPlain(value.GetType());
         public static bool IsDefault(object value) => value is null || value.Equals(GetData(value.GetType()).Default);
         public static bool IsPrimitive(object value) => value is null || value.GetType().IsPrimitive;
         public static MemberInfo[] StaticMembers(this Type type) => GetData(type).StaticMembers;

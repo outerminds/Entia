@@ -49,7 +49,7 @@ namespace Entia.Modules
             {
                 result = type.Hierarchy()
                     .Where(child => child.IsGenericType && child.GetGenericTypeDefinition() == definition)
-                    .SelectMany(child => child.GetGenericArguments().Select(argument => Result.Try(Activator.CreateInstance, argument).Cast<T>()))
+                    .SelectMany(child => child.GetGenericArguments().Select(argument => Result.Try(argument, Activator.CreateInstance).Cast<T>()))
                     .Any();
             }
 
