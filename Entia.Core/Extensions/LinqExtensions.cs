@@ -297,30 +297,6 @@ namespace Entia.Core
 
         public static bool None<T>(this IEnumerable<T> source, Func<T, bool> predicate) => !source.Any(predicate);
 
-        public static IEnumerable<T> Concat<T>(this IEnumerable<T> source, params IEnumerable<T>[] others)
-        {
-            foreach (var item in source) yield return item;
-            foreach (var other in others) foreach (var item in other) yield return item;
-        }
-
-        public static IEnumerable<T> Except<T>(this IEnumerable<T> source, params T[] values) => source.Except(values.AsEnumerable());
-
-        public static IEnumerable<T> Except<T>(this IEnumerable<T> source, params object[] values) where T : class =>
-            source.Except(values.AsEnumerable());
-
-        public static IEnumerable<T[]> Window<T>(this IEnumerable<T> source, int size)
-        {
-            if (size <= 0) yield break;
-
-            var items = source.ToArray();
-            for (var i = 0; i <= items.Length - size; i++)
-            {
-                var window = new T[size];
-                Array.Copy(items, i, window, 0, size);
-                yield return window;
-            }
-        }
-
         public static IEnumerable<T[]> Combinations<T>(this IEnumerable<T> source, int size)
         {
             if (size <= 0) yield break;
@@ -340,6 +316,20 @@ namespace Entia.Core
                 }
             }
         }
+
+        public static IEnumerable<T> Concat<T>(this IEnumerable<T> source, params IEnumerable<T>[] others)
+        {
+            foreach (var item in source) yield return item;
+            foreach (var other in others) foreach (var item in other) yield return item;
+        }
+
+        public static IEnumerable<T> Except<T>(this IEnumerable<T> source, params T[] values) => source.Except(values.AsEnumerable());
+
+        public static IEnumerable<T> Except<T>(this IEnumerable<T> source, params object[] values) where T : class =>
+            source.Except(values.AsEnumerable());
+
+        public static IEnumerable<T> OfType<T>(this IEnumerable<T> source, Type type, bool hierarchy = false, bool definition = false) =>
+            source.Where(item => TypeUtility.Is(item, type, hierarchy, definition));
 
         public static bool Same<T>(this IEnumerable<T> source, Func<T, T, bool> equals)
         {
@@ -363,14 +353,23 @@ namespace Entia.Core
         public static bool Same<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null) =>
             source.Same(comparer == null ? Cache<T>.Equal : comparer.Equals);
 
+        public static IEnumerable<TResult> Select<TSource, TResult, TState>(this IEnumerable<TSource> source, TState state, Func<TSource, TState, TResult> selector)
+        {
+            foreach (var item in source) yield return selector(item, state);
+        }
+
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed)
         {
             var random = new Random(seed);
             return source.OrderBy(_ => random.Next(-100, 100));
         }
 
-        public static IEnumerable<T> OfType<T>(this IEnumerable<T> source, Type type, bool hierarchy = false, bool definition = false) =>
-            source.Where(item => TypeUtility.Is(item, type, hierarchy, definition));
+        public static IEnumerable<T> Some<T>(this IEnumerable<T> source) where T : class => source.Where(value => value != null);
+        public static IEnumerable<T> Some<T>(this IEnumerable<T?> source) where T : struct => source.Where(value => value.HasValue).Select(value => value.Value);
+        public static IEnumerable<TSource> SomeBy<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector) where TResult : class =>
+            source.Where(value => selector(value) != null);
+        public static IEnumerable<TSource> SomeBy<TSource, TResult>(this IEnumerable<TSource?> source, Func<TSource, TResult> selector) where TSource : struct where TResult : class =>
+            source.Where(value => value.HasValue && selector(value.Value) != null).Select(value => value.Value);
 
         public static (T[] @true, T[] @false) Split<T>(this IEnumerable<T> source, Func<T, bool> predicate)
         {
@@ -385,18 +384,34 @@ namespace Entia.Core
             return (@true.ToArray(), @false.ToArray());
         }
 
+        public static HashSet<T> ToSet<T>(this IEnumerable<T> source) => new HashSet<T>(source);
+
         public static IEnumerable<TResult> TrySelect<TSource, TResult>(this IEnumerable<TSource> source, TryFunc<TSource, TResult> selector)
         {
             foreach (var item in source) if (selector(item, out var value)) yield return value;
         }
 
-        public static HashSet<T> ToSet<T>(this IEnumerable<T> source) => new HashSet<T>(source);
+        public static IEnumerable<TResult> TrySelect<TSource, TResult, TState>(this IEnumerable<TSource> source, TState state, TryFunc<TSource, TState, TResult> selector)
+        {
+            foreach (var item in source) if (selector(item, state, out var value)) yield return value;
+        }
 
-        public static IEnumerable<T> Some<T>(this IEnumerable<T> source) where T : class => source.Where(value => value != null);
-        public static IEnumerable<T> Some<T>(this IEnumerable<T?> source) where T : struct => source.Where(value => value.HasValue).Select(value => value.Value);
-        public static IEnumerable<T1> SomeBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector) where T2 : class =>
-            source.Where(value => selector(value) != null);
-        public static IEnumerable<T1> SomeBy<T1, T2>(this IEnumerable<T1?> source, Func<T1, T2> selector) where T1 : struct where T2 : class =>
-            source.Where(value => value.HasValue && selector(value.Value) != null).Select(value => value.Value);
+        public static IEnumerable<T[]> Window<T>(this IEnumerable<T> source, int size)
+        {
+            if (size <= 0) yield break;
+
+            var items = source.ToArray();
+            for (var i = 0; i <= items.Length - size; i++)
+            {
+                var window = new T[size];
+                Array.Copy(items, i, window, 0, size);
+                yield return window;
+            }
+        }
+
+        public static IEnumerable<T> Where<T, TState>(this IEnumerable<T> source, TState state, Func<T, TState, bool> predicate)
+        {
+            foreach (var item in source) if (predicate(item, state)) yield return item;
+        }
     }
 }
