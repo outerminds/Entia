@@ -9,8 +9,8 @@ namespace Entia.Core
 
         public static class Array
         {
-            public static readonly T[] Zero = new T[0];
-            public static readonly T[] One = new T[1];
+            public static T[] Zero = new T[0];
+            public static T[] One = new T[1];
         }
 
         public static T Value;

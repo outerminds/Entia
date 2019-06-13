@@ -4,7 +4,6 @@ using Entia.Messages;
 using Entia.Modules;
 using FsCheck;
 using Entia.Core;
-using Entia.Modules.Message;
 using System.Collections.Generic;
 
 namespace Entia.Test

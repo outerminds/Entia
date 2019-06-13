@@ -3,7 +3,6 @@ using System.Linq;
 using Entia.Messages;
 using Entia.Core;
 using Entia.Modules;
-using Entia.Modules.Message;
 using FsCheck;
 using System.Collections.Generic;
 using Entia.Modules.Component;
@@ -104,6 +103,8 @@ namespace Entia.Test
                 yield return (components.Get(_entity, typeof(TConcrete)).Equals(_component), "Components.Get(TConcrete) == component");
 
                 yield return (components.TryGet<TConcrete>(_entity, out _), "Components.TryGet<TConcrete>()");
+                yield return (components.TryGet<TAbstract>(_entity, out _), "Components.TryGet<TAbstract>()");
+                yield return (components.TryGet<IComponent>(_entity, out _), "Components.TryGet<IComponent>()");
                 yield return (components.TryGet(_entity, typeof(TConcrete), out _), "Components.TryGet(TConcrete)");
                 yield return (components.TryGet(_entity, typeof(TAbstract), out _), "Components.TryGet<T>(TAbstract)");
                 yield return (components.TryGet(_entity, _abstract, out _), "Components.TryGet<T>(abstract)");

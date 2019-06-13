@@ -77,10 +77,26 @@ namespace Entia.Modules
         /// <param name="include">A filter that includes only the components that correspond to the provided states.</param>
         /// <returns>Returns <c>true</c> if the component was found; otherwise, <c>false</c>.</returns>
         [ThreadSafe]
-        public bool TryGet<T>(Entity entity, out T component, States include = States.All) where T : struct, IComponent
+        public bool TryGet<T>(Entity entity, out T component, States include = States.All) where T : IComponent
         {
-            component = GetOrDummy<T>(entity, out var success, include);
-            return success;
+            if (ComponentUtility.Abstract<T>.TryConcrete(out var metadata))
+            {
+                if (TryGet(entity, metadata, out var value, include) && value is T casted)
+                {
+                    component = casted;
+                    return true;
+                }
+            }
+            else if (ComponentUtility.TryGetConcreteTypes<T>(out var types))
+            {
+                if (TryGet(entity, types, out var value, include) && value is T casted)
+                {
+                    component = casted;
+                    return true;
+                }
+            }
+            component = default;
+            return false;
         }
 
         /// <summary>

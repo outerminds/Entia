@@ -1,7 +1,6 @@
 ﻿using Entia.Core;
 using Entia.Messages;
 using Entia.Modules;
-using Entia.Modules.Message;
 using Entia.Modules.Component;
 using FsCheck;
 using System.Linq;

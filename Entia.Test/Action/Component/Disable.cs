@@ -1,11 +1,9 @@
 using System.Linq;
 using Entia.Messages;
 using Entia.Modules;
-using Entia.Modules.Message;
 using Entia.Core;
 using FsCheck;
 using System;
-using Entia.Components;
 using System.Collections.Generic;
 using Entia.Modules.Component;
 

@@ -1,12 +1,10 @@
 using System.Linq;
 using Entia.Messages;
 using Entia.Modules;
-using Entia.Modules.Message;
 using Entia.Core;
 using FsCheck;
 using System;
 using System.Collections.Generic;
-using Entia.Components;
 using Entia.Modules.Component;
 
 namespace Entia.Test

@@ -86,6 +86,8 @@ namespace Entia
                 Entity = entity;
                 World = world;
             }
+
+            public override string ToString() => $"{{ {Component}, {State} }}";
         }
 
         sealed class Querier : Querier<Entity>

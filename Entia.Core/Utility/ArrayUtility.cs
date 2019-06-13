@@ -82,10 +82,15 @@ namespace Entia.Core
         {
             var index = Array.IndexOf(array, item);
             if (index < 0) return false;
-            var shrunk = new T[array.Length - 1];
-            Array.Copy(array, 0, shrunk, 0, index);
-            Array.Copy(array, index + 1, shrunk, index, shrunk.Length - index);
-            array = shrunk;
+
+            if (array.Length == 1) array = Dummy<T>.Array.Zero;
+            else
+            {
+                var shrunk = new T[array.Length - 1];
+                Array.Copy(array, 0, shrunk, 0, index);
+                Array.Copy(array, index + 1, shrunk, index, shrunk.Length - index);
+                array = shrunk;
+            }
             return true;
         }
 

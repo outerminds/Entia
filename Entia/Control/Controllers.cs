@@ -16,6 +16,7 @@ namespace Entia.Modules
 
         public Controllers(World world) { _world = world; }
 
+        public bool TryControl(Node node, out Controller controller) => Control(node).TryValue(out controller);
         public Result<Controller> Control(Node node)
         {
             if (TryGet(node, out var controller)) return controller;
