@@ -18,6 +18,7 @@ namespace Entia.Core
         Option.Tags IOption.Tag => Option.Tags.Some;
 
         public readonly T Value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Some(in T value) { Value = value; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -28,9 +29,7 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Some<T>(in T value) => new Some<T>(value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Some<Unit>(in Some<T> _) => default(Unit);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Option<T>(in Some<T> some) => some.Value;
+        public static implicit operator Some<Unit>(in Some<T> _) => new Some<Unit>(default);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Option<Unit>(in Some<T> _) => default(Unit);
     }
@@ -73,19 +72,24 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Option<T>(in T value) => Option.Some(value);
-
-        public static explicit operator Some<T>(in Option<T> option) => option.Tag == Option.Tags.Some ?
-            Option.Some(option._value) : throw new InvalidCastException();
+        public static implicit operator Option<T>(in Some<T> some) => new Option<T>(Option.Tags.Some, some.Value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Option<T>(in T value) => new Option<T>(Option.Tags.Some, value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Option<T>(in None none) => new Option<T>(Option.Tags.None, default);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator None(in Option<T> option) => option.Tag == Option.Tags.None ?
-            Option.None() : throw new InvalidCastException();
+        public static implicit operator Option<Unit>(in Option<T> option) => new Option<Unit>(option.Tag, default);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Option<Unit>(in Option<T> option) => option.Map(_ => default(Unit));
+        public static implicit operator bool(in Option<T> option) => option.Tag == Option.Tags.Some;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Some<T>(in Option<T> option) => option.Tag == Option.Tags.Some ?
+            Option.Some(option._value) : throw new InvalidCastException();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator None(in Option<T> option) => option.Tag == Option.Tags.None ?
+            Option.None() : throw new InvalidCastException();
     }
 
     public static class Option
@@ -98,8 +102,6 @@ namespace Entia.Core
         public static Some<Unit> Some() => new Some<Unit>(default);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static None None() => new None();
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static None None(IEnumerable<string> messages) => None(messages.ToArray());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Try<T>(Func<T> @try)
@@ -366,7 +368,40 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static IEnumerable<T> Choose<T>(this IEnumerable<Option<T>> options) => Choose(options.ToArray());
+        public static IEnumerable<T> Choose<T>(this IEnumerable<Option<T>> options)
+        {
+            foreach (var option in options) if (option.TryValue(out var value)) yield return value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> FirstOrNone<T>(this IEnumerable<T> source)
+        {
+            foreach (var item in source) return item;
+            return None();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> FirstOrNone<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+        {
+            foreach (var item in source) if (predicate(item)) return item;
+            return None();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> LastOrNone<T>(this IEnumerable<T> source)
+        {
+            var option = None().AsOption<T>();
+            foreach (var item in source) option = item;
+            return option;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> LastOrNone<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+        {
+            var option = None().AsOption<T>();
+            foreach (var item in source) if (predicate(item)) option = item;
+            return option;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Cast<T>(object value) => Some(value).AsOption().Cast<T>();

@@ -142,8 +142,8 @@ namespace Entia.Experiment
                 System<Systems.B>(),
                 System<Systems.C>()
             );
-            var game = world.Resources().GetBox<Game>();
-            // var result = world.Controllers().Run(node, () => !game.Value.Quit);
+            var game = world.Resources().Box<Game>();
+            // var result = world.Controllers().Run(node, () => !game[0].Quit);
         }
 
         static void Simple2()

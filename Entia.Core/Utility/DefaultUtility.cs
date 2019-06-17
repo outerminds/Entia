@@ -11,15 +11,15 @@ namespace Entia.Core
         [ThreadSafe]
         static class Cache<T>
         {
-            public static readonly Func<T> Provide = GetProvider<T>();
+            public static readonly Func<T> Provide = Provider<T>();
         }
 
         static readonly Concurrent<TypeMap<object, (Delegate generic, Delegate reflection)>> _providers = new TypeMap<object, (Delegate, Delegate)>();
 
         public static T Default<T>() => Cache<T>.Provide();
-        public static object Default(Type type) => GetProvider(type)();
+        public static object Default(Type type) => Provider(type)();
 
-        static Func<T> GetProvider<T>()
+        public static Func<T> Provider<T>()
         {
             using (var read = _providers.Read(true))
             {
@@ -34,7 +34,7 @@ namespace Entia.Core
             }
         }
 
-        static Func<object> GetProvider(Type type)
+        public static Func<object> Provider(Type type)
         {
             using (var read = _providers.Read(true))
             {

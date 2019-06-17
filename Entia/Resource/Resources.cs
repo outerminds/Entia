@@ -1,6 +1,5 @@
 ﻿using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Injectables;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,7 +14,7 @@ namespace Entia.Modules
 
         public bool TryGet<T>(out T resource) where T : struct, IResource
         {
-            if (TryGetBox<T>(out var box))
+            if (TryBox<T>(out var box))
             {
                 resource = box[0];
                 return true;
@@ -27,7 +26,7 @@ namespace Entia.Modules
 
         public bool TryGet(Type type, out IResource resource)
         {
-            if (TryGetBox(type, out var box))
+            if (TryBox(type, out var box))
             {
                 resource = box.GetValue(0) as IResource;
                 return resource != null;
@@ -37,10 +36,10 @@ namespace Entia.Modules
             return false;
         }
 
-        public ref T Get<T>() where T : struct, IResource => ref GetBox<T>()[0];
-        public IResource Get(Type type) => GetBox(type).GetValue(0) as IResource;
-        public void Set<T>(in T resource) where T : struct, IResource => GetBox<T>()[0] = resource;
-        public void Set(IResource resource) => GetBox(resource.GetType()).SetValue(resource, 0);
+        public ref T Get<T>() where T : struct, IResource => ref Box<T>()[0];
+        public IResource Get(Type type) => Box(type).GetValue(0) as IResource;
+        public void Set<T>(in T resource) where T : struct, IResource => Box<T>()[0] = resource;
+        public void Set(IResource resource) => Box(resource.GetType()).SetValue(resource, 0);
 
         public bool Has<T>() where T : struct, IResource
         {
@@ -62,12 +61,12 @@ namespace Entia.Modules
             using (var write = _boxes.Write()) return write.Value.Remove(type, false, false);
         }
 
-        public bool TryGetBox(Type type, out Array box)
+        public bool TryBox(Type type, out Array box)
         {
             using (var read = _boxes.Read()) return read.Value.TryGet(type, out box, false, false);
         }
 
-        public bool TryGetBox<T>(out T[] box) where T : struct, IResource
+        public bool TryBox<T>(out T[] box) where T : struct, IResource
         {
             using (var read = _boxes.Read())
             {
@@ -82,7 +81,7 @@ namespace Entia.Modules
             }
         }
 
-        public Array GetBox(Type type)
+        public Array Box(Type type)
         {
             using (var read = _boxes.Read(true))
             {
@@ -97,7 +96,7 @@ namespace Entia.Modules
             }
         }
 
-        public T[] GetBox<T>() where T : struct, IResource
+        public T[] Box<T>() where T : struct, IResource
         {
             using (var read = _boxes.Read(true))
             {

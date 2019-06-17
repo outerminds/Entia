@@ -3,10 +3,7 @@ using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Messages;
 using Entia.Modules.Component;
-using Entia.Modules.Message;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Entia.Modules
@@ -56,14 +53,12 @@ namespace Entia.Modules
             public Action<Entity> OnRemove;
             public Action<Entity> OnEnable;
             public Action<Entity> OnDisable;
-            public Func<Messages, Delegates> Clone;
         }
 
         [ThreadSafe]
         static Delegates CreateDelegates<T>(Messages messages) where T : struct, IComponent
         {
             var delegates = Delegates.Cache<T>.Empty;
-            delegates.Clone = CreateDelegates<T>;
             if (Delegates.Cache<T>.IsSilent) return delegates;
 
             var metadata = ComponentUtility.Concrete<T>.Data;

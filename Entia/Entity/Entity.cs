@@ -77,6 +77,7 @@ namespace Entia
             public Entity Entity { get; }
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             public World World { get; }
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             public States State => World.TryGet<Modules.Components>(out var components) ?
                 components.State(Entity, Component.GetType()) : States.None;
 

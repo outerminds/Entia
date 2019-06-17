@@ -94,9 +94,9 @@ namespace Entia.Modules.Message
 
         public bool Clear()
         {
-            var cleared = Reaction.Clear();
-            _receivers.Clear();
-            return _receive != Concurrent.Mutate(ref _receive, _empty) || cleared;
+            var cleared = false;
+            foreach (var receiver in _receivers.Keys) cleared |= receiver.Clear();
+            return cleared;
         }
 
         bool IEmitter.Emit(IMessage message)

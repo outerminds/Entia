@@ -112,9 +112,7 @@ namespace Entia
         {
             var cleared = false;
             foreach (var module in _modules.Values) if (module is IClearable clearable) cleared |= clearable.Clear();
-            // NOTE: clearing the modules breaks the communication between them, so theres no use to keep a reference to them
-            _resolvables = Array.Empty<IResolvable>();
-            return _modules.Clear() || cleared;
+            return cleared;
         }
 
         public bool Resolve()

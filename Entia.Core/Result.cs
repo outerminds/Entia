@@ -28,7 +28,7 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Success<T>(in T value) => new Success<T>(value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Success<Unit>(in Success<T> _) => default(Unit);
+        public static implicit operator Success<Unit>(in Success<T> _) => new Success<Unit>(default);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Some<T>(in Success<T> success) => success.Value;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -89,26 +89,28 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Result<T>(in T value) => Result.Success(value);
-
+        public static implicit operator Result<T>(in T value) => new Result<T>(Result.Tags.Success, value, null);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Result<T>(in Success<T> success) => new Result<T>(Result.Tags.Success, success.Value, null);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Option<T>(in Result<T> result) => result.TryValue(out var value) ? Option.Some(value).AsOption() : Option.None();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Result<T>(in Option<T> option) => option.TryValue(out var value) ? Result.Success(value).AsResult() : Result.Failure();
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator Success<T>(in Result<T> result) => result.Tag == Result.Tags.Success ?
-            Result.Success(result._value) : throw new InvalidCastException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Result<T>(in Failure failure) => new Result<T>(Result.Tags.Failure, default, failure.Messages);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator Failure(in Result<T> result) => result.Tag == Result.Tags.Failure ?
-            Result.Failure(result._messages) : throw new InvalidCastException();
+        public static implicit operator Result<Unit>(in Result<T> result) => new Result<Unit>(result.Tag, default, result._messages);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Result<Unit>(in Result<T> result) => result.Map(_ => default(Unit));
+        public static implicit operator bool(in Result<T> result) => result.Tag == Result.Tags.Success;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Success<T>(in Result<T> result) => result.Tag == Result.Tags.Success ?
+            Result.Success(result._value) : throw new InvalidCastException();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Failure(in Result<T> result) => result.Tag == Result.Tags.Failure ?
+            Result.Failure(result._messages) : throw new InvalidCastException();
     }
 
     public static class Result

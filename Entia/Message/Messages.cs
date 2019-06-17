@@ -170,7 +170,6 @@ namespace Entia.Modules
             using (var write = _emitters.Write())
             {
                 foreach (var emitter in write.Value.Values) cleared |= emitter.Clear();
-                cleared |= write.Value.Clear();
                 return cleared;
             }
         }
