@@ -82,7 +82,6 @@ namespace Entia.Core
 
         public static Slice<T> Slice<T>(this T[] array, int index, int count) => new Slice<T>(array, index, count);
         public static Slice<T> Slice<T>(this T[] array, int count) => array.Slice(0, count);
-        public static Slice<T> Slice<T>(this T[] array) => array.Slice(0, array.Length);
         public static Slice<T> Slice<T>(in this (T[] items, int count) array) => array.items.Slice(array.count);
 
         public static bool Ensure<T>(ref this (T[] items, int count) array) => ArrayUtility.Ensure(ref array.items, array.count);
@@ -139,12 +138,12 @@ namespace Entia.Core
         }
 
         public static bool Contains<T>(this T[] array, in T item) => Array.IndexOf(array, item, 0, array.Length) >= 0;
-        public static bool Contains<T>(in this (T[] items, int count) array, in T item) => Array.IndexOf(array.items, item, 0, array.count) >= 0;
-        public static bool Contains<T>(in this (Array items, int count) array, in T item) => Array.IndexOf(array.items as T[], item, 0, array.count) >= 0;
+        public static bool Contains<T>(in this (T[] items, int count) array, in T item) => array.IndexOf(item) >= 0;
+        public static bool Contains<T>(in this (Array items, int count) array, in T item) => array.IndexOf(item) >= 0;
 
         public static bool Remove<T>(ref this (T[] items, int count) array, in T item)
         {
-            var index = Array.IndexOf(array.items, item, 0, array.count);
+            var index = array.IndexOf(item);
             if (index < 0) return false;
             array.count--;
             if (index < array.count) Array.Copy(array.items, index + 1, array.items, index, array.count - index);
@@ -153,12 +152,18 @@ namespace Entia.Core
 
         public static bool Remove<T>(ref this (Array items, int count) array, in T item)
         {
-            var index = Array.IndexOf(array.items as T[], item, 0, array.count);
+            var index = array.IndexOf(item);
             if (index < 0) return false;
             array.count--;
             if (index < array.count) Array.Copy(array.items, index + 1, array.items, index, array.count - index);
             return true;
         }
+
+        public static int IndexOf<T>(in this (T[] items, int count) array, in T item) =>
+            Array.IndexOf(array.items, item, 0, array.count);
+
+        public static int IndexOf<T>(in this (Array items, int count) array, in T item) =>
+            Array.IndexOf(array.items, item, 0, array.count);
 
         public static bool Clear<T>(ref this (T[] items, int count) array)
         {

@@ -41,6 +41,8 @@ namespace Entia.Core
                 public void Reset() => _index = -1;
             }
 
+            public static implicit operator Read(T[] array) => new Read(array, 0, array.Length);
+
             public ref readonly T this[int index]
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -102,6 +104,7 @@ namespace Entia.Core
             public void Reset() => _index = -1;
         }
 
+        public static implicit operator Slice<T>(T[] array) => new Slice<T>(array, 0, array.Length);
         public static implicit operator Read(in Slice<T> slice) => new Read(slice._array, slice._offset, slice.Count);
 
         public ref T this[int index]

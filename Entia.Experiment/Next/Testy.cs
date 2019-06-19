@@ -113,8 +113,9 @@ namespace Entia.Experiment.Next
 
     public sealed class Execution
     {
+        public static Execution Create<T>(Phase<T> phase, Action run) => throw null;
+        public static Execution Create<T>(Phase<T> phase, Action<T> run) => throw null;
         public static Execution Create<T>(Phase<T> phase, InAction<T> run) => throw null;
-        public static Execution Create(Phase<Unit> phase, Action run) => Create(phase, (in Unit _) => run());
 
         Execution() { }
     }
@@ -221,7 +222,7 @@ namespace Entia.Experiment.Next
 
             void Initialize() { }
 
-            void Run(in float delta)
+            void Run(float delta)
             {
                 foreach (var item in group)
                 {

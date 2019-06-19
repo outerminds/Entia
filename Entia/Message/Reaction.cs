@@ -3,8 +3,8 @@ using Entia.Core.Documentation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace Entia.Modules.Message
 {
@@ -50,7 +50,7 @@ namespace Entia.Modules.Message
         }
         public bool Clear() => _reaction != Concurrent.Mutate(ref _reaction, _empty);
 
-        public IEnumerator<Delegate> GetEnumerator() => _reaction.GetInvocationList().Slice().GetEnumerator();
+        public IEnumerator<Delegate> GetEnumerator() => _reaction.GetInvocationList().Cast<Delegate>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         bool IReaction.Add(Delegate reaction) => reaction is InAction<T> action && Add(action);
         bool IReaction.Remove(Delegate reaction) => reaction is InAction<T> action && Remove(action);
