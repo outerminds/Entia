@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Messages;
 using Entia.Modules.Family;
 using Entia.Modules.Message;
@@ -44,6 +45,7 @@ namespace Entia.Modules
             messages.React((in OnPostDestroy message) => Dispose(message.Entity));
         }
 
+        [ThreadSafe]
         public Entity Root(Entity entity)
         {
             ref var relationships = ref GetRelationships(entity, out var success);
@@ -51,24 +53,28 @@ namespace Entia.Modules
             return entity;
         }
 
+        [ThreadSafe]
         public IEnumerable<Entity> Roots()
         {
             foreach (var relationships in _relationships)
                 if (relationships.Entity && relationships.Parent == Entity.Zero) yield return relationships.Entity;
         }
 
+        [ThreadSafe]
         public Entity Parent(Entity child)
         {
             ref var relationships = ref GetRelationships(child, out var success);
             return success ? relationships.Parent : default;
         }
 
+        [ThreadSafe]
         public Slice<Entity>.Read Children(Entity parent)
         {
             ref var relationships = ref GetRelationships(parent, out var success);
             return success ? relationships.Children.Slice() : Dummy<Entity>.Array.Zero;
         }
 
+        [ThreadSafe]
         public IEnumerable<Entity> Ancestors(Entity child)
         {
             var parent = child;
@@ -76,6 +82,7 @@ namespace Entia.Modules
                 yield return parent = relationships.Parent;
         }
 
+        [ThreadSafe]
         public IEnumerable<Entity> Descendants(Entity parent, From from)
         {
             if (TryGetRelationships(parent, out var relationships))
@@ -90,6 +97,7 @@ namespace Entia.Modules
             }
         }
 
+        [ThreadSafe]
         public IEnumerable<Entity> Siblings(Entity entity)
         {
             if (TryGetRelationships(entity, out var relationships))
@@ -101,7 +109,15 @@ namespace Entia.Modules
             return Array.Empty<Entity>();
         }
 
+        [ThreadSafe]
         public IEnumerable<Entity> Family(Entity entity, From from) => Descendants(Root(entity), from);
+
+        [ThreadSafe]
+        public bool Has(Entity parent, Entity child)
+        {
+            ref var relationships = ref GetRelationships(child, out var success);
+            return success && Has(parent, ref relationships);
+        }
 
         public bool Adopt(Entity parent, Entity child)
         {
@@ -121,12 +137,6 @@ namespace Entia.Modules
             return success && Replace(child, ref relationships);
         }
 
-        public bool Has(Entity parent, Entity child)
-        {
-            ref var relationships = ref GetRelationships(child, out var success);
-            return success && Has(parent, ref relationships);
-        }
-
         public bool Clear()
         {
             var cleared = false;
@@ -138,12 +148,14 @@ namespace Entia.Modules
             return cleared;
         }
 
+        [ThreadSafe]
         bool TryGetRelationships(Entity entity, out Relationships relationships)
         {
             relationships = GetRelationships(entity, out var success);
             return success;
         }
 
+        [ThreadSafe]
         ref Relationships GetRelationships(Entity entity, out bool success)
         {
             if (entity && entity.Index < _relationships.Length)
@@ -236,12 +248,14 @@ namespace Entia.Modules
             return true;
         }
 
+        [ThreadSafe]
         bool Has(Entity parent, ref Relationships child)
         {
             ref var relationships = ref GetRelationships(parent, out var success);
             return success && Has(ref relationships, ref child);
         }
 
+        [ThreadSafe]
         bool Has(ref Relationships parent, ref Relationships child) => child.Parent == parent.Entity;
     }
 }
