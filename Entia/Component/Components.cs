@@ -21,6 +21,14 @@ namespace Entia.Modules
             public Segment Segment;
             public int? Transient;
         }
+        enum Resolutions : byte { None = 0, Move = 1, Initialize = 2, Dispose = 3 }
+        struct Slot
+        {
+            public Entity Entity;
+            public BitMask Mask;
+            public BitMask Lock;
+            public Resolutions Resolution;
+        }
 
         static Array[] _tags = new Array[8];
 
