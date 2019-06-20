@@ -1,13 +1,5 @@
-using Entia.Components;
-using Entia.Core;
-using Entia.Core.Documentation;
-using Entia.Messages;
 using Entia.Modules.Component;
-using Entia.Modules.Message;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Entia.Modules
 {
@@ -53,7 +45,7 @@ namespace Entia.Modules
             if (sourceSuccess && targetSuccess)
             {
                 var types = GetTargetTypes(sourceData);
-                ref var slot = ref GetTransientSlot(target, ref targetData, Transient.Resolutions.Move);
+                ref var slot = ref GetTransientSlot(target, ref targetData, Resolutions.Move);
                 for (var i = 0; i < types.Length; i++)
                 {
                     ref readonly var metadata = ref types[i];
@@ -71,7 +63,7 @@ namespace Entia.Modules
             ref var targetData = ref GetData(target, out var targetSuccess);
             if (sourceSuccess && targetSuccess && TryGetDelegates(metadata, out var delegates))
             {
-                ref var slot = ref GetTransientSlot(target, ref targetData, Transient.Resolutions.None);
+                ref var slot = ref GetTransientSlot(target, ref targetData, Resolutions.None);
                 Copy(sourceData, ref targetData, ref slot, metadata, delegates, include);
                 return true;
             }
@@ -84,7 +76,7 @@ namespace Entia.Modules
             ref var targetData = ref GetData(target, out var targetSuccess);
             if (sourceSuccess && targetSuccess)
             {
-                ref var slot = ref GetTransientSlot(target, ref targetData, Transient.Resolutions.None);
+                ref var slot = ref GetTransientSlot(target, ref targetData, Resolutions.None);
                 for (var i = 0; i < types.Length; i++)
                 {
                     ref readonly var metadata = ref types[i];
@@ -95,10 +87,10 @@ namespace Entia.Modules
             return false;
         }
 
-        bool Copy(in Data source, ref Data target, ref Transient.Slot slot, in Metadata metadata, States include) =>
+        bool Copy(in Data source, ref Data target, ref Slot slot, in Metadata metadata, States include) =>
             TryGetDelegates(metadata, out var delegates) && Copy(source, ref target, ref slot, metadata, delegates, include);
 
-        bool Copy(in Data source, ref Data target, ref Transient.Slot slot, in Metadata metadata, in Delegates delegates, States include)
+        bool Copy(in Data source, ref Data target, ref Slot slot, in Metadata metadata, in Delegates delegates, States include)
         {
             if (metadata.Kind == Metadata.Kinds.Tag)
                 // NOTE: must check 'Has' in case the component has been removed on the source

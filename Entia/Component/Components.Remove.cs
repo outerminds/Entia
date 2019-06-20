@@ -1,13 +1,6 @@
-using Entia.Components;
 using Entia.Core;
-using Entia.Core.Documentation;
-using Entia.Messages;
 using Entia.Modules.Component;
-using Entia.Modules.Message;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Entia.Modules
 {
@@ -46,7 +39,7 @@ namespace Entia.Modules
 
         bool Remove(Entity entity, ref Data data, in Metadata metadata, in Delegates delegates, States include)
         {
-            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
+            ref var slot = ref GetTransientSlot(entity, ref data, Resolutions.None);
             return Remove(ref slot, metadata, delegates, include);
         }
 
@@ -58,11 +51,11 @@ namespace Entia.Modules
 
         bool Remove(Entity entity, ref Data data, in (BitMask mask, Metadata[] types) components, States include)
         {
-            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
+            ref var slot = ref GetTransientSlot(entity, ref data, Resolutions.None);
             return Remove(ref slot, components, include);
         }
 
-        bool Remove(ref Transient.Slot slot, in (BitMask mask, Metadata[] types) components, States include)
+        bool Remove(ref Slot slot, in (BitMask mask, Metadata[] types) components, States include)
         {
             var removed = false;
             for (int i = 0; i < components.types.Length; i++)
@@ -73,16 +66,16 @@ namespace Entia.Modules
             return removed;
         }
 
-        bool Remove(ref Transient.Slot slot, in Metadata metadata, States include) =>
+        bool Remove(ref Slot slot, in Metadata metadata, States include) =>
             TryGetDelegates(metadata, out var delegates) && Remove(ref slot, metadata, delegates, include);
 
-        bool Remove(ref Transient.Slot slot, in Metadata metadata, in Delegates delegates, States include)
+        bool Remove(ref Slot slot, in Metadata metadata, in Delegates delegates, States include)
         {
             if (Has(slot, metadata, delegates, include) && slot.Lock.Add(metadata.Index))
             {
                 delegates.OnRemove(slot.Entity);
                 RemoveDisabled(ref slot, delegates);
-                slot.Resolution.Set(Transient.Resolutions.Move);
+                SetResolution(ref slot.Resolution, Resolutions.Move);
                 slot.Mask.Remove(metadata.Index);
                 slot.Lock.Remove(metadata.Index);
                 return true;
@@ -90,13 +83,13 @@ namespace Entia.Modules
             return false;
         }
 
-        bool RemoveDisabled(ref Transient.Slot slot, in Delegates delegates)
+        bool RemoveDisabled(ref Slot slot, in Delegates delegates)
         {
             if (delegates.IsDisabled.IsValueCreated &&
                 delegates.IsDisabled.Value.IsValid &&
                 slot.Mask.Remove(delegates.IsDisabled.Value.Index))
             {
-                slot.Resolution.Set(Transient.Resolutions.Move);
+                SetResolution(ref slot.Resolution, Resolutions.Move);
                 return true;
             }
             return false;

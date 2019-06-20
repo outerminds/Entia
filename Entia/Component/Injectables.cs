@@ -1,7 +1,4 @@
-﻿using Entia.Components;
-using Entia.Core;
-using Entia.Core.Documentation;
-using Entia.Dependencies;
+﻿using Entia.Core.Documentation;
 using Entia.Dependers;
 using Entia.Injectors;
 using Entia.Modules;

@@ -37,7 +37,6 @@ namespace Entia.Modules
         readonly Emitter<OnException> _onException;
         readonly Emitter<Entia.Messages.Segment.OnCreate> _onCreate;
         readonly Emitter<Entia.Messages.Segment.OnMove> _onMove;
-        readonly Transient _transient = new Transient();
         readonly Segment _created = new Segment(int.MaxValue, new BitMask());
         readonly Segment _destroyed = new Segment(int.MaxValue, new BitMask(), 1);
         readonly Dictionary<BitMask, Segment> _maskToSegment;
@@ -45,6 +44,8 @@ namespace Entia.Modules
         (Data[] items, int count) _data;
         Segment[] _segments;
         Delegates[] _delegates;
+        (Slot[] items, int count) _slots = (new Slot[16], 0);
+        Array[][] _chunks = new Array[2][];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Components"/> class.
@@ -99,34 +100,34 @@ namespace Entia.Modules
 
         public bool Resolve()
         {
-            for (int i = 0; i < _transient.Slots.count; i++)
+            for (int i = 0; i < _slots.count; i++)
             {
-                ref var slot = ref _transient.Slots.items[i];
+                ref var slot = ref _slots.items[i];
                 ref var data = ref GetData(slot.Entity, out var success);
                 if (success)
                 {
                     switch (slot.Resolution)
                     {
-                        case Transient.Resolutions.None:
+                        case Resolutions.None:
                             {
                                 data.Transient = default;
                                 break;
                             }
-                        case Transient.Resolutions.Move:
+                        case Resolutions.Move:
                             {
                                 var enabled = GetSegment(slot.Mask);
                                 MoveTo((data.Segment, data.Index), enabled);
                                 data.Transient = default;
                                 break;
                             }
-                        case Transient.Resolutions.Initialize:
+                        case Resolutions.Initialize:
                             {
                                 var segment = GetSegment(slot.Mask);
                                 CopyTo((data.Segment, data.Index), (segment, segment.Entities.count++));
                                 data.Transient = default;
                                 break;
                             }
-                        case Transient.Resolutions.Dispose:
+                        case Resolutions.Dispose:
                             {
                                 MoveTo((data.Segment, data.Index), _destroyed);
                                 _destroyed.Entities.count = 0;
@@ -137,7 +138,7 @@ namespace Entia.Modules
                 }
             }
 
-            return _created.Entities.count.Change(0) | _destroyed.Entities.count.Change(0) | _transient.Slots.count.Change(0);
+            return _created.Entities.count.Change(0) | _destroyed.Entities.count.Change(0) | _slots.count.Change(0);
         }
 
         [ThreadSafe]
@@ -217,7 +218,7 @@ namespace Entia.Modules
 
         void Initialize(Entity entity)
         {
-            var transient = _transient.Reserve(entity, Transient.Resolutions.Initialize);
+            var transient = ReserveTransient(entity, Resolutions.Initialize);
             var segment = _created;
             var index = segment.Entities.count++;
             segment.Entities.Ensure();
@@ -230,41 +231,41 @@ namespace Entia.Modules
             ref var data = ref GetData(entity, out var success);
             if (success)
             {
-                ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
+                ref var slot = ref GetTransientSlot(entity, ref data, Resolutions.None);
                 Clear(ref slot, States.All);
-                slot.Resolution.Set(Transient.Resolutions.Dispose);
+                SetResolution(ref slot.Resolution, Resolutions.Dispose);
             }
         }
 
         [ThreadSafe]
         (BitMask mask, Metadata[] types) GetTargetData(in Data data) => data.Transient is int transient ?
-            GetTargetData(_transient.Slots.items[transient]) : (data.Segment.Mask, data.Segment.Types);
+            GetTargetData(_slots.items[transient]) : (data.Segment.Mask, data.Segment.Types);
 
         [ThreadSafe]
-        (BitMask mask, Metadata[] types) GetTargetData(in Transient.Slot slot) => (slot.Mask, ComponentUtility.GetConcreteTypes(slot.Mask));
+        (BitMask mask, Metadata[] types) GetTargetData(in Slot slot) => (slot.Mask, ComponentUtility.GetConcreteTypes(slot.Mask));
 
         [ThreadSafe]
         BitMask GetTargetMask(in Data data) => data.Transient is int transient ?
-            _transient.Slots.items[transient].Mask : data.Segment.Mask;
+            _slots.items[transient].Mask : data.Segment.Mask;
 
         [ThreadSafe]
         Metadata[] GetTargetTypes(in Data data) => data.Transient is int transient ?
-            GetTargetTypes(_transient.Slots.items[transient]) : data.Segment.Types;
+            GetTargetTypes(_slots.items[transient]) : data.Segment.Types;
 
         [ThreadSafe]
-        Metadata[] GetTargetTypes(in Transient.Slot slot) => ComponentUtility.GetConcreteTypes(slot.Mask);
+        Metadata[] GetTargetTypes(in Slot slot) => ComponentUtility.GetConcreteTypes(slot.Mask);
 
-        ref Transient.Slot GetTransientSlot(Entity entity, ref Data data, Transient.Resolutions resolution)
+        ref Slot GetTransientSlot(Entity entity, ref Data data, Resolutions resolution)
         {
             if (data.Transient is int transient)
             {
-                ref var slot = ref _transient.Slots.items[transient];
-                slot.Resolution.Set(resolution);
+                ref var slot = ref _slots.items[transient];
+                SetResolution(ref slot.Resolution, resolution);
                 return ref slot;
             }
 
-            data.Transient = transient = _transient.Reserve(entity, resolution, data.Segment.Mask);
-            return ref _transient.Slots.items[transient];
+            data.Transient = transient = ReserveTransient(entity, resolution, data.Segment.Mask);
+            return ref _slots.items[transient];
         }
 
         // NOTE: make sure that segments are only created with components that have their 'Delegates' initialized;

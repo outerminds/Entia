@@ -1,14 +1,15 @@
 using Entia.Core;
 using Entia.Core.Documentation;
+using Entia.Modules.Component;
 using System;
-using System.Threading;
+using System.Runtime.CompilerServices;
 
-namespace Entia.Modules.Component
+namespace Entia.Modules
 {
-    public sealed class Transient
+    public sealed partial class Components
     {
-        public enum Resolutions : byte { None = 0, Move = 1, Initialize = 2, Dispose = 3 }
-        public struct Slot
+        enum Resolutions : byte { None = 0, Move = 1, Initialize = 2, Dispose = 3 }
+        struct Slot
         {
             public Entity Entity;
             public BitMask Mask;
@@ -16,17 +17,26 @@ namespace Entia.Modules.Component
             public Resolutions Resolution;
         }
 
-        public const int ChunkSize = 8;
+        const int ChunkSize = 8;
 
-        public (Slot[] items, int count) Slots = (new Slot[16], 0);
-        public Array[][] Chunks = new Array[2][];
-
-        public int Reserve(Entity entity, Resolutions resolution, BitMask mask = null)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static bool SetResolution(ref Resolutions resolution, Resolutions value)
         {
-            var index = Slots.count++;
-            Slots.Ensure();
+            if (value > resolution)
+            {
+                resolution = value;
+                return true;
+            }
 
-            ref var slot = ref Slots.items[index];
+            return false;
+        }
+
+        int ReserveTransient(Entity entity, Resolutions resolution, BitMask mask = null)
+        {
+            var index = _slots.count++;
+            _slots.Ensure();
+
+            ref var slot = ref _slots.items[index];
             if (slot.Mask == null || slot.Lock == null)
                 slot = new Slot { Entity = entity, Mask = new BitMask(), Lock = new BitMask(), Resolution = resolution };
             else
@@ -42,9 +52,9 @@ namespace Entia.Modules.Component
         }
 
         [ThreadSafe]
-        public bool TryStore(int index, in Metadata metadata, out Array store, out int adjusted)
+        bool TryGetTransientStore(int index, in Metadata metadata, out Array store, out int adjusted)
         {
-            if (TryGetChunk(index, out var chunk) && metadata.Index < chunk.Length && chunk[metadata.Index] is Array array)
+            if (TryGetTransientChunk(index, out var chunk) && metadata.Index < chunk.Length && chunk[metadata.Index] is Array array)
             {
                 store = array;
                 adjusted = index % ChunkSize;
@@ -56,9 +66,9 @@ namespace Entia.Modules.Component
             return false;
         }
 
-        public Array Store(int index, in Metadata metadata, out int adjusted)
+        Array GetTransientStore(int index, in Metadata metadata, out int adjusted)
         {
-            var chunk = GetChunk(index, metadata.Index + 1);
+            var chunk = GetTransientChunk(index, metadata.Index + 1);
             adjusted = index % ChunkSize;
 
             if (chunk[metadata.Index] is Array store) return store;
@@ -66,12 +76,12 @@ namespace Entia.Modules.Component
         }
 
         [ThreadSafe]
-        bool TryGetChunk(int index, out Array[] chunk)
+        bool TryGetTransientChunk(int index, out Array[] chunk)
         {
             index /= ChunkSize;
-            if (index < Chunks.Length)
+            if (index < _chunks.Length)
             {
-                chunk = Chunks[index];
+                chunk = _chunks[index];
                 return chunk != null;
             }
 
@@ -79,12 +89,12 @@ namespace Entia.Modules.Component
             return false;
         }
 
-        Array[] GetChunk(int index, int count)
+        Array[] GetTransientChunk(int index, int count)
         {
             index /= ChunkSize;
-            ArrayUtility.Ensure(ref Chunks, index + 1);
+            ArrayUtility.Ensure(ref _chunks, index + 1);
 
-            ref var chunk = ref Chunks[index];
+            ref var chunk = ref _chunks[index];
             if (chunk == null) return chunk = new Array[count];
             ArrayUtility.Ensure(ref chunk, count);
             return chunk;

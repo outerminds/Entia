@@ -1,14 +1,3 @@
-using Entia.Components;
-using Entia.Core;
-using Entia.Core.Documentation;
-using Entia.Messages;
-using Entia.Modules.Component;
-using Entia.Modules.Message;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace Entia.Modules
 {
     public sealed partial class Components
@@ -26,7 +15,7 @@ namespace Entia.Modules
             ref var targetData = ref GetData(target, out var targetSuccess);
             if (sourceSuccess && targetSuccess)
             {
-                ref var targetSlot = ref GetTransientSlot(target, ref targetData, Transient.Resolutions.None);
+                ref var targetSlot = ref GetTransientSlot(target, ref targetData, Resolutions.None);
                 var types = GetTargetTypes(targetSlot);
                 var trimmed = false;
                 for (int i = 0; i < types.Length; i++)

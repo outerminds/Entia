@@ -1,13 +1,7 @@
-using Entia.Components;
 using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Messages;
 using Entia.Modules.Component;
-using Entia.Modules.Message;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Entia.Modules
 {
@@ -104,12 +98,12 @@ namespace Entia.Modules
 
         [ThreadSafe]
         bool Has(in Data data, in Metadata metadata, States include) => data.Transient is int transient ?
-            Has(_transient.Slots.items[transient], metadata, include) :
+            Has(_slots.items[transient], metadata, include) :
             Has(data.Segment.Mask, metadata, include);
 
         [ThreadSafe]
         bool Has(in Data data, in Metadata metadata, in Delegates delegates, States include) => data.Transient is int transient ?
-            Has(_transient.Slots.items[transient], metadata, delegates, include) :
+            Has(_slots.items[transient], metadata, delegates, include) :
             Has(data.Segment.Mask, metadata, delegates, include);
 
         [ThreadSafe]
@@ -121,20 +115,20 @@ namespace Entia.Modules
 
         [ThreadSafe]
         bool Has(in Data data, in (BitMask mask, Metadata[] types) components, States include) => data.Transient is int transient ?
-            Has(_transient.Slots.items[transient], components, include) :
+            Has(_slots.items[transient], components, include) :
             Has(data.Segment.Mask, components, include);
 
         [ThreadSafe]
-        bool Has(in Transient.Slot slot, in (BitMask mask, Metadata[] types) components, States include) =>
-            slot.Resolution < Transient.Resolutions.Dispose && Has(slot.Mask, components, include);
+        bool Has(in Slot slot, in (BitMask mask, Metadata[] types) components, States include) =>
+            slot.Resolution < Resolutions.Dispose && Has(slot.Mask, components, include);
 
         [ThreadSafe]
-        bool Has(in Transient.Slot slot, Metadata metadata, States include) =>
-            slot.Resolution < Transient.Resolutions.Dispose && Has(slot.Mask, metadata, include);
+        bool Has(in Slot slot, Metadata metadata, States include) =>
+            slot.Resolution < Resolutions.Dispose && Has(slot.Mask, metadata, include);
 
         [ThreadSafe]
-        bool Has(in Transient.Slot slot, Metadata metadata, in Delegates delegates, States include) =>
-            slot.Resolution < Transient.Resolutions.Dispose && Has(slot.Mask, metadata, delegates, include);
+        bool Has(in Slot slot, Metadata metadata, in Delegates delegates, States include) =>
+            slot.Resolution < Resolutions.Dispose && Has(slot.Mask, metadata, delegates, include);
 
         [ThreadSafe]
         bool Has(BitMask mask, in (BitMask mask, Metadata[] types) components, States include)

@@ -1,13 +1,7 @@
-using Entia.Components;
 using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Messages;
 using Entia.Modules.Component;
-using Entia.Modules.Message;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Entia.Modules
 {
@@ -91,9 +85,9 @@ namespace Entia.Modules
             else if (data.Transient is int transient)
             {
                 // NOTE: prioritize the segment store
-                _transient.TryStore(transient, metadata, out store, out adjusted);
+                TryGetTransientStore(transient, metadata, out store, out adjusted);
                 // NOTE: if the slot has the component, then the store must not be null
-                return Has(_transient.Slots.items[transient], metadata, include);
+                return Has(_slots.items[transient], metadata, include);
             }
 
             adjusted = default;
@@ -112,11 +106,11 @@ namespace Entia.Modules
                 adjusted = data.Index;
                 return store;
             }
-            else if (data.Transient is int transient) return _transient.Store(transient, metadata, out adjusted);
+            else if (data.Transient is int transient) return GetTransientStore(transient, metadata, out adjusted);
             else
             {
-                data.Transient = transient = _transient.Reserve(entity, Transient.Resolutions.None, data.Segment.Mask);
-                return _transient.Store(transient, metadata, out adjusted);
+                data.Transient = transient = ReserveTransient(entity, Resolutions.None, data.Segment.Mask);
+                return GetTransientStore(transient, metadata, out adjusted);
             }
         }
 

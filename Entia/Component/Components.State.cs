@@ -1,13 +1,7 @@
-using Entia.Components;
 using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Messages;
 using Entia.Modules.Component;
-using Entia.Modules.Message;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Entia.Modules
 {
@@ -56,12 +50,12 @@ namespace Entia.Modules
 
         [ThreadSafe]
         States State(in Data data, in Metadata metadata) => data.Transient is int transient ?
-            State(_transient.Slots.items[transient], metadata) :
+            State(_slots.items[transient], metadata) :
             State(data.Segment.Mask, metadata);
 
         [ThreadSafe]
-        States State(in Transient.Slot slot, in Metadata metadata) =>
-            slot.Resolution == Transient.Resolutions.Dispose ? States.None : State(slot.Mask, metadata);
+        States State(in Slot slot, in Metadata metadata) =>
+            slot.Resolution == Resolutions.Dispose ? States.None : State(slot.Mask, metadata);
 
         [ThreadSafe]
         internal States State(BitMask mask, in Metadata metadata) =>

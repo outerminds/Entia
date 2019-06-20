@@ -1,15 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependers;
-using Entia.Modules;
-using Entia.Modules.Component;
-using Entia.Modules.Query;
 using Entia.Queriers;
 using Entia.Queryables;
 
@@ -49,18 +45,9 @@ namespace Entia.Modules.Component
             }
         }
 
-        sealed class Depender : IDepender
-        {
-            public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-            {
-                yield return new Write(typeof(T));
-                foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
-            }
-        }
-
         [Querier]
         static readonly Querier _querier = new Querier();
         [Depender]
-        static readonly Depender _depender = new Depender();
+        static readonly IDepender _depender = Depender.From<T>(new Write(typeof(T)));
     }
 }

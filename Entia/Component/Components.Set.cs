@@ -1,13 +1,5 @@
-using Entia.Components;
-using Entia.Core;
-using Entia.Core.Documentation;
-using Entia.Messages;
 using Entia.Modules.Component;
-using Entia.Modules.Message;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Entia.Modules
 {
@@ -88,27 +80,27 @@ namespace Entia.Modules
 
         bool Set(Entity entity, ref Data data, in Metadata metadata, in Delegates delegates)
         {
-            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
-            return slot.Resolution < Transient.Resolutions.Dispose && Set(ref slot, metadata, delegates);
+            ref var slot = ref GetTransientSlot(entity, ref data, Resolutions.None);
+            return slot.Resolution < Resolutions.Dispose && Set(ref slot, metadata, delegates);
         }
 
-        bool Set(ref Transient.Slot slot, in Metadata metadata, in Delegates delegates)
+        bool Set(ref Slot slot, in Metadata metadata, in Delegates delegates)
         {
             if (slot.Mask.Add(metadata.Index) && slot.Lock.Add(metadata.Index))
             {
                 delegates.OnAdd(slot.Entity);
-                slot.Resolution.Set(Transient.Resolutions.Move);
+                SetResolution(ref slot.Resolution, Resolutions.Move);
                 slot.Lock.Remove(metadata.Index);
                 return true;
             }
             return false;
         }
 
-        bool SetDisabled(ref Transient.Slot slot, in Delegates delegates)
+        bool SetDisabled(ref Slot slot, in Delegates delegates)
         {
             if (delegates.IsDisabled.Value.IsValid && slot.Mask.Add(delegates.IsDisabled.Value.Index))
             {
-                slot.Resolution.Set(Transient.Resolutions.Move);
+                SetResolution(ref slot.Resolution, Resolutions.Move);
                 return true;
             }
 

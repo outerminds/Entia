@@ -15,17 +15,5 @@ namespace Entia.Modules.Component
         [ThreadSafe]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasNone(this States state, States other) => (state & other) == 0;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Set(this ref Transient.Resolutions resolution, Transient.Resolutions value)
-        {
-            if (value > resolution)
-            {
-                resolution = value;
-                return true;
-            }
-
-            return false;
-        }
     }
 }

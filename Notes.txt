@@ -59,6 +59,26 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- add a 'Stores' or 'States' module that holds all the state of the world
+	- other modules would be able to request a store of any struct type
+	- when serializing, there should be essentially nothing else to serialize than this module
+- add a 'Caches' module that facilitates managing private state
+	- holds a map from an arbitrary key to entity
+	- this entity will have a special 'Cache<T>' component with a 'T' that represent the stored state
+		- no need to wrap the type 'T' if using the 'Stores'/'States' module
+	- it is similar to the 'Resources' module but allows for many instances of a given 'T'
+- implement the resources module as accessing components on an entity
+	- simplifies serialization
+	- unifies/centralizes state in components
+	
+	- the entity will have a special 'Resource<T>' component with a 'T' of the resource type
+		- wrapping the resource in a 'Resource<T>' will make it hard/impossible to do abstract 'Get'
+	OR
+	- the 'Components' module could accept any struct type as a valid component
+	- this would allow for strange things such as attaching an 'int' to an entity, basically allowing to have unlabelled data attached to an entity
+	OR
+	- both the 'Resources' and 'Components' modules would store their state/data in a 'Stores'/'States' module that would provide stores for any struct type
+	
 - add tests similar to 'Inject' that scans assemblies but for other elements (such as components)
 - make a type builder for generic types to make tests even more generative
 - remove Entia.Components.IsDisabled in favor of 'Activated/Deactivated' states

@@ -1,7 +1,6 @@
 using Entia.Core;
 using Entia.Core.Documentation;
 using System;
-using System.Linq;
 
 namespace Entia.Modules.Component
 {

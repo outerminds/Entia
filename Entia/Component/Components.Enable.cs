@@ -1,13 +1,5 @@
-using Entia.Components;
-using Entia.Core;
-using Entia.Core.Documentation;
-using Entia.Messages;
 using Entia.Modules.Component;
-using Entia.Modules.Message;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Entia.Modules
 {
@@ -35,14 +27,14 @@ namespace Entia.Modules
 
         bool Enable(Entity entity, ref Data data, in Metadata metadata)
         {
-            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
-            return slot.Resolution < Transient.Resolutions.Dispose && Enable(ref slot, metadata);
+            ref var slot = ref GetTransientSlot(entity, ref data, Resolutions.None);
+            return slot.Resolution < Resolutions.Dispose && Enable(ref slot, metadata);
         }
 
-        bool Enable(ref Transient.Slot slot, in Metadata metadata) =>
+        bool Enable(ref Slot slot, in Metadata metadata) =>
             TryGetDelegates(metadata, out var delegates) && Enable(ref slot, delegates);
 
-        bool Enable(ref Transient.Slot slot, in Delegates delegates)
+        bool Enable(ref Slot slot, in Delegates delegates)
         {
             if (RemoveDisabled(ref slot, delegates))
             {
@@ -60,7 +52,7 @@ namespace Entia.Modules
 
         bool Enable(Entity entity, ref Data data, Metadata[] types)
         {
-            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
+            ref var slot = ref GetTransientSlot(entity, ref data, Resolutions.None);
             var enabled = false;
             for (var i = 0; i < types.Length; i++) enabled |= Enable(ref slot, types[i]);
             return enabled;

@@ -1,13 +1,6 @@
-using Entia.Components;
 using Entia.Core;
-using Entia.Core.Documentation;
-using Entia.Messages;
 using Entia.Modules.Component;
-using Entia.Modules.Message;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Entia.Modules
 {
@@ -80,10 +73,10 @@ namespace Entia.Modules
 
         bool Clear(Entity entity, ref Data data, States include)
         {
-            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
+            ref var slot = ref GetTransientSlot(entity, ref data, Resolutions.None);
             return Clear(ref slot, include);
         }
 
-        bool Clear(ref Transient.Slot slot, States include) => Remove(ref slot, (slot.Mask, GetTargetTypes(slot)), include);
+        bool Clear(ref Slot slot, States include) => Remove(ref slot, (slot.Mask, GetTargetTypes(slot)), include);
     }
 }

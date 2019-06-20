@@ -1,13 +1,5 @@
-using Entia.Components;
-using Entia.Core;
-using Entia.Core.Documentation;
-using Entia.Messages;
 using Entia.Modules.Component;
-using Entia.Modules.Message;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Entia.Modules
 {
@@ -35,14 +27,14 @@ namespace Entia.Modules
 
         bool Disable(Entity entity, ref Data data, in Metadata metadata)
         {
-            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
-            return slot.Resolution < Transient.Resolutions.Dispose && Disable(ref slot, metadata);
+            ref var slot = ref GetTransientSlot(entity, ref data, Resolutions.None);
+            return slot.Resolution < Resolutions.Dispose && Disable(ref slot, metadata);
         }
 
-        bool Disable(ref Transient.Slot slot, in Metadata metadata) =>
+        bool Disable(ref Slot slot, in Metadata metadata) =>
             TryGetDelegates(metadata, out var delegates) && Disable(ref slot, metadata, delegates);
 
-        bool Disable(ref Transient.Slot slot, in Metadata metadata, in Delegates delegates)
+        bool Disable(ref Slot slot, in Metadata metadata, in Delegates delegates)
         {
             if (Has(slot.Mask, metadata, delegates, States.All) && SetDisabled(ref slot, delegates))
             {
@@ -60,7 +52,7 @@ namespace Entia.Modules
 
         bool Disable(Entity entity, ref Data data, Metadata[] types)
         {
-            ref var slot = ref GetTransientSlot(entity, ref data, Transient.Resolutions.None);
+            ref var slot = ref GetTransientSlot(entity, ref data, Resolutions.None);
             var disabled = false;
             for (var i = 0; i < types.Length; i++) disabled |= Disable(ref slot, types[i]);
             return disabled;
