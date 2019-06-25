@@ -98,13 +98,13 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
-        public IEnumerable<Entity> Siblings(Entity entity)
+        public IEnumerable<Entity> Siblings(Entity child)
         {
-            if (TryGetRelationships(entity, out var relationships))
+            if (TryGetRelationships(child, out var relationships))
             {
                 return relationships.Parent ?
-                    Children(relationships.Parent).Except(entity) :
-                    Roots().Except(entity);
+                    Children(relationships.Parent).Except(child) :
+                    Roots().Except(child);
             }
             return Array.Empty<Entity>();
         }
