@@ -59,6 +59,7 @@ Frictions:
 - can not add a component/resource by dragging the file on a gameObject
 
 Features:
+- generate specific 'LinqExtensions.Enumerable' extensions for 'Group<T>' and for its injectables to reduce generic nesting
 - add a 'Stores' or 'States' module that holds all the state of the world
 	- other modules would be able to request a store of any struct type
 	- when serializing, there should be essentially nothing else to serialize than this module

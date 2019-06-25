@@ -57,7 +57,7 @@ namespace Entia.Modules.Group
     /// Queries and caches all entities that satisfy the query of type <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T">The query type.</typeparam>
-    public sealed class Group<T> : IGroup, IEnumerable<Group<T>.Enumerator, T> where T : struct, IQueryable
+    public sealed partial class Group<T> : IGroup, IEnumerable<Group<T>.Enumerator, T> where T : struct, IQueryable
     {
         /// <summary>
         /// An enumerator that enumerates over the group items.
