@@ -13,7 +13,7 @@ namespace Entia.Injectables
         public readonly struct Read : IInjectable
         {
             [Injector]
-            static readonly Injector<Read> _injector = Injector.From(world => new Read(world.Families()));
+            static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Families()));
 
             readonly Families _families;
             public Read(Families families) { _families = families; }
@@ -30,7 +30,7 @@ namespace Entia.Injectables
         }
 
         [Injector]
-        static readonly Injector<AllFamilies> _injector = Injector.From(world => new AllFamilies(world.Families()));
+        static Injector<AllFamilies> Injector => Injectors.Injector.From(world => new AllFamilies(world.Families()));
 
         readonly Families _families;
         public AllFamilies(Families families) { _families = families; }

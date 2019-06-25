@@ -2,8 +2,6 @@
 
 using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Dependables;
-using Entia.Dependencies;
 using Entia.Dependers;
 using Entia.Injectors;
 using Entia.Modules;
@@ -11,7 +9,6 @@ using Entia.Modules.Group;
 using Entia.Queryables;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Entia.Injectables
 {
