@@ -54,7 +54,9 @@ namespace Entia.Injectables
         [ThreadSafe]
         public bool Has(Entity parent, Entity child) => _families.Has(parent, child);
         public bool Adopt(Entity parent, Entity child) => _families.Adopt(parent, child);
+        public bool Adopt(Entity parent, params Entity[] children) => _families.Adopt(parent, children);
         public bool Reject(Entity child) => _families.Reject(child);
+        public bool Reject(params Entity[] children) => _families.Reject(children);
         public bool Replace(Entity child, Entity replacement) => _families.Replace(child, replacement);
         public bool Clear() => _families.Clear();
     }

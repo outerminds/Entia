@@ -125,10 +125,24 @@ namespace Entia.Modules
             return success && Adopt(parent, ref relationships);
         }
 
+        public bool Adopt(Entity parent, params Entity[] children)
+        {
+            var success = false;
+            for (int i = 0; i < children.Length; i++) success |= Adopt(parent, children[i]);
+            return success;
+        }
+
         public bool Reject(Entity child)
         {
             ref var relationships = ref GetRelationships(child, out var success);
             return success && Reject(ref relationships);
+        }
+
+        public bool Reject(params Entity[] children)
+        {
+            var success = false;
+            for (int i = 0; i < children.Length; i++) success |= Reject(children[i]);
+            return success;
         }
 
         public bool Replace(Entity child, Entity replacement)
