@@ -172,7 +172,12 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<Unit> AsResult(in this Failure failure) => failure;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> AsResult<T>(in this Option<T> option) => option;
+        public static Success<T> AsResult<T>(in this Some<T> some) => some.Value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Failure AsResult(in this None none, params string[] messages) => new Failure(messages);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T> AsResult<T>(in this Option<T> option, params string[] messages) =>
+            option.TryValue(out var value) ? Success(value).AsResult() : Failure(messages);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> AsOption<T>(in this Result<T> result) => result;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -231,7 +236,7 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static IEnumerable<string> Messages<T>(in this Result<T> result) => result.TryMessages(out var messages) ? messages : new string[0];
+        public static string[] Messages<T>(in this Result<T> result) => result.TryMessages(out var messages) ? messages : Array.Empty<string>();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Success<TOut> Map<TIn, TOut>(in this Success<TIn> success, Func<TIn, TOut> map) => map(success.Value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -316,24 +321,28 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<(T1 left, T2 right)> And<T1, T2>(in this Result<T1> left, in Result<T2> right) =>
-            left.And(right, (a, b) => (a, b));
+        public static Result<(T1 value1, T2 value2)> And<T1, T2>(in this Result<T1> left, in Result<T2> right) =>
+            All(left, right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T3> And<T1, T2, T3>(in this Result<T1> left, in Result<T2> right, Func<T1, T2, T3> select)
-        {
-            if (left.TryValue(out var value1) && right.TryValue(out var value2)) return Success(select(value1, value2));
-            else if (left.TryFailure(out var failure1))
-                return right.TryFailure(out var failure2) ? Failure(failure1.Messages.Concat(failure2.Messages).ToArray()) : failure1;
-            else if (right.TryFailure(out var failure2)) return failure2;
-            else return Failure();
-        }
+        public static Result<(T1 value1, T2 value2, T3 value3)> And<T1, T2, T3>(in this Result<(T1 value1, T2 value2)> left, in Result<T3> right) =>
+            All(left, right).Map(pair => (pair.value1.value1, pair.value1.value2, pair.value2));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T1> Left<T1, T2>(in this Result<T1> left, in Result<T2> right) => left.And(right, (a, _) => a);
+        public static Result<(T1 value1, T2 value2, T3 value3, T4 value4)> And<T1, T2, T3, T4>(in this Result<(T1 value1, T2 value2, T3 value3)> left, in Result<T4> right) =>
+            All(left, right).Map(pair => (pair.value1.value1, pair.value1.value2, pair.value1.value3, pair.value2));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T2> Right<T1, T2>(in this Result<T1> left, in Result<T2> right) => left.And(right, (_, b) => b);
+        public static Result<(T1 value1, T2 value2, T3 value3, T4 value4, T5 value5)> And<T1, T2, T3, T4, T5>(in this Result<(T1 value1, T2 value2, T3 value3, T4 value4)> left, in Result<T5> right) =>
+            All(left, right).Map(pair => (pair.value1.value1, pair.value1.value2, pair.value1.value3, pair.value1.value4, pair.value2));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T1> Left<T1, T2>(in this Result<T1> left, in Result<T2> right) =>
+            All(left, right).Map(pair => pair.value1);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T2> Right<T1, T2>(in this Result<T1> left, in Result<T2> right) =>
+            All(left, right).Map(pair => pair.value2);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<TOut> Return<TIn, TOut>(in this Result<TIn> result, TOut value)
@@ -380,31 +389,38 @@ namespace Entia.Core
             result.TryMessages(out var messages) ? recover(messages) : result;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<(T1, T2)> All<T1, T2>(Result<T1> result1, Result<T2> result2)
+        public static Result<(T1 value1, T2 value2)> All<T1, T2>(in Result<T1> result1, in Result<T2> result2)
         {
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2)) return (value1, value2);
             return Failure(result1.Messages().Concat(result2.Messages()));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<(T1, T2, T3)> All<T1, T2, T3>(Result<T1> result1, Result<T2> result2, Result<T3> result3)
+        public static Result<(T1 value1, T2 value2, T3 value3)> All<T1, T2, T3>(in Result<T1> result1, in Result<T2> result2, in Result<T3> result3)
         {
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3)) return (value1, value2, value3);
             return Failure(result1.Messages().Concat(result2.Messages()).Concat(result3.Messages()));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<(T1, T2, T3, T4)> All<T1, T2, T3, T4>(Result<T1> result1, Result<T2> result2, Result<T3> result3, Result<T4> result4)
+        public static Result<(T1 value1, T2 value2, T3 value3, T4 value4)> All<T1, T2, T3, T4>(in Result<T1> result1, in Result<T2> result2, in Result<T3> result3, in Result<T4> result4)
         {
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4)) return (value1, value2, value3, value4);
             return Failure(result1.Messages().Concat(result2.Messages()).Concat(result3.Messages()).Concat(result4.Messages()));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<(T1 value1, T2 value2, T3 value3, T4 value4, T5 value5)> All<T1, T2, T3, T4, T5>(in Result<T1> result1, in Result<T2> result2, in Result<T3> result3, in Result<T4> result4, in Result<T5> result5)
+        {
+            if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5)) return (value1, value2, value3, value4, value5);
+            return Failure(result1.Messages().Concat(result2.Messages()).Concat(result3.Messages()).Concat(result4.Messages()).Concat(result5.Messages()));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T[]> All<T>(params Result<T>[] results)
         {
             var values = new T[results.Length];
-            var messages = new List<string>();
+            var messages = new List<string>(results.Length);
 
             for (var i = 0; i < results.Length; i++)
             {

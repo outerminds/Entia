@@ -250,21 +250,28 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<(T1 left, T2 right)> And<T1, T2>(in this Option<T1> left, in Option<T2> right) =>
-            left.And(right, (a, b) => (a, b));
+        public static Option<(T1 value1, T2 value2)> And<T1, T2>(in this Option<T1> left, in Option<T2> right) =>
+            All(left, right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T3> And<T1, T2, T3>(in this Option<T1> left, in Option<T2> right, Func<T1, T2, T3> select)
-        {
-            if (left.TryValue(out var value1) && right.TryValue(out var value2)) return Some(select(value1, value2));
-            return None();
-        }
+        public static Option<(T1 value1, T2 value2, T3 value3)> And<T1, T2, T3>(in this Option<(T1 value1, T2 value2)> left, in Option<T3> right) =>
+            All(left, right).Map(pair => (pair.value1.value1, pair.value1.value2, pair.value2));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T1> Left<T1, T2>(in this Option<T1> left, in Option<T2> right) => left.And(right, (a, _) => a);
+        public static Option<(T1 value1, T2 value2, T3 value3, T4 value4)> And<T1, T2, T3, T4>(in this Option<(T1 value1, T2 value2, T3 value3)> left, in Option<T4> right) =>
+            All(left, right).Map(pair => (pair.value1.value1, pair.value1.value2, pair.value1.value3, pair.value2));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T2> Right<T1, T2>(in this Option<T1> left, in Option<T2> right) => left.And(right, (_, b) => b);
+        public static Option<(T1 value1, T2 value2, T3 value3, T4 value4, T5 value5)> And<T1, T2, T3, T4, T5>(in this Option<(T1 value1, T2 value2, T3 value3, T4 value4)> left, in Option<T5> right) =>
+            All(left, right).Map(pair => (pair.value1.value1, pair.value1.value2, pair.value1.value3, pair.value1.value4, pair.value2));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T1> Left<T1, T2>(in this Option<T1> left, in Option<T2> right) =>
+            All(left, right).Map(pair => pair.value1);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T2> Right<T1, T2>(in this Option<T1> left, in Option<T2> right) =>
+            All(left, right).Map(pair => pair.value2);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<TOut> Return<TIn, TOut>(in this Option<TIn> option, TOut value)
@@ -306,23 +313,30 @@ namespace Entia.Core
             option.IsNone() ? recover() : option;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<(T1, T2)> All<T1, T2>(Option<T1> option1, Option<T2> option2)
+        public static Option<(T1 value1, T2 value2)> All<T1, T2>(in Option<T1> option1, in Option<T2> option2)
         {
             if (option1.TryValue(out var value1) && option2.TryValue(out var value2)) return (value1, value2);
             return None();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<(T1, T2, T3)> All<T1, T2, T3>(Option<T1> option1, Option<T2> option2, Option<T3> option3)
+        public static Option<(T1 value1, T2 value2, T3 value3)> All<T1, T2, T3>(in Option<T1> option1, in Option<T2> option2, in Option<T3> option3)
         {
             if (option1.TryValue(out var value1) && option2.TryValue(out var value2) && option3.TryValue(out var value3)) return (value1, value2, value3);
             return None();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<(T1, T2, T3, T4)> All<T1, T2, T3, T4>(Option<T1> option1, Option<T2> option2, Option<T3> option3, Option<T4> option4)
+        public static Option<(T1 value1, T2 value2, T3 value3, T4 value4)> All<T1, T2, T3, T4>(in Option<T1> option1, in Option<T2> option2, in Option<T3> option3, in Option<T4> option4)
         {
             if (option1.TryValue(out var value1) && option2.TryValue(out var value2) && option3.TryValue(out var value3) && option4.TryValue(out var value4)) return (value1, value2, value3, value4);
+            return None();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<(T1 value1, T2 value2, T3 value3, T4 value4, T5 value5)> All<T1, T2, T3, T4, T5>(in Option<T1> option1, in Option<T2> option2, in Option<T3> option3, in Option<T4> option4, in Option<T5> option5)
+        {
+            if (option1.TryValue(out var value1) && option2.TryValue(out var value2) && option3.TryValue(out var value3) && option4.TryValue(out var value4) && option5.TryValue(out var value5)) return (value1, value2, value3, value4, value5);
             return None();
         }
 

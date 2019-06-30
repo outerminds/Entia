@@ -91,24 +91,8 @@ namespace Entia.Core
         public static void Sort<T>(ref this (T[] items, int count) array, IComparer<T> comparer) =>
             Array.Sort(array.items, 0, array.count, comparer);
 
-        public static ref T Push<T>(ref this (T[] items, int count) array, T item)
-        {
-            var index = array.count++;
-            array.Ensure();
-            ref var slot = ref array.items[index];
-            slot = item;
-            return ref slot;
-        }
-
-        public static ref T Push<T>(ref this (Array items, int count) array, T item)
-        {
-            var items = array.items as T[];
-            var index = array.count++;
-            if (ArrayUtility.Ensure(ref items, array.count)) array.items = items;
-            ref var slot = ref items[index];
-            slot = item;
-            return ref slot;
-        }
+        public static ref T Push<T>(ref this (T[] items, int count) array, in T item) => ref array.Insert(item, array.count);
+        public static ref T Push<T>(ref this (Array items, int count) array, in T item) => ref array.Insert(item, array.count);
 
         public static ref T Pop<T>(ref this (T[] items, int count) array) => ref array.items[--array.count];
 
@@ -141,19 +125,41 @@ namespace Entia.Core
         public static bool Contains<T>(in this (T[] items, int count) array, in T item) => array.IndexOf(item) >= 0;
         public static bool Contains<T>(in this (Array items, int count) array, in T item) => array.IndexOf(item) >= 0;
 
-        public static bool Remove<T>(ref this (T[] items, int count) array, in T item)
+        public static ref T Insert<T>(ref this (T[] items, int count) array, in T item, int index)
         {
-            var index = array.IndexOf(item);
-            if (index < 0) return false;
+            var last = array.count++;
+            array.Ensure();
+            if (index < last) Array.Copy(array.items, index, array.items, index + 1, last - index);
+            ref var slot = ref array.items[index];
+            slot = item;
+            return ref slot;
+        }
+
+        public static ref T Insert<T>(ref this (Array items, int count) array, in T item, int index)
+        {
+            var items = array.items as T[];
+            var last = array.count++;
+            if (ArrayUtility.Ensure(ref items, array.count)) array.items = items;
+            if (index < last) Array.Copy(array.items, index, array.items, index + 1, last - index);
+            ref var slot = ref items[index];
+            slot = item;
+            return ref slot;
+        }
+
+        public static bool Remove<T>(ref this (T[] items, int count) array, in T item) => array.RemoveAt(array.IndexOf(item));
+        public static bool Remove<T>(ref this (Array items, int count) array, in T item) => array.RemoveAt(array.IndexOf(item));
+
+        public static bool RemoveAt<T>(ref this (T[] items, int count) array, int index)
+        {
+            if (index < 0 || index >= array.count) return false;
             array.count--;
             if (index < array.count) Array.Copy(array.items, index + 1, array.items, index, array.count - index);
             return true;
         }
 
-        public static bool Remove<T>(ref this (Array items, int count) array, in T item)
+        public static bool RemoveAt(ref this (Array items, int count) array, int index)
         {
-            var index = array.IndexOf(item);
-            if (index < 0) return false;
+            if (index < 0 || index >= array.count) return false;
             array.count--;
             if (index < array.count) Array.Copy(array.items, index + 1, array.items, index, array.count - index);
             return true;

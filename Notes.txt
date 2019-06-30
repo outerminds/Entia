@@ -157,6 +157,7 @@ Bugs:
 	- increases generic nesting (should not be a real issue)
 
 Optimization:
+- Families module can optimize methods that act on many children such as 'Adopt/AdoptAt/Reject/RejectAt'
 - Shrink component segment stores by half when the 'count < capacity / 4'
 	- This will free up some memory
 	- This behaviour might cause allocations if lots of entities are moved around causing some segment to grow alot and shrink soon after

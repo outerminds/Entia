@@ -55,8 +55,12 @@ namespace Entia.Injectables
         public bool Has(Entity parent, Entity child) => _families.Has(parent, child);
         public bool Adopt(Entity parent, Entity child) => _families.Adopt(parent, child);
         public bool Adopt(Entity parent, params Entity[] children) => _families.Adopt(parent, children);
+        public bool AdoptAt(int index, Entity parent, Entity child) => _families.AdoptAt(index, parent, child);
+        public bool AdoptAt(int index, Entity parent, params Entity[] children) => _families.AdoptAt(index, parent, children);
         public bool Reject(Entity child) => _families.Reject(child);
         public bool Reject(params Entity[] children) => _families.Reject(children);
+        public bool RejectAt(int index, Entity parent) => _families.RejectAt(index, parent);
+        public bool RejectAt(int index, int count, Entity parent) => _families.RejectAt(index, count, parent);
         public bool Replace(Entity child, Entity replacement) => _families.Replace(child, replacement);
         public bool Clear() => _families.Clear();
     }

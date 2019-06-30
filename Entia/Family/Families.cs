@@ -119,17 +119,46 @@ namespace Entia.Modules
             return success && Has(parent, ref relationships);
         }
 
+        public bool AdoptAt(int index, Entity parent, Entity child)
+        {
+            ref var relationships = ref GetRelationships(parent, out var success);
+            return success && AdoptAt(index, ref relationships, child);
+        }
+
+        public bool AdoptAt(int index, Entity parent, params Entity[] children)
+        {
+            var adopted = false;
+            ref var relationships = ref GetRelationships(parent, out var success);
+            if (success) for (int i = 0; i < children.Length; i++) adopted |= AdoptAt(index + i, parent, children[i]);
+            return adopted;
+        }
+
         public bool Adopt(Entity parent, Entity child)
         {
-            ref var relationships = ref GetRelationships(child, out var success);
-            return success && Adopt(parent, ref relationships);
+            ref var relationships = ref GetRelationships(parent, out var success);
+            return success && Adopt(ref relationships, child);
         }
 
         public bool Adopt(Entity parent, params Entity[] children)
         {
-            var success = false;
-            for (int i = 0; i < children.Length; i++) success |= Adopt(parent, children[i]);
-            return success;
+            var adopted = false;
+            ref var relationships = ref GetRelationships(parent, out var success);
+            if (success) for (int i = 0; i < children.Length; i++) adopted |= Adopt(ref relationships, children[i]);
+            return adopted;
+        }
+
+        public bool RejectAt(int index, Entity parent)
+        {
+            ref var relationships = ref GetRelationships(parent, out var success);
+            return success && RejectAt(index, ref relationships);
+        }
+
+        public bool RejectAt(int index, int count, Entity parent)
+        {
+            var rejected = false;
+            ref var relationships = ref GetRelationships(parent, out var success);
+            if (success) for (int i = 0; i < count; i++) rejected |= RejectAt(index, ref relationships);
+            return rejected;
         }
 
         public bool Reject(Entity child)
@@ -198,19 +227,37 @@ namespace Entia.Modules
             relationships.Entity = default;
         }
 
-        bool Adopt(Entity parent, ref Relationships child)
+        [ThreadSafe]
+        bool Has(Entity parent, ref Relationships child)
         {
             ref var relationships = ref GetRelationships(parent, out var success);
-            return success && Adopt(ref relationships, ref child);
+            return success && Has(ref relationships, ref child);
         }
 
-        bool Adopt(ref Relationships parent, ref Relationships child)
+        [ThreadSafe]
+        bool Has(ref Relationships parent, ref Relationships child) => child.Parent == parent.Entity;
+
+        bool Adopt(ref Relationships parent, Entity child)
         {
-            if (parent.Entity == child.Parent || parent.Entity == child.Entity) return false;
+            ref var relationships = ref GetRelationships(child, out var success);
+            return success && Adopt(ref parent, ref relationships);
+        }
+
+        bool Adopt(ref Relationships parent, ref Relationships child) => AdoptAt(parent.Children.count, ref parent, ref child);
+
+        bool AdoptAt(int index, ref Relationships parent, Entity child)
+        {
+            ref var relationships = ref GetRelationships(child, out var success);
+            return success && AdoptAt(index, ref parent, ref relationships);
+        }
+
+        bool AdoptAt(int index, ref Relationships parent, ref Relationships child)
+        {
+            if (parent.Entity == child.Entity) return false;
 
             ref var relationships = ref GetRelationships(child.Parent, out var success);
             if (success) Reject(ref relationships, ref child);
-            parent.Children.Push(child.Entity);
+            parent.Children.Insert(child.Entity, index);
             child.Parent = parent.Entity;
             _onAdopt.Emit(new OnAdopt { Parent = parent.Entity, Child = child.Entity });
             return true;
@@ -222,9 +269,17 @@ namespace Entia.Modules
             return success && Reject(ref relationships, ref child);
         }
 
-        bool Reject(ref Relationships parent, ref Relationships child)
+        bool Reject(ref Relationships parent, ref Relationships child) => RejectAt(parent.Children.IndexOf(child.Entity), ref parent, ref child);
+
+        bool RejectAt(int index, ref Relationships parent)
         {
-            if (parent.Children.Remove(child.Entity))
+            ref var relationships = ref GetRelationships(parent.Children.items[index], out var success);
+            return success && RejectAt(index, ref parent, ref relationships);
+        }
+
+        bool RejectAt(int index, ref Relationships parent, ref Relationships child)
+        {
+            if (parent.Children.RemoveAt(index))
             {
                 child.Parent = default;
                 _onReject.Emit(new OnReject { Parent = parent.Entity, Child = child.Entity });
@@ -249,27 +304,8 @@ namespace Entia.Modules
         {
             if (child.Entity == replacement.Entity) return false;
 
-            ref var relationships = ref GetRelationships(replacement.Parent, out var success);
-            if (success) Reject(ref relationships, ref replacement);
-
             var index = parent.Children.IndexOf(child.Entity);
-            if (index < 0) return false;
-
-            parent.Children.items[index] = replacement.Entity;
-            replacement.Parent = parent.Entity;
-            child.Parent = default;
-            _onAdopt.Emit(new OnAdopt { Parent = parent.Entity, Child = replacement.Entity });
-            return true;
+            return index >= 0 && RejectAt(index, ref parent, ref child) && AdoptAt(index, ref parent, ref replacement);
         }
-
-        [ThreadSafe]
-        bool Has(Entity parent, ref Relationships child)
-        {
-            ref var relationships = ref GetRelationships(parent, out var success);
-            return success && Has(ref relationships, ref child);
-        }
-
-        [ThreadSafe]
-        bool Has(ref Relationships parent, ref Relationships child) => child.Parent == parent.Entity;
     }
 }
