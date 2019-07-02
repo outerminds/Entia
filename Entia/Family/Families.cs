@@ -223,7 +223,7 @@ namespace Entia.Modules
         {
             ref var relationships = ref _relationships[entity.Index];
             Reject(ref relationships);
-            for (int i = 0; i < relationships.Children.count; i++) _entities.Destroy(relationships.Children.items[i]);
+            for (int i = relationships.Children.count - 1; i >= 0; i--) _entities.Destroy(relationships.Children.items[i]);
             relationships.Entity = default;
         }
 
@@ -257,7 +257,7 @@ namespace Entia.Modules
 
             ref var relationships = ref GetRelationships(child.Parent, out var success);
             if (success) Reject(ref relationships, ref child);
-            parent.Children.Insert(child.Entity, index);
+            parent.Children.Insert(child.Entity, Math.Min(parent.Children.count, index));
             child.Parent = parent.Entity;
             _onAdopt.Emit(new OnAdopt { Parent = parent.Entity, Child = child.Entity });
             return true;
