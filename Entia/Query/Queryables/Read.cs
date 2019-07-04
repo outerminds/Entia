@@ -1,10 +1,8 @@
 using System.Runtime.CompilerServices;
-using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Dependencies;
 using Entia.Dependers;
 using Entia.Modules;
-using Entia.Modules.Component;
 using Entia.Modules.Query;
 using Entia.Queriers;
 
@@ -17,17 +15,10 @@ namespace Entia.Queryables
         {
             public override bool TryQuery(in Context context, out Query<Read<T>> query)
             {
-                if (ComponentUtility.Abstract<T>.TryConcrete(out var metadata))
+                if (context.World.Queriers().TryQuery<Write<T>>(context, out var write))
                 {
-                    var segment = context.Segment;
-                    var state = context.World.Components().State(segment.Mask, metadata);
-                    if (context.Include.HasAny(state))
-                    {
-                        query = metadata.Kind == Metadata.Kinds.Tag ?
-                            new Query<Read<T>>(_ => new Read<T>(0, Dummy<T>.Array.One, state)) :
-                            new Query<Read<T>>(index => new Read<T>(index, segment.Store(metadata) as T[], state), metadata);
-                        return true;
-                    }
+                    query = new Query<Read<T>>(index => write.Get(index), write.Types);
+                    return true;
                 }
 
                 query = default;
