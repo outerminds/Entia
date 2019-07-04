@@ -16,7 +16,7 @@ IEnumerable<(string system, string scheduler, string depender)> Generate(int dep
             i == 0 ? "Entity" :
             i == 1 ? $"Write<{generics[0]}>" :
             $"All<{string.Join(", ", generics.Select(generic => $"Write<{generic}>"))}>";
-        var storeVars = string.Join("", generics.Select((generic, index) => $"var store{index + 1} = segment.Store<{generic}>();"));
+        var storeVars = string.Join(" ", generics.Select((generic, index) => $"var store{index + 1} = segment.Store<{generic}>();"));
         var storeRefs = string.Join("", generics.Select((generic, index) => $", ref store{index + 1}[j]"));
         var yields = string.Join(
             Environment.NewLine + "            ",

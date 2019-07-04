@@ -70,7 +70,7 @@ namespace Entia.Schedulers
                     {
                         var segment = segments[i];
                         var (entities, count) = segment.Entities;
-
+                        
                         for (int j = 0; j < count; j++) run(entities[j]);
                     }
                 })
@@ -124,7 +124,7 @@ namespace Entia.Schedulers
                     {
                         var segment = segments[i];
                         var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>();var store2 = segment.Store<T2>();
+                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
                         for (int j = 0; j < count; j++) run(entities[j], ref store1[j], ref store2[j]);
                     }
                 })
@@ -151,7 +151,7 @@ namespace Entia.Schedulers
                     {
                         var segment = segments[i];
                         var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>();var store2 = segment.Store<T2>();var store3 = segment.Store<T3>();
+                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
                         for (int j = 0; j < count; j++) run(entities[j], ref store1[j], ref store2[j], ref store3[j]);
                     }
                 })
@@ -178,7 +178,7 @@ namespace Entia.Schedulers
                     {
                         var segment = segments[i];
                         var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>();var store2 = segment.Store<T2>();var store3 = segment.Store<T3>();var store4 = segment.Store<T4>();
+                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
                         for (int j = 0; j < count; j++) run(entities[j], ref store1[j], ref store2[j], ref store3[j], ref store4[j]);
                     }
                 })
@@ -205,7 +205,7 @@ namespace Entia.Schedulers
                     {
                         var segment = segments[i];
                         var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>();var store2 = segment.Store<T2>();var store3 = segment.Store<T3>();var store4 = segment.Store<T4>();var store5 = segment.Store<T5>();
+                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
                         for (int j = 0; j < count; j++) run(entities[j], ref store1[j], ref store2[j], ref store3[j], ref store4[j], ref store5[j]);
                     }
                 })
@@ -232,7 +232,7 @@ namespace Entia.Schedulers
                     {
                         var segment = segments[i];
                         var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>();var store2 = segment.Store<T2>();var store3 = segment.Store<T3>();var store4 = segment.Store<T4>();var store5 = segment.Store<T5>();var store6 = segment.Store<T6>();
+                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
                         for (int j = 0; j < count; j++) run(entities[j], ref store1[j], ref store2[j], ref store3[j], ref store4[j], ref store5[j], ref store6[j]);
                     }
                 })
@@ -259,7 +259,7 @@ namespace Entia.Schedulers
                     {
                         var segment = segments[i];
                         var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>();var store2 = segment.Store<T2>();var store3 = segment.Store<T3>();var store4 = segment.Store<T4>();var store5 = segment.Store<T5>();var store6 = segment.Store<T6>();var store7 = segment.Store<T7>();
+                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
                         for (int j = 0; j < count; j++) run(entities[j], ref store1[j], ref store2[j], ref store3[j], ref store4[j], ref store5[j], ref store6[j], ref store7[j]);
                     }
                 })
@@ -275,7 +275,7 @@ namespace Entia.Dependers
         public IEnumerable<IDependency> Depend(MemberInfo member, World world)
         {
             yield return new Read(typeof(Entity));
-
+            
         }
     }
     public sealed class RunEach<T> : IDepender where T : struct, IComponent
