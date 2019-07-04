@@ -1,4 +1,3 @@
-using Entia.Components;
 using Entia.Core;
 using Entia.Core.Documentation;
 using System;
