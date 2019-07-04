@@ -14,12 +14,11 @@ namespace Entia.Experiment
             var world = WorldTest.RandomWorld(iterations);
             var group = world.Groups().Get(world.Queriers().Get<All<Write<Position>, Read<Velocity>>>());
             var array = group.ToArray();
-            // var segments = world.Components().Segments
-            //     .Where(segment => group.Querier.TryQuery(new Context(segment, world), out _))
-            //     .ToArray();
-            // var arrays = segments
-            //     .Select(segment => (segment.Entities.count, positions: segment.Store<Position>(), velocities: segment.Store<Velocity>()))
-            //     .ToArray();
+            var segments = world.Components().Segments;
+            var arrays = segments
+                .Where(segment => group.Querier.TryQuery(new Context(segment, world), out _))
+                .Select(segment => (segment.Entities.count, positions: segment.Store<Position>(), velocities: segment.Store<Velocity>()))
+                .ToArray();
 
             void Body(ref Position position, in Velocity velocity)
             {
@@ -30,41 +29,40 @@ namespace Entia.Experiment
 
             void DirectFor()
             {
-                // for (var i = 0; i < arrays.Length; i++)
-                // {
-                //     var (count, positions, velocities) = arrays[i];
-                //     for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
-                // }
+                for (var i = 0; i < arrays.Length; i++)
+                {
+                    var (count, positions, velocities) = arrays[i];
+                    for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
+                }
             }
 
             void DirectParallel1()
             {
-                // Parallel.For(0, arrays.Length, i =>
-                // {
-                //     var (count, positions, velocities) = arrays[i];
-                //     for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
-                // });
+                Parallel.For(0, arrays.Length, i =>
+                {
+                    var (count, positions, velocities) = arrays[i];
+                    for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
+                });
             }
 
             void DirectParallel2()
             {
-                // Parallel.For(0, arrays.Length, i =>
-                // {
-                //     var (count, positions, velocities) = arrays[i];
-                //     Parallel.For(0, count, j => Body(ref positions[j], velocities[j]));
-                // });
+                Parallel.For(0, arrays.Length, i =>
+                {
+                    var (count, positions, velocities) = arrays[i];
+                    Parallel.For(0, count, j => Body(ref positions[j], velocities[j]));
+                });
             }
 
             void SegmentFor()
             {
-                // for (var i = 0; i < segments.Length; i++)
-                // {
-                //     var segment = segments[i];
-                //     var count = segment.Entities.count;
-                //     var positions = segment.Store<Position>();
-                //     var velocities = segment.Store<Velocity>();
-                //     for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
-                // }
+                for (var i = 0; i < segments.Length; i++)
+                {
+                    var segment = segments[i];
+                    var count = segment.Entities.count;
+                    if (segment.TryStore<Position>(out var positions) && segment.TryStore<Velocity>(out var velocities))
+                        for (var j = 0; j < count; j++) Body(ref positions[j], velocities[j]);
+                }
             }
 
             void ArrayFor()

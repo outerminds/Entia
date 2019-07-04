@@ -104,7 +104,7 @@ namespace Entia
         public static readonly Entity Zero;
 
         [Depender]
-        static readonly IDepender _depender = Dependers.Depender.From(new Read(typeof(Entity)));
+        static IDepender Depender => Dependers.Depender.From(new Read(typeof(Entity)));
 
         /// <summary>
         /// Implements the operator ==.

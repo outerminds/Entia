@@ -1,5 +1,4 @@
 ﻿using Entia.Dependables;
-using Entia.Dependers;
 using Entia.Injectables;
 using Entia.Schedulables;
 using Entia.Schedulers;

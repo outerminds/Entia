@@ -30,7 +30,7 @@ namespace Entia.Modules.Component
         /// <summary>
         /// The index of the segment.
         /// </summary>
-        public readonly int Index;
+        public readonly uint Index;
         /// <summary>
         /// The mask that represents the component profile of the segment.
         /// </summary>
@@ -60,9 +60,9 @@ namespace Entia.Modules.Component
         /// <summary>
         /// Initializes a new instance of the <see cref="Segment"/> class.
         /// </summary>
-        public Segment(int index, BitMask mask, int capacity = 4) : this(index, mask, ComponentUtility.ToMetadata(mask), capacity) { }
+        public Segment(uint index, BitMask mask, int capacity = 4) : this(index, mask, ComponentUtility.ToMetadata(mask), capacity) { }
 
-        Segment(int index, BitMask mask, Metadata[] types, int capacity = 4) : this(
+        Segment(uint index, BitMask mask, Metadata[] types, int capacity = 4) : this(
             index,
             mask,
             types,
@@ -71,7 +71,7 @@ namespace Entia.Modules.Component
             (new Entity[capacity], 0))
         { }
 
-        Segment(int index, BitMask mask, Metadata[] types, Metadata[] components, Metadata[] tags, in (Entity[] items, int count) entities)
+        Segment(uint index, BitMask mask, Metadata[] types, Metadata[] components, Metadata[] tags, in (Entity[] items, int count) entities)
         {
             Index = index;
             Mask = mask;
@@ -133,6 +133,19 @@ namespace Entia.Modules.Component
             store = default;
             return false;
         }
+        [ThreadSafe]
+        public bool TryStore<T>(out T[] store) where T : struct, IComponent
+        {
+            var index = GetStoreIndex(ComponentUtility.Concrete<T>.Data);
+            if (index >= 0 && index < _stores.Length && _stores[index] is T[] array)
+            {
+                store = array;
+                return true;
+            }
+
+            store = default;
+            return false;
+        }
         /// <summary>
         /// Gets the component store of provided component <paramref name="type"/>.
         /// If the store doesn't exist, an <see cref="IndexOutOfRangeException"/> may be thrown or a <c>null</c> will be returned.
@@ -148,6 +161,9 @@ namespace Entia.Modules.Component
         /// If a component store not large enough, it is resized.
         /// </summary>
         /// <returns>Returns <c>true</c> if a component store was resized; otherwise, <c>false</c>.</returns>
+        [ThreadSafe]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T[] Store<T>() where T : struct, IComponent => _stores[GetStoreIndex(ComponentUtility.Concrete<T>.Data)] as T[];
         public bool Ensure()
         {
             var resized = false;

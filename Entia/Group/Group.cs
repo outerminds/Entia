@@ -413,9 +413,9 @@ namespace Entia.Modules.Group
             if (!Has(segment) && Querier.TryQuery(new Context(segment, _world), out var query))
             {
                 Count += segment.Entities.count;
-                ArrayUtility.Set(ref _indexToComponentSegment, segment, segment.Index);
-                ArrayUtility.Set(ref _indexToQuery, query, segment.Index);
-                ArrayUtility.Set(ref _indexToSegment, _segments.Length, segment.Index);
+                ArrayUtility.Set(ref _indexToComponentSegment, segment, (int)segment.Index);
+                ArrayUtility.Set(ref _indexToQuery, query, (int)segment.Index);
+                ArrayUtility.Set(ref _indexToSegment, _segments.Length, (int)segment.Index);
 
                 // NOTE: less maintenance is required for the special case 'Group<Entity>'
                 if (typeof(T) == typeof(Entity))

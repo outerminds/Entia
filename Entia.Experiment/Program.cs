@@ -450,7 +450,7 @@ namespace Entia.Experiment
         static void Main()
         {
             // Performance();
-            Layout();
+            // Layout();
             // DebugView();
             // ComponentTest.Run();
             // ParallelTest.Run();
@@ -467,13 +467,13 @@ namespace Entia.Experiment
             // Group2Test.Benchmark(1_000_000);
 
             // TestLaPool();
-            // for (int i = 0; i < 100; i++)
-            // {
-            //     GroupTest.Benchmark(1_000);
-            //     GroupTest.Benchmark(10_000);
-            //     GroupTest.Benchmark(100_000);
-            //     GroupTest.Benchmark(1_000_000);
-            // }
+            for (int i = 0; i < 100; i++)
+            {
+                GroupTest.Benchmark(1_000);
+                GroupTest.Benchmark(10_000);
+                GroupTest.Benchmark(100_000);
+                GroupTest.Benchmark(1_000_000);
+            }
         }
 
         public readonly struct BobaData : ISystem

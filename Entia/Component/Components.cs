@@ -45,8 +45,8 @@ namespace Entia.Modules
         readonly Emitter<OnException> _onException;
         readonly Emitter<Entia.Messages.Segment.OnCreate> _onCreate;
         readonly Emitter<Entia.Messages.Segment.OnMove> _onMove;
-        readonly Segment _created = new Segment(int.MaxValue, new BitMask());
-        readonly Segment _destroyed = new Segment(int.MaxValue, new BitMask(), 1);
+        readonly Segment _created = new Segment(uint.MaxValue, new BitMask());
+        readonly Segment _destroyed = new Segment(uint.MaxValue, new BitMask(), 1);
         readonly Dictionary<BitMask, Segment> _maskToSegment;
         readonly Segment _empty;
         (Data[] items, int count) _data;
@@ -283,7 +283,7 @@ namespace Entia.Modules
             if (mask.IsEmpty) return _empty;
             if (_maskToSegment.TryGetValue(mask, out var segment)) return segment;
             var clone = new BitMask { mask };
-            segment = _maskToSegment[clone] = ArrayUtility.Add(ref _segments, new Segment(_segments.Length, clone));
+            segment = _maskToSegment[clone] = ArrayUtility.Add(ref _segments, new Segment((uint)_segments.Length, clone));
             _onCreate.Emit(new Entia.Messages.Segment.OnCreate { Segment = segment });
             return segment;
         }

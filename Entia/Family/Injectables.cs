@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Entia.Core;
 using Entia.Core.Documentation;
+using Entia.Dependers;
 using Entia.Injectors;
 using Entia.Modules;
 using Entia.Modules.Family;
@@ -14,6 +15,8 @@ namespace Entia.Injectables
         {
             [Injector]
             static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Families()));
+            [Depender]
+            static IDepender Depender => Dependers.Depender.From(new Dependencies.Read(typeof(Entity)));
 
             readonly Families _families;
             public Read(Families families) { _families = families; }
@@ -31,6 +34,8 @@ namespace Entia.Injectables
 
         [Injector]
         static Injector<AllFamilies> Injector => Injectors.Injector.From(world => new AllFamilies(world.Families()));
+        [Depender]
+        static IDepender Depender => Dependers.Depender.From(new Dependencies.Write(typeof(Entity)));
 
         readonly Families _families;
         public AllFamilies(Families families) { _families = families; }

@@ -1,28 +1,21 @@
-﻿using Entia.Components;
-using Entia.Core;
-using Entia.Core.Documentation;
-using Entia.Dependencies;
-using Entia.Dependers;
+﻿using Entia.Core.Documentation;
 using Entia.Modules;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
 using Entia.Queriers;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 
 namespace Entia.Queryables
 {
     [ThreadSafe]
-    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Method, AllowMultiple = false)]
     public sealed class IncludeAttribute : Attribute
     {
         public readonly States States;
         public IncludeAttribute(States states = States.Enabled) { States = states; }
     }
 
-    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Method)]
     public sealed class QueryAttribute : Attribute, IQuerier
     {
         public readonly States? Include;
@@ -37,7 +30,7 @@ namespace Entia.Queryables
     }
 
     [ThreadSafe]
-    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Method)]
     public sealed class AllAttribute : Attribute, IQuerier
     {
         public readonly States? Include;
@@ -69,7 +62,7 @@ namespace Entia.Queryables
     }
 
     [ThreadSafe]
-    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Method)]
     public sealed class AnyAttribute : Attribute, IQuerier
     {
         public readonly States? Include;
@@ -99,7 +92,7 @@ namespace Entia.Queryables
     }
 
     [ThreadSafe]
-    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Method)]
     public sealed class NoneAttribute : Attribute, IQuerier
     {
         public readonly States? Include;

@@ -48,7 +48,7 @@ namespace Entia.Experiment
 
             string Format((string name, Action test, long total, long minimum, long maximum) result, double baseTotal)
             {
-                var column = 25;
+                var column = 20;
                 var name = Justify(result.name, column);
                 var total = Justify(TimeSpan.FromTicks(result.total), column);
                 var ratio = Justify((result.total / baseTotal).ToString("0.000"), column);
