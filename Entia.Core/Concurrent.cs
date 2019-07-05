@@ -148,6 +148,11 @@ namespace Entia.Core
             using (var value = Read()) return read(value.Value, state);
         }
 
+        public void Write(Action<T> write)
+        {
+            using (var value = Write()) write(value.Value);
+        }
+
         public void Write(RefAction<T> write)
         {
             using (var value = Write()) write(ref value.Value);
@@ -158,9 +163,24 @@ namespace Entia.Core
             using (var value = Write()) write(ref value.Value, state);
         }
 
+        public void Write<TState>(in TState state, Action<T, TState> write)
+        {
+            using (var value = Write()) write(value.Value, state);
+        }
+
+        public TValue Write<TValue>(Func<T, TValue> write)
+        {
+            using (var value = Write()) return write(value.Value);
+        }
+
         public TValue Write<TValue, TState>(in TState state, RefInFunc<T, TState, TValue> write)
         {
             using (var value = Write()) return write(ref value.Value, state);
+        }
+
+        public TValue Write<TValue, TState>(in TState state, Func<T, TState, TValue> write)
+        {
+            using (var value = Write()) return write(value.Value, state);
         }
     }
 }

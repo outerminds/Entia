@@ -28,8 +28,8 @@ namespace Entia.Modules
             var set = new HashSet<MemberInfo>();
             IEnumerable<IDependency> Next(MemberInfo current)
             {
-                var attributes = current.GetCustomAttributes(true);
-                if (set.Add(current) && attributes.OfType<IgnoreAttribute>().None())
+                if (current.IsDefined(typeof(IgnoreAttribute))) yield break;
+                else if (set.Add(current))
                 {
                     switch (current)
                     {

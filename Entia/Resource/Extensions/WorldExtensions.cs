@@ -10,7 +10,7 @@
 		public static Resources Resources(this World world)
         {
             if (world.TryGet<Resources>(out var module)) return module;
-            world.Set(module = new Resources());
+            world.Set(module = new Resources(world.Boxes()));
             return module;
         }
     }

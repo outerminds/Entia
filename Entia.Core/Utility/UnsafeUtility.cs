@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -126,7 +125,7 @@ namespace Entia.Core
         {
             for (int i = 0; i < count; i++) ((byte*)target)[i] = ((byte*)source)[i];
         }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void Copy(Delegate source, Delegate target)
         {
             foreach (var field in _fields) field.SetValue(target, field.GetValue(source));

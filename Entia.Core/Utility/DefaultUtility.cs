@@ -62,7 +62,7 @@ namespace Entia.Core
             {
                 try
                 {
-                    if (member.GetCustomAttributes(typeof(DefaultAttribute), true).Any())
+                    if (member.IsDefined(typeof(DefaultAttribute), true))
                     {
                         switch (member)
                         {
@@ -89,7 +89,7 @@ namespace Entia.Core
             {
                 try
                 {
-                    if (member.GetCustomAttributes(typeof(DefaultAttribute), true).Any())
+                    if (member.IsDefined(typeof(DefaultAttribute), true))
                     {
                         switch (member)
                         {

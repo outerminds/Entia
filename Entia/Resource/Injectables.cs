@@ -79,11 +79,11 @@ namespace Entia.Injectables
             [Depender]
             static IDepender Depender => Dependers.Depender.From<T>(new Dependencies.Read(typeof(T)));
 
-            public ref readonly T Value => ref _box[0];
+            public ref readonly T Value => ref _box.Value;
 
-            readonly T[] _box;
+            readonly Box<T>.Read _box;
 
-            public Read(T[] box) { _box = box; }
+            public Read(Box<T>.Read box) { _box = box; }
         }
 
         [Injector]
@@ -91,10 +91,10 @@ namespace Entia.Injectables
         [Depender]
         static IDepender Depender => Dependers.Depender.From<T>(new Dependencies.Write(typeof(T)));
 
-        public ref T Value => ref _box[0];
+        public ref T Value => ref _box.Value;
 
-        readonly T[] _box;
+        readonly Box<T> _box;
 
-        public Resource(T[] box) { _box = box; }
+        public Resource(Box<T> box) { _box = box; }
     }
 }

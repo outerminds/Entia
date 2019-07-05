@@ -10,13 +10,16 @@ namespace Entia.Modules
     [ThreadSafe]
     public sealed class Resources : IModule, IClearable, IEnumerable<IResource>
     {
-        readonly Concurrent<TypeMap<IResource, Array>> _boxes = new TypeMap<IResource, Array>();
+        static readonly object _key = typeof(Resources);
+
+        readonly Boxes _boxes;
+        public Resources(Boxes boxes) { _boxes = boxes; }
 
         public bool TryGet<T>(out T resource) where T : struct, IResource
         {
             if (TryBox<T>(out var box))
             {
-                resource = box[0];
+                resource = box.Value;
                 return true;
             }
 
@@ -28,7 +31,7 @@ namespace Entia.Modules
         {
             if (TryBox(type, out var box))
             {
-                resource = box.GetValue(0) as IResource;
+                resource = box.Value as IResource;
                 return resource != null;
             }
 
@@ -36,88 +39,37 @@ namespace Entia.Modules
             return false;
         }
 
-        public ref T Get<T>() where T : struct, IResource => ref Box<T>()[0];
-        public IResource Get(Type type) => Box(type).GetValue(0) as IResource;
-        public void Set<T>(in T resource) where T : struct, IResource => Box<T>()[0] = resource;
-        public void Set(IResource resource) => Box(resource.GetType()).SetValue(resource, 0);
+        public ref T Get<T>() where T : struct, IResource => ref Box<T>().Value;
+        public IResource Get(Type type) => Box(type).Value as IResource;
+        public bool Set<T>(in T resource) where T : struct, IResource => _boxes.Set(_key, resource);
+        public bool Set(IResource resource) => _boxes.Set(resource.GetType(), _key, resource);
 
-        public bool Has<T>() where T : struct, IResource
+        public bool Has<T>() where T : struct, IResource => _boxes.Has<T>(_key);
+        public bool Has(Type type) => _boxes.Has(type, _key);
+        public bool Remove<T>() where T : struct, IResource => _boxes.Remove<T>(_key);
+        public bool Remove(Type type) => _boxes.Remove(type, _key);
+        public bool TryBox(Type type, out Box box) => _boxes.TryGet(type, _key, out box);
+        public bool TryBox<T>(out Box<T> box) where T : struct, IResource => _boxes.TryGet<T>(_key, out box);
+
+        public Box Box(Type type)
         {
-            using (var read = _boxes.Read()) return read.Value.Has<T>(false, false);
+            if (_boxes.TryGet(type, _key, out var box)) return box;
+            _boxes.Set(type, _key, DefaultUtility.Default(type), out box);
+            return box;
         }
 
-        public bool Has(Type type)
+        public Box<T> Box<T>() where T : struct, IResource
         {
-            using (var read = _boxes.Read()) return read.Value.Has(type, false, false);
+            if (_boxes.TryGet<T>(_key, out var box)) return box;
+            _boxes.Set(_key, DefaultUtility.Default<T>(), out box);
+            return box;
         }
 
-        public bool Remove<T>() where T : struct, IResource
-        {
-            using (var write = _boxes.Write()) return write.Value.Remove<T>(false, false);
-        }
-
-        public bool Remove(Type type)
-        {
-            using (var write = _boxes.Write()) return write.Value.Remove(type, false, false);
-        }
-
-        public bool TryBox(Type type, out Array box)
-        {
-            using (var read = _boxes.Read()) return read.Value.TryGet(type, out box, false, false);
-        }
-
-        public bool TryBox<T>(out T[] box) where T : struct, IResource
-        {
-            using (var read = _boxes.Read())
-            {
-                if (read.Value.TryGet<T>(out var value, false, false) && value is T[] casted)
-                {
-                    box = casted;
-                    return true;
-                }
-
-                box = default;
-                return false;
-            }
-        }
-
-        public Array Box(Type type)
-        {
-            using (var read = _boxes.Read(true))
-            {
-                if (read.Value.TryGet(type, out var box, false, false)) return box;
-                using (var write = _boxes.Write())
-                {
-                    if (write.Value.TryGet(type, out box, false, false)) return box;
-                    write.Value.Set(type, box = Array.CreateInstance(type, 1));
-                    box.SetValue(DefaultUtility.Default(type), 0);
-                    return box;
-                }
-            }
-        }
-
-        public T[] Box<T>() where T : struct, IResource
-        {
-            using (var read = _boxes.Read(true))
-            {
-                if (read.Value.TryGet<T>(out var box, false, false) && box is T[] casted1) return casted1;
-                using (var write = _boxes.Write())
-                {
-                    if (write.Value.TryGet<T>(out box, false, false) && box is T[] casted2) return casted2;
-                    write.Value.Set<T>(casted2 = new T[] { DefaultUtility.Default<T>() });
-                    return casted2;
-                }
-            }
-        }
-
-        public bool Clear()
-        {
-            using (var write = _boxes.Write()) return write.Value.Clear();
-        }
+        public bool Clear() => _boxes.Clear(_key);
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator()"/>
-        public IEnumerator<IResource> GetEnumerator() => _boxes.Read(boxes => boxes.Values.ToArray())
-            .Select(pair => pair.GetValue(0))
+        public IEnumerator<IResource> GetEnumerator() => _boxes.Get(_key)
+            .Select(box => box.Value)
             .OfType<IResource>()
             .GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

@@ -447,8 +447,23 @@ namespace Entia.Experiment
             For<QueryC>();
         }
 
+        static unsafe void SuperUnsafe()
+        {
+            var positions = new Position[32];
+            var array = positions as Array;
+            var target = (void*)UnsafeUtility.AsPointer(ref positions[0]);
+            // var bytes = new byte[positions.Length * UnsafeUtility.Size<Position>()];
+            // for (int i = 0; i < bytes.Length; i++) bytes[i] = 19;
+            // fixed (byte* source = bytes) Buffer.MemoryCopy(source, target, bytes.Length, bytes.Length);
+
+            var size = positions.Length * UnsafeUtility.Size<Position>();
+            var @string = new string('a', size / sizeof(char));
+            fixed (char* source = @string) Buffer.MemoryCopy(source, target, size, size);
+        }
+
         static void Main()
         {
+            SuperUnsafe();
             // Performance();
             // Layout();
             // DebugView();
@@ -467,12 +482,13 @@ namespace Entia.Experiment
             // Group2Test.Benchmark(1_000_000);
 
             // TestLaPool();
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 1000; i++)
             {
-                GroupTest.Benchmark(1_000);
-                GroupTest.Benchmark(10_000);
-                GroupTest.Benchmark(100_000);
-                GroupTest.Benchmark(1_000_000);
+                GroupTest.Benchmark(1000 * i);
+                // GroupTest.Benchmark(1_000);
+                // GroupTest.Benchmark(10_000);
+                // GroupTest.Benchmark(100_000);
+                // GroupTest.Benchmark(1_000_000);
             }
         }
 

@@ -255,6 +255,23 @@ namespace Entia.Core
         public int Index<T>() where T : TBase => Cache<T>.Index;
         [ThreadSafe]
         public bool TryIndex(Type concrete, out int index) => (index = GetIndex(concrete)) >= 0;
+        [ThreadSafe]
+        public IEnumerable<int> Indices<T>(bool super = false, bool sub = false) where T : TBase
+        {
+            yield return Cache<T>.Index;
+            if (super) for (int i = 0; i < Cache<T>.Super.Count; i++) yield return Cache<T>.Super[i];
+            if (sub) for (int i = 0; i < Cache<T>.Sub.Count; i++) yield return Cache<T>.Sub[i];
+        }
+        [ThreadSafe]
+        public IEnumerable<int> Indices(Type type, bool super = false, bool sub = false)
+        {
+            if (TryGetIndices(type, out var indices))
+            {
+                yield return indices.index;
+                if (super) for (int i = 0; i < indices.super.Count; i++) yield return indices.super[i];
+                if (sub) for (int i = 0; i < indices.sub.Count; i++) yield return indices.sub[i];
+            }
+        }
 
         [ThreadSafe]
         public ref TValue Get<T>(out bool success, bool super = false, bool sub = false) where T : TBase

@@ -33,7 +33,7 @@ namespace Entia.Modules
             {
                 var generic = type.GetGenericArguments();
                 result = type.StaticMembers()
-                    .Where(member => member.GetCustomAttributes(true).Any(current => current.GetType().Is(attribute)))
+                    .Where(member => member.IsDefined(attribute, true))
                     .Select(member =>
                         member is Type nested ? Result.Try(() =>
                             Activator.CreateInstance(nested.IsGenericTypeDefinition ? nested.MakeGenericType(type.GetGenericArguments()) : nested)) :
