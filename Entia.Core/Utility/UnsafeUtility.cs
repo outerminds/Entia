@@ -8,15 +8,15 @@ namespace Entia.Core
     public unsafe static class UnsafeUtility
     {
         public delegate IntPtr PointerReturn(IntPtr pointer);
-        public delegate ref TTarget ReferenceReturn<TSource, TTarget>(ref TSource reference);
+        public delegate ref TTarget ReferenceReturn<TSource, TTarget>(in TSource reference);
         public delegate ref T ReferenceReturn<T>(IntPtr pointer);
-        public delegate IntPtr PointerReturn<T>(ref T reference);
+        public delegate IntPtr PointerReturn<T>(in T reference);
         public delegate IntPtr PointerOffset(IntPtr pointer, int offset);
-        public delegate ref T ReferenceOffset<T>(ref T reference, int offset);
+        public delegate ref T ReferenceOffset<T>(in T reference, int offset);
 
         static class Cache
         {
-            public static readonly PointerReturn<Unit> AsPointer = (ref Unit _) => throw new NotImplementedException();
+            public static readonly PointerReturn<Unit> AsPointer = (in Unit _) => throw new NotImplementedException();
 
             static Cache() { Copy(_return, AsPointer); }
         }
@@ -32,8 +32,8 @@ namespace Entia.Core
 
             // NOTE: these function are replaced in the constructor.
             public static readonly ReferenceReturn<T> As = _ => throw new NotImplementedException();
-            public static readonly PointerReturn<T> AsPointer = (ref T _) => throw new NotImplementedException();
-            public static readonly ReferenceOffset<T> Offset = (ref T _, int __) => throw new NotImplementedException();
+            public static readonly PointerReturn<T> AsPointer = (in T _) => throw new NotImplementedException();
+            public static readonly ReferenceOffset<T> Offset = (in T _, int __) => throw new NotImplementedException();
             public static readonly FieldInfo[] Fields = typeof(T).InstanceFields();
 
             public static readonly int Size = IntPtr.Size;
@@ -48,8 +48,8 @@ namespace Entia.Core
                 if (typeof(T).IsValueType)
                 {
                     var pair = default(Pair);
-                    var head = AsPointer(ref pair.Value);
-                    var tail = Cache.AsPointer(ref pair.End);
+                    var head = AsPointer(pair.Value);
+                    var tail = Cache.AsPointer(pair.End);
                     Size = (int)(tail.ToInt64() - head.ToInt64());
 
                     // NOTE: layout as it is won't work for reference types
@@ -80,7 +80,7 @@ namespace Entia.Core
         static class Cache<TSource, TTarget>
         {
             // NOTE: this function is replaced in the constructor.
-            public static readonly ReferenceReturn<TSource, TTarget> As = (ref TSource _) => throw new NotImplementedException();
+            public static readonly ReferenceReturn<TSource, TTarget> As = (in TSource _) => throw new NotImplementedException();
 
             static Cache() { Copy(_return, As); }
         }
@@ -90,19 +90,23 @@ namespace Entia.Core
         static readonly FieldInfo[] _fields = typeof(Delegate).InstanceFields();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Set<T>(in T reference, in T value) => AsReference(reference) = value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Size<T>() => Cache<T>.Size;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref TTarget As<TSource, TTarget>(ref TSource reference) => ref Cache<TSource, TTarget>.As(ref reference);
+        public static ref TTarget As<TSource, TTarget>(ref TSource reference) => ref Cache<TSource, TTarget>.As(reference);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T As<T>(IntPtr pointer) => ref Cache<T>.As(pointer);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static IntPtr AsPointer<T>(ref T reference) => Cache<T>.AsPointer(ref reference);
+        public static IntPtr AsPointer<T>(ref T reference) => Cache<T>.AsPointer(reference);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T AsReference<T>(in T reference) => ref Cache<T, T>.As(reference);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IntPtr Unbox(ref object box) => *(IntPtr*)AsPointer(ref box) + IntPtr.Size;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T Unbox<T>(ref object box) => ref As<T>(Unbox(ref box));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T Offset<T>(ref T reference, int offset) => ref Cache<T>.Offset(ref reference, offset);
+        public static ref T Offset<T>(ref T reference, int offset) => ref Cache<T>.Offset(reference, offset);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static (FieldInfo field, int offset)[] Layout<T>() => Cache<T>.Layout;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

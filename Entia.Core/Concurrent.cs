@@ -6,6 +6,9 @@ namespace Entia.Core
 {
     public static class Concurrent
     {
+        public interface IRead : IDisposable { object Value { get; } }
+        public interface IWrite : IDisposable { object Value { get; set; } }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Mutate<T>(ref T location, in T value) where T : class
         {
@@ -49,15 +52,22 @@ namespace Entia.Core
         }
     }
 
-    public sealed class Concurrent<T>
+    public interface IConcurrent
     {
-        public readonly struct ReadDisposable : IDisposable
+        Concurrent.IRead Read(bool upgradeable = false);
+        Concurrent.IWrite Write();
+    }
+
+    public sealed class Concurrent<T> : IConcurrent
+    {
+        public readonly struct ReadDisposable : Concurrent.IRead
         {
             public ref readonly T Value
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => ref _concurrent._value;
             }
+            object Concurrent.IRead.Value => Value;
 
             readonly Concurrent<T> _concurrent;
             readonly Action<Concurrent<T>> _dispose;
@@ -74,13 +84,14 @@ namespace Entia.Core
             public void Dispose() => _dispose(_concurrent);
         }
 
-        public readonly struct WriteDisposable : IDisposable
+        public readonly struct WriteDisposable : Concurrent.IWrite
         {
             public ref T Value
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => ref _concurrent._value;
             }
+            object Concurrent.IWrite.Value { get => Value; set => Value = (T)value; }
 
             readonly Concurrent<T> _concurrent;
             readonly Action<Concurrent<T>> _dispose;
@@ -182,5 +193,8 @@ namespace Entia.Core
         {
             using (var value = Write()) return write(value.Value, state);
         }
+
+        Concurrent.IRead IConcurrent.Read(bool upgradeable) => Read();
+        Concurrent.IWrite IConcurrent.Write() => Write();
     }
 }

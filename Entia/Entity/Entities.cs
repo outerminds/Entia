@@ -2,6 +2,8 @@
 using Entia.Core.Documentation;
 using Entia.Messages;
 using Entia.Modules.Message;
+using Entia.Serializables;
+using Entia.Serializers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,7 +14,7 @@ namespace Entia.Modules
     /// <summary>
     /// Module that manages entities.
     /// </summary>
-    public sealed class Entities : IModule, IClearable, IResolvable, IEnumerable<Entities.Enumerator, Entity>
+    public sealed class Entities : IModule, IClearable, IResolvable, ISerializable<Entities.Serializer>, IEnumerable<Entities.Enumerator, Entity>
     {
         /// <summary>
         /// An enumerator that enumerates over all existing entities.
@@ -62,6 +64,45 @@ namespace Entia.Modules
             public bool Alive;
         }
 
+        sealed class Serializer : Serializer<Entities>
+        {
+            public override bool Serialize(in Entities instance, TypeData dynamic, TypeData @static, in WriteContext context)
+            {
+                context.Serializers.Serialize(instance._onCreate, context);
+                context.Serializers.Serialize(instance._onPreDestroy, context);
+                context.Serializers.Serialize(instance._onPostDestroy, context);
+
+                context.Writer.Write(instance._data.count);
+                context.Writer.Write(instance._data.items, instance._data.count);
+                context.Writer.Write(instance._free.count);
+                context.Writer.Write(instance._free.items, instance._free.count);
+                context.Writer.Write(instance._frozen.count);
+                context.Writer.Write(instance._frozen.items, instance._frozen.count);
+                return true;
+            }
+
+            public override bool Deserialize(ref Entities instance, TypeData dynamic, TypeData @static, in ReadContext context)
+            {
+                context.Serializers.Deserialize(out Emitter<OnCreate> onCreate, context);
+                UnsafeUtility.Set(instance._onCreate, onCreate);
+                context.Serializers.Deserialize(out Emitter<OnPreDestroy> onPreDestroy, context);
+                UnsafeUtility.Set(instance._onPreDestroy, onPreDestroy);
+                context.Serializers.Deserialize(out Emitter<OnPostDestroy> onPostDestroy, context);
+                UnsafeUtility.Set(instance._onPostDestroy, onPostDestroy);
+
+                context.Reader.Read(out int dataCount);
+                context.Reader.Read(out Data[] dataItems, dataCount);
+                instance._data = (dataItems, dataCount);
+                context.Reader.Read(out int freeCount);
+                context.Reader.Read(out int[] freeItems, freeCount);
+                instance._free = (freeItems, freeCount);
+                context.Reader.Read(out int frozenCount);
+                context.Reader.Read(out int[] frozenItems, frozenCount);
+                instance._frozen = (frozenItems, frozenCount);
+                return true;
+            }
+        }
+
         /// <summary>
         /// Gets the current entity capacity.
         /// </summary>
@@ -82,9 +123,9 @@ namespace Entia.Modules
         readonly Emitter<OnCreate> _onCreate;
         readonly Emitter<OnPreDestroy> _onPreDestroy;
         readonly Emitter<OnPostDestroy> _onPostDestroy;
+        (Data[] items, int count) _data = (new Data[64], 0);
         (int[] items, int count) _free = (new int[8], 0);
         (int[] items, int count) _frozen = (new int[8], 0);
-        (Data[] items, int count) _data = (new Data[64], 0);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Entities"/> class.

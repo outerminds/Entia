@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -8,8 +7,14 @@ namespace Entia.Core
 {
     public sealed class TypeData
     {
+        public static implicit operator TypeData(Type type) => TypeUtility.GetData(type);
+        public static implicit operator Type(TypeData type) => type.Type;
+
         public readonly Type Type;
+        public TypeCode Code => _code.Value;
         public Type Element => _element.Value;
+        public Type Definition => _definition.Value;
+        public Dictionary<int, MemberInfo> Members => _members.Value;
         public MemberInfo[] StaticMembers => _staticMembers.Value;
         public MethodInfo[] StaticMethods => _staticMethods.Value;
         public MemberInfo[] InstanceMembers => _instanceMembers.Value;
@@ -19,12 +24,16 @@ namespace Entia.Core
         public ConstructorInfo[] InstanceConstructors => _instanceConstructors.Value;
         public Type[] Interfaces => _interfaces.Value;
         public Type[] Declaring => _declaring.Value;
+        public Type[] Arguments => _arguments.Value;
         public Type[] Bases => _bases.Value;
         public bool IsPlain => _isPlain.Value;
         public bool IsBlittable => _isBlittable.Value;
         public object Default => _default.Value;
 
+        readonly Lazy<TypeCode> _code;
         readonly Lazy<Type> _element;
+        readonly Lazy<Type> _definition;
+        readonly Lazy<Dictionary<int, MemberInfo>> _members;
         readonly Lazy<MemberInfo[]> _staticMembers;
         readonly Lazy<MethodInfo[]> _staticMethods;
         readonly Lazy<MemberInfo[]> _instanceMembers;
@@ -34,6 +43,7 @@ namespace Entia.Core
         readonly Lazy<ConstructorInfo[]> _instanceConstructors;
         readonly Lazy<Type[]> _interfaces;
         readonly Lazy<Type[]> _declaring;
+        readonly Lazy<Type[]> _arguments;
         readonly Lazy<Type[]> _bases;
         readonly Lazy<bool> _isPlain;
         readonly Lazy<bool> _isBlittable;
@@ -113,9 +123,12 @@ namespace Entia.Core
             }
 
             Type = type;
+            _code = new Lazy<TypeCode>(() => Type.GetTypeCode(type));
             _interfaces = new Lazy<Type[]>(() => Type.GetInterfaces());
             _bases = new Lazy<Type[]>(() => GetBases(Type).ToArray());
             _element = new Lazy<Type>(() => GetElement(Type, Interfaces));
+            _definition = new Lazy<Type>(() => Type.IsGenericType ? Type.GetGenericTypeDefinition() : default);
+            _members = new Lazy<Dictionary<int, MemberInfo>>(() => Type.GetMembers(TypeUtility.All).ToDictionary(member => member.MetadataToken));
             _staticMembers = new Lazy<MemberInfo[]>(() => Type.GetMembers(TypeUtility.Static));
             _staticMethods = new Lazy<MethodInfo[]>(() => StaticMembers.OfType<MethodInfo>().ToArray());
             _instanceMembers = new Lazy<MemberInfo[]>(() => GetMembers(Type, Bases));
@@ -124,10 +137,13 @@ namespace Entia.Core
             _instanceMethods = new Lazy<MethodInfo[]>(() => InstanceMembers.OfType<MethodInfo>().ToArray());
             _instanceConstructors = new Lazy<ConstructorInfo[]>(() => InstanceMembers.OfType<ConstructorInfo>().ToArray());
             _declaring = new Lazy<Type[]>(() => GetDeclaring(Type).ToArray());
+            _arguments = new Lazy<Type[]>(() => Type.GetGenericArguments());
             _isPlain = new Lazy<bool>(() => GetIsPlain(Type, InstanceFields));
             _isBlittable = new Lazy<bool>(() => GetIsBlittable(Type.IsArray ? Type.GetElementType() : Type, InstanceFields));
             _default = new Lazy<object>(() => GetDefault(Type));
         }
+
+        public override string ToString() => Type.FullFormat();
     }
 
     public static class TypeUtility
@@ -137,11 +153,11 @@ namespace Entia.Core
             public static readonly TypeData Data = GetData(typeof(T));
         }
 
-        public const BindingFlags Members = BindingFlags.Public | BindingFlags.NonPublic;
         public const BindingFlags PublicInstance = BindingFlags.Instance | BindingFlags.Public;
         public const BindingFlags Instance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         public const BindingFlags PublicStatic = BindingFlags.Static | BindingFlags.Public;
         public const BindingFlags Static = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+        public const BindingFlags All = Instance | Static;
 
         public static IEnumerable<Assembly> AllAssemblies => AppDomain.CurrentDomain.GetAssemblies();
         public static IEnumerable<Type> AllTypes
@@ -262,6 +278,11 @@ namespace Entia.Core
         public static bool IsPlain(object value) => value is null || IsPlain(value.GetType());
         public static bool IsDefault(object value) => value is null || value.Equals(GetData(value.GetType()).Default);
         public static bool IsPrimitive(object value) => value is null || value.GetType().IsPrimitive;
+        public static MemberInfo Member(this Type type, int token) => GetData(type).Members.TryGetValue(token, out var member) ? member : default;
+        public static FieldInfo Field(this Type type, int token) => type.Member(token) as FieldInfo;
+        public static PropertyInfo Property(this Type type, int token) => type.Member(token) as PropertyInfo;
+        public static MethodInfo Method(this Type type, int token) => type.Member(token) as MethodInfo;
+        public static ConstructorInfo Constructor(this Type type, int token) => type.Member(token) as ConstructorInfo;
         public static MemberInfo[] StaticMembers(this Type type) => GetData(type).StaticMembers;
         public static MethodInfo[] StaticMethods(this Type type) => GetData(type).StaticMethods;
         public static MemberInfo[] InstanceMembers(this Type type) => GetData(type).InstanceMembers;

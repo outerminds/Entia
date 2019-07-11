@@ -1,14 +1,14 @@
 ﻿using Entia.Core;
 using Entia.Injectables;
+using Entia.Messages;
 using Entia.Modules;
-using Entia.Modules.Component;
+using Entia.Modules.Serialization;
 using Entia.Nodes;
 using Entia.Queryables;
 using Entia.Systems;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -461,9 +461,62 @@ namespace Entia.Experiment
             fixed (char* source = @string) Buffer.MemoryCopy(source, target, size, size);
         }
 
+        static void TestJson()
+        {
+            var text = @"{ ""a "": [4.4
+            ,
+            ""aofiu"", true, { ""b"": null }]    }";
+            var node = Json.Parse(text);
+        }
+
+        public class Cyclic { public Cyclic A; }
+        static void Serializer()
+        {
+            var world = new World();
+            var entities = world.Entities();
+            entities.Create();
+            var serializers = world.Serializers();
+            var cyclic = new Cyclic(); cyclic.A = cyclic;
+
+            serializers.Serialize(cyclic, out var bytes);
+            serializers.Deserialize(bytes, out Cyclic b);
+
+            serializers.Serialize((object)cyclic, out bytes);
+            serializers.Deserialize(bytes, out Cyclic c);
+
+            serializers.Serialize(((object)13, (object)27), out bytes);
+            serializers.Deserialize(bytes, out (object, object) tuple1);
+
+            serializers.Serialize((object)((object)13, (object)27), out bytes);
+            serializers.Deserialize(bytes, out object tuple2);
+
+            var i = 0;
+            var action = new Action(() => i++);
+            action();
+            serializers.Serialize(action, out bytes, action.Target);
+            serializers.Deserialize(bytes, out action, action.Target);
+            action();
+
+            var inAction = new RefAction<int>((ref int value) => value++);
+            serializers.Serialize(inAction, out bytes);
+            serializers.Deserialize(bytes, out inAction);
+            inAction(ref i);
+
+            var reaction = new Entia.Modules.Message.Reaction<OnCreate>();
+            reaction.Add((in OnCreate message) => { });
+            serializers.Serialize(reaction, out bytes);
+            serializers.Deserialize(bytes, out reaction);
+
+            serializers.Serialize(entities, out bytes);
+            serializers.Deserialize(bytes, out Entities d);
+            serializers.Serialize((object)entities, out bytes);
+            serializers.Deserialize(bytes, out Entities e);
+        }
+
         static void Main()
         {
-            SuperUnsafe();
+            Serializer();
+            // SuperUnsafe();
             // Performance();
             // Layout();
             // DebugView();

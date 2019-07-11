@@ -91,8 +91,9 @@ namespace Entia.Core
         public static void Sort<T>(ref this (T[] items, int count) array, IComparer<T> comparer) =>
             Array.Sort(array.items, 0, array.count, comparer);
 
-        public static ref T Push<T>(ref this (T[] items, int count) array, in T item) => ref array.Insert(item, array.count);
-        public static ref T Push<T>(ref this (Array items, int count) array, in T item) => ref array.Insert(item, array.count);
+        public static void Push<T>(ref this (T[] items, int count) array, params T[] items) => array.Insert(array.count, items);
+        public static ref T Push<T>(ref this (T[] items, int count) array, in T item) => ref array.Insert(array.count, item);
+        public static ref T Push<T>(ref this (Array items, int count) array, in T item) => ref array.Insert(array.count, item);
 
         public static ref T Pop<T>(ref this (T[] items, int count) array) => ref array.items[--array.count];
 
@@ -125,7 +126,12 @@ namespace Entia.Core
         public static bool Contains<T>(in this (T[] items, int count) array, in T item) => array.IndexOf(item) >= 0;
         public static bool Contains<T>(in this (Array items, int count) array, in T item) => array.IndexOf(item) >= 0;
 
-        public static ref T Insert<T>(ref this (T[] items, int count) array, in T item, int index)
+        public static void Insert<T>(ref this (T[] items, int count) array, int index, params T[] items)
+        {
+            for (int i = 0; i < items.Length; i++) array.Insert(index + i, items[i]);
+        }
+
+        public static ref T Insert<T>(ref this (T[] items, int count) array, int index, in T item)
         {
             var last = array.count++;
             array.Ensure();
@@ -135,7 +141,7 @@ namespace Entia.Core
             return ref slot;
         }
 
-        public static ref T Insert<T>(ref this (Array items, int count) array, in T item, int index)
+        public static ref T Insert<T>(ref this (Array items, int count) array, int index, in T item)
         {
             var items = array.items as T[];
             var last = array.count++;

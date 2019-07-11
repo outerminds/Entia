@@ -257,7 +257,7 @@ namespace Entia.Modules
 
             ref var relationships = ref GetRelationships(child.Parent, out var success);
             if (success) Reject(ref relationships, ref child);
-            parent.Children.Insert(child.Entity, Math.Min(parent.Children.count, index));
+            parent.Children.Insert(Math.Min(parent.Children.count, index), child.Entity);
             child.Parent = parent.Entity;
             _onAdopt.Emit(new OnAdopt { Parent = parent.Entity, Child = child.Entity });
             return true;
