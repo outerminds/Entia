@@ -2,6 +2,7 @@ using Entia.Components;
 using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Messages;
+using Entia.Messages.Component;
 using Entia.Modules.Component;
 using System;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace Entia.Modules
     {
         struct Delegates
         {
-            public static class Silent<TComponent, TMessage> where TComponent : struct, IComponent where TMessage : struct, IMessage
+            public static class Silent<TComponent, TMessage> where TComponent : struct, IComponent where TMessage : struct, IOnChange
             {
                 public static readonly bool Is = typeof(TComponent).Is<ISilent>() || typeof(TComponent).Is<ISilent<TMessage>>();
             }
@@ -32,7 +33,7 @@ namespace Entia.Modules
                     OnDisable = Default<OnDisable, OnDisable<T>>(),
                 };
 
-                static Action<Entity> Default<TA, TB>() where TA : struct, IMessage where TB : struct, IMessage =>
+                static Action<Entity> Default<TA, TB>() where TA : struct, IOnChange where TB : struct, IOnChange =>
                     Silent<T, TA>.Is && Silent<T, TB>.Is ? (_ => { }) : default(Action<Entity>);
             }
 
