@@ -10,7 +10,7 @@ namespace Entia.Modules.Component
     [ThreadSafe]
     public readonly struct Metadata : IEquatable<Metadata>
     {
-        public enum Kinds { Data, Tag }
+        public enum Kinds { None, Data, Tag }
 
         /// <summary>
         /// Implements the operator ==.
@@ -25,7 +25,7 @@ namespace Entia.Modules.Component
         /// Returns true if the instance is valid.
         /// </summary>
         /// <value>Returns <c>true</c> if this instance is valid; otherwise, <c>false</c>.</value>
-        public bool IsValid => Data != null && Index >= 0;
+        public bool IsValid => Kind != Kinds.None;
         /// <summary>
         /// The component type.
         /// </summary>

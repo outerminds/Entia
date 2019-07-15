@@ -102,6 +102,7 @@ Features:
 - run tests on device with IL2CPP build
 
 Bugs:
+- Generic types in components is not generated properly
 - 'Modules.Messages' is not truly '[ThreadSafe]'
 	- 'Receiver<T>()' might add a receiver to a removed emitter
 - Fix "The C# project "Entia.Analyze.Vsix" is targeting ".NETFramework,Version=v4.7", which is not installed on this machine." warning if a later version of .Net Framework is installed.

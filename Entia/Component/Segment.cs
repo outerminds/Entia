@@ -80,18 +80,18 @@ namespace Entia.Modules.Component
             Tags = tags;
             Entities = entities;
 
-            _minimum = Components.Select(type => type.Index).FirstOrDefault();
-            _maximum = Components.Select(type => type.Index + 1).LastOrDefault();
+            _minimum = Types.Select(type => type.Index).FirstOrDefault();
+            _maximum = Types.Select(type => type.Index + 1).LastOrDefault();
             _stores = new Array[_maximum - _minimum];
             _handles = new (GCHandle handle, IntPtr address)[_maximum - _minimum];
-            foreach (var type in Components) _stores[GetStoreIndex(type)] = Array.CreateInstance(type.Type, entities.items.Length);
+            foreach (var type in Types) _stores[GetStoreIndex(type)] = Array.CreateInstance(type.Type, entities.items.Length);
         }
 
         ~Segment()
         {
-            for (int i = 0; i < Components.Length; i++)
+            for (int i = 0; i < Types.Length; i++)
             {
-                var index = GetStoreIndex(Components[i]);
+                var index = GetStoreIndex(Types[i]);
                 ref var pair = ref _handles[index];
                 if (pair.handle.IsAllocated) pair.handle.Free();
             }
@@ -166,9 +166,9 @@ namespace Entia.Modules.Component
         public bool Ensure()
         {
             var resized = false;
-            for (int i = 0; i < Components.Length; i++)
+            for (int i = 0; i < Types.Length; i++)
             {
-                ref readonly var metadata = ref Components[i];
+                ref readonly var metadata = ref Types[i];
                 var index = GetStoreIndex(metadata);
                 ref var store = ref _stores[index];
                 if (ArrayUtility.Ensure(ref store, metadata.Type, Entities.count))
