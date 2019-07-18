@@ -1,4 +1,4 @@
-﻿using Entia.Messages.Component;
+﻿using Entia.Messages;
 
 namespace Entia
 {
@@ -7,15 +7,10 @@ namespace Entia
     /// </summary>
     public interface IComponent { }
 
-    namespace Messages.Component
-    {
-        public interface IOnChange : IMessage { }
-    }
-
     namespace Components
     {
         public interface ISilent : IComponent { }
-        public interface ISilent<T> : IComponent where T : struct, IOnChange { }
+        public interface ISilent<T> : IComponent where T : struct, IComponentMessage { }
         public interface IEnabled : IComponent { }
 
         public struct Debug : IEnabled, ISilent { public string Name; }

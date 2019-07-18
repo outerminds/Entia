@@ -1,14 +1,15 @@
-﻿using Entia.Messages.Component;
-using Entia.Modules.Component;
+﻿using Entia.Modules.Component;
 using System;
 
 namespace Entia.Messages
 {
+    public interface IComponentMessage : IMessage { }
+
     /// <summary>
     /// Message emitted after a component has been added to an entity.
     /// </summary>
     /// <seealso cref="IMessage" />
-    public struct OnAdd : IOnChange
+    public struct OnAdd : IComponentMessage
     {
         /// <summary>
         /// The entity that gained a component.
@@ -25,7 +26,7 @@ namespace Entia.Messages
     /// </summary>
     /// <typeparam name="T">The component type.</typeparam>
     /// <seealso cref="IMessage" />
-    public struct OnAdd<T> : IOnChange where T : struct, IComponent
+    public struct OnAdd<T> : IComponentMessage where T : struct, IComponent
     {
         /// <summary>
         /// The entity that gained a component of type <typeparamref name="T"/>.
@@ -37,7 +38,7 @@ namespace Entia.Messages
     /// Message emitted before a component will be removed from an entity.
     /// </summary>
     /// <seealso cref="IMessage" />
-    public struct OnRemove : IOnChange
+    public struct OnRemove : IComponentMessage
     {
         /// <summary>
         /// The entity that lost a component.
@@ -54,7 +55,7 @@ namespace Entia.Messages
     /// </summary>
     /// <typeparam name="T">The component type.</typeparam>
     /// <seealso cref="IMessage" />
-    public struct OnRemove<T> : IOnChange where T : struct, IComponent
+    public struct OnRemove<T> : IComponentMessage where T : struct, IComponent
     {
         /// <summary>
         /// The entity that lost a component of type <typeparamref name="T"/>.
@@ -66,7 +67,7 @@ namespace Entia.Messages
     /// Message emitted after a component has been enabled.
     /// </summary>
     /// <seealso cref="IMessage" />
-    public struct OnEnable : IOnChange
+    public struct OnEnable : IComponentMessage
     {
         /// <summary>
         /// The entity that had a component enabled.
@@ -83,7 +84,7 @@ namespace Entia.Messages
     /// </summary>
     /// <typeparam name="T">The component type.</typeparam>
     /// <seealso cref="IMessage" />
-    public struct OnEnable<T> : IOnChange where T : struct, IComponent
+    public struct OnEnable<T> : IComponentMessage where T : struct, IComponent
     {
         /// <summary>
         /// The entity that had a component of type <typeparamref name="T"/> enabled.
@@ -95,7 +96,7 @@ namespace Entia.Messages
     /// Message emitted after a component has been disabled.
     /// </summary>
     /// <seealso cref="IMessage" />
-    public struct OnDisable : IOnChange
+    public struct OnDisable : IComponentMessage
     {
         /// <summary>
         /// The entity that had a component disabled.
@@ -112,24 +113,12 @@ namespace Entia.Messages
     /// </summary>
     /// <typeparam name="T">The component type.</typeparam>
     /// <seealso cref="IMessage" />
-    public struct OnDisable<T> : IOnChange where T : struct, IComponent
+    public struct OnDisable<T> : IComponentMessage where T : struct, IComponent
     {
         /// <summary>
         /// The entity that had a component of type <typeparamref name="T"/> disabled.
         /// </summary>
         public Entity Entity;
-    }
-
-    /// <summary>
-    /// Message emitted after an exception is thrown.
-    /// </summary>
-    /// <seealso cref="IMessage" />
-    public struct OnException : IMessage
-    {
-        /// <summary>
-        /// The thrown exception.
-        /// </summary>
-        public Exception Exception;
     }
 
     namespace Segment
