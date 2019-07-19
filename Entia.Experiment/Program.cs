@@ -490,6 +490,9 @@ namespace Entia.Experiment
             serializers.Serialize((object)((object)13, (object)27), out bytes);
             serializers.Deserialize(bytes, out object tuple2);
 
+            serializers.Serialize(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }, out bytes);
+            serializers.Deserialize(bytes, out byte[] array);
+
             var i = 0;
             var action = new Action(() => i++);
             action();
