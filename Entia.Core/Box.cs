@@ -6,7 +6,7 @@ namespace Entia.Core
 {
     public interface IBox
     {
-        bool Valid { get; }
+        bool IsValid { get; }
         Array Box { get; }
         Type Type { get; }
     }
@@ -17,7 +17,7 @@ namespace Entia.Core
         {
             public object Value => _box.GetValue(0);
             public Type Type => _box.GetType().GetElementType();
-            public bool Valid => _box != null;
+            public bool IsValid => _box != null;
             Array IBox.Box => _box;
 
             readonly Array _box;
@@ -36,21 +36,28 @@ namespace Entia.Core
                 return false;
             }
 
-            public bool Equals(Read other) => this._box == other._box || Equals(other.Value);
-            public bool Equals(Box other) => this._box == other._box || Equals(other.Value);
+            public Option<object> TryValue()
+            {
+                if (IsValid) return Value;
+                else return Option.None();
+            }
+            public bool TryValue(out object value) => TryValue().TryValue(out value);
+
+            public bool Equals(Read other) => this._box == other._box || (TryValue(out var value) && other.Equals(value));
+            public bool Equals(Box other) => this._box == other._box || (TryValue(out var value) && other.Equals(value));
             public override bool Equals(object obj) =>
                 obj is Box box ? Equals(box) :
                 obj is Read read ? Equals(read) :
-                Equals(Value, obj);
-            public override int GetHashCode() => _box.GetHashCode();
-            public override string ToString() => Value?.ToString();
+                TryValue(out var value) & Equals(value, obj);
+            public override int GetHashCode() => _box?.GetHashCode() ?? 0;
+            public override string ToString() => TryValue(out var value) ? value?.ToString() : "";
         }
 
         public static implicit operator Read(Box box) => new Read(box._box);
 
         public object Value { get => _box.GetValue(0); set => _box.SetValue(value, 0); }
         public Type Type => _box.GetType().GetElementType();
-        public bool Valid => _box != null;
+        public bool IsValid => _box != null;
         Array IBox.Box => _box;
 
         readonly Array _box;
@@ -69,22 +76,27 @@ namespace Entia.Core
             return false;
         }
 
-        public bool Equals(Read other) => other.Equals(this);
-        public bool Equals(Box other) => this._box == other._box || Equals(other.Value);
+        public Option<object> TryValue()
+        {
+            if (IsValid) return Value;
+            else return Option.None();
+        }
+        public bool TryValue(out object value) => TryValue().TryValue(out value);
+
+        public bool Equals(Read other) => EqualityComparer<Read>.Default.Equals(this, other);
+        public bool Equals(Box other) => EqualityComparer<Read>.Default.Equals(this, other);
         public override bool Equals(object obj) =>
             obj is Box box ? Equals(box) :
             obj is Read read ? Equals(read) :
-            Equals(Value, obj);
-        public override int GetHashCode() => _box.GetHashCode();
-        public override string ToString() => Value?.ToString();
+            TryValue(out var value) & Equals(value, obj);
+        public override int GetHashCode() => _box?.GetHashCode() ?? 0;
+        public override string ToString() => TryValue(out var value) ? value?.ToString() : "";
     }
 
     public readonly struct Box<T> : IBox, IEquatable<Box<T>>, IEquatable<Box<T>.Read>, IEquatable<T>
     {
         public readonly struct Read : IBox, IEquatable<Box<T>>, IEquatable<Read>, IEquatable<T>
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator T(Read box) => box.Value;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static implicit operator Read(in T value) => new Read(value);
 
@@ -93,7 +105,7 @@ namespace Entia.Core
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => ref _box[0];
             }
-            public bool Valid
+            public bool IsValid
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _box != null;
@@ -108,29 +120,34 @@ namespace Entia.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Read(T[] box) { _box = box; }
 
+            public Option<T> TryValue()
+            {
+                if (IsValid) return Value;
+                else return Option.None();
+            }
+            public bool TryValue(out T value) => TryValue().TryValue(out value);
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool Equals(Read other) => this._box == other._box || Equals(other.Value);
+            public bool Equals(Read other) => this._box == other._box || (TryValue(out var value) && other.Equals(value));
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool Equals(Box<T> other) => this._box == other._box || Equals(other.Value);
+            public bool Equals(Box<T> other) => this._box == other._box || (TryValue(out var value) && other.Equals(value));
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool Equals(T other) => EqualityComparer<T>.Default.Equals(Value, other);
+            public bool Equals(T other) => TryValue(out var value) & EqualityComparer<T>.Default.Equals(value, other);
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public override bool Equals(object obj) =>
                 obj is Box<T> box ? Equals(box) :
                 obj is Read read ? Equals(read) :
                 obj is T value && Equals(value);
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public override int GetHashCode() => _box.GetHashCode();
+            public override int GetHashCode() => _box?.GetHashCode() ?? 0;
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public override string ToString() => Value?.ToString();
+            public override string ToString() => TryValue(out var value) ? value?.ToString() : "";
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Box.Read(Box<T> box) => new Box.Read(box._box);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Box(Box<T> box) => new Box(box._box);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator T(Box<T> box) => box.Value;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Box<T>(in T value) => new Box<T>(value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -141,7 +158,7 @@ namespace Entia.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref _box[0];
         }
-        public bool Valid
+        public bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _box != null;
@@ -156,20 +173,27 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Box(T[] box) { _box = box; }
 
+        public Option<T> TryValue()
+        {
+            if (IsValid) return Value;
+            else return Option.None();
+        }
+        public bool TryValue(out T value) => TryValue().TryValue(out value);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(Read other) => other.Equals(this);
+        public bool Equals(Read other) => EqualityComparer<Read>.Default.Equals(this, other);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(Box<T> other) => this._box == other._box || Equals(other.Value);
+        public bool Equals(Box<T> other) => EqualityComparer<Read>.Default.Equals(this, other);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(T other) => EqualityComparer<T>.Default.Equals(Value, other);
+        public bool Equals(T other) => TryValue(out var value) & EqualityComparer<T>.Default.Equals(value, other);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj) =>
             obj is Box<T> box ? Equals(box) :
             obj is Read read ? Equals(read) :
             obj is T value && Equals(value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() => _box.GetHashCode();
+        public override int GetHashCode() => _box?.GetHashCode() ?? 0;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override string ToString() => Value?.ToString();
+        public override string ToString() => TryValue(out var value) ? value?.ToString() : "";
     }
 }

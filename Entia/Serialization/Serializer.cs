@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using Entia.Core;
 using Entia.Modules;
@@ -78,14 +79,25 @@ namespace Entia.Serializers
                 case TypeCode.UInt64: context.Writer.Write((ulong)instance); return true;
                 case TypeCode.DateTime: context.Writer.Write((DateTime)instance); return true;
                 default:
-                    var fields = dynamic.InstanceFields;
-                    for (int i = 0; i < fields.Length; i++)
+                    if (dynamic.Size is int size)
                     {
-                        var field = fields[i];
-                        var value = field.GetValue(instance);
-                        context.Serializers.Serialize(value, field.FieldType, context);
+                        var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
+                        var pointer = handle.AddrOfPinnedObject();
+                        context.Writer.Write(pointer, size);
+                        handle.Free();
+                        return true;
                     }
-                    return true;
+                    else
+                    {
+                        var fields = dynamic.InstanceFields;
+                        for (int i = 0; i < fields.Length; i++)
+                        {
+                            var field = fields[i];
+                            var value = field.GetValue(instance);
+                            context.Serializers.Serialize(value, field.FieldType, context);
+                        }
+                        return true;
+                    }
             }
         }
 
@@ -109,9 +121,8 @@ namespace Entia.Serializers
                 case TypeCode.UInt64: { context.Reader.Read(out ulong value); instance = value; return true; }
                 case TypeCode.DateTime: { context.Reader.Read(out DateTime value); instance = value; return true; }
                 default:
-                    if (@static.Type.IsValueType) { instance = @static.Default; return true; }
-                    else if (dynamic.Type.IsValueType) { instance = CloneUtility.Shallow(dynamic.Default); return true; }
-                    else { instance = FormatterServices.GetUninitializedObject(dynamic); return true; }
+                    instance = CloneUtility.Shallow(dynamic.Default) ?? FormatterServices.GetUninitializedObject(dynamic);
+                    return true;
             }
         }
 
@@ -135,20 +146,31 @@ namespace Entia.Serializers
                 case TypeCode.UInt64:
                 case TypeCode.DateTime: return true;
                 default:
-                    var fields = dynamic.InstanceFields;
-                    var success = true;
-                    if (fields.Length > 0)
+                    if (dynamic.Size is int size)
                     {
-                        for (int i = 0; i < fields.Length; i++)
-                        {
-                            var field = fields[i];
-                            if (context.Serializers.Deserialize(out var value, field.FieldType, context))
-                                field.SetValue(instance, value);
-                            else
-                                success = false;
-                        }
+                        var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
+                        var pointer = handle.AddrOfPinnedObject();
+                        context.Reader.Read(pointer, size);
+                        handle.Free();
+                        return true;
                     }
-                    return success;
+                    else
+                    {
+                        var fields = dynamic.InstanceFields;
+                        var success = true;
+                        if (fields.Length > 0)
+                        {
+                            for (int i = 0; i < fields.Length; i++)
+                            {
+                                var field = fields[i];
+                                if (context.Serializers.Deserialize(out var value, field.FieldType, context))
+                                    field.SetValue(instance, value);
+                                else
+                                    success = false;
+                            }
+                        }
+                        return success;
+                    }
             }
         }
     }

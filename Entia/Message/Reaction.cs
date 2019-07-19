@@ -11,12 +11,12 @@ using System.Runtime.CompilerServices;
 namespace Entia.Modules.Message
 {
     [ThreadSafe]
-    public interface IReaction : IEnumerable<System.Delegate>
+    public interface IReaction : IEnumerable<Delegate>
     {
-        System.Type Type { get; }
-        System.Delegate React { get; }
-        bool Add(System.Delegate reaction);
-        bool Remove(System.Delegate reaction);
+        Type Type { get; }
+        Delegate React { get; }
+        bool Add(Delegate reaction);
+        bool Remove(Delegate reaction);
         bool Clear();
     }
 
@@ -50,8 +50,8 @@ namespace Entia.Modules.Message
             get => _reaction;
         }
 
-        System.Delegate IReaction.React => _reaction;
-        System.Type IReaction.Type => typeof(T);
+        Delegate IReaction.React => _reaction;
+        Type IReaction.Type => typeof(T);
 
         event InAction<T> _reaction = _empty;
 
@@ -71,10 +71,10 @@ namespace Entia.Modules.Message
         }
         public bool Clear() => _reaction != Concurrent.Mutate(ref _reaction, _empty);
 
-        public IEnumerator<System.Delegate> GetEnumerator() =>
-            _reaction.GetInvocationList().Cast<System.Delegate>().GetEnumerator();
+        public IEnumerator<Delegate> GetEnumerator() =>
+            _reaction.GetInvocationList().Cast<Delegate>().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        bool IReaction.Add(System.Delegate reaction) => reaction is InAction<T> action && Add(action);
-        bool IReaction.Remove(System.Delegate reaction) => reaction is InAction<T> action && Remove(action);
+        bool IReaction.Add(Delegate reaction) => reaction is InAction<T> action && Add(action);
+        bool IReaction.Remove(Delegate reaction) => reaction is InAction<T> action && Remove(action);
     }
 }

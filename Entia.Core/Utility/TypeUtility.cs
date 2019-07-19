@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Entia.Core
 {
@@ -29,6 +30,7 @@ namespace Entia.Core
         public bool IsPlain => _isPlain.Value;
         public bool IsBlittable => _isBlittable.Value;
         public object Default => _default.Value;
+        public int? Size => _size.Value;
 
         readonly Lazy<TypeCode> _code;
         readonly Lazy<Type> _element;
@@ -48,6 +50,7 @@ namespace Entia.Core
         readonly Lazy<bool> _isPlain;
         readonly Lazy<bool> _isBlittable;
         readonly Lazy<object> _default;
+        readonly Lazy<int?> _size;
 
         public TypeData(Type type)
         {
@@ -110,7 +113,8 @@ namespace Entia.Core
             {
                 if (current.IsPrimitive || current.IsPointer)
                     return current != typeof(bool) && current != typeof(char) && current != typeof(decimal);
-                if (current.IsValueType)
+                else if (current.IsGenericType) return false;
+                else if (current.IsValueType)
                 {
                     foreach (var field in fields)
                     {
@@ -120,6 +124,32 @@ namespace Entia.Core
                     return true;
                 }
                 return false;
+            }
+
+            unsafe int? GetSize(Type current)
+            {
+                switch (Type.GetTypeCode(type))
+                {
+                    case TypeCode.Boolean: return sizeof(bool);
+                    case TypeCode.Byte: return sizeof(byte);
+                    case TypeCode.Char: return sizeof(char);
+                    case TypeCode.DateTime: return sizeof(DateTime);
+                    case TypeCode.Decimal: return sizeof(decimal);
+                    case TypeCode.Double: return sizeof(double);
+                    case TypeCode.Int16: return sizeof(short);
+                    case TypeCode.Int32: return sizeof(int);
+                    case TypeCode.Int64: return sizeof(long);
+                    case TypeCode.SByte: return sizeof(sbyte);
+                    case TypeCode.Single: return sizeof(float);
+                    case TypeCode.UInt16: return sizeof(ushort);
+                    case TypeCode.UInt32: return sizeof(uint);
+                    case TypeCode.UInt64: return sizeof(ulong);
+                    default:
+                        // NOTE: do not 'try-catch' 'Marshal.SizeOf' because it may cause inconsistencies between
+                        // serialization and deserialization if they occur on different platforms
+                        if (IsBlittable) return Marshal.SizeOf(current);
+                        return null;
+                }
             }
 
             Type = type;
@@ -141,6 +171,7 @@ namespace Entia.Core
             _isPlain = new Lazy<bool>(() => GetIsPlain(Type, InstanceFields));
             _isBlittable = new Lazy<bool>(() => GetIsBlittable(Type.IsArray ? Type.GetElementType() : Type, InstanceFields));
             _default = new Lazy<object>(() => GetDefault(Type));
+            _size = new Lazy<int?>(() => GetSize(Type));
         }
 
         public override string ToString() => Type.FullFormat();

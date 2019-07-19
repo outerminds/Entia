@@ -4,7 +4,7 @@ using Entia.Modules;
 
 namespace Entia.Serializers
 {
-    public sealed class Member : Serializer<MemberInfo>
+    public sealed class ReflectionMember : Serializer<MemberInfo>
     {
         public override bool Serialize(in MemberInfo instance, TypeData dynamic, TypeData @static, in WriteContext context)
         {

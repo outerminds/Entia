@@ -44,8 +44,19 @@ namespace Entia.Modules
 
     public enum Kinds : byte { Null = 1, Reference, Value, TypedValue }
 
-    public unsafe sealed class Serializers : IModule, IEnumerable<ISerializer>
+    public unsafe sealed class Serializers : IModule, ISerializable<Serializers.Serializer>, IEnumerable<ISerializer>
     {
+        sealed class Serializer : Serializer<Serializers>
+        {
+            public override bool Serialize(in Serializers instance, TypeData dynamic, TypeData @static, in WriteContext context) => true;
+            public override bool Instantiate(out Serializers instance, TypeData dynamic, TypeData @static, in ReadContext context)
+            {
+                instance = new Serializers(context.World);
+                return true;
+            }
+            public override bool Deserialize(ref Serializers instance, TypeData dynamic, TypeData @static, in ReadContext context) => true;
+        }
+
         static readonly object[] _references = {
             typeof(bool), typeof(bool[]), typeof(bool*), typeof(bool?),
             typeof(char), typeof(char[]), typeof(char*), typeof(char?),
@@ -75,14 +86,14 @@ namespace Entia.Modules
         readonly World _world;
         readonly TypeMap<object, ISerializer> _serializers = new TypeMap<object, ISerializer>();
         readonly TypeMap<object, ISerializer> _defaults = new TypeMap<object, ISerializer>(
-            (typeof(System.Delegate), new Entia.Serializers.Delegate()),
-            (typeof(System.Array), new Entia.Serializers.Array()),
-            (typeof(System.Reflection.Assembly), new Entia.Serializers.Assembly()),
-            (typeof(System.Reflection.Module), new Entia.Serializers.Module()),
-            (typeof(System.Type), new Entia.Serializers.Type()),
-            (typeof(MethodBase), new Method()),
-            (typeof(MemberInfo), new Member()),
-            (typeof(ReaderWriterLockSlim), new Entia.Serializers.ReaderWriterLock())
+            (typeof(Delegate), new SystemDelegate()),
+            (typeof(Array), new SystemArray()),
+            (typeof(Assembly), new ReflectionAssembly()),
+            (typeof(Module), new ReflectionModule()),
+            (typeof(Type), new SystemType()),
+            (typeof(MethodBase), new ReflectionMethod()),
+            (typeof(MemberInfo), new ReflectionMember()),
+            (typeof(ReaderWriterLockSlim), new ReadWriteLock())
         );
 
         public Serializers(World world) { _world = world; }
@@ -99,7 +110,7 @@ namespace Entia.Modules
                     bytes = writer.ToArray();
                     return true;
                 }
-                bytes = System.Array.Empty<byte>();
+                bytes = Array.Empty<byte>();
                 return false;
             }
         }
@@ -142,7 +153,7 @@ namespace Entia.Modules
                 case Kinds.Null: value = null; return true;
                 case Kinds.Value: return Deserialize(out value, @static, @static, context);
                 case Kinds.TypedValue:
-                    if (Deserialize(out System.Type dynamic, context) && Deserialize(out value, dynamic, @static, context))
+                    if (Deserialize(out Type dynamic, context) && Deserialize(out value, dynamic, @static, context))
                         return true;
                     value = default;
                     return false;
@@ -153,15 +164,15 @@ namespace Entia.Modules
         }
 
         public ISerializer Default<T>() => _defaults.TryGet<T>(out var serializer, false, false) ? serializer : Default(typeof(T));
-        public ISerializer Default(System.Type type) => _defaults.Default(type, typeof(ISerializable<>), typeof(SerializerAttribute), _ => new Default());
+        public ISerializer Default(Type type) => _defaults.Default(type, typeof(ISerializable<>), typeof(SerializerAttribute), _ => new Default());
         public bool Has<T>() => _serializers.Has<T>(true, false);
-        public bool Has(System.Type type) => _serializers.Has(type, true, false);
+        public bool Has(Type type) => _serializers.Has(type, true, false);
         public ISerializer Get<T>() => _serializers.TryGet<T>(out var serializer, true, false) ? serializer : Default<T>();
-        public ISerializer Get(System.Type type) => _serializers.TryGet(type, out var serializer, true, false) ? serializer : Default(type);
+        public ISerializer Get(Type type) => _serializers.TryGet(type, out var serializer, true, false) ? serializer : Default(type);
         public bool Set<T>(ISerializer serializer) => _serializers.Set<T>(serializer);
-        public bool Set(System.Type type, ISerializer serializer) => _serializers.Set(type, serializer);
+        public bool Set(Type type, ISerializer serializer) => _serializers.Set(type, serializer);
         public bool Remove<T>() => _serializers.Remove<T>(false, false);
-        public bool Remove(System.Type type) => _serializers.Remove(type, false, false);
+        public bool Remove(Type type) => _serializers.Remove(type, false, false);
         public bool Clear() => _defaults.Clear() | _serializers.Clear();
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>

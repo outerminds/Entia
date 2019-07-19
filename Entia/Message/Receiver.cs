@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ namespace Entia.Modules.Message
     public interface IReceiver
     {
         IMessage[] Messages { get; }
-        System.Type Type { get; }
+        Type Type { get; }
         int Count { get; }
         int Capacity { get; set; }
 
@@ -113,7 +114,7 @@ namespace Entia.Modules.Message
         }
 
         IMessage[] IReceiver.Messages => Messages.Cast<IMessage>().ToArray();
-        System.Type IReceiver.Type => typeof(T);
+        Type IReceiver.Type => typeof(T);
 
         readonly ConcurrentQueue<T> _messages = new ConcurrentQueue<T>();
         int _capacity;

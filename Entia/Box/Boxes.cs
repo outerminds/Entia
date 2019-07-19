@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Entia.Core;
 using Entia.Core.Documentation;
+using Entia.Serializers;
 
 namespace Entia.Modules
 {
@@ -12,6 +13,47 @@ namespace Entia.Modules
         {
             public Box Box;
             public Dictionary<object, Box> Map;
+        }
+
+        sealed class Serializer : Serializer<Boxes>
+        {
+            public override bool Serialize(in Boxes instance, TypeData dynamic, TypeData @static, in WriteContext context)
+            {
+                var success = true;
+                ref var count = ref context.Writer.Reserve<uint>();
+                using (var read = instance._boxes.Read())
+                {
+                    foreach (var (type, data) in read.Value)
+                    {
+                        count++;
+                        success &= context.Serializers.Serialize(type, context);
+                        success &= context.Serializers.Serialize(data, context);
+                    }
+                }
+                return success;
+            }
+
+            public override bool Instantiate(out Boxes instance, TypeData dynamic, TypeData @static, in ReadContext context)
+            {
+                instance = new Boxes();
+                return true;
+            }
+
+            public override bool Deserialize(ref Boxes instance, TypeData dynamic, TypeData @static, in ReadContext context)
+            {
+                var success = context.Reader.Read(out uint count);
+                using (var write = instance._boxes.Write())
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (context.Serializers.Deserialize(out Type type, context) &
+                            context.Serializers.Deserialize(out Data data, context))
+                            write.Value[type] = data;
+                        else success = false;
+                    }
+                }
+                return success;
+            }
         }
 
         readonly Concurrent<TypeMap<object, Data>> _boxes = new TypeMap<object, Data>();
@@ -40,7 +82,7 @@ namespace Entia.Modules
                 ref var data = ref read.Value.Get(type, out var success);
                 if (success)
                 {
-                    if (key is null) return (box = data.Box).Valid;
+                    if (key is null) return (box = data.Box).IsValid;
                     return data.Map.TryGetValue(key, out box);
                 }
 
@@ -128,7 +170,7 @@ namespace Entia.Modules
                 {
                     if (key is null)
                     {
-                        if (data.Box.Valid)
+                        if (data.Box.IsValid)
                         {
                             box = data.Box;
                             box.Value = value;
@@ -191,7 +233,7 @@ namespace Entia.Modules
 
         bool Has(in Data data, object key)
         {
-            if (key is null) return data.Box.Valid;
+            if (key is null) return data.Box.IsValid;
             return data.Map.ContainsKey(key);
         }
 
@@ -199,7 +241,7 @@ namespace Entia.Modules
         {
             if (key is null)
             {
-                if (data.Box.Valid)
+                if (data.Box.IsValid)
                 {
                     data.Box = default;
                     return true;

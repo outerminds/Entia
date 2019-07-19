@@ -416,12 +416,12 @@ namespace Entia.Experiment
         }
         static unsafe void Layout()
         {
-            int IndexOf(IntPtr pointer, int size)
-            {
-                var bytes = (byte*)pointer;
-                for (int i = 0; i < size; i++) if (bytes[i] == 0) return i;
-                return -1;
-            }
+            // int IndexOf(IntPtr pointer, int size)
+            // {
+            //     var bytes = (byte*)pointer;
+            //     for (int i = 0; i < size; i++) if (bytes[i] == 0) return i;
+            //     return -1;
+            // }
 
             (FieldInfo, int)[] For<T>()
             {
@@ -437,8 +437,8 @@ namespace Entia.Experiment
                     var field = fields[i];
                     object box = instance;
                     field.SetValue(box, default);
-                    var offset = IndexOf(UnsafeUtility.Unbox(ref box), size);
-                    layout[i] = (field, offset);
+                    // var offset = IndexOf(UnsafeUtility.Unbox(box), size);
+                    // layout[i] = (field, offset);
                 }
                 Array.Sort(layout, (a, b) => a.offset.CompareTo(b.offset));
                 return layout;
@@ -474,11 +474,16 @@ namespace Entia.Experiment
         {
             var world = new World();
             var entities = world.Entities();
-            entities.Create();
+            var messages = world.Messages();
+            var resources = world.Resources();
+            var boxes = world.Boxes();
+            var components = world.Components();
+            for (int i = 0; i < 10; i++) entities.Create();
             var serializers = world.Serializers();
             var cyclic = new Cyclic(); cyclic.A = cyclic;
+            byte[] bytes;
 
-            serializers.Serialize(cyclic, out var bytes);
+            serializers.Serialize(cyclic, out bytes);
             serializers.Deserialize(bytes, out Cyclic b);
 
             serializers.Serialize((object)cyclic, out bytes);
@@ -490,11 +495,14 @@ namespace Entia.Experiment
             serializers.Serialize((object)((object)13, (object)27), out bytes);
             serializers.Deserialize(bytes, out object tuple2);
 
-            serializers.Serialize(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }, out bytes);
-            serializers.Deserialize(bytes, out byte[] array);
+            serializers.Serialize((new Entity(1, 2), new Entity(10, 11)), out bytes);
+            serializers.Deserialize(bytes, out (Entity, Entity) tuple3);
 
-            var i = 0;
-            var action = new Action(() => i++);
+            serializers.Serialize(new Entity[] { new Entity(1, 2), new Entity(10, 11) }, out bytes);
+            serializers.Deserialize(bytes, out Entity[] array);
+
+            var index = 0;
+            var action = new Action(() => index++);
             action();
             serializers.Serialize(action, out bytes, action.Target);
             serializers.Deserialize(bytes, out action, action.Target);
@@ -503,7 +511,7 @@ namespace Entia.Experiment
             var inAction = new RefAction<int>((ref int value) => value++);
             serializers.Serialize(inAction, out bytes);
             serializers.Deserialize(bytes, out inAction);
-            inAction(ref i);
+            inAction(ref index);
 
             var reaction = new Entia.Modules.Message.Reaction<OnCreate>();
             reaction.Add((in OnCreate message) => { });
@@ -511,9 +519,24 @@ namespace Entia.Experiment
             serializers.Deserialize(bytes, out reaction);
 
             serializers.Serialize(entities, out bytes);
-            serializers.Deserialize(bytes, out Entities d);
+            serializers.Deserialize(bytes, out entities);
             serializers.Serialize((object)entities, out bytes);
-            serializers.Deserialize(bytes, out Entities e);
+            serializers.Deserialize(bytes, out entities);
+
+            // serializers.Serialize(components, out bytes);
+            // serializers.Deserialize(bytes, out Modules.Components f);
+
+            serializers.Serialize(boxes, out bytes);
+            serializers.Deserialize(bytes, out boxes);
+
+            serializers.Serialize(messages, out bytes);
+            serializers.Deserialize(bytes, out messages);
+
+            serializers.Serialize(resources, out bytes);
+            serializers.Deserialize(bytes, out resources);
+
+            serializers.Serialize(world, out bytes);
+            serializers.Deserialize(bytes, out world);
         }
 
         static void Main()

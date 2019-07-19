@@ -5,11 +5,11 @@ using Entia.Modules;
 
 namespace Entia.Serializers
 {
-    public sealed class Type : Serializer<System.Type>
+    public sealed class SystemType : Serializer<Type>
     {
         public enum Kinds : byte { Type = 1, Array, Pointer, Generic, Definition }
 
-        static readonly System.Type[] _definitions ={
+        static readonly Type[] _definitions ={
             typeof(Nullable<>),
             typeof(List<>),
             typeof(Dictionary<,>),
@@ -24,7 +24,7 @@ namespace Entia.Serializers
             typeof(Disposable<>)
         };
 
-        public override bool Serialize(in System.Type instance, TypeData dynamic, TypeData @static, in WriteContext context)
+        public override bool Serialize(in Type instance, TypeData dynamic, TypeData @static, in WriteContext context)
         {
             if (instance.IsArray)
             {
@@ -42,7 +42,7 @@ namespace Entia.Serializers
             }
             else if (instance.IsGenericTypeDefinition)
             {
-                var index = System.Array.IndexOf(_definitions, instance);
+                var index = Array.IndexOf(_definitions, instance);
                 if (index > 0)
                 {
                     context.Writer.Write(Kinds.Definition);
@@ -67,7 +67,7 @@ namespace Entia.Serializers
             else return SerializeType(instance, context);
         }
 
-        public override bool Instantiate(out System.Type instance, TypeData dynamic, TypeData @static, in ReadContext context)
+        public override bool Instantiate(out Type instance, TypeData dynamic, TypeData @static, in ReadContext context)
         {
             var success = context.Reader.Read(out Kinds kind);
             switch (kind)
@@ -75,19 +75,19 @@ namespace Entia.Serializers
                 case Kinds.Array:
                     {
                         success &= context.Reader.Read(out byte rank);
-                        success &= context.Serializers.Deserialize(out System.Type element, context);
+                        success &= context.Serializers.Deserialize(out Type element, context);
                         instance = element.MakeArrayType(rank);
                         break;
                     }
                 case Kinds.Pointer:
                     {
-                        success &= context.Serializers.Deserialize(out System.Type element, context);
+                        success &= context.Serializers.Deserialize(out Type element, context);
                         instance = element.MakePointerType();
                         break;
                     }
                 case Kinds.Generic:
                     {
-                        success &= context.Serializers.Deserialize(out System.Type definition, context);
+                        success &= context.Serializers.Deserialize(out Type definition, context);
                         var arguments = definition.GetGenericArguments();
                         for (int i = 0; i < arguments.Length; i++) success &= context.Serializers.Deserialize(out arguments[i], context);
                         instance = definition.MakeGenericType(arguments);
@@ -111,9 +111,9 @@ namespace Entia.Serializers
             return success;
         }
 
-        public override bool Deserialize(ref System.Type instance, TypeData dynamic, TypeData @static, in ReadContext context) => true;
+        public override bool Deserialize(ref Type instance, TypeData dynamic, TypeData @static, in ReadContext context) => true;
 
-        bool SerializeType(System.Type instance, in WriteContext context)
+        bool SerializeType(Type instance, in WriteContext context)
         {
             context.Writer.Write(Kinds.Type);
             context.Writer.Write(instance.MetadataToken);

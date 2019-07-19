@@ -15,7 +15,7 @@ namespace Entia.Modules.Message
     public interface IEmitter : IEnumerable<IReceiver>
     {
         IReaction Reaction { get; }
-        System.Type Type { get; }
+        Type Type { get; }
 
         void Emit();
         bool Emit(IMessage message);
@@ -84,7 +84,7 @@ namespace Entia.Modules.Message
         public readonly Reaction<T> Reaction = new Reaction<T>();
 
         IReaction IEmitter.Reaction => Reaction;
-        System.Type IEmitter.Type => typeof(T);
+        Type IEmitter.Type => typeof(T);
 
         event InFunc<T, bool> _receive = _empty;
         readonly ConcurrentDictionary<Receiver<T>, Unit> _receivers = new ConcurrentDictionary<Receiver<T>, Unit>();

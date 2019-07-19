@@ -6,7 +6,6 @@ using Entia.Dependers;
 using Entia.Modules;
 using Entia.Modules.Query;
 using Entia.Queriers;
-using Entia.Serializers;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -56,7 +55,7 @@ namespace Entia
             public long Identifier => Entity.Identifier;
             public ComponentView[] Components => World.TryGet<Modules.Components>(out var components) ?
                 components.Get(Entity, States.All).Select(component => new ComponentView(component, Entity, World)).ToArray() :
-                System.Array.Empty<ComponentView>();
+                Array.Empty<ComponentView>();
 
             public EntityView(Entity entity, World world)
             {
@@ -97,22 +96,6 @@ namespace Entia
                 query = new Query<Entity>(index => segment.Entities.items[index]);
                 return true;
             }
-        }
-
-        sealed class Serializer : Serializer<Entity>
-        {
-            public override bool Serialize(in Entity instance, TypeData dynamic, TypeData @static, in WriteContext context)
-            {
-                context.Writer.Write(instance.Identifier);
-                return true;
-            }
-            public override bool Instantiate(out Entity instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                var success = context.Reader.Read(out long identifier);
-                instance = new Entity(identifier);
-                return success;
-            }
-            public override bool Deserialize(ref Entity instance, TypeData dynamic, TypeData @static, in ReadContext context) => true;
         }
 
         /// <summary>

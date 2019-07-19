@@ -4,7 +4,7 @@ using Entia.Modules;
 
 namespace Entia.Serializers
 {
-    public sealed class ReaderWriterLock : Serializer<ReaderWriterLockSlim>
+    public sealed class ReadWriteLock : Serializer<ReaderWriterLockSlim>
     {
         public override bool Serialize(in ReaderWriterLockSlim instance, TypeData dynamic, TypeData @static, in WriteContext context)
         {

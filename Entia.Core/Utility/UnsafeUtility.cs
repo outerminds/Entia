@@ -102,10 +102,6 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T AsReference<T>(in T reference) => ref Cache<T, T>.As(reference);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static IntPtr Unbox(ref object box) => *(IntPtr*)AsPointer(ref box) + IntPtr.Size;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T Unbox<T>(ref object box) => ref As<T>(Unbox(ref box));
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T Offset<T>(ref T reference, int offset) => ref Cache<T>.Offset(reference, offset);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static (FieldInfo field, int offset)[] Layout<T>() => Cache<T>.Layout;

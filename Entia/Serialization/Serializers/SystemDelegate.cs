@@ -1,12 +1,13 @@
+using System;
 using System.Reflection;
 using Entia.Core;
 using Entia.Modules;
 
 namespace Entia.Serializers
 {
-    public sealed class Delegate : Serializer<System.Delegate>
+    public sealed class SystemDelegate : Serializer<Delegate>
     {
-        public override bool Serialize(in System.Delegate instance, TypeData dynamic, TypeData @static, in WriteContext context)
+        public override bool Serialize(in Delegate instance, TypeData dynamic, TypeData @static, in WriteContext context)
         {
             var invocations = instance.GetInvocationList();
             var success = true;
@@ -24,14 +25,14 @@ namespace Entia.Serializers
             return success;
         }
 
-        public override bool Instantiate(out System.Delegate instance, TypeData dynamic, TypeData @static, in ReadContext context)
+        public override bool Instantiate(out Delegate instance, TypeData dynamic, TypeData @static, in ReadContext context)
         {
             var success = context.Reader.Read(out int count);
             if (count == 1)
             {
                 success &= context.Serializers.Deserialize(out MethodInfo method, context);
                 success &= context.Serializers.Deserialize(out object target, context);
-                instance = System.Delegate.CreateDelegate(dynamic, target, method);
+                instance = Delegate.CreateDelegate(dynamic, target, method);
             }
             else
             {
@@ -39,12 +40,12 @@ namespace Entia.Serializers
                 for (int i = 0; i < count; i++)
                 {
                     success &= context.Serializers.Deserialize(out var @delegate, dynamic, context);
-                    instance = System.Delegate.Combine(instance, @delegate as System.Delegate);
+                    instance = Delegate.Combine(instance, @delegate as Delegate);
                 }
             }
             return success;
         }
 
-        public override bool Deserialize(ref System.Delegate instance, TypeData dynamic, TypeData @static, in ReadContext context) => true;
+        public override bool Deserialize(ref Delegate instance, TypeData dynamic, TypeData @static, in ReadContext context) => true;
     }
 }

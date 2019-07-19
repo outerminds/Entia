@@ -1,10 +1,11 @@
+using System;
 using System.Reflection;
 using Entia.Core;
 using Entia.Modules;
 
 namespace Entia.Serializers
 {
-    public sealed class Method : Serializer<MethodInfo>
+    public sealed class ReflectionMethod : Serializer<MethodInfo>
     {
         public override bool Serialize(in MethodInfo instance, TypeData dynamic, TypeData @static, in WriteContext context)
         {
@@ -26,17 +27,17 @@ namespace Entia.Serializers
 
         public override bool Instantiate(out MethodInfo instance, TypeData dynamic, TypeData @static, in ReadContext context)
         {
-            var success = context.Serializers.Deserialize(out System.Type declaring, context);
+            var success = context.Serializers.Deserialize(out Type declaring, context);
             success &= context.Reader.Read(out int token);
 
             instance = declaring.Method(token);
             if (instance.IsGenericMethodDefinition)
             {
                 success &= context.Reader.Read(out int count);
-                var arguments = new System.Type[count];
+                var arguments = new Type[count];
                 for (int i = 0; i < arguments.Length; i++)
                 {
-                    success &= context.Serializers.Deserialize(out System.Type argument, context);
+                    success &= context.Serializers.Deserialize(out Type argument, context);
                     arguments[i] = argument;
                 }
                 instance = instance.MakeGenericMethod(arguments);

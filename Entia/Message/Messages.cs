@@ -1,6 +1,8 @@
 ﻿using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Modules.Message;
+using Entia.Serializables;
+using Entia.Serializers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,9 +11,46 @@ using System.Linq;
 namespace Entia.Modules
 {
     [ThreadSafe]
-    public sealed class Messages : IModule, IClearable, IEnumerable<IEmitter>
+    public sealed class Messages : IModule, IClearable, ISerializable<Messages.Serializer>, IEnumerable<IEmitter>
     {
         readonly Concurrent<TypeMap<IMessage, IEmitter>> _emitters = new TypeMap<IMessage, IEmitter>();
+
+        sealed class Serializer : Serializer<Messages>
+        {
+            public override bool Serialize(in Messages instance, TypeData dynamic, TypeData @static, in WriteContext context)
+            {
+                var success = true;
+                ref var count = ref context.Writer.Reserve<uint>();
+                using (var read = instance._emitters.Read())
+                {
+                    foreach (var emitter in read.Value.Values)
+                    {
+                        count++;
+                        success &= context.Serializers.Serialize(emitter, context);
+                    }
+                }
+                return success;
+            }
+            public override bool Instantiate(out Messages instance, TypeData dynamic, TypeData @static, in ReadContext context)
+            {
+                instance = new Messages();
+                return true;
+            }
+            public override bool Deserialize(ref Messages instance, TypeData dynamic, TypeData @static, in ReadContext context)
+            {
+                var success = context.Reader.Read(out uint count);
+                using (var write = instance._emitters.Write())
+                {
+                    for (var i = 0u; i < count; i++)
+                    {
+                        if (context.Serializers.Deserialize(out IEmitter emitter, context))
+                            write.Value[emitter.Type] = emitter;
+                        else success = false;
+                    }
+                }
+                return success;
+            }
+        }
 
         public Emitter<T> Emitter<T>() where T : struct, IMessage
         {

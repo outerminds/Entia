@@ -3,7 +3,7 @@ using Entia.Modules;
 
 namespace Entia.Serializers
 {
-    public sealed class Assembly : Serializer<System.Reflection.Assembly>
+    public sealed class ReflectionAssembly : Serializer<System.Reflection.Assembly>
     {
         public override bool Serialize(in System.Reflection.Assembly instance, TypeData dynamic, TypeData @static, in WriteContext context)
         {

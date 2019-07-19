@@ -1,24 +1,53 @@
 ﻿using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Dependables;
-using Entia.Dependencies;
 using Entia.Dependers;
 using Entia.Injectables;
 using Entia.Injectors;
 using Entia.Modules;
+using Entia.Serializables;
+using Entia.Serializers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Entia
 {
-    public sealed class World : IClearable, IInjectable, IEnumerable<TypeMap<IModule, IModule>.ValueEnumerator, IModule>
+    public sealed class World : IClearable, IInjectable, ISerializable<World.Serializer>, IEnumerable<TypeMap<IModule, IModule>.ValueEnumerator, IModule>
     {
         struct State
         {
             public Dictionary<ulong, WeakReference<World>> Worlds;
             public ulong Count;
+        }
+
+        sealed class Serializer : Serializer<World>
+        {
+            public override bool Serialize(in World instance, TypeData dynamic, TypeData @static, in WriteContext context)
+            {
+                var success = true;
+                ref var count = ref context.Writer.Reserve<uint>();
+                foreach (var module in instance._modules.Values)
+                {
+                    count++;
+                    success &= context.Serializers.Serialize(module, context);
+                }
+                return success;
+            }
+            public override bool Instantiate(out World instance, TypeData dynamic, TypeData @static, in ReadContext context)
+            {
+                instance = new World();
+                return true;
+            }
+            public override bool Deserialize(ref World instance, TypeData dynamic, TypeData @static, in ReadContext context)
+            {
+                var success = context.Reader.Read(out uint count);
+                for (var i = 0u; i < count; i++)
+                {
+                    if (context.Serializers.Deserialize(out IModule module, context)) instance.Set(module);
+                    else success = false;
+                }
+                return success;
+            }
         }
 
         [Injector]
@@ -83,7 +112,7 @@ namespace Entia
 
         public bool TryGet<T>(out T module) where T : IModule
         {
-            if (_modules.TryGet<T>(out var value, false, false) && value is T casted)
+            if (_modules.TryGet<T>(out var value) && value is T casted)
             {
                 module = casted;
                 return true;
@@ -93,6 +122,8 @@ namespace Entia
             return false;
         }
 
+        public bool TryGet(Type type, out IModule module) => _modules.TryGet(type, out module);
+
         public bool Set<T>(T module) where T : IModule
         {
             Remove<T>();
@@ -100,12 +131,27 @@ namespace Entia
             return _modules.Set<T>(module);
         }
 
-        public bool Has<T>() where T : IModule => _modules.Has<T>(false, false);
+        public bool Set(IModule module)
+        {
+            var type = module.GetType();
+            Remove(type);
+            if (module is IResolvable resolvable) ArrayUtility.Add(ref _resolvables, resolvable);
+            return _modules.Set(type, module);
+        }
+
+        public bool Has<T>() where T : IModule => _modules.Has<T>();
+        public bool Has(Type type) => _modules.Has(type);
 
         public bool Remove<T>() where T : IModule
         {
-            if (_modules.TryGet<T>(out var module, false, false) && module is IResolvable resolvable) ArrayUtility.Remove(ref _resolvables, resolvable);
-            return _modules.Remove<T>(false, false);
+            if (_modules.TryGet<T>(out var module) && module is IResolvable resolvable) ArrayUtility.Remove(ref _resolvables, resolvable);
+            return _modules.Remove<T>();
+        }
+
+        public bool Remove(Type type)
+        {
+            if (_modules.TryGet(type, out var module) && module is IResolvable resolvable) ArrayUtility.Remove(ref _resolvables, resolvable);
+            return _modules.Remove(type);
         }
 
         public bool Clear()

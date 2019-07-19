@@ -16,6 +16,9 @@ namespace Entia.Modules
     /// </summary>
     public sealed class Entities : IModule, IClearable, IResolvable, ISerializable<Entities.Serializer>, IEnumerable<Entities.Enumerator, Entity>
     {
+        [Flags]
+        enum States : byte { None = 0, All = byte.MaxValue, Allocated = 1 << 0, Alive = 1 << 1 }
+
         /// <summary>
         /// An enumerator that enumerates over all existing entities.
         /// </summary>
@@ -60,8 +63,18 @@ namespace Entia.Modules
         struct Data
         {
             public uint Generation;
-            public bool Allocated;
-            public bool Alive;
+            public States State;
+
+            public bool Allocated
+            {
+                get => (State & States.Allocated) != 0;
+                set { if (value) State |= States.Allocated; else State &= ~States.Allocated; }
+            }
+            public bool Alive
+            {
+                get => (State & States.Alive) != 0;
+                set { if (value) State |= States.Alive; else State &= ~States.Alive; }
+            }
         }
 
         sealed class Serializer : Serializer<Entities>

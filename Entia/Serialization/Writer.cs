@@ -25,6 +25,20 @@ namespace Entia.Modules.Serialization
             fixed (char* pointer = value) Write(pointer, value.Length);
         }
 
+        public ref T Reserve<T>() where T : unmanaged => ref *(T*)Reserve(sizeof(T));
+        public T* Reserve<T>(int count) where T : unmanaged => (T*)Reserve(sizeof(T) * count);
+        public byte* Reserve(int count)
+        {
+            var position = _bytes.count;
+            _bytes.count += count;
+            if (_bytes.Ensure())
+            {
+                _handle.Free();
+                _bytes.items.Fix(out _handle, out _pointer);
+            }
+            return _pointer + position;
+        }
+
         public void Write<T>(T value) where T : unmanaged => Write((byte*)&value, sizeof(T));
         public void Write<T>(params T[] values) where T : unmanaged => Write(values, 0, values.Length);
         public void Write<T>(T[] values, int count) where T : unmanaged => Write(values, 0, count);
@@ -39,20 +53,10 @@ namespace Entia.Modules.Serialization
         public void Write(byte* bytes, int count)
         {
             if (count <= 0) return;
-
-            var position = _bytes.count;
-            _bytes.count += count;
-            if (_bytes.Ensure())
-            {
-                _handle.Free();
-                _bytes.items.Fix(out _handle, out _pointer);
-            }
-
-            Buffer.MemoryCopy(bytes, _pointer + position, count, count);
+            Buffer.MemoryCopy(bytes, Reserve(count), count, count);
         }
 
         public byte[] ToArray() => _bytes.ToArray();
-
         public void Dispose() => _handle.Free();
     }
 }
