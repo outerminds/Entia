@@ -39,6 +39,7 @@ namespace Entia.Modules.Serialization
             return _pointer + position;
         }
 
+        public void Write(void* pointer) => Write((IntPtr)pointer);
         public void Write<T>(T value) where T : unmanaged => Write((byte*)&value, sizeof(T));
         public void Write<T>(params T[] values) where T : unmanaged => Write(values, 0, values.Length);
         public void Write<T>(T[] values, int count) where T : unmanaged => Write(values, 0, count);

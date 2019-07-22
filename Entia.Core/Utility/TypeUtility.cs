@@ -29,6 +29,7 @@ namespace Entia.Core
         public Type[] Bases => _bases.Value;
         public bool IsPlain => _isPlain.Value;
         public bool IsBlittable => _isBlittable.Value;
+        public bool IsCyclic => _isCyclic.Value;
         public object Default => _default.Value;
         public int? Size => _size.Value;
 
@@ -49,6 +50,7 @@ namespace Entia.Core
         readonly Lazy<Type[]> _bases;
         readonly Lazy<bool> _isPlain;
         readonly Lazy<bool> _isBlittable;
+        readonly Lazy<bool> _isCyclic;
         readonly Lazy<object> _default;
         readonly Lazy<int?> _size;
 
@@ -96,7 +98,7 @@ namespace Entia.Core
 
             bool GetIsPlain(Type current, FieldInfo[] fields)
             {
-                if (current.IsPrimitive || current.IsPointer) return true;
+                if (current.IsPrimitive || current.IsPointer || current.IsEnum) return true;
                 if (current.IsValueType)
                 {
                     foreach (var field in fields)
@@ -111,7 +113,7 @@ namespace Entia.Core
 
             bool GetIsBlittable(Type current, FieldInfo[] fields)
             {
-                if (current.IsPrimitive || current.IsPointer)
+                if (current.IsPrimitive || current.IsPointer || current.IsEnum)
                     return current != typeof(bool) && current != typeof(char) && current != typeof(decimal);
                 else if (current.IsGenericType) return false;
                 else if (current.IsValueType)
@@ -123,7 +125,25 @@ namespace Entia.Core
                     }
                     return true;
                 }
-                return false;
+                else return false;
+            }
+
+            bool GetIsCyclic(Type current, FieldInfo[] fields, HashSet<Type> types)
+            {
+                if (current.IsPrimitive || current.IsEnum) return false;
+                else if (types.Add(current))
+                {
+                    if (current.GetElementType() is Type element)
+                        return GetIsCyclic(element, element.InstanceFields(), types);
+
+                    foreach (var field in fields)
+                    {
+                        if (GetIsCyclic(field.FieldType, field.FieldType.InstanceFields(), new HashSet<Type>(types)))
+                            return true;
+                    }
+                    return false;
+                }
+                else return true;
             }
 
             unsafe int? GetSize(Type current)
@@ -170,6 +190,7 @@ namespace Entia.Core
             _arguments = new Lazy<Type[]>(() => Type.GetGenericArguments());
             _isPlain = new Lazy<bool>(() => GetIsPlain(Type, InstanceFields));
             _isBlittable = new Lazy<bool>(() => GetIsBlittable(Type.IsArray ? Type.GetElementType() : Type, InstanceFields));
+            _isCyclic = new Lazy<bool>(() => GetIsCyclic(Type, InstanceFields, new HashSet<Type>()));
             _default = new Lazy<object>(() => GetDefault(Type));
             _size = new Lazy<int?>(() => GetSize(Type));
         }
@@ -309,6 +330,7 @@ namespace Entia.Core
         public static bool IsPlain(object value) => value is null || IsPlain(value.GetType());
         public static bool IsDefault(object value) => value is null || value.Equals(GetData(value.GetType()).Default);
         public static bool IsPrimitive(object value) => value is null || value.GetType().IsPrimitive;
+        public static bool IsCyclic(this Type type) => GetData(type).IsCyclic;
         public static MemberInfo Member(this Type type, int token) => GetData(type).Members.TryGetValue(token, out var member) ? member : default;
         public static FieldInfo Field(this Type type, int token) => type.Member(token) as FieldInfo;
         public static PropertyInfo Property(this Type type, int token) => type.Member(token) as PropertyInfo;

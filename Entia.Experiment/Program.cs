@@ -8,7 +8,9 @@ using Entia.Queryables;
 using Entia.Systems;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -470,7 +472,7 @@ namespace Entia.Experiment
         }
 
         public class Cyclic { public Cyclic A; }
-        static void Serializer()
+        static void Serializer1()
         {
             var world = new World();
             var entities = world.Entities();
@@ -539,9 +541,101 @@ namespace Entia.Experiment
             serializers.Deserialize(bytes, out world);
         }
 
+        static void Serializer2()
+        {
+            var world = new World();
+            var descriptors = world.Descriptors();
+            byte[] bytes;
+            bool success;
+
+            var type = typeof(int);
+            success = descriptors.Serialize(type, out bytes);
+            success = descriptors.Deserialize(bytes, out type);
+
+            var array = new int[] { 1, 2, 3, 4 };
+            success = descriptors.Serialize(array, out bytes);
+            success = descriptors.Deserialize(bytes, out array);
+
+            var cycle = new Cyclic();
+            cycle.A = cycle;
+            success = descriptors.Serialize(cycle, out bytes);
+            success = descriptors.Deserialize(bytes, out cycle);
+
+            success = descriptors.Serialize(null, typeof(object), out bytes);
+            success = descriptors.Deserialize(bytes, out object @null);
+
+            var function = new Func<int>(() => 321);
+            success = descriptors.Serialize(function, out bytes);
+            success = descriptors.Deserialize(bytes, out function);
+            var value = function();
+
+            var action = new Action(() => value += 1);
+            success = descriptors.Serialize(action, out bytes, action.Target);
+            success = descriptors.Deserialize(bytes, out action, action.Target);
+            action();
+
+            var reaction = new Entia.Modules.Message.Reaction<OnCreate>();
+            success = descriptors.Serialize(reaction, out bytes);
+            success = descriptors.Deserialize(bytes, out reaction);
+
+            var emitter = new Entia.Modules.Message.Emitter<OnCreate>();
+            success = descriptors.Serialize(emitter, out bytes);
+            success = descriptors.Deserialize(bytes, out emitter);
+
+            var entities = world.Entities();
+            for (int i = 0; i < 100; i++) entities.Create();
+            success = descriptors.Serialize(entities, out bytes);
+            success = descriptors.Deserialize(bytes, out entities);
+
+            // var fett = new Fett();
+            // success = descriptors.Serialize(fett, out bytes);
+            // success = descriptors.Deserialize(bytes, out fett);
+            // descriptors.Set(Fett.Serializer);
+            // success = descriptors.Serialize(fett, out bytes);
+            // success = descriptors.Deserialize(bytes, out fett);
+        }
+
+        static void CompareSerializers()
+        {
+            var world = new World();
+            var serializers = world.Serializers();
+            var descriptors = world.Descriptors();
+
+            var value = new Dictionary<object, object>();
+            value[1] = "2";
+            value["3"] = 4;
+            value[DateTime.Now] = TimeSpan.MaxValue;
+            value[TimeSpan.MinValue] = DateTime.UtcNow;
+            value[new object()] = null;
+            value[new Unit()] = value;
+            value[value] = new Unit();
+            while (true)
+            {
+                var watch1 = Stopwatch.StartNew();
+                for (int i = 0; i < 1000; i++)
+                {
+                    var success1 = serializers.Serialize(value, out var bytes1);
+                    var success2 = serializers.Deserialize(bytes1, out object value1);
+                }
+                watch1.Stop();
+
+                var watch2 = Stopwatch.StartNew();
+                for (int i = 0; i < 1000; i++)
+                {
+                    var success3 = descriptors.Serialize(value, out var bytes2);
+                    var success4 = descriptors.Deserialize(bytes2, out var value2, value.GetType());
+                }
+                watch2.Stop();
+
+                Console.WriteLine($"{watch1.Elapsed} | {watch2.Elapsed}");
+            }
+        }
+
         static void Main()
         {
-            Serializer();
+            // Serializer1();
+            // Serializer2();
+            CompareSerializers();
             // SuperUnsafe();
             // Performance();
             // Layout();

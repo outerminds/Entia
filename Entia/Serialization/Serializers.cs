@@ -42,7 +42,7 @@ namespace Entia.Modules
         }
     }
 
-    public enum Kinds : byte { Null = 1, Reference, Value, TypedValue }
+    public enum Kinds : byte { Null = 1, Reference, Concrete, Abstract }
 
     public unsafe sealed class Serializers : IModule, ISerializable<Serializers.Serializer>, IEnumerable<ISerializer>
     {
@@ -151,8 +151,8 @@ namespace Entia.Modules
                     value = context.References[reference];
                     return true;
                 case Kinds.Null: value = null; return true;
-                case Kinds.Value: return Deserialize(out value, @static, @static, context);
-                case Kinds.TypedValue:
+                case Kinds.Concrete: return Deserialize(out value, @static, @static, context);
+                case Kinds.Abstract:
                     if (Deserialize(out Type dynamic, context) && Deserialize(out value, dynamic, @static, context))
                         return true;
                     value = default;
@@ -194,13 +194,13 @@ namespace Entia.Modules
             }
             else if (dynamic == @static)
             {
-                context.Writer.Write(Kinds.Value);
+                context.Writer.Write(Kinds.Concrete);
                 context.References[value] = context.References.Count;
-                return Get(dynamic.Type).Serialize(value, dynamic, @static, context);
+                return Get(dynamic).Serialize(value, dynamic, @static, context);
             }
             else
             {
-                context.Writer.Write(Kinds.TypedValue);
+                context.Writer.Write(Kinds.Abstract);
                 Serialize(dynamic.Type, dynamic.Type.GetType(), context);
                 context.References[value] = context.References.Count;
                 return Get(dynamic).Serialize(value, dynamic, @static, context);

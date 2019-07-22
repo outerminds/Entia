@@ -6,8 +6,8 @@ namespace Entia.Core
     {
         static class Cache<T>
         {
-            public static Func<T, T> Clone = typeof(T).IsValueType ?
-                new Func<T, T>((value => value)) :
+            public static Func<T, T> Clone =
+                typeof(T).IsValueType ? new Func<T, T>(value => value) :
                 new Func<T, T>((value => value == null ? default : (T)_clone(value)));
         }
 

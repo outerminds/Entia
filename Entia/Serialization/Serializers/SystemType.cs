@@ -43,7 +43,7 @@ namespace Entia.Serializers
             else if (instance.IsGenericTypeDefinition)
             {
                 var index = Array.IndexOf(_definitions, instance);
-                if (index > 0)
+                if (index >= 0)
                 {
                     context.Writer.Write(Kinds.Definition);
                     context.Writer.Write((byte)index);

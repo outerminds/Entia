@@ -32,6 +32,17 @@ namespace Entia.Modules.Serialization
             return false;
         }
 
+        public bool Read(out void* pointer)
+        {
+            if (Read(out IntPtr value))
+            {
+                pointer = (void*)value;
+                return true;
+            }
+            pointer = default;
+            return false;
+        }
+
         public bool Read<T>(out T value) where T : unmanaged
         {
             var pointer = stackalloc T[1];
@@ -51,8 +62,8 @@ namespace Entia.Modules.Serialization
         }
 
         public bool Read<T>(T* pointer, int count) where T : unmanaged => Read((byte*)pointer, count * sizeof(T));
-        public void Read(IntPtr pointer, int size, int count) => Read((byte*)pointer, size * count);
-        public void Read(IntPtr bytes, int count) => Read((byte*)bytes, count);
+        public bool Read(IntPtr pointer, int size, int count) => Read((byte*)pointer, size * count);
+        public bool Read(IntPtr bytes, int count) => Read((byte*)bytes, count);
         public bool Read(byte* bytes, int count)
         {
             count = Math.Min(Bytes.Length - Position, count);
