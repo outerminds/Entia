@@ -72,8 +72,5 @@ namespace Entia.Experiment
 
         public static bool Deserialize(this ISerializer serializer, out object instance, DeserializeContext context) =>
             serializer.Instantiate(out instance, context) && serializer.Initialize(ref instance, context);
-
-        public static bool Deserialize<T>(this Serializer<T> serializer, out T instance, DeserializeContext context) =>
-            serializer.Instantiate(out instance, context) && serializer.Initialize(ref instance, context);
     }
 }

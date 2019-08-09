@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Entia.Core;
 using Entia.Modules;
@@ -45,6 +46,7 @@ namespace Entia.Experiment
                 default:
                     if (type.IsArray)
                     {
+                        var descriptors = world.Descriptors();
                         var element = TypeUtility.GetData(data.Element);
                         switch (element.Code)
                         {
@@ -62,25 +64,21 @@ namespace Entia.Experiment
                             case TypeCode.UInt16: return Blittable.Array<ushort>();
                             case TypeCode.UInt32: return Blittable.Array<uint>();
                             case TypeCode.UInt64: return Blittable.Array<ulong>();
-                            case TypeCode.String: return Array(String());
                             default:
                                 if (element.Size is int size) return Blittable.Array(element, size);
                                 else return Array(element);
                         }
                     }
                     else if (data.Size is int size) return Blittable.Object(data, size);
-                    else if (type.IsValueType) return Object(type);
                     else if (type.Is<Type>()) return Serializer.Reflection.Type();
                     else if (type.Is<Assembly>()) return Serializer.Reflection.Assembly();
                     else if (type.Is<Module>()) return Serializer.Reflection.Module();
                     else if (type.Is<MethodInfo>()) return Serializer.Reflection.Method();
                     else if (type.Is<MemberInfo>()) return Serializer.Reflection.Member();
-                    else if (type.IsSealed)
-                    {
-                        if (type.Is<Delegate>()) return Delegate(type);
-                        else return Object(type);
-                    }
-                    else return Abstract(type);
+                    else if (type.Is<Delegate>()) return Delegate(type);
+                    else if (type.Is(typeof(List<>), definition: true)) return List(data.Arguments[0]);
+                    else if (type.Is(typeof(Dictionary<,>), definition: true)) return Dictionary(data.Arguments[0], data.Arguments[1]);
+                    else return Object(type);
             }
         }
     }

@@ -4,15 +4,12 @@ namespace Entia.Experiment
 {
     public sealed class AbstractModule : Serializer<Module>
     {
-        public readonly Serializer<Assembly> Assembly;
-        public AbstractModule(Serializer<Assembly> assembly) { Assembly = assembly; }
-
         public override bool Serialize(in Module instance, in SerializeContext context) =>
-            Assembly.Serialize(instance.Assembly, context);
+            context.Descriptors.Serialize(instance.Assembly, instance.Assembly.GetType(), context);
 
         public override bool Instantiate(out Module instance, in DeserializeContext context)
         {
-            if (Assembly.Deserialize(out var assembly, context))
+            if (context.Descriptors.Deserialize(out Assembly assembly, context))
             {
                 instance = assembly.ManifestModule;
                 return true;

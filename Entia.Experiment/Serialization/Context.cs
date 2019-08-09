@@ -24,9 +24,9 @@ namespace Entia.Experiment
         public readonly Reader Reader;
         public readonly Descriptors Descriptors;
         public readonly World World;
-        public readonly List<object> References;
+        public readonly object[] References;
 
-        public DeserializeContext(Reader reader, Descriptors descriptors, World world, List<object> references)
+        public DeserializeContext(Reader reader, Descriptors descriptors, World world, object[] references)
         {
             Reader = reader;
             Descriptors = descriptors;

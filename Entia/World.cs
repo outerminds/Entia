@@ -25,10 +25,10 @@ namespace Entia
             public override bool Serialize(in World instance, TypeData dynamic, TypeData @static, in WriteContext context)
             {
                 var success = true;
-                ref var count = ref context.Writer.Reserve<uint>();
+                var count = context.Writer.Reserve<uint>();
                 foreach (var module in instance._modules.Values)
                 {
-                    count++;
+                    count.Value++;
                     success &= context.Serializers.Serialize(module, context);
                 }
                 return success;

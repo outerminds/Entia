@@ -16,6 +16,9 @@ namespace Entia.Core
         public Type Element => _element.Value;
         public Type Definition => _definition.Value;
         public Dictionary<int, MemberInfo> Members => _members.Value;
+        public Dictionary<string, FieldInfo> Fields => _fields.Value;
+        public Dictionary<string, PropertyInfo> Properties => _properties.Value;
+        public Dictionary<string, MethodInfo> Methods => _methods.Value;
         public MemberInfo[] StaticMembers => _staticMembers.Value;
         public MethodInfo[] StaticMethods => _staticMethods.Value;
         public MemberInfo[] InstanceMembers => _instanceMembers.Value;
@@ -27,6 +30,7 @@ namespace Entia.Core
         public Type[] Declaring => _declaring.Value;
         public Type[] Arguments => _arguments.Value;
         public Type[] Bases => _bases.Value;
+        public bool IsShallow => _isShallow.Value;
         public bool IsPlain => _isPlain.Value;
         public bool IsBlittable => _isBlittable.Value;
         public bool IsCyclic => _isCyclic.Value;
@@ -37,6 +41,9 @@ namespace Entia.Core
         readonly Lazy<Type> _element;
         readonly Lazy<Type> _definition;
         readonly Lazy<Dictionary<int, MemberInfo>> _members;
+        readonly Lazy<Dictionary<string, FieldInfo>> _fields;
+        readonly Lazy<Dictionary<string, PropertyInfo>> _properties;
+        readonly Lazy<Dictionary<string, MethodInfo>> _methods;
         readonly Lazy<MemberInfo[]> _staticMembers;
         readonly Lazy<MethodInfo[]> _staticMethods;
         readonly Lazy<MemberInfo[]> _instanceMembers;
@@ -48,6 +55,7 @@ namespace Entia.Core
         readonly Lazy<Type[]> _declaring;
         readonly Lazy<Type[]> _arguments;
         readonly Lazy<Type[]> _bases;
+        readonly Lazy<bool> _isShallow;
         readonly Lazy<bool> _isPlain;
         readonly Lazy<bool> _isBlittable;
         readonly Lazy<bool> _isCyclic;
@@ -94,6 +102,20 @@ namespace Entia.Core
                     yield return current;
                     current = current.DeclaringType;
                 }
+            }
+
+            bool GetIsShallow(Type current, FieldInfo[] fields)
+            {
+                if (current.IsArray && current.GetElementType() is Type element)
+                    return GetIsPlain(element, element.InstanceFields());
+
+                foreach (var field in fields)
+                {
+                    if (field.FieldType == typeof(string) ||
+                        GetIsPlain(field.FieldType, field.FieldType.InstanceFields())) continue;
+                    return false;
+                }
+                return true;
             }
 
             bool GetIsPlain(Type current, FieldInfo[] fields)
@@ -179,6 +201,9 @@ namespace Entia.Core
             _element = new Lazy<Type>(() => GetElement(Type, Interfaces));
             _definition = new Lazy<Type>(() => Type.IsGenericType ? Type.GetGenericTypeDefinition() : default);
             _members = new Lazy<Dictionary<int, MemberInfo>>(() => Type.GetMembers(TypeUtility.All).ToDictionary(member => member.MetadataToken));
+            _fields = new Lazy<Dictionary<string, FieldInfo>>(() => Members.Values.OfType<FieldInfo>().ToDictionary(member => member.Name));
+            _properties = new Lazy<Dictionary<string, PropertyInfo>>(() => Members.Values.OfType<PropertyInfo>().ToDictionary(member => member.Name));
+            _methods = new Lazy<Dictionary<string, MethodInfo>>(() => Members.Values.OfType<MethodInfo>().ToDictionary(member => member.Name));
             _staticMembers = new Lazy<MemberInfo[]>(() => Type.GetMembers(TypeUtility.Static));
             _staticMethods = new Lazy<MethodInfo[]>(() => StaticMembers.OfType<MethodInfo>().ToArray());
             _instanceMembers = new Lazy<MemberInfo[]>(() => GetMembers(Type, Bases));
@@ -188,6 +213,7 @@ namespace Entia.Core
             _instanceConstructors = new Lazy<ConstructorInfo[]>(() => InstanceMembers.OfType<ConstructorInfo>().ToArray());
             _declaring = new Lazy<Type[]>(() => GetDeclaring(Type).ToArray());
             _arguments = new Lazy<Type[]>(() => Type.GetGenericArguments());
+            _isShallow = new Lazy<bool>(() => GetIsShallow(Type, InstanceFields));
             _isPlain = new Lazy<bool>(() => GetIsPlain(Type, InstanceFields));
             _isBlittable = new Lazy<bool>(() => GetIsBlittable(Type.IsArray ? Type.GetElementType() : Type, InstanceFields));
             _isCyclic = new Lazy<bool>(() => GetIsCyclic(Type, InstanceFields, new HashSet<Type>()));
@@ -200,7 +226,7 @@ namespace Entia.Core
 
     public static class TypeUtility
     {
-        public static class Cache<T>
+        static class Cache<T>
         {
             public static readonly TypeData Data = GetData(typeof(T));
         }
@@ -225,6 +251,8 @@ namespace Entia.Core
         }
 
         static readonly Concurrent<Dictionary<Type, TypeData>> _typeToData = new Dictionary<Type, TypeData>();
+
+        public static TypeData GetData<T>() => Cache<T>.Data;
 
         public static TypeData GetData(Type type)
         {

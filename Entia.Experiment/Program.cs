@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Experiment.Serialization;
 using Entia.Injectables;
 using Entia.Messages;
 using Entia.Modules;
@@ -8,24 +9,28 @@ using Entia.Queryables;
 using Entia.Systems;
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
 using static Entia.Nodes.Node;
 
 namespace Entia.Experiment
 {
+    [Serializable]
     public struct Position : IComponent { public float X, Y, Z; }
+    [Serializable]
     public struct Velocity : IComponent { public float X, Y, Z; }
+    [Serializable]
     public struct Lifetime : IComponent { public float Remaining; }
     public struct Targetable : IComponent { }
     public struct Targeter : IComponent { public Entity? Current; public float Distance; }
+    [Serializable]
     public struct Mass : IComponent { public float Value; }
     public struct Impure : IComponent { public Dictionary<int, List<DateTime>> Dates; }
     public struct IsDead : IComponent { }
@@ -548,8 +553,8 @@ namespace Entia.Experiment
             byte[] bytes;
             bool success;
 
-            var type = typeof(int);
-            success = descriptors.Serialize(type, out bytes);
+            var type = typeof(Program);
+            success = descriptors.Serialize(type, type.GetType(), out bytes);
             success = descriptors.Deserialize(bytes, out type);
 
             var array = new int[] { 1, 2, 3, 4 };
@@ -597,42 +602,145 @@ namespace Entia.Experiment
 
         static void CompareSerializers()
         {
+            // Serializer.Object(
+            //     () => new World(),
+            //     Serializer.Member.Property(
+            //         (in World world) => world.ToArray(),
+            //         (ref World world, in IModule[] modules) => { for (int i = 0; i < modules.Length; i++) world.Set(modules[i]); })
+            // );
+            // Serializer.Blittable.Object<Entity>();
+            // Serializer.Blittable.Array<Entity>();
+            // Serializer.Object(
+            //     () => new List<Entity>(),
+            //     Serializer.Member.Property(
+            //         (in List<Entity> list) => list.ToArray(),
+            //         (ref List<Entity> list, in Entity[] values) => list.AddRange(values))
+            // );
+            // Serializer.Object(
+            //     () => new Entity(),
+            // );
+            // var value = (new Position[1000], new Velocity[1000], new Mass[1000]);
+            // var value = new Dictionary<object, object>();
+            // value[1] = "2";
+            // value["3"] = 4;
+            // value[DateTime.Now] = TimeSpan.MaxValue;
+            // value[TimeSpan.MinValue] = DateTime.UtcNow;
+            // value[new object()] = value;
+            // value[new Position[100]] = new Velocity[100];
+            // value[new List<Mass>(new Mass[100])] = new List<Lifetime>(new Lifetime[100]);
+            // CompareSerializers(value);
+            var values = new Dictionary<Position, Velocity>();
+            for (int i = 0; i < 100; i++) values[new Position { X = i }] = new Velocity { Y = 1 };
+            CompareSerializers((values, new List<Position>(new Position[100]), new List<Velocity>(new Velocity[100])));
+            // CompareSerializers(new List<Position>(new Position[1000]));
+        }
+        static void CompareSerializers<T>(T value)
+        {
             var world = new World();
             var serializers = world.Serializers();
             var descriptors = world.Descriptors();
 
-            var value = new Dictionary<object, object>();
-            value[1] = "2";
-            value["3"] = 4;
-            value[DateTime.Now] = TimeSpan.MaxValue;
-            value[TimeSpan.MinValue] = DateTime.UtcNow;
-            value[new object()] = null;
-            value[new Unit()] = value;
-            value[value] = new Unit();
+            var container = new Container();
+            var poulah = new Serialization.Descriptors(container);
+            poulah.Describe(value, out var description);
+
+            // serializers.Serialize(value, out var bytes1);
+            descriptors.Serialize(value, out var bytes2);
+
+            byte[] bytes3;
+            var binary = new BinaryFormatter();
+            using (var stream = new MemoryStream())
+            {
+                binary.Serialize(stream, value);
+                bytes3 = stream.ToArray();
+            }
+
+            // void OldSerialize()
+            // {
+            //     serializers.Serialize(value, out _);
+            // }
+            // void OldDeserialize()
+            // {
+            //     serializers.Deserialize(bytes1, out T _, value.GetType());
+            // }
+
+            void Describe() => poulah.Describe(value, out _);
+            void Instantiate() => poulah.Instantiate(description, out T _);
+
+            void NewSerialize() => descriptors.Serialize(value, out _);
+            void NewDeserialize()
+            {
+                descriptors.Deserialize(bytes2, out T _);
+            }
+            void BinarySerialize()
+            {
+                using (var stream = new MemoryStream())
+                {
+                    binary.Serialize(stream, value);
+                    stream.ToArray();
+                }
+            }
+            void BinaryDeserialize()
+            {
+                using (var stream = new MemoryStream(bytes3)) binary.Deserialize(stream);
+            }
+
             while (true)
             {
-                var watch1 = Stopwatch.StartNew();
-                for (int i = 0; i < 1000; i++)
-                {
-                    var success1 = serializers.Serialize(value, out var bytes1);
-                    var success2 = serializers.Deserialize(bytes1, out object value1);
-                }
-                watch1.Stop();
-
-                var watch2 = Stopwatch.StartNew();
-                for (int i = 0; i < 1000; i++)
-                {
-                    var success3 = descriptors.Serialize(value, out var bytes2);
-                    var success4 = descriptors.Deserialize(bytes2, out var value2, value.GetType());
-                }
-                watch2.Stop();
-
-                Console.WriteLine($"{watch1.Elapsed} | {watch2.Elapsed}");
+                Test.Measure(NewSerialize, new Action[] { BinarySerialize, Describe }, 1000);
+                Test.Measure(NewDeserialize, new Action[] { BinaryDeserialize, Instantiate }, 1000);
+                Console.WriteLine();
             }
+        }
+
+        interface IMambo : ITrait { }
+        interface INumba : ITrait { }
+        interface IFive : ITrait, IImplementation<string, Karlz.C>, IImplementation<object, Five> { }
+        sealed class Five : IFive { }
+        struct Karlz : IImplementation<Karlz.B>
+        {
+            [Implementation]
+            public sealed class A : IMambo { }
+            public sealed class B : INumba { }
+            public sealed class C : IFive { }
+
+            // [Implementation]
+            static readonly C D = new C();
+        }
+
+        static void Traitz()
+        {
+            Container.TryDefault<Karlz, IMambo>(out var mambo);
+            Container.TryDefault<Karlz, INumba>(out var numba);
+            Container.TryDefault<Karlz, IFive>(out var five);
+            Container.TryDefault<string, IFive>(out var b);
+        }
+
+        static void PoulahDescriptor()
+        {
+            var container = new Container();
+            var descriptors = new Serialization.Descriptors(container);
+
+            void Test<T>(T value)
+            {
+                descriptors.Describe(value, out var description);
+                descriptors.Instantiate(description, out value);
+            }
+
+            Test(new List<int> { });
+            Test((object)new List<int> { });
+            Test(new { A = 1, B = 2 });
+            Test(new[] { 0, 1, 2, 3 });
+            Test(new object[] { 0, "A", DateTime.Now, TimeSpan.MaxValue, new List<int> { 1, 2, 3 } });
+            var cyclic = new Cyclic();
+            cyclic.A = cyclic;
+            Test(cyclic);
         }
 
         static void Main()
         {
+            // Traitz();
+            PoulahDescriptor();
             // Serializer1();
             // Serializer2();
             CompareSerializers();

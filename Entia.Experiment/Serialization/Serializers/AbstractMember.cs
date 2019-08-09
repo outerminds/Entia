@@ -4,18 +4,15 @@ namespace Entia.Experiment
 {
     public sealed class AbstractMember : Serializer<MemberInfo>
     {
-        public readonly Serializer<Module> Module;
-        public AbstractMember(Serializer<Module> module) { Module = module; }
-
         public override bool Serialize(in MemberInfo instance, in SerializeContext context)
         {
             context.Writer.Write(instance.MetadataToken);
-            return Module.Serialize(instance.Module, context);
+            return context.Descriptors.Serialize(instance.Module, instance.Module.GetType(), context);
         }
 
         public override bool Instantiate(out MemberInfo instance, in DeserializeContext context)
         {
-            if (context.Reader.Read(out int token) && Module.Deserialize(out var module, context))
+            if (context.Reader.Read(out int token) && context.Descriptors.Deserialize(out Module module, context))
             {
                 instance = module.ResolveMember(token);
                 return true;

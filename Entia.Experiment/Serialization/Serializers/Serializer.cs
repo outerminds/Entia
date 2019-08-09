@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Entia.Core;
@@ -16,6 +18,8 @@ namespace Entia.Experiment
     public abstract class Serializer<T> : ISerializer
     {
         public abstract bool Serialize(in T instance, in SerializeContext context);
+        public bool Deserialize(out T instance, in DeserializeContext context) =>
+            Instantiate(out instance, context) && Initialize(ref instance, context);
         public abstract bool Instantiate(out T instance, in DeserializeContext context);
         public abstract bool Initialize(ref T instance, in DeserializeContext context);
         public abstract bool Clone(in T instance, out T clone, in CloneContext context);
@@ -62,38 +66,28 @@ namespace Entia.Experiment
     {
         public static class Member
         {
-            public static IMember<T> Field<T, TValue>(Field<T, TValue>.Getter get, Serializer<TValue> serializer = null) =>
-                new Field<T, TValue>(get, serializer ?? Lazy<TValue>());
-
-            public static IMember Reflection(FieldInfo field, ISerializer serializer = null) =>
-                new Experiment.Reflection(field, serializer ?? Lazy(field.FieldType));
-
-            public static IMember<T> Reflection<T>(FieldInfo field, ISerializer serializer = null) =>
-                new Reflection<T>(field, serializer ?? Lazy(field.FieldType));
-
-            public static IMember Reflection(PropertyInfo property, ISerializer serializer = null) =>
-                new Experiment.Reflection(property, serializer ?? Lazy(property.PropertyType));
-
-            public static IMember<T> Reflection<T>(PropertyInfo property, ISerializer serializer = null) =>
-                new Reflection<T>(property, serializer ?? Lazy(property.PropertyType));
+            public static IMember<T> Field<T, TValue>(Field<T, TValue>.Getter get) => new Field<T, TValue>(get);
+            public static IMember<T> Property<T, TValue>(Property<T, TValue>.Getter get, Property<T, TValue>.Setter set) => new Property<T, TValue>(get, set);
+            public static IMember Reflection(FieldInfo field, ISerializer serializer = null) => new Experiment.Reflection(field);
+            public static IMember Reflection(PropertyInfo property, ISerializer serializer = null) => new Experiment.Reflection(property);
         }
 
         public static class Blittable
         {
             public static Serializer<(T[] items, int count)> Pair<T>() where T : unmanaged => new BlittablePair<T>();
 
-            public static Serializer<T[]> Array<T>() where T : unmanaged => Reference(new BlittableArray<T>());
+            public static Serializer<T[]> Array<T>() where T : unmanaged => new BlittableArray<T>();
             public static ISerializer Array(Type type, int size)
             {
                 if (TryInvoke(nameof(Array), type, out ISerializer value)) return value;
-                return Reference(new BlittableArray(type, size));
+                return new BlittableArray(type, size);
             }
 
-            public static Serializer<T> Object<T>() where T : unmanaged => Reference(new BlittableObject<T>());
+            public static Serializer<T> Object<T>() where T : unmanaged => new BlittableObject<T>();
             public static ISerializer Object(Type type, int size)
             {
                 if (TryInvoke(nameof(Object), type, out ISerializer value)) return value;
-                return Reference(new BlittableObject(type, size));
+                return new BlittableObject(type, size);
             }
 
             static bool TryInvoke<T>(string name, Type type, out T value, params object[] arguments) =>
@@ -102,30 +96,27 @@ namespace Entia.Experiment
 
         public static class Reflection
         {
-            public static Serializer<Assembly> Assembly() => Reference(new AbstractAssembly());
-            public static Serializer<Module> Module() => Reference(new AbstractModule(Assembly()));
-            public static Serializer<Type> Type() => Reference(new AbstractType(Module()));
-            public static Serializer<MethodInfo> Method() => Reference(new AbstractMethod(Type()));
-            public static Serializer<MemberInfo> Member() => Reference(new AbstractMember(Module()));
+            public static Serializer<Assembly> Assembly() => new AbstractAssembly();
+            public static Serializer<Module> Module() => new AbstractModule();
+            public static Serializer<Type> Type() => new AbstractType();
+            public static Serializer<MethodInfo> Method() => new AbstractMethod();
+            public static Serializer<MemberInfo> Member() => new AbstractMember();
         }
 
-        public static Serializer<string> String() => Reference(new ConcreteString());
-        public static ISerializer Abstract(Type type) => new AbstractObject(type, (Reflection.Type(), Object(type)));
+        public static Serializer<string> String() => new ConcreteString();
 
-        public static ISerializer Array(Type type, ISerializer serializer = null) =>
-            Reference(new ConcreteArray(type, serializer ?? Lazy(type)));
-        public static Serializer<T[]> Array<T>(Serializer<T> serializer = null) =>
-            Reference(new ConcreteArray<T>(serializer ?? Lazy<T>()));
-
-        public static Serializer<T> Object<T>(params IMember<T>[] members) => Reference(new ConcreteObject<T>(members));
-        public static Serializer<T> Object<T>()
+        public static Serializer<T[]> Array<T>() => new ConcreteArray<T>();
+        public static ISerializer Array(Type type)
         {
-            var fields = typeof(T).InstanceFields();
-            var members = fields.Select(field => Member.Reflection<T>(field)).ToArray();
-            return Object<T>(members);
+            if (TryInvoke(nameof(Array), type, out ISerializer value)) return value;
+            return new ConcreteArray(type);
         }
 
-        public static ISerializer Object(Type type, params IMember[] members) => Reference(new ConcreteObject(type, members));
+        public static Serializer<TFrom> Map<TFrom, TTo>(InFunc<TFrom, TTo> to, InFunc<TTo, TFrom> from) => new Mapper<TFrom, TTo>(to, from);
+
+        public static Serializer<T> Object<T>(Func<T> construct, params IMember<T>[] members) => new ConcreteObject<T>(construct, members);
+        public static Serializer<T> Object<T>(params IMember<T>[] members) => new ConcreteObject<T>(members);
+        public static ISerializer Object(Type type, params IMember[] members) => new ConcreteObject(type, members);
         public static ISerializer Object(Type type)
         {
             var fields = type.InstanceFields();
@@ -133,31 +124,30 @@ namespace Entia.Experiment
             return Object(type, members);
         }
 
-        public static Serializer<T> Lazy<T>() => new Lazy<T>();
-        public static ISerializer Lazy(Type type)
-        {
-            if (TryInvoke(nameof(Lazy), type, out ISerializer serializer)) return serializer;
-            return new Lazy(type);
-        }
-
-        public static Serializer<T> Delegate<T>() where T : Delegate =>
-            Reference(new ConcreteDelegate<T>(Reflection.Method(), Abstract(typeof(object))));
+        public static Serializer<T> Delegate<T>() where T : Delegate => new ConcreteDelegate<T>();
         public static ISerializer Delegate(Type type)
         {
             if (TryInvoke(nameof(Delegate), type, out ISerializer value)) return value;
-            return new Reference(new ConcreteDelegate(type, Reflection.Method(), Abstract(typeof(object))));
+            return new ConcreteDelegate(type);
         }
 
-        public static Serializer<T> Reference<T>(Serializer<T> serializer) => new Reference<T>(serializer);
-        public static ISerializer Reference(ISerializer serializer)
+        public static Serializer<List<T>> List<T>() => new ConcreteList<T>();
+        public static ISerializer List(Type type)
         {
-            if (TryInvoke(nameof(Reference), serializer, out var value, serializer)) return value;
-            return new Reference(serializer);
+            if (TryInvoke(nameof(List), type, out ISerializer value)) return value;
+            return new ConcreteList(type);
+        }
+
+        public static Serializer<Dictionary<TKey, TValue>> Dictionary<TKey, TValue>() => new ConcreteDictionary<TKey, TValue>();
+        public static ISerializer Dictionary(Type key, Type value)
+        {
+            if (TryInvoke(nameof(Dictionary), new[] { key, value }, out ISerializer serializer)) return serializer;
+            return new ConcreteDictionary(key, value);
         }
 
         static bool TryGeneric(ISerializer serializer, out Type type)
         {
-            if (serializer.GetType().Bases().TryFirst(@base => @base.IsGenericType && @base.GetGenericTypeDefinition() == typeof(Serializer<>), out var generic) &&
+            if (serializer.GetType().Bases().TryFirst(@base => @base.Is(typeof(Serializer<>), definition: true), out var generic) &&
                 generic.GetGenericArguments().TryFirst(out type)) return true;
             type = default;
             return false;
@@ -171,15 +161,24 @@ namespace Entia.Experiment
         }
 
         static bool TryInvoke<T>(string name, Type type, out T value, params object[] arguments) =>
-            TryInvoke(typeof(Serializer).StaticMethods(), name, type, out value, arguments);
-
-        static bool TryInvoke<T>(MethodInfo[] methods, string name, Type type, out T value, params object[] arguments)
+            TryInvoke(name, new[] { type }, out value, arguments);
+        static bool TryInvoke<T>(string name, Type[] types, out T value, params object[] arguments) =>
+            TryInvoke(typeof(Serializer).StaticMethods(), name, types, out value, arguments);
+        static bool TryInvoke<T>(MethodInfo[] methods, string name, Type type, out T value, params object[] arguments) =>
+            TryInvoke(methods, name, new[] { type }, out value, arguments);
+        static bool TryInvoke<T>(MethodInfo[] methods, string name, Type[] types, out T value, params object[] arguments)
         {
-            if (methods.TryFirst(current => current.IsGenericMethod && current.Name == name, out var method))
+            if (methods.TryFirst(
+                current =>
+                    current.IsGenericMethod &&
+                    current.Name == name &&
+                    current.GetGenericArguments().Length == types.Length &&
+                    current.GetParameters().Length == arguments.Length,
+                out var method))
             {
                 try
                 {
-                    value = (T)method.MakeGenericMethod(type).Invoke(null, arguments);
+                    value = (T)method.MakeGenericMethod(types).Invoke(null, arguments);
                     return true;
                 }
                 catch { }

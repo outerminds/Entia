@@ -6,6 +6,21 @@ namespace Entia.Modules.Serialization
 {
     public sealed unsafe class Writer : IDisposable
     {
+        public readonly ref struct Pointer<T> where T : unmanaged
+        {
+            public ref T Value => ref *(T*)_writer._pointer;
+            public ref T this[int index] => ref ((T*)_writer._pointer)[index];
+
+            readonly int _position;
+            readonly Writer _writer;
+
+            public Pointer(int position, Writer writer)
+            {
+                _position = position;
+                _writer = writer;
+            }
+        }
+
         public ref int Position => ref _bytes.count;
         public int Capacity => _bytes.items.Length;
 
@@ -19,24 +34,17 @@ namespace Entia.Modules.Serialization
             _bytes.items.Fix(out _handle, out _pointer);
         }
 
+        public Pointer<T> Reserve<T>(int count = 1) where T : unmanaged
+        {
+            var pointer = new Pointer<T>(Position, this);
+            Reserve(sizeof(T) * count);
+            return pointer;
+        }
+
         public void Write(string value)
         {
             Write(value.Length);
             fixed (char* pointer = value) Write(pointer, value.Length);
-        }
-
-        public ref T Reserve<T>() where T : unmanaged => ref *(T*)Reserve(sizeof(T));
-        public T* Reserve<T>(int count) where T : unmanaged => (T*)Reserve(sizeof(T) * count);
-        public byte* Reserve(int count)
-        {
-            var position = _bytes.count;
-            _bytes.count += count;
-            if (_bytes.Ensure())
-            {
-                _handle.Free();
-                _bytes.items.Fix(out _handle, out _pointer);
-            }
-            return _pointer + position;
         }
 
         public void Write(void* pointer) => Write((IntPtr)pointer);
@@ -59,5 +67,17 @@ namespace Entia.Modules.Serialization
 
         public byte[] ToArray() => _bytes.ToArray();
         public void Dispose() => _handle.Free();
+
+        byte* Reserve(int count)
+        {
+            var position = _bytes.count;
+            _bytes.count += count;
+            if (_bytes.Ensure())
+            {
+                _handle.Free();
+                _bytes.items.Fix(out _handle, out _pointer);
+            }
+            return _pointer + position;
+        }
     }
 }

@@ -6,16 +6,15 @@ namespace Entia.Experiment
     public sealed class ConcreteArray : Serializer<Array>
     {
         public readonly Type Type;
-        public readonly ISerializer Element;
 
-        public ConcreteArray(Type type, ISerializer element) { Type = type; Element = element; }
+        public ConcreteArray(Type type) { Type = type; }
 
         public override bool Serialize(in Array instance, in SerializeContext context)
         {
             context.Writer.Write(instance.Length);
             for (int i = 0; i < instance.Length; i++)
             {
-                if (Element.Serialize(instance.GetValue(i), context)) continue;
+                if (context.Descriptors.Serialize(instance.GetValue(i), Type, context)) continue;
                 return false;
             }
             return true;
@@ -36,7 +35,7 @@ namespace Entia.Experiment
         {
             for (int i = 0; i < instance.Length; i++)
             {
-                if (Element.Deserialize(out var value, context)) instance.SetValue(value, i);
+                if (context.Descriptors.Deserialize(out var value, Type, context)) instance.SetValue(value, i);
                 else return false;
             }
             return true;
@@ -47,7 +46,7 @@ namespace Entia.Experiment
             clone = CloneUtility.Shallow(instance);
             for (int i = 0; i < clone.Length; i++)
             {
-                if (Element.Clone(clone.GetValue(i), out var value, context)) clone.SetValue(value, i);
+                if (context.Descriptors.Clone(clone.GetValue(i), out var value, Type, context)) clone.SetValue(value, i);
                 else return false;
             }
             return true;
@@ -56,16 +55,12 @@ namespace Entia.Experiment
 
     public sealed class ConcreteArray<T> : Serializer<T[]>
     {
-        public readonly Serializer<T> Element;
-
-        public ConcreteArray(Serializer<T> element) { Element = element; }
-
         public override bool Serialize(in T[] instance, in SerializeContext context)
         {
             context.Writer.Write(instance.Length);
             for (int i = 0; i < instance.Length; i++)
             {
-                if (Element.Serialize(instance[i], context)) continue;
+                if (context.Descriptors.Serialize(instance[i], context)) continue;
                 return false;
             }
             return true;
@@ -86,7 +81,7 @@ namespace Entia.Experiment
         {
             for (int i = 0; i < instance.Length; i++)
             {
-                if (Element.Deserialize(out instance[i], context)) continue;
+                if (context.Descriptors.Deserialize(out instance[i], context)) continue;
                 return false;
             }
             return true;
@@ -97,7 +92,7 @@ namespace Entia.Experiment
             clone = CloneUtility.Shallow(instance);
             for (int i = 0; i < clone.Length; i++)
             {
-                if (Element.Clone(clone[i], out clone[i], context)) continue;
+                if (context.Descriptors.Clone(clone[i], out clone[i], context)) continue;
                 return false;
             }
             return true;

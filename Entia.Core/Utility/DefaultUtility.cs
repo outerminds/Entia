@@ -57,7 +57,7 @@ namespace Entia.Core
 
         static Func<T> CreateProvider<T>()
         {
-            var data = TypeUtility.Cache<T>.Data;
+            var data = TypeUtility.GetData<T>();
             foreach (var member in data.StaticMembers)
             {
                 try

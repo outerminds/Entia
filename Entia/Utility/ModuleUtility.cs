@@ -36,7 +36,7 @@ namespace Entia.Modules
                     .Where(member => member.IsDefined(attribute, true))
                     .Select(member =>
                         member is Type nested ? Result.Try(() =>
-                            Activator.CreateInstance(nested.IsGenericTypeDefinition ? nested.MakeGenericType(type.GetGenericArguments()) : nested)) :
+                            Activator.CreateInstance(nested.IsGenericTypeDefinition ? nested.MakeGenericType(generic) : nested)) :
                         member is FieldInfo field ? Result.Try(() => field.GetValue(null)) :
                         member is PropertyInfo property ? Result.Try(() => property.GetValue(null)) :
                         member is MethodInfo method ? Result.Try(() => method.Invoke(null, Array.Empty<object>())) :

@@ -51,7 +51,7 @@ namespace Entia.Experiment
                 var column = 20;
                 var name = Justify(result.name, column);
                 var total = Justify(TimeSpan.FromTicks(result.total), column);
-                var ratio = Justify((result.total / baseTotal).ToString("0.000"), column);
+                var ratio = Justify((result.total / baseTotal).ToString("0.000"), column / 2);
                 var average = Justify(TimeSpan.FromTicks(result.total / iterations), column);
                 var minimum = Justify(TimeSpan.FromTicks(result.minimum), column);
                 var maximum = Justify(TimeSpan.FromTicks(result.maximum), column);

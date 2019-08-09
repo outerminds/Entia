@@ -116,7 +116,7 @@ namespace Entia.Modules
         }
 
         public bool Serialize<T>(in T value, in WriteContext context) =>
-            Serialize((object)value, TypeUtility.Cache<T>.Data, context);
+            Serialize((object)value, TypeUtility.GetData<T>(), context);
         public bool Serialize(object value, TypeData @static, in WriteContext context) =>
             Serialize(value, value?.GetType() ?? @static, @static, context);
 
@@ -133,7 +133,7 @@ namespace Entia.Modules
 
         public bool Deserialize<T>(out T value, in ReadContext context)
         {
-            if (Deserialize(out var current, TypeUtility.Cache<T>.Data, context) && current is T casted)
+            if (Deserialize(out var current, TypeUtility.GetData<T>(), context) && current is T casted)
             {
                 value = casted;
                 return true;

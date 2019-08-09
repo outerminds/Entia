@@ -35,10 +35,6 @@ namespace Entia.Experiment
             #endregion
         };
 
-        public readonly (Serializer<Type> type, Serializer<Module> module) Serializers;
-
-        public AbstractType(Serializer<Module> module) { Serializers = (Serializer.Reference(this), module); }
-
         public override bool Serialize(in Type instance, in SerializeContext context)
         {
             if (instance.IsArray)
@@ -47,13 +43,13 @@ namespace Entia.Experiment
                 var element = instance.GetElementType();
                 context.Writer.Write(Kinds.Array);
                 context.Writer.Write((byte)rank);
-                return Serializers.type.Serialize(element, context);
+                return Serialize(element, context);
             }
             else if (instance.IsPointer)
             {
                 context.Writer.Write(Kinds.Pointer);
                 var element = instance.GetElementType();
-                return Serializers.type.Serialize(element, context);
+                return Serialize(element, context);
             }
             else if (instance.IsGenericTypeDefinition)
             {
@@ -71,11 +67,11 @@ namespace Entia.Experiment
                 context.Writer.Write(Kinds.Generic);
                 var definition = instance.GetGenericTypeDefinition();
                 var arguments = instance.GetGenericArguments();
-                if (Serializers.type.Serialize(definition, context))
+                if (Serialize(definition, context))
                 {
                     for (int i = 0; i < arguments.Length; i++)
                     {
-                        if (Serializers.type.Serialize(arguments[i], context)) continue;
+                        if (Serialize(arguments[i], context)) continue;
                         return false;
                     }
                     return true;
@@ -93,7 +89,7 @@ namespace Entia.Experiment
                 {
                     case Kinds.Array:
                         {
-                            if (context.Reader.Read(out byte rank) && Serializers.type.Deserialize(out var element, context))
+                            if (context.Reader.Read(out byte rank) && Deserialize(out var element, context))
                             {
                                 instance = element.MakeArrayType(rank);
                                 return true;
@@ -102,7 +98,7 @@ namespace Entia.Experiment
                         }
                     case Kinds.Pointer:
                         {
-                            if (Serializers.type.Deserialize(out var element, context))
+                            if (Deserialize(out var element, context))
                             {
                                 instance = element.MakePointerType();
                                 return true;
@@ -111,12 +107,12 @@ namespace Entia.Experiment
                         }
                     case Kinds.Generic:
                         {
-                            if (Serializers.type.Deserialize(out instance, context))
+                            if (Deserialize(out instance, context))
                             {
                                 var arguments = instance.GetGenericArguments();
                                 for (int i = 0; i < arguments.Length; i++)
                                 {
-                                    if (Serializers.type.Deserialize(out arguments[i], context)) continue;
+                                    if (Deserialize(out arguments[i], context)) continue;
                                     return false;
                                 }
                                 instance = instance.MakeGenericType(arguments);
@@ -135,7 +131,7 @@ namespace Entia.Experiment
                         }
                     case Kinds.Type:
                         {
-                            if (context.Reader.Read(out int token) && Serializers.module.Deserialize(out var module, context))
+                            if (context.Reader.Read(out int token) && context.Descriptors.Deserialize(out Module module, context))
                             {
                                 instance = module.ResolveType(token);
                                 return true;
@@ -162,7 +158,7 @@ namespace Entia.Experiment
         {
             context.Writer.Write(Kinds.Type);
             context.Writer.Write(instance.MetadataToken);
-            return Serializers.module.Serialize(instance.Module, context);
+            return context.Descriptors.Serialize(instance.Module, instance.Module.GetType(), context);
         }
     }
 }

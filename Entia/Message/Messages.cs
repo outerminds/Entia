@@ -20,12 +20,12 @@ namespace Entia.Modules
             public override bool Serialize(in Messages instance, TypeData dynamic, TypeData @static, in WriteContext context)
             {
                 var success = true;
-                ref var count = ref context.Writer.Reserve<uint>();
+                var count = context.Writer.Reserve<uint>();
                 using (var read = instance._emitters.Read())
                 {
                     foreach (var emitter in read.Value.Values)
                     {
-                        count++;
+                        count.Value++;
                         success &= context.Serializers.Serialize(emitter, context);
                     }
                 }

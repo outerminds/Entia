@@ -55,14 +55,25 @@ namespace Entia.Experiment
             new Func<T>(() => default) :
             new Func<T>(() => (T)FormatterServices.GetUninitializedObject(typeof(T)));
 
+        public readonly Func<T> Construct = _instantiate;
         public readonly IMember<T>[] Members;
 
+        public ConcreteObject(Func<T> construct, params IMember<T>[] members) { Construct = construct; Members = members; }
         public ConcreteObject(params IMember<T>[] members) { Members = members; }
 
         public override bool Serialize(in T instance, in SerializeContext context)
         {
+            // TODO: tolerant deserialize
             for (int i = 0; i < Members.Length; i++)
             {
+                // var member = Members[i];
+                // var next = context.Writer.Reserve<int>();
+                // if (member.Serialize(instance, context))
+                // {
+                //     next.Value = context.Writer.Position;
+                //     continue;
+                // }
+                // return false;
                 if (Members[i].Serialize(instance, context)) continue;
                 return false;
             }
@@ -71,7 +82,7 @@ namespace Entia.Experiment
 
         public override bool Instantiate(out T instance, in DeserializeContext context)
         {
-            instance = _instantiate();
+            instance = Construct();
             return true;
         }
 
@@ -79,7 +90,11 @@ namespace Entia.Experiment
         {
             for (int i = 0; i < Members.Length; i++)
             {
-                if (Members[i].Deserialize(instance, context)) continue;
+                // var member = Members[i];
+                // context.Reader.Read(out int next);
+                // member.Deserialize(ref instance, context);
+                // context.Reader.Position = next;
+                if (Members[i].Deserialize(ref instance, context)) continue;
                 return false;
             }
             return true;

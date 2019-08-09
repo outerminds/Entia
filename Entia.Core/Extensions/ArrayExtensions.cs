@@ -5,6 +5,39 @@ namespace Entia.Core
 {
     public static class ArrayExtensions
     {
+        public static bool TryFirst<T>(this T[] array, out T item)
+        {
+            if (array.Length > 0)
+            {
+                item = array[0];
+                return true;
+            }
+            item = default;
+            return false;
+        }
+
+        public static bool TryLast<T>(this T[] array, out T item)
+        {
+            if (array.Length > 0)
+            {
+                item = array[array.Length - 1];
+                return true;
+            }
+            item = default;
+            return false;
+        }
+
+        public static bool TryAt<T>(this T[] array, int index, out T item)
+        {
+            if (index > 0 && index < array.Length)
+            {
+                item = array[index];
+                return true;
+            }
+            item = default;
+            return false;
+        }
+
         public static TResult[] Map<TSource, TResult>(this TSource[] array, Func<TSource, TResult> map)
         {
             var results = new TResult[array.Length];
