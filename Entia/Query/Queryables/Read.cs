@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Dependencies;
 using Entia.Dependers;
@@ -28,7 +29,7 @@ namespace Entia.Queryables
 
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
+        [Implementation]
         static readonly IDepender _depender = Depender.From<T>(new Read(typeof(T)));
 
         public ref readonly T Value

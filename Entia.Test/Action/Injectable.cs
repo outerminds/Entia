@@ -2,9 +2,8 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Entia.Core;
+using Entia.Injection;
 using Entia.Injectables;
-using Entia.Modules;
-using Entia.Queryables;
 using FsCheck;
 
 namespace Entia.Test
@@ -16,7 +15,7 @@ namespace Entia.Test
 
         public Inject(params Type[] types) { _types = types; }
 
-        public override void Do(World value, Model model) => _result = _types.Select(value.Injectors().Inject).All();
+        public override void Do(World value, Model model) => _result = _types.Select(value.Inject).All();
 
         public override Property Check(World value, Model model) =>
             _result.IsSuccess().Label("result.IsSuccess()")
@@ -33,8 +32,8 @@ namespace Entia.Test
 
         public override void Do(World value, Model model)
         {
-            _resultT = value.Injectors().Inject<T>(_member);
-            _result = value.Injectors().Inject(typeof(T), _member ?? typeof(T));
+            _resultT = value.Inject<T>(_member);
+            _result = value.Inject(typeof(T), _member);
         }
 
         public override Property Check(World value, Model model) =>

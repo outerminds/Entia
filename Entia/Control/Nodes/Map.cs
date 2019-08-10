@@ -1,21 +1,17 @@
+using Entia.Build;
 using Entia.Builders;
 using Entia.Core;
-using Entia.Modules;
-using Entia.Modules.Build;
-using Entia.Modules.Schedule;
-using Entia.Phases;
 using System;
-using System.Collections.Generic;
 
 namespace Entia.Nodes
 {
-    public readonly struct Map : IWrapper, IBuildable<Map.Builder>
+    public readonly struct Map : IWrapper, IImplementation<Map.Builder>
     {
-        sealed class Builder : IBuilder
+        sealed class Builder : Builder<Map>
         {
-            public Result<IRunner> Build(Node node, Node root, World world) => Result.Cast<Map>(node.Value)
-                .Bind(data => world.Builders().Build(Node.Sequence(node.Name, node.Children), root)
-                    .Map(child => data.Mapper(child)));
+            public override Result<IRunner> Build(in Map data, in Context context) =>
+                context.Build(Node.Sequence(context.Node.Name, context.Node.Children))
+                    .Map(data.Mapper, (child, state) => state(child));
         }
 
         public readonly Func<IRunner, IRunner> Mapper;

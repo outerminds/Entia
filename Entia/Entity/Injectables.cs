@@ -1,12 +1,10 @@
 ﻿using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Dependencies;
 using Entia.Dependers;
 using Entia.Injectors;
 using Entia.Modules;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Entia.Injectables
 {
@@ -21,9 +19,9 @@ namespace Entia.Injectables
         [ThreadSafe]
         public sealed class Read : IInjectable, IEnumerable<Entities.Enumerator, Entity>
         {
-            [Injector]
-            static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Entities()));
-            [Depender]
+            [Implementation]
+            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Entities()));
+            [Implementation]
             static IDepender Depender => Dependers.Depender.From(new Dependencies.Read(typeof(Entity)));
 
             /// <inheritdoc cref="Entities.Count"/>
@@ -46,9 +44,9 @@ namespace Entia.Injectables
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
-        [Injector]
-        static Injector<AllEntities> Injector => Injectors.Injector.From(world => new AllEntities(world.Entities()));
-        [Depender]
+        [Implementation]
+        static Injector<AllEntities> Injector => Injectors.Injector.From(context => new AllEntities(context.World.Entities()));
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From(
             new Dependencies.Write(typeof(Entity)),
             new Dependencies.Emit(typeof(Messages.OnCreate)),

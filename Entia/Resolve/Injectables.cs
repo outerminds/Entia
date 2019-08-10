@@ -12,8 +12,9 @@ namespace Entia.Injectables
     {
         public readonly struct Entities : IInjectable
         {
-            [Injector]
-            static Injector<Entities> Injector => Injectors.Injector.From(world => new Entities(world.Resolvers(), world.Entities()));
+            [Implementation]
+            static Injector<Entities> Injector => Injectors.Injector.From(context =>
+                new Entities(context.World.Resolvers(), context.World.Entities()));
 
             readonly Modules.Resolvers _resolvers;
             readonly Modules.Entities _entities;
@@ -40,8 +41,8 @@ namespace Entia.Injectables
 
         public readonly struct Components : IInjectable
         {
-            [Injector]
-            static Injector<Components> Injector => Injectors.Injector.From(world => new Components(world.Resolvers(), world.Components()));
+            [Implementation]
+            static Injector<Components> Injector => Injectors.Injector.From(context => new Components(context.World.Resolvers(), context.World.Components()));
 
             readonly Modules.Resolvers _resolvers;
             readonly Modules.Components _components;
@@ -76,8 +77,8 @@ namespace Entia.Injectables
                 _resolvers.Defer((include, _components), state => state._components.Clear(state.include));
         }
 
-        [Injector]
-        static Injector<Defer> Injector => Injectors.Injector.From(world => new Defer(world.Resolvers()));
+        [Implementation]
+        static Injector<Defer> Injector => Injectors.Injector.From(context => new Defer(context.World.Resolvers()));
 
         readonly Modules.Resolvers _resolvers;
 

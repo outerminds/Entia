@@ -1,7 +1,6 @@
+using Entia.Build;
 using Entia.Builders;
 using Entia.Core;
-using Entia.Modules;
-using Entia.Modules.Build;
 using Entia.Modules.Schedule;
 using Entia.Phases;
 using System;
@@ -9,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Entia.Nodes
 {
-    public readonly struct Resolve : IWrapper, IBuildable<Resolve.Builder>
+    public readonly struct Resolve : IWrapper, IImplementation<Resolve.Builder>
     {
         sealed class Runner : IRunner
         {
@@ -34,11 +33,10 @@ namespace Entia.Nodes
             }
         }
 
-        sealed class Builder : Builder<Runner>
+        sealed class Builder : Builder<Resolve>
         {
-            public override Result<Runner> Build(Node node, Node root, World world) => Result.Cast<Resolve>(node.Value)
-                .Bind(_ => world.Builders().Build(Node.Sequence(node.Name, node.Children), root))
-                .Map(child => new Runner(child));
+            public override Result<IRunner> Build(in Resolve data, in Context context) =>
+                context.Build(Node.Sequence(context.Node.Name, context.Node.Children)).Map(child => new Runner(child)).Cast<IRunner>();
         }
     }
 }

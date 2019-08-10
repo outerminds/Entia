@@ -1,7 +1,6 @@
+using Entia.Build;
 using Entia.Builders;
 using Entia.Core;
-using Entia.Modules;
-using Entia.Modules.Build;
 using Entia.Modules.Schedule;
 using Entia.Phases;
 using System;
@@ -10,7 +9,7 @@ using System.Linq;
 
 namespace Entia.Nodes
 {
-    public readonly struct Sequence : INode, IBuildable<Sequence.Builder>
+    public readonly struct Sequence : INode, IImplementation<Sequence.Builder>
     {
         sealed class Runner : IRunner
         {
@@ -29,14 +28,18 @@ namespace Entia.Nodes
             }
         }
 
-        sealed class Builder : IBuilder
+        sealed class Builder : Builder<Sequence>
         {
-            public Result<IRunner> Build(Node node, Node root, World world) => node.Children.Length == 1 ?
-                Result.Cast<Sequence>(node.Value).Bind(_ => world.Builders().Build(node.Children[0], root)) :
-                Result.Cast<Sequence>(node.Value)
-                    .Bind(_ => node.Children.Select(child => world.Builders().Build(child, root)).All())
-                    .Map(children => new Runner(children))
+            public override Result<IRunner> Build(in Sequence data, in Context context)
+            {
+                var children = context.Node.Children;
+                if (children.Length == 1) return context.Build(children[0]);
+                return children
+                    .Select(context, (child, state) => state.Build(child))
+                    .All()
+                    .Map(runners => new Runner(runners))
                     .Cast<IRunner>();
+            }
         }
     }
 }

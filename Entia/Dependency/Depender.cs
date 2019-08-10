@@ -1,5 +1,7 @@
 ﻿using Entia.Core;
+using Entia.Dependables;
 using Entia.Dependencies;
+using Entia.Dependency;
 using Entia.Modules;
 using System;
 using System.Collections.Generic;
@@ -8,38 +10,35 @@ using System.Reflection;
 
 namespace Entia.Dependers
 {
-    public interface IDepender
+    public interface IDepender : ITrait, IImplementation<IDependable, Default>
     {
-        IEnumerable<IDependency> Depend(MemberInfo member, World world);
+        IEnumerable<IDependency> Depend(in Context context);
     }
-
-    [AttributeUsage(ModuleUtility.AttributeUsage, Inherited = true, AllowMultiple = false)]
-    public sealed class DependerAttribute : PreserveAttribute { }
 
     public sealed class Default : IDepender
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world) => Array.Empty<IDependency>();
+        public IEnumerable<IDependency> Depend(in Context context) => Array.Empty<IDependency>();
     }
 
     public sealed class Fields : IDepender
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world) =>
-            member is Type type ? type.InstanceFields().SelectMany(world.Dependers().Dependencies) :
+        public IEnumerable<IDependency> Depend(in Context context) =>
+            context.Member is Type type ? type.InstanceFields().SelectMany(context.Dependencies) :
             Array.Empty<IDependency>();
     }
 
     public sealed class Provider : IDepender
     {
-        readonly Func<World, IEnumerable<IDependency>> _provider;
-        public Provider(Func<World, IEnumerable<IDependency>> provider) { _provider = provider; }
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world) => _provider(world);
+        readonly Func<Context, IEnumerable<IDependency>> _provider;
+        public Provider(Func<Context, IEnumerable<IDependency>> provider) { _provider = provider; }
+        public IEnumerable<IDependency> Depend(in Context context) => _provider(context);
     }
 
     public static class Depender
     {
-        public static IDepender From(Func<World, IEnumerable<IDependency>> dependencies) => new Provider(dependencies);
-        public static IDepender From(Func<IEnumerable<IDependency>> dependencies) => new Provider(_ => dependencies());
+        public static IDepender From(Func<Context, IEnumerable<IDependency>> provider) => new Provider(provider);
+        public static IDepender From(Func<IEnumerable<IDependency>> provider) => new Provider(_ => provider());
         public static IDepender From(params IDependency[] dependencies) => new Provider(_ => dependencies);
-        public static IDepender From<T>(params IDependency[] dependencies) => new Provider(world => dependencies.Concat(world.Dependers().Dependencies<T>()));
+        public static IDepender From<T>(params IDependency[] dependencies) => new Provider(context => dependencies.Concat(context.Dependencies<T>()));
     }
 }

@@ -1,11 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Dependables;
-using Entia.Dependencies;
-using Entia.Dependers;
 using Entia.Queriers;
 using Entia.Queryables;
 
@@ -47,7 +43,5 @@ namespace Entia.Modules.Component
 
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
-        static readonly IDepender _depender = Depender.From<T>(new Write(typeof(T)));
     }
 }

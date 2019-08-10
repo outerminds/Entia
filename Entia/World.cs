@@ -50,9 +50,9 @@ namespace Entia
             }
         }
 
-        [Injector]
-        static Injector<World> Injector => Injectors.Injector.From(world => world);
-        [Depender]
+        [Implementation]
+        static Injector<World> Injector => Injectors.Injector.From(context => context.World);
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From(new Dependencies.Unknown());
 
         static readonly Concurrent<State> _state = new State { Worlds = new Dictionary<ulong, WeakReference<World>>() };
@@ -92,12 +92,15 @@ namespace Entia
             }
         }
 
+        public readonly Container Container;
+
         readonly ulong _identifier;
         readonly TypeMap<IModule, IModule> _modules = new TypeMap<IModule, IModule>();
         IResolvable[] _resolvables = Array.Empty<IResolvable>();
 
-        public World()
+        public World(Container container = null)
         {
+            Container = container ?? new Container();
             using (var write = _state.Write())
             {
                 _identifier = ++write.Value.Count;

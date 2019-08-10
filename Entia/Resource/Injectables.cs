@@ -15,9 +15,9 @@ namespace Entia.Injectables
         [ThreadSafe]
         public readonly struct Read : IInjectable
         {
-            [Injector]
-            static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Resources()));
-            [Depender]
+            [Implementation]
+            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Resources()));
+            [Implementation]
             static IDepender Depender => Dependers.Depender.From(new Dependencies.Read(typeof(IResource)));
 
             readonly Modules.Resources _resources;
@@ -37,9 +37,9 @@ namespace Entia.Injectables
             public bool Has(Type type) => _resources.Has(type);
         }
 
-        [Injector]
-        static Injector<AllResources> Injector => Injectors.Injector.From(world => new AllResources(world.Resources()));
-        [Depender]
+        [Implementation]
+        static Injector<AllResources> Injector => Injectors.Injector.From(context => new AllResources(context.World.Resources()));
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From(new Dependencies.Write(typeof(IResource)));
 
         readonly Modules.Resources _resources;
@@ -75,9 +75,9 @@ namespace Entia.Injectables
         [ThreadSafe]
         public readonly struct Read : IInjectable
         {
-            [Injector]
-            static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Resources().Box<T>()));
-            [Depender]
+            [Implementation]
+            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Resources().Box<T>()));
+            [Implementation]
             static IDepender Depender => Dependers.Depender.From<T>(new Dependencies.Read(typeof(T)));
 
             public ref readonly T Value => ref _box.Value;
@@ -87,9 +87,9 @@ namespace Entia.Injectables
             public Read(Box<T>.Read box) { _box = box; }
         }
 
-        [Injector]
-        static Injector<Resource<T>> Injector => Injectors.Injector.From(world => new Resource<T>(world.Resources().Box<T>()));
-        [Depender]
+        [Implementation]
+        static Injector<Resource<T>> Injector => Injectors.Injector.From(context => new Resource<T>(context.World.Resources().Box<T>()));
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From<T>(new Dependencies.Write(typeof(T)));
 
         public ref T Value => ref _box.Value;

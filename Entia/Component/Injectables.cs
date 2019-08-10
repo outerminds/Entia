@@ -1,4 +1,5 @@
-﻿using Entia.Core.Documentation;
+﻿using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Dependers;
 using Entia.Injectors;
 using Entia.Modules;
@@ -16,9 +17,9 @@ namespace Entia.Injectables
         [ThreadSafe]
         public readonly struct Write : IInjectable, IEnumerable<IComponent>
         {
-            [Injector]
-            static Injector<Write> Injector => Injectors.Injector.From(world => new Write(world.Components()));
-            [Depender]
+            [Implementation]
+            static Injector<Write> Injector => Injectors.Injector.From(context => new Write(context.World.Components()));
+            [Implementation]
             static IDepender Depender => Dependers.Depender.From(
                 new Dependencies.Read(typeof(Entity)),
                 new Dependencies.Write(typeof(IComponent)));
@@ -85,9 +86,9 @@ namespace Entia.Injectables
         [ThreadSafe]
         public readonly struct Read : IInjectable, IEnumerable<IComponent>
         {
-            [Injector]
-            static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Components()));
-            [Depender]
+            [Implementation]
+            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Components()));
+            [Implementation]
             static IDepender Depender => Dependers.Depender.From(
                 new Dependencies.Read(typeof(Entity)),
                 new Dependencies.Read(typeof(IComponent)));
@@ -151,9 +152,9 @@ namespace Entia.Injectables
             IEnumerator IEnumerable.GetEnumerator() => _components.GetEnumerator();
         }
 
-        [Injector]
-        static Injector<AllComponents> Injector => Injectors.Injector.From(world => new AllComponents(world.Components()));
-        [Depender]
+        [Implementation]
+        static Injector<AllComponents> Injector => Injectors.Injector.From(context => new AllComponents(context.World.Components()));
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From(
             new Dependencies.Read(typeof(Entity)),
             new Dependencies.Write(typeof(IComponent)),
@@ -300,9 +301,9 @@ namespace Entia.Injectables
         [ThreadSafe]
         public readonly struct Write : IInjectable, IEnumerable<T>
         {
-            [Injector]
-            static Injector<Write> Injector => Injectors.Injector.From(world => new Write(world.Components()));
-            [Depender]
+            [Implementation]
+            static Injector<Write> Injector => Injectors.Injector.From(context => new Write(context.World.Components()));
+            [Implementation]
             static IDepender Depender => Dependers.Depender.From<T>(
                 new Dependencies.Read(typeof(Entity)),
                 new Dependencies.Write(typeof(T)));
@@ -342,9 +343,9 @@ namespace Entia.Injectables
         [ThreadSafe]
         public readonly struct Read : IInjectable, IEnumerable<T>
         {
-            [Injector]
-            static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Components()));
-            [Depender]
+            [Implementation]
+            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Components()));
+            [Implementation]
             static IDepender Depender => Dependers.Depender.From<T>(
                 new Dependencies.Read(typeof(Entity)),
                 new Dependencies.Read(typeof(T)));
@@ -380,9 +381,9 @@ namespace Entia.Injectables
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
-        [Injector]
-        static Injector<Components<T>> Injector => Injectors.Injector.From(world => new Components<T>(world.Components()));
-        [Depender]
+        [Implementation]
+        static Injector<Components<T>> Injector => Injectors.Injector.From(context => new Components<T>(context.World.Components()));
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From<T>(
             new Dependencies.Read(typeof(Entity)),
             new Dependencies.Write(typeof(T)),

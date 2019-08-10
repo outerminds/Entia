@@ -1,10 +1,11 @@
-using Entia.Analyzers;
+using Entia.Analysis;
+using Entia.Build;
 using Entia.Builders;
 using Entia.Core;
 using Entia.Dependencies;
+using Entia.Dependency;
+using Entia.Injection;
 using Entia.Modules;
-using Entia.Modules.Analysis;
-using Entia.Modules.Build;
 using Entia.Modules.Schedule;
 using Entia.Phases;
 using Entia.Schedulables;
@@ -16,7 +17,7 @@ using System.Linq;
 
 namespace Entia.Nodes
 {
-    public readonly struct System : IAtomic, IAnalyzable<System.Analyzer>, IBuildable<System.Builder>
+    public readonly struct System : IAtomic, IImplementation<System.Analyzer>, IImplementation<System.Builder>
     {
         sealed class Runner : IRunner
         {
@@ -50,33 +51,34 @@ namespace Entia.Nodes
             }
         }
 
-        sealed class Builder : Builder<Runner>
+        sealed class Builder : Builder<System>
         {
-            public override Result<Runner> Build(Node node, Node root, World world) => Result.Cast<System>(node.Value)
-                .Bind(data => world.Injectors().Inject<ISystem>(data.Type))
-                .Map(system =>
-                {
-                    var schedulers = system.GetType().Hierarchy()
-                        .Where(type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ISchedulable<>))
-                        .Select(world.Schedulers().Get)
-                        .ToArray();
-                    return new Runner(system, schedulers);
-                });
+            public override Result<IRunner> Build(in System data, in Build.Context context) =>
+                context.World.Inject<ISystem>(data.Type)
+                    .Map(context, (system, state) =>
+                    {
+                        var schedulers = system.GetType().Hierarchy()
+                            .Where(type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ISchedulable<>))
+                            .Select(state.World.Schedulers().Get)
+                            .ToArray();
+                        return new Runner(system, schedulers);
+                    })
+                    .Cast<IRunner>();
         }
 
         sealed class Analyzer : Analyzer<System>
         {
-            public override Result<IDependency[]> Analyze(System data, Node node, Node root, World world)
+            public override Result<IDependency[]> Analyze(in System data, in Analysis.Context context)
             {
-                var dependers = world.Dependers();
-                var dependencies = dependers.Dependencies(data.Type);
+                var world = context.World;
+                var dependencies = world.Dependencies(data.Type);
                 var emits = dependencies.Emits().ToArray();
                 if (emits.Length > 0)
                 {
-                    var direct = root.Family()
+                    var direct = context.Root.Family()
                         .Select(child => Option.Cast<Nodes.System>(child.Value).Map(system => (child, system)))
                         .Choose()
-                        .Select(pair => (pair.child, dependencies: dependers.Dependencies(pair.system.Type)))
+                        .Select(pair => (pair.child, dependencies: world.Dependencies(pair.system.Type)))
                         .ToArray();
                     dependencies = direct
                         .Where(pair => pair.dependencies.Reacts().Any(react => emits.Any(emit => react.Is(emit, true, true))))
@@ -91,7 +93,6 @@ namespace Entia.Nodes
         }
 
         public readonly Type Type;
-
         public System(Type type) { Type = type; }
     }
 }

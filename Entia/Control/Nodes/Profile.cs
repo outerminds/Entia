@@ -1,8 +1,8 @@
+using Entia.Build;
 using Entia.Builders;
 using Entia.Core;
 using Entia.Messages;
 using Entia.Modules;
-using Entia.Modules.Build;
 using Entia.Modules.Schedule;
 using Entia.Phases;
 using System;
@@ -11,7 +11,7 @@ using System.Diagnostics;
 
 namespace Entia.Nodes
 {
-    public readonly struct Profile : IWrapper, IBuildable<Profile.Builder>
+    public readonly struct Profile : IWrapper, IImplementation<Profile.Builder>
     {
         sealed class Runner : IRunner
         {
@@ -41,11 +41,10 @@ namespace Entia.Nodes
             }
         }
 
-        sealed class Builder : Builder<Runner>
+        sealed class Builder : Builder<Profile>
         {
-            public override Result<Runner> Build(Node node, Node root, World world) => Result.Cast<Profile>(node.Value)
-                .Bind(_ => world.Builders().Build(Node.Sequence(node.Children), root))
-                .Map(child => new Runner(child));
+            public override Result<IRunner> Build(in Profile data, in Context context) =>
+                context.Build(Node.Sequence(context.Node.Children)).Map(child => new Runner(child)).Cast<IRunner>();
         }
     }
 }

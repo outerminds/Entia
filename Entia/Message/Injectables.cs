@@ -14,9 +14,9 @@ namespace Entia.Injectables
     [ThreadSafe]
     public readonly struct AllEmitters : IInjectable
     {
-        [Injector]
-        static Injector<AllEmitters> Injector => Injectors.Injector.From(world => new AllEmitters(world.Messages()));
-        [Depender]
+        [Implementation]
+        static Injector<AllEmitters> Injector => Injectors.Injector.From(context => new AllEmitters(context.World.Messages()));
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From(new Emit(typeof(IMessage)), new Write(typeof(IMessage)));
 
         readonly Modules.Messages _messages;
@@ -34,9 +34,9 @@ namespace Entia.Injectables
     [ThreadSafe]
     public readonly struct Emitter<T> : IInjectable where T : struct, IMessage
     {
-        [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((_, world) => new Emitter<T>(world.Messages().Emitter<T>()));
-        [Depender]
+        [Implementation]
+        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Emitter<T>(context.World.Messages().Emitter<T>()));
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From<T>(new Emit(typeof(T)), new Write(typeof(T)));
 
         readonly Modules.Message.Emitter<T> _emitter;
@@ -50,9 +50,9 @@ namespace Entia.Injectables
     [ThreadSafe]
     public readonly struct Receiver<T> : IInjectable where T : struct, IMessage
     {
-        [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((_, world) => new Receiver<T>(world.Messages().Receiver<T>()));
-        [Depender]
+        [Implementation]
+        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Receiver<T>(context.World.Messages().Receiver<T>()));
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From<T>(new Read(typeof(T)));
 
         public int Count => _receiver.Count;
@@ -68,9 +68,9 @@ namespace Entia.Injectables
     [ThreadSafe]
     public readonly struct Reaction<T> : IInjectable where T : struct, IMessage
     {
-        [Injector]
-        static Injector<object> Injector => Injectors.Injector.From<object>((_, world) => new Reaction<T>(world.Messages().Reaction<T>()));
-        [Depender]
+        [Implementation]
+        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Reaction<T>(context.World.Messages().Reaction<T>()));
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From<T>(new React(typeof(T)));
 
         readonly Modules.Message.Reaction<T> _reaction;

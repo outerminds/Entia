@@ -103,7 +103,7 @@ namespace Entia
         /// </summary>
         public static readonly Entity Zero;
 
-        [Depender]
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From(new Read(typeof(Entity)));
 
         /// <summary>

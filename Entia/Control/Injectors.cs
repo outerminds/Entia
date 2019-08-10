@@ -1,4 +1,5 @@
 ﻿using Entia.Core;
+using Entia.Injection;
 using Entia.Modules;
 using Entia.Systems;
 using System;
@@ -9,20 +10,17 @@ namespace Entia.Injectors
 {
     public sealed class System : Injector<ISystem>
     {
-        public override Result<ISystem> Inject(MemberInfo member, World world)
+        public override Result<ISystem> Inject(in Context context)
         {
-            switch (member)
+            switch (context.Member)
             {
-                case Type type:
-                    var injectors = world.Injectors();
-                    return Result
-                        .Cast<ISystem>(DefaultUtility.Default(type))
-                        .Bind(instance => type.InstanceFields()
-                            .Where(field => field.IsPublic)
-                            .Select(field => injectors.Inject(field).Do(current => field.SetValue(instance, current)))
-                            .All()
-                            .Return(instance));
-                case FieldInfo field: return Inject(field.FieldType, world);
+                case Type type when DefaultUtility.Default(type) is ISystem instance:
+                    return type.InstanceFields()
+                        .Where(field => field.IsPublic)
+                        .Select(context, (field, state) => state.Inject(field).Do(value => field.SetValue(instance, value)))
+                        .All()
+                        .Return(instance);
+                case FieldInfo field: return context.Inject<ISystem>(field.FieldType);
                 default: return Failure.Empty;
             }
         }

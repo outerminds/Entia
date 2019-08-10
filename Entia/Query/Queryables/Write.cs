@@ -39,7 +39,7 @@ namespace Entia.Queryables
 
         [Querier]
         static readonly Querier _querier = new Querier();
-        [Depender]
+        [Implementation]
         static readonly IDepender _depender = Depender.From<T>(new Write(typeof(T)));
 
         public ref T Value

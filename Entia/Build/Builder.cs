@@ -1,31 +1,24 @@
-﻿using Entia.Core;
-using Entia.Modules.Build;
-using Entia.Modules.Schedule;
-using Entia.Nodes;
-using Entia.Dependencies;
-using Entia.Phases;
+﻿using Entia.Build;
+using Entia.Buildables;
+using Entia.Core;
 using System;
-using System.Collections.Generic;
-using Entia.Modules;
 
 namespace Entia.Builders
 {
-    public interface IBuilder
+    public interface IBuilder : ITrait, IImplementation<IBuildable, Default>
     {
-        Result<IRunner> Build(Node node, Node root, World world);
+        Result<IRunner> Build(in Context context);
     }
 
-    public abstract class Builder<T> : IBuilder where T : IRunner
+    public abstract class Builder<T> : IBuilder where T : struct, IBuildable
     {
-        public abstract Result<T> Build(Node node, Node root, World world);
-        Result<IRunner> IBuilder.Build(Node node, Node root, World world) => Build(node, root, world).Cast<IRunner>();
+        public abstract Result<IRunner> Build(in T data, in Context context);
+        Result<IRunner> IBuilder.Build(in Context context) => Result.Cast<T>(context.Node.Value)
+            .Bind((@this: this, context), (data, state) => state.@this.Build(data, state.context));
     }
-
-    [AttributeUsage(ModuleUtility.AttributeUsage, Inherited = true, AllowMultiple = false)]
-    public sealed class BuilderAttribute : PreserveAttribute { }
 
     public sealed class Default : IBuilder
     {
-        public Result<IRunner> Build(Node node, Node root, World world) => Result.Exception(new NotImplementedException());
+        public Result<IRunner> Build(in Context context) => Result.Exception(new NotImplementedException());
     }
 }

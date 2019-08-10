@@ -1,8 +1,6 @@
-﻿using Entia.Builders;
+﻿using Entia.Build;
 using Entia.Core;
-using Entia.Modules.Build;
 using Entia.Nodes;
-using Entia.Phases;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -41,7 +39,7 @@ namespace Entia.Modules
             states = new Controller.States[count];
 
             // TODO: put analysis back in when it works properly
-            return _world.Builders().Build(root, root)
+            return _world.Build(root, root)
                 .Map(runner => _controllers[node] = new Controller((root, runner), _world, nodes, runners, states));
         }
 

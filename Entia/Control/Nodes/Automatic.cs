@@ -1,24 +1,25 @@
+using Entia.Analysis;
+using Entia.Build;
 using Entia.Builders;
 using Entia.Core;
-using Entia.Modules;
-using Entia.Modules.Build;
-using Entia.Modules.Schedule;
-using Entia.Phases;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Entia.Nodes
 {
-    public readonly struct Automatic : IAtomic, IBuildable<Automatic.Builder>
+    public readonly struct Automatic : IAtomic, IImplementation<Automatic.Builder>
     {
-        sealed class Builder : IBuilder
+        sealed class Builder : Builder<Automatic>
         {
-            public Result<IRunner> Build(Node node, Node root, World world)
+            public override Result<IRunner> Build(in Automatic data, in Build.Context context)
             {
-                if (node.Children.Length <= 1) return world.Builders().Build(Node.Sequence(node.Children), root);
+                var world = context.World;
+                var root = context.Root;
+                var children = context.Node.Children;
+                if (children.Length <= 1) return context.Build(Node.Sequence(children));
 
-                var sets = new[] { node.Children, node.Children.Reverse() }
+                var sets = new[] { children, children.Reverse() }
                     .SelectMany(runners => runners
                         .Select(runner => runners
                             .Except(runner)
@@ -28,14 +29,14 @@ namespace Entia.Nodes
                                 {
                                     var nodes = group.Append(current).ToArray();
                                     var parallel = Node.Parallel(nodes);
-                                    var result = world.Analyzers().Analyze(parallel, root);
+                                    var result = world.Analyze(parallel, root);
                                     return result.IsSuccess() ? nodes : group;
                                 })
                             .ToSet()))
                     .ToArray();
 
                 var groups = new List<Node>();
-                var remaining = new HashSet<Node>(node.Children);
+                var remaining = new HashSet<Node>(children);
                 while (remaining.Count > 0)
                 {
                     var set = sets
@@ -49,7 +50,7 @@ namespace Entia.Nodes
                     groups.Add(Node.Parallel(set));
                 }
 
-                return world.Builders().Build(Node.Sequence(node.Name, groups.ToArray()), root);
+                return context.Build(Node.Sequence(context.Node.Name, groups.ToArray()));
             }
         }
     }

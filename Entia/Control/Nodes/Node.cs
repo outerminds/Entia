@@ -1,9 +1,8 @@
-﻿using Entia.Core;
-using Entia.Modules.Analysis;
-using Entia.Modules.Build;
+﻿using Entia.Analyzables;
+using Entia.Buildables;
+using Entia.Core;
 using Entia.Systems;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 

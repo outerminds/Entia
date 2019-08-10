@@ -13,9 +13,9 @@ namespace Entia.Injectables
         [ThreadSafe]
         public readonly struct Read : IInjectable
         {
-            [Injector]
-            static Injector<Read> Injector => Injectors.Injector.From(world => new Read(world.Families()));
-            [Depender]
+            [Implementation]
+            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Families()));
+            [Implementation]
             static IDepender Depender => Dependers.Depender.From(new Dependencies.Read(typeof(Entity)));
 
             readonly Families _families;
@@ -32,9 +32,9 @@ namespace Entia.Injectables
             public bool Has(Entity parent, Entity child) => _families.Has(parent, child);
         }
 
-        [Injector]
-        static Injector<AllFamilies> Injector => Injectors.Injector.From(world => new AllFamilies(world.Families()));
-        [Depender]
+        [Implementation]
+        static Injector<AllFamilies> Injector => Injectors.Injector.From(context => new AllFamilies(context.World.Families()));
+        [Implementation]
         static IDepender Depender => Dependers.Depender.From(new Dependencies.Write(typeof(Entity)));
 
         readonly Families _families;

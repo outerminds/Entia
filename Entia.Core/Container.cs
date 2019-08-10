@@ -1,8 +1,7 @@
 using System;
 using System.Reflection;
-using Entia.Core;
 
-namespace Entia.Experiment.Serialization
+namespace Entia.Core
 {
     public interface ITrait { }
     public interface IImplementation<TTrait> where TTrait : ITrait, new() { }
@@ -12,10 +11,16 @@ namespace Entia.Experiment.Serialization
     {
         public readonly TypeData Type;
         public readonly TypeData Implementation;
+        public readonly object[] Arguments;
 
         public ImplementationAttribute() : this(typeof(void), typeof(void)) { }
-        public ImplementationAttribute(Type implementation) : this(typeof(void), implementation) { }
-        public ImplementationAttribute(Type type, Type implementation) { Type = type; Implementation = implementation; }
+        public ImplementationAttribute(Type implementation, params object[] arguments) : this(typeof(void), implementation, arguments) { }
+        public ImplementationAttribute(Type type, Type implementation, params object[] arguments)
+        {
+            Type = type;
+            Implementation = implementation;
+            Arguments = arguments;
+        }
     }
 
     public sealed class Container
@@ -73,7 +78,7 @@ namespace Entia.Experiment.Serialization
                             attribute.Implementation.Type.IsGenericTypeDefinition &&
                             typeData.Arguments.Length == attribute.Implementation.Arguments.Length ?
                             attribute.Implementation.Type.MakeGenericType(typeData.Arguments) : attribute.Implementation.Type;
-                        return (ITrait)Activator.CreateInstance(concrete);
+                        return (ITrait)Activator.CreateInstance(concrete, attribute.Arguments);
                     }
                     catch { }
                 }
@@ -129,7 +134,7 @@ namespace Entia.Experiment.Serialization
                             attribute.Implementation.Type.IsGenericTypeDefinition &&
                             typeData.Arguments.Length == attribute.Implementation.Arguments.Length ?
                             attribute.Implementation.Type.MakeGenericType(typeData.Arguments) : attribute.Implementation.Type;
-                        return (ITrait)Activator.CreateInstance(concrete);
+                        return (ITrait)Activator.CreateInstance(concrete, attribute.Arguments);
                     }
                     catch { }
                 }
@@ -152,10 +157,20 @@ namespace Entia.Experiment.Serialization
             return default;
         }
 
+        static Result<T> Failure<T>(Type type, Type trait) =>
+            Result.Failure($"Could not find an implementation of trait '{trait.FullFormat()}' for type '{type.FullFormat()}'");
+
         public readonly Container Parent;
         readonly TypeMap<object, TypeMap<ITrait, ITrait>> _implementations = new TypeMap<object, TypeMap<ITrait, ITrait>>();
 
         public Container(Container parent = null) { Parent = parent; }
+
+        public Result<ITrait> Get(Type type, Type trait) =>
+            TryGet(type, trait, out var implementation) ? Result.Success(implementation) : Failure<ITrait>(type, trait);
+        public Result<TTrait> Get<TTrait>(Type type) where TTrait : ITrait =>
+            TryGet<TTrait>(type, out var implementation) ? Result.Success(implementation) : Failure<TTrait>(type, typeof(TTrait));
+        public Result<TTrait> Get<T, TTrait>() where TTrait : ITrait =>
+            TryGet<T, TTrait>(out var implementation) ? Result.Success(implementation) : Failure<TTrait>(typeof(T), typeof(TTrait));
 
         public bool TryGet(Type type, Type trait, out ITrait implementation)
         {

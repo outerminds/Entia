@@ -1,10 +1,9 @@
-using Entia.Analyzers;
+using Entia.Analysis;
+using Entia.Build;
 using Entia.Builders;
 using Entia.Core;
 using Entia.Dependencies;
-using Entia.Modules;
-using Entia.Modules.Analysis;
-using Entia.Modules.Build;
+using Entia.Dependency;
 using Entia.Modules.Schedule;
 using Entia.Phases;
 using System;
@@ -13,7 +12,7 @@ using System.Linq;
 
 namespace Entia.Nodes
 {
-    public readonly struct Parallel : IAtomic, IAnalyzable<Parallel.Analyzer>, IBuildable<Parallel.Builder>
+    public readonly struct Parallel : IAtomic, IImplementation<Parallel.Builder>, IImplementation<Parallel.Analyzer>
     {
         sealed class Runner : IRunner
         {
@@ -44,17 +43,21 @@ namespace Entia.Nodes
             }
         }
 
-        sealed class Builder : IBuilder
+        sealed class Builder : Builder<Parallel>
         {
-            public Result<IRunner> Build(Node node, Node root, World world) => node.Children.Length == 1 ?
-                Result.Cast<Parallel>(node.Value).Bind(_ => world.Builders().Build(node.Children[0], root)) :
-                Result.Cast<Parallel>(node.Value)
-                    .Bind(_ => node.Children.Select(child => world.Builders().Build(child, root)).All())
-                    .Map(children => new Runner(children))
+            public override Result<IRunner> Build(in Parallel data, in Build.Context context)
+            {
+                var children = context.Node.Children;
+                if (children.Length == 1) return context.Build(children[0]);
+                return children
+                    .Select(context, (child, state) => state.Build(child))
+                    .All()
+                    .Map(runners => new Runner(runners))
                     .Cast<IRunner>();
+            }
         }
 
-        sealed class Analyzer : Analyzer<Nodes.Parallel>
+        sealed class Analyzer : Analyzer<Parallel>
         {
             Result<Unit> Unknown(Node node, IDependency[] dependencies) =>
                 dependencies.OfType<Unknown>().Select(_ => Result.Failure($"'{node}' has unknown dependencies.")).All();
@@ -77,20 +80,22 @@ namespace Entia.Nodes
                     .All();
             }
 
-            public override Result<IDependency[]> Analyze(Nodes.Parallel data, Node node, Node root, World world) =>
-                node.Children.Select(child => world.Analyzers().Analyze(child, root).Map(dependencies => (child, dependencies))).All().Bind(children =>
+            public override Result<IDependency[]> Analyze(in Nodes.Parallel data, in Analysis.Context context) => context.Node.Children
+                .Select(context, (child, state) => state.Analyze(child)
+                    .Map(dependencies => (child, dependencies)))
+                .All()
+                .Bind(pairs =>
                 {
-                    var combinations = children.Combinations(2).ToArray();
-                    var unknown = children.Select(pair => Unknown(pair.child, pair.dependencies)).All();
-                    var writeWrite1 = combinations.Select(pairs => WriteWrite(pairs[0], pairs[1])).All();
-                    var writeWrite2 = combinations.Select(pairs => WriteWrite(pairs[1], pairs[0])).All();
-                    var writeRead = combinations.Select(pairs => WriteRead(pairs[0], pairs[1])).All();
-                    var readWrite = combinations.Select(pairs => WriteRead(pairs[1], pairs[0])).All();
+                    var combinations = pairs.Combinations(2).ToArray();
+                    var unknown = pairs.Select(pair => Unknown(pair.child, pair.dependencies)).All();
+                    var writeWrite1 = combinations.Select(combination => WriteWrite(combination[0], combination[1])).All();
+                    var writeWrite2 = combinations.Select(combination => WriteWrite(combination[1], combination[0])).All();
+                    var writeRead = combinations.Select(combination => WriteRead(combination[0], combination[1])).All();
+                    var readWrite = combinations.Select(combination => WriteRead(combination[1], combination[0])).All();
                     return Result.All(unknown, writeWrite1, writeWrite2, writeRead, readWrite)
-                        .Map(_ => children.SelectMany(pair => pair.dependencies)
+                        .Map(_ => pairs.SelectMany(pair => pair.dependencies)
                         .ToArray());
                 });
-
         }
     }
 }

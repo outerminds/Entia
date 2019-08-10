@@ -18,9 +18,9 @@ IEnumerable<(string system, string scheduler, string depender)> Generate(int dep
             $"All<{string.Join(", ", generics.Select(generic => $"Write<{generic}>"))}>";
         var storeVars = string.Join(" ", generics.Select((generic, index) => $"var store{index + 1} = segment.Store<{generic}>();"));
         var storeRefs = string.Join("", generics.Select((generic, index) => $", ref store{index + 1}[j]"));
-        var yields = string.Join(
+        var concats = string.Join(
             Environment.NewLine + "            ",
-            generics.Select(generic => $"foreach (var dependency in world.Dependers().Dependencies<Write<{generic}>>()) yield return dependency;"));
+            generics.Select(generic => $".Concat(context.Dependencies<Write<{generic}>>())"));
 
         yield return (
 $@"    public interface IRunEach{parameters} : ISystem, ISchedulable<Schedulers.RunEach{parameters}>, IDependable<Dependers.RunEach{parameters}>{constraints}
@@ -56,11 +56,9 @@ $@"    public sealed class RunEach{parameters} : Scheduler<IRunEach{parameters}>
     }}",
 $@"    public sealed class RunEach{parameters} : IDepender{constraints}
     {{
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-        {{
-            yield return new Read(typeof(Entity));
-            {yields}
-        }}
+        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+            {concats}
+            .Prepend(new Read(typeof(Entity)));
     }}");
     }
 }
@@ -77,10 +75,10 @@ using System;
 using Entia.Modules.Schedule;
 using Entia.Modules.Query;
 using Entia.Queryables;
-using System.Reflection;
 using System.Collections.Generic;
 using Entia.Dependencies;
-using Entia.Modules;
+using System.Linq;
+using Entia.Dependency;
 
 namespace Entia.Systems
 {{

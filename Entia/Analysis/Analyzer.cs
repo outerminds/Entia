@@ -1,33 +1,26 @@
-﻿using Entia.Core;
+﻿using Entia.Analyzables;
+using Entia.Core;
 using Entia.Dependencies;
-using Entia.Modules;
-using Entia.Modules.Analysis;
-using Entia.Nodes;
-using System;
 using System.Linq;
 
-namespace Entia.Analyzers
+namespace Entia.Analysis
 {
-    public interface IAnalyzer
+    public interface IAnalyzer : ITrait, IImplementation<IAnalyzable, Default>
     {
-        Result<IDependency[]> Analyze(Node node, Node root, World world);
+        Result<IDependency[]> Analyze(in Context context);
     }
 
     public abstract class Analyzer<T> : IAnalyzer where T : struct, IAnalyzable
     {
-        public abstract Result<IDependency[]> Analyze(T data, Node node, Node root, World world);
-
-        Result<IDependency[]> IAnalyzer.Analyze(Node node, Node root, World world) =>
-            Result.Cast<T>(node.Value).Bind(data => Analyze(data, node, root, world));
+        public abstract Result<IDependency[]> Analyze(in T data, in Context context);
+        Result<IDependency[]> IAnalyzer.Analyze(in Context context) => Result.Cast<T>(context.Node.Value)
+            .Bind((@this: this, context), (data, state) => state.@this.Analyze(data, state.context));
     }
-
-    [AttributeUsage(ModuleUtility.AttributeUsage, Inherited = true, AllowMultiple = false)]
-    public sealed class AnalyzerAttribute : PreserveAttribute { }
 
     public sealed class Default : IAnalyzer
     {
-        public Result<IDependency[]> Analyze(Node node, Node root, World world) =>
-            node.Children.Select(child => world.Analyzers().Analyze(child, root)).All().Map(
+        public Result<IDependency[]> Analyze(in Context context) =>
+            context.Node.Children.Select(context, (child, state) => state.Analyze(child)).All().Map(
                 children => children.SelectMany(_ => _).ToArray());
     }
 }

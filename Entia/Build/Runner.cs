@@ -4,7 +4,7 @@ using Entia.Phases;
 using System;
 using System.Collections.Generic;
 
-namespace Entia.Modules.Build
+namespace Entia.Build
 {
     public delegate void Run<T>(in T phase) where T : struct, IPhase;
 

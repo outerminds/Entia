@@ -1,16 +1,13 @@
 using System.Collections.Generic;
-using System.Reflection;
+using System.Linq;
 using Entia.Dependencies;
-using Entia.Modules;
+using Entia.Dependency;
 
 namespace Entia.Dependers
 {
     public sealed class React<T> : IDepender
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-        {
-            yield return new React(typeof(T));
-            foreach (var dependency in world.Dependers().Dependencies<T>()) yield return dependency;
-        }
+        public IEnumerable<IDependency> Depend(in Context context) =>
+            context.Dependencies<T>().Prepend(new React(typeof(T)));
     }
 }

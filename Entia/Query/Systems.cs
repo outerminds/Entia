@@ -7,10 +7,10 @@ using System;
 using Entia.Modules.Schedule;
 using Entia.Modules.Query;
 using Entia.Queryables;
-using System.Reflection;
 using System.Collections.Generic;
 using Entia.Dependencies;
-using Entia.Modules;
+using System.Linq;
+using Entia.Dependency;
 
 namespace Entia.Systems
 {
@@ -272,87 +272,71 @@ namespace Entia.Dependers
 {
     public sealed class RunEach : IDepender
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-        {
-            yield return new Read(typeof(Entity));
+        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
             
-        }
+            .Prepend(new Read(typeof(Entity)));
     }
     public sealed class RunEach<T> : IDepender where T : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-        {
-            yield return new Read(typeof(Entity));
-            foreach (var dependency in world.Dependers().Dependencies<Write<T>>()) yield return dependency;
-        }
+        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+            .Concat(context.Dependencies<Write<T>>())
+            .Prepend(new Read(typeof(Entity)));
     }
     public sealed class RunEach<T1, T2> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-        {
-            yield return new Read(typeof(Entity));
-            foreach (var dependency in world.Dependers().Dependencies<Write<T1>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T2>>()) yield return dependency;
-        }
+        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+            .Concat(context.Dependencies<Write<T1>>())
+            .Concat(context.Dependencies<Write<T2>>())
+            .Prepend(new Read(typeof(Entity)));
     }
     public sealed class RunEach<T1, T2, T3> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-        {
-            yield return new Read(typeof(Entity));
-            foreach (var dependency in world.Dependers().Dependencies<Write<T1>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T2>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T3>>()) yield return dependency;
-        }
+        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+            .Concat(context.Dependencies<Write<T1>>())
+            .Concat(context.Dependencies<Write<T2>>())
+            .Concat(context.Dependencies<Write<T3>>())
+            .Prepend(new Read(typeof(Entity)));
     }
     public sealed class RunEach<T1, T2, T3, T4> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-        {
-            yield return new Read(typeof(Entity));
-            foreach (var dependency in world.Dependers().Dependencies<Write<T1>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T2>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T3>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T4>>()) yield return dependency;
-        }
+        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+            .Concat(context.Dependencies<Write<T1>>())
+            .Concat(context.Dependencies<Write<T2>>())
+            .Concat(context.Dependencies<Write<T3>>())
+            .Concat(context.Dependencies<Write<T4>>())
+            .Prepend(new Read(typeof(Entity)));
     }
     public sealed class RunEach<T1, T2, T3, T4, T5> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-        {
-            yield return new Read(typeof(Entity));
-            foreach (var dependency in world.Dependers().Dependencies<Write<T1>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T2>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T3>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T4>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T5>>()) yield return dependency;
-        }
+        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+            .Concat(context.Dependencies<Write<T1>>())
+            .Concat(context.Dependencies<Write<T2>>())
+            .Concat(context.Dependencies<Write<T3>>())
+            .Concat(context.Dependencies<Write<T4>>())
+            .Concat(context.Dependencies<Write<T5>>())
+            .Prepend(new Read(typeof(Entity)));
     }
     public sealed class RunEach<T1, T2, T3, T4, T5, T6> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-        {
-            yield return new Read(typeof(Entity));
-            foreach (var dependency in world.Dependers().Dependencies<Write<T1>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T2>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T3>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T4>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T5>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T6>>()) yield return dependency;
-        }
+        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+            .Concat(context.Dependencies<Write<T1>>())
+            .Concat(context.Dependencies<Write<T2>>())
+            .Concat(context.Dependencies<Write<T3>>())
+            .Concat(context.Dependencies<Write<T4>>())
+            .Concat(context.Dependencies<Write<T5>>())
+            .Concat(context.Dependencies<Write<T6>>())
+            .Prepend(new Read(typeof(Entity)));
     }
     public sealed class RunEach<T1, T2, T3, T4, T5, T6, T7> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(MemberInfo member, World world)
-        {
-            yield return new Read(typeof(Entity));
-            foreach (var dependency in world.Dependers().Dependencies<Write<T1>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T2>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T3>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T4>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T5>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T6>>()) yield return dependency;
-            foreach (var dependency in world.Dependers().Dependencies<Write<T7>>()) yield return dependency;
-        }
+        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+            .Concat(context.Dependencies<Write<T1>>())
+            .Concat(context.Dependencies<Write<T2>>())
+            .Concat(context.Dependencies<Write<T3>>())
+            .Concat(context.Dependencies<Write<T4>>())
+            .Concat(context.Dependencies<Write<T5>>())
+            .Concat(context.Dependencies<Write<T6>>())
+            .Concat(context.Dependencies<Write<T7>>())
+            .Prepend(new Read(typeof(Entity)));
     }
 }
