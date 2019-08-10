@@ -9,6 +9,9 @@ using System.Reflection;
 
 namespace Entia.Dependency
 {
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface)]
+    public sealed class IgnoreAttribute : Attribute { }
+
     public readonly struct Context
     {
         public readonly MemberInfo Member;
@@ -36,12 +39,12 @@ namespace Entia.Dependency
 
         public Context With(MemberInfo member = null) => new Context(member ?? Member, Members, World);
 
-        IEnumerable<IDependency> Next(MemberInfo current)
+        IEnumerable<IDependency> Next(MemberInfo member)
         {
-            if (current.IsDefined(typeof(IgnoreAttribute))) yield break;
-            else if (Members.Add(current))
+            if (member.IsDefined(typeof(IgnoreAttribute))) yield break;
+            if (Members.Add(member))
             {
-                switch (current)
+                switch (member)
                 {
                     case Type type:
                         if (type.GetElementType() is Type element)
@@ -98,9 +101,6 @@ namespace Entia.Dependency
 namespace Entia.Dependencies
 {
     public interface IDependency { }
-
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Interface)]
-    public sealed class IgnoreAttribute : Attribute { }
 
     public readonly struct Unknown : IDependency { }
     public readonly struct Read : IDependency
