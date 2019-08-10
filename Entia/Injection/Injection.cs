@@ -14,11 +14,8 @@ namespace Entia.Injection
         public Context(World world) : this(null, world) { }
         public Context(MemberInfo member, World world) { Member = member; World = world; }
 
-        public Result<T> Inject<T>(MemberInfo member = null) where T : IInjectable
-        {
-            if (World.Container.TryGet<T, Injector<T>>(out var injector)) return injector.Inject(With(member ?? typeof(T)));
-            return Inject(typeof(T), member).Cast<T>();
-        }
+        public Result<T> Inject<T>(MemberInfo member = null) where T : IInjectable =>
+            Inject(typeof(T), member).Cast<T>();
 
         public Result<object> Inject(MemberInfo member)
         {
@@ -30,8 +27,9 @@ namespace Entia.Injection
         }
 
         public Result<object> Inject(Type injectable, MemberInfo member = null) => World.Container.Get<IInjector>(injectable)
-            .Bind(With(member ?? injectable), (injector, state) => injector.Inject(state))
-            .As(injectable);
+            .Select(With(member ?? injectable), (injector, state) => injector.Inject(state).As(injectable))
+            .FirstOrFailure()
+            .Flatten();
 
         public Context With(MemberInfo member = null) => new Context(member ?? Member, World);
     }

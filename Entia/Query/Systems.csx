@@ -33,9 +33,9 @@ $@"    public sealed class RunEach{parameters} : Scheduler<IRunEach{parameters}>
 
         public override Type[] Phases {{ get; }} = new[] {{ typeof(Phases.Run) }};
 
-        public override Phase[] Schedule(IRunEach{parameters} instance, Controller controller)
+        public override Phase[] Schedule(in IRunEach{parameters} instance, in Schedule.Context context)
         {{
-            var world = controller.World;
+            var world = context.World;
             var run = new Run(instance.Run);
             var box = world.Segments<{queryable}>(run.Method);
             return new[]
@@ -56,7 +56,7 @@ $@"    public sealed class RunEach{parameters} : Scheduler<IRunEach{parameters}>
     }}",
 $@"    public sealed class RunEach{parameters} : IDepender{constraints}
     {{
-        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+        public IEnumerable<IDependency> Depend(in Dependency.Context context) => Enumerable.Empty<IDependency>()
             {concats}
             .Prepend(new Read(typeof(Entity)));
     }}");

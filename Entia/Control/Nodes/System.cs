@@ -36,7 +36,9 @@ namespace Entia.Nodes
             public IEnumerable<Type> Phases() => Schedulers.SelectMany(scheduler => scheduler.Phases);
             public IEnumerable<Phase> Phases(Controller controller) =>
                 _phases.TryGetValue(controller, out var phases) ? phases :
-                _phases[controller] = Schedulers.SelectMany(scheduler => scheduler.Schedule(System, controller)).ToArray();
+                _phases[controller] = Schedulers
+                    .SelectMany(scheduler => new Schedule.Context(controller, controller.World).Schedule(System))
+                    .ToArray();
             public Option<Run<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
                 var run = default(Run<T>);
@@ -56,13 +58,7 @@ namespace Entia.Nodes
             public override Result<IRunner> Build(in System data, in Build.Context context) =>
                 context.World.Inject<ISystem>(data.Type)
                     .Map(context, (system, state) =>
-                    {
-                        var schedulers = system.GetType().Hierarchy()
-                            .Where(type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ISchedulable<>))
-                            .Select(state.World.Schedulers().Get)
-                            .ToArray();
-                        return new Runner(system, schedulers);
-                    })
+                        new Runner(system, state.World.Container.Get<IScheduler>(system.GetType()).ToArray()))
                     .Cast<IRunner>();
         }
 

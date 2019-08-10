@@ -358,6 +358,11 @@ namespace Entia.Core
             foreach (var item in source) yield return selector(item, state);
         }
 
+        public static IEnumerable<TResult> SelectMany<TSource, TResult, TState>(this IEnumerable<TSource> source, TState state, Func<TSource, TState, IEnumerable<TResult>> selector)
+        {
+            foreach (var item in source) foreach (var sub in selector(item, state)) yield return sub;
+        }
+
         public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed)
         {
             var random = new Random(seed);

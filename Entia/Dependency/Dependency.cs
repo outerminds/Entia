@@ -53,14 +53,8 @@ namespace Entia.Dependency
                             foreach (var dependency in Next(element)) yield return dependency;
                         }
 
-                        foreach (var child in type.Hierarchy())
-                        {
-                            if (World.Container.TryGet<IDepender>(child, out var depender))
-                            {
-                                foreach (var dependency in depender.Depend(With(type)))
-                                    yield return dependency;
-                            }
-                        }
+                        foreach (var depender in World.Container.Get<IDepender>(type))
+                            foreach (var dependency in depender.Depend(With(type))) yield return dependency;
                         break;
                     case FieldInfo field:
                         foreach (var dependency in Next(field.FieldType)) yield return dependency;

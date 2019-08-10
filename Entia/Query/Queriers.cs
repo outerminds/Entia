@@ -2,7 +2,6 @@ using Entia.Core;
 using Entia.Modules.Component;
 using Entia.Modules.Query;
 using Entia.Queriers;
-using Entia.Queryables;
 using System;
 using System.Collections;
 using System.Collections.Generic;

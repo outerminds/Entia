@@ -14,7 +14,9 @@ namespace Entia.Analysis
         public Context(Node node, Node root, World world) { Node = node; Root = root; World = world; }
 
         public Result<IDependency[]> Analyze(Node node) => World.Container.Get<IAnalyzer>(node.Value.GetType())
-            .Bind(With(node), (analyzer, state) => analyzer.Analyze(state));
+            .Select(With(node), (analyzer, state) => analyzer.Analyze(state))
+            .FirstOrFailure()
+            .Flatten();
         public Context With(Node node = null) => new Context(node ?? Node, Root, World);
     }
 

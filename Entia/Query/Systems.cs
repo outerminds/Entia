@@ -56,9 +56,9 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach instance, Controller controller)
+        public override Phase[] Schedule(in IRunEach instance, in Schedule.Context context)
         {
-            var world = controller.World;
+            var world = context.World;
             var run = new Run(instance.Run);
             var box = world.Segments<Entity>(run.Method);
             return new[]
@@ -83,9 +83,9 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T> instance, Controller controller)
+        public override Phase[] Schedule(in IRunEach<T> instance, in Schedule.Context context)
         {
-            var world = controller.World;
+            var world = context.World;
             var run = new Run(instance.Run);
             var box = world.Segments<Write<T>>(run.Method);
             return new[]
@@ -110,9 +110,9 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2> instance, Controller controller)
+        public override Phase[] Schedule(in IRunEach<T1, T2> instance, in Schedule.Context context)
         {
-            var world = controller.World;
+            var world = context.World;
             var run = new Run(instance.Run);
             var box = world.Segments<All<Write<T1>, Write<T2>>>(run.Method);
             return new[]
@@ -137,9 +137,9 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2, T3> instance, Controller controller)
+        public override Phase[] Schedule(in IRunEach<T1, T2, T3> instance, in Schedule.Context context)
         {
-            var world = controller.World;
+            var world = context.World;
             var run = new Run(instance.Run);
             var box = world.Segments<All<Write<T1>, Write<T2>, Write<T3>>>(run.Method);
             return new[]
@@ -164,9 +164,9 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4> instance, Controller controller)
+        public override Phase[] Schedule(in IRunEach<T1, T2, T3, T4> instance, in Schedule.Context context)
         {
-            var world = controller.World;
+            var world = context.World;
             var run = new Run(instance.Run);
             var box = world.Segments<All<Write<T1>, Write<T2>, Write<T3>, Write<T4>>>(run.Method);
             return new[]
@@ -191,9 +191,9 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4, T5> instance, Controller controller)
+        public override Phase[] Schedule(in IRunEach<T1, T2, T3, T4, T5> instance, in Schedule.Context context)
         {
-            var world = controller.World;
+            var world = context.World;
             var run = new Run(instance.Run);
             var box = world.Segments<All<Write<T1>, Write<T2>, Write<T3>, Write<T4>, Write<T5>>>(run.Method);
             return new[]
@@ -218,9 +218,9 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4, T5, T6> instance, Controller controller)
+        public override Phase[] Schedule(in IRunEach<T1, T2, T3, T4, T5, T6> instance, in Schedule.Context context)
         {
-            var world = controller.World;
+            var world = context.World;
             var run = new Run(instance.Run);
             var box = world.Segments<All<Write<T1>, Write<T2>, Write<T3>, Write<T4>, Write<T5>, Write<T6>>>(run.Method);
             return new[]
@@ -245,9 +245,9 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4, T5, T6, T7> instance, Controller controller)
+        public override Phase[] Schedule(in IRunEach<T1, T2, T3, T4, T5, T6, T7> instance, in Schedule.Context context)
         {
-            var world = controller.World;
+            var world = context.World;
             var run = new Run(instance.Run);
             var box = world.Segments<All<Write<T1>, Write<T2>, Write<T3>, Write<T4>, Write<T5>, Write<T6>, Write<T7>>>(run.Method);
             return new[]
@@ -272,26 +272,26 @@ namespace Entia.Dependers
 {
     public sealed class RunEach : IDepender
     {
-        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+        public IEnumerable<IDependency> Depend(in Dependency.Context context) => Enumerable.Empty<IDependency>()
 
             .Prepend(new Read(typeof(Entity)));
     }
     public sealed class RunEach<T> : IDepender where T : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+        public IEnumerable<IDependency> Depend(in Dependency.Context context) => Enumerable.Empty<IDependency>()
             .Concat(context.Dependencies<Write<T>>())
             .Prepend(new Read(typeof(Entity)));
     }
     public sealed class RunEach<T1, T2> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+        public IEnumerable<IDependency> Depend(in Dependency.Context context) => Enumerable.Empty<IDependency>()
             .Concat(context.Dependencies<Write<T1>>())
             .Concat(context.Dependencies<Write<T2>>())
             .Prepend(new Read(typeof(Entity)));
     }
     public sealed class RunEach<T1, T2, T3> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+        public IEnumerable<IDependency> Depend(in Dependency.Context context) => Enumerable.Empty<IDependency>()
             .Concat(context.Dependencies<Write<T1>>())
             .Concat(context.Dependencies<Write<T2>>())
             .Concat(context.Dependencies<Write<T3>>())
@@ -299,7 +299,7 @@ namespace Entia.Dependers
     }
     public sealed class RunEach<T1, T2, T3, T4> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+        public IEnumerable<IDependency> Depend(in Dependency.Context context) => Enumerable.Empty<IDependency>()
             .Concat(context.Dependencies<Write<T1>>())
             .Concat(context.Dependencies<Write<T2>>())
             .Concat(context.Dependencies<Write<T3>>())
@@ -308,7 +308,7 @@ namespace Entia.Dependers
     }
     public sealed class RunEach<T1, T2, T3, T4, T5> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+        public IEnumerable<IDependency> Depend(in Dependency.Context context) => Enumerable.Empty<IDependency>()
             .Concat(context.Dependencies<Write<T1>>())
             .Concat(context.Dependencies<Write<T2>>())
             .Concat(context.Dependencies<Write<T3>>())
@@ -318,7 +318,7 @@ namespace Entia.Dependers
     }
     public sealed class RunEach<T1, T2, T3, T4, T5, T6> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+        public IEnumerable<IDependency> Depend(in Dependency.Context context) => Enumerable.Empty<IDependency>()
             .Concat(context.Dependencies<Write<T1>>())
             .Concat(context.Dependencies<Write<T2>>())
             .Concat(context.Dependencies<Write<T3>>())
@@ -329,7 +329,7 @@ namespace Entia.Dependers
     }
     public sealed class RunEach<T1, T2, T3, T4, T5, T6, T7> : IDepender where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent
     {
-        public IEnumerable<IDependency> Depend(in Context context) => Enumerable.Empty<IDependency>()
+        public IEnumerable<IDependency> Depend(in Dependency.Context context) => Enumerable.Empty<IDependency>()
             .Concat(context.Dependencies<Write<T1>>())
             .Concat(context.Dependencies<Write<T2>>())
             .Concat(context.Dependencies<Write<T3>>())

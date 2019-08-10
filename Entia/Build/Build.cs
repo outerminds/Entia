@@ -14,7 +14,9 @@ namespace Entia.Build
         public Context(Node node, Node root, World world) { Node = node; Root = root; World = world; }
 
         public Result<IRunner> Build(Node node) => World.Container.Get<IBuilder>(node.Value.GetType())
-            .Bind(With(node), (builder, state) => builder.Build(state));
+            .Select(With(node), (builder, state) => builder.Build(state))
+            .FirstOrFailure()
+            .Flatten();
         public Context With(Node node = null) => new Context(node ?? Node, Root, World);
     }
 

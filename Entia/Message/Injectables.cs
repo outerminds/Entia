@@ -1,13 +1,10 @@
 ﻿using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependers;
 using Entia.Injectors;
 using Entia.Modules;
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 
 namespace Entia.Injectables
 {

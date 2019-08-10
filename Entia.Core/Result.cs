@@ -463,6 +463,36 @@ namespace Entia.Core
         public static Result<Unit> Any(this IEnumerable<Result<Unit>> results) => results.Any<Unit>().Return(default(Unit));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T> FirstOrFailure<T>(this IEnumerable<T> source)
+        {
+            foreach (var item in source) return item;
+            return Failure();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T> FirstOrFailure<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+        {
+            foreach (var item in source) if (predicate(item)) return item;
+            return Failure();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T> LastOrFailure<T>(this IEnumerable<T> source)
+        {
+            var result = Failure().AsResult<T>();
+            foreach (var item in source) result = item;
+            return result;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T> LastOrFailure<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+        {
+            var result = Failure().AsResult<T>();
+            foreach (var item in source) if (predicate(item)) result = item;
+            return result;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<T> Choose<T>(params Result<T>[] results)
         {
             foreach (var result in results) if (result.TryValue(out var value)) yield return value;

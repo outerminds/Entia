@@ -3,27 +3,28 @@ using Entia.Core;
 using Entia.Modules;
 using Entia.Modules.Schedule;
 using Entia.Systems;
+using Entia.Schedule;
 
 namespace Entia.Schedulers
 {
     public sealed class Initialize : Scheduler<IInitialize>
     {
         public override Type[] Phases => new[] { typeof(Phases.Initialize) };
-        public override Phase[] Schedule(IInitialize instance, Controller controller) =>
+        public override Phase[] Schedule(in IInitialize instance, in Context context) =>
             new[] { Phase.From<Phases.Initialize>(instance.Initialize) };
     }
 
     public sealed class Dispose : Scheduler<IDispose>
     {
         public override Type[] Phases => new[] { typeof(Phases.Dispose) };
-        public override Phase[] Schedule(IDispose instance, Controller controller) =>
+        public override Phase[] Schedule(in IDispose instance, in Context context) =>
             new[] { Phase.From<Phases.Dispose>(instance.Dispose) };
     }
 
     public sealed class Run : Scheduler<IRun>
     {
         public override Type[] Phases => new[] { typeof(Phases.Run) };
-        public override Phase[] Schedule(IRun instance, Controller controller) =>
+        public override Phase[] Schedule(in IRun instance, in Context context) =>
             new[] { Phase.From<Phases.Run>(instance.Run) };
     }
 
@@ -36,10 +37,11 @@ namespace Entia.Schedulers
             typeof(Phases.React.Dispose),
         };
 
-        public override Phase[] Schedule(IReact<T> instance, Controller controller)
+        public override Phase[] Schedule(in IReact<T> instance, in Context context)
         {
+            var controller = context.Controller;
             var run = new InAction<T>(instance.React);
-            var reaction = controller.World.Messages().Reaction<T>();
+            var reaction = context.World.Messages().Reaction<T>();
             var react = new InAction<T>((in T message) => controller.Run(new Phases.React<T> { Message = message }));
             return new[]
             {
