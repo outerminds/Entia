@@ -5,7 +5,7 @@ using System;
 
 namespace Entia.Builders
 {
-    public interface IBuilder : ITrait, IImplementation<IBuildable, Default>
+    public interface IBuilder : ITrait
     {
         Result<IRunner> Build(in Context context);
     }
@@ -15,10 +15,5 @@ namespace Entia.Builders
         public abstract Result<IRunner> Build(in T data, in Context context);
         Result<IRunner> IBuilder.Build(in Context context) => Result.Cast<T>(context.Node.Value)
             .Bind((@this: this, context), (data, state) => state.@this.Build(data, state.context));
-    }
-
-    public sealed class Default : IBuilder
-    {
-        public Result<IRunner> Build(in Context context) => Result.Exception(new NotImplementedException());
     }
 }

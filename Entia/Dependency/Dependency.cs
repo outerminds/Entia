@@ -29,12 +29,11 @@ namespace Entia.Dependency
         public IDependency[] Dependencies<T>() => Dependencies(typeof(T));
         public IDependency[] Dependencies(MemberInfo member)
         {
+            var key = (typeof(Context), member);
             var boxes = World.Boxes();
-            if (boxes.TryGet<IDependency[]>(member, out var box)) return box.Value;
-
-            var dependencies = Next(member).Distinct().ToArray();
-            boxes.Set(member, dependencies);
-            return dependencies;
+            if (boxes.TryGet<IDependency[]>(key, out var box)) return box.Value;
+            boxes.Set(key, Next(member).Distinct().ToArray(), out box);
+            return box.Value;
         }
 
         public Context With(MemberInfo member = null) => new Context(member ?? Member, Members, World);

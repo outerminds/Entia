@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Serializers;
@@ -7,7 +9,7 @@ using Entia.Serializers;
 namespace Entia.Modules
 {
     [ThreadSafe]
-    public sealed class Boxes : IModule, IClearable
+    public sealed class Boxes : IModule, IClearable, IEnumerable<(Type type, object key, object value)>
     {
         struct Data
         {
@@ -250,5 +252,17 @@ namespace Entia.Modules
             }
             return data.Map.Remove(key);
         }
+
+        public IEnumerator<(Type type, object key, object value)> GetEnumerator() =>
+            _boxes.Read(boxes => boxes
+                .SelectMany(pair => pair.value.Map
+                    .Select(pair2 => (pair.type, key: pair2.Key, box: pair2.Value))
+                    .Prepend((pair.type, null, pair.value.Box))
+                    .Where(data => data.box.IsValid)
+                    .Select(data => (data.type, data.key, data.box.Value)))
+                .ToArray())
+            .Slice()
+            .GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

@@ -1,3 +1,4 @@
+using System.Linq;
 using Entia.Core;
 using Entia.Dependencies;
 using Entia.Nodes;
@@ -15,8 +16,8 @@ namespace Entia.Analysis
 
         public Result<IDependency[]> Analyze(Node node) => World.Container.Get<IAnalyzer>(node.Value.GetType())
             .Select(With(node), (analyzer, state) => analyzer.Analyze(state))
-            .FirstOrFailure()
-            .Flatten();
+            .Choose()
+            .FirstOrFailure();
         public Context With(Node node = null) => new Context(node ?? Node, Root, World);
     }
 
