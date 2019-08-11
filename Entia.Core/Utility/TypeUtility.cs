@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -250,22 +251,15 @@ namespace Entia.Core
             }
         }
 
-        static readonly Concurrent<Dictionary<Type, TypeData>> _typeToData = new Dictionary<Type, TypeData>();
+        static readonly ConcurrentDictionary<Type, TypeData> _typeToData = new ConcurrentDictionary<Type, TypeData>();
 
         public static TypeData GetData<T>() => Cache<T>.Data;
 
         public static TypeData GetData(Type type)
         {
-            using (var read = _typeToData.Read(true))
-            {
-                if (read.Value.TryGetValue(type, out var value)) return value;
-                var data = new TypeData(type);
-                using (var write = _typeToData.Write())
-                {
-                    if (write.Value.TryGetValue(type, out value)) return value;
-                    return write.Value[type] = data;
-                }
-            }
+            if (_typeToData.TryGetValue(type, out var data)) return data;
+            _typeToData.TryAdd(type, data = new TypeData(type));
+            return data;
         }
 
         public static string Trimmed(this Type type) => type.Name.Split('`').First();

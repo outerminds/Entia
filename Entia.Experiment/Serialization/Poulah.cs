@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using Entia.Core;
-using Entia.Modules;
 using Entia.Modules.Serialization;
 
 namespace Entia.Experiment.Serialization
@@ -69,142 +68,93 @@ namespace Entia.Experiment.Serialization
         }
     }
 
-    public struct DescribeContext
+    public readonly struct DescribeContext
     {
-        public TypeData Type;
-        public Descriptors Descriptors;
-        public Dictionary<object, IDescription> References;
+        public readonly TypeData Type;
+        public readonly Dictionary<object, IDescription> References;
+        public readonly World World;
 
-        public bool Describe(object instance, Type type, out IDescription description) =>
-            Descriptors.Describe(instance, out description, this.With(type));
-        public bool Describe<T>(in T instance, out IDescription description) =>
-            Descriptors.Describe(instance, out description, this.With<T>());
+        public DescribeContext(Dictionary<object, IDescription> references, World world) : this(null, references, world) { }
+        public DescribeContext(TypeData type, Dictionary<object, IDescription> references, World world)
+        {
+            Type = type;
+            References = references;
+            World = world;
+        }
+
+        public bool Describe(object instance, Type type, out IDescription description)
+        {
+            if (instance == null) { description = new Null(); return true; }
+            else if (References.TryGetValue(instance, out description)) return true;
+            else if (World.Container.TryGet<IDescriptor>(type, out var descriptor))
+                return descriptor.Describe(instance, out description, With(type));
+            else { description = default; return false; }
+        }
+
+        public bool Describe<T>(in T instance, out IDescription description)
+        {
+            if (instance == null) { description = new Null(); return true; }
+            else if (References.TryGetValue(instance, out description)) return true;
+            else if (World.Container.TryGet<T, Descriptor<T>>(out var descriptor))
+                return descriptor.Describe(instance, out description, With<T>());
+            else return Describe(instance, typeof(T), out description);
+        }
 
         public DescribeContext With<T>() => With(TypeUtility.GetData<T>());
         public DescribeContext With(Type type = null) => With(TypeUtility.GetData(type));
-        public DescribeContext With(TypeData type = null) => new DescribeContext
-        {
-            Type = type ?? Type,
-            Descriptors = Descriptors,
-            References = References
-        };
+        public DescribeContext With(TypeData type = null) => new DescribeContext(type ?? Type, References, World);
     }
 
-    public struct InstantiateContext
+    public readonly struct InstantiateContext
     {
-        public TypeData Type;
-        public Descriptors Descriptors;
-        public Dictionary<IDescription, object> References;
+        public readonly TypeData Type;
+        public readonly Dictionary<IDescription, object> References;
+        public readonly World World;
 
-        public bool Instantiate<T>(IDescription description, out T instance) =>
-            Descriptors.Instantiate(description, out instance, With<T>());
-        public bool Instantiate(IDescription description, out object instance, Type type) =>
-            Descriptors.Instantiate(description, out instance, With(type));
+        public InstantiateContext(Dictionary<IDescription, object> references, World world) : this(null, references, world) { }
+        public InstantiateContext(TypeData type, Dictionary<IDescription, object> references, World world)
+        {
+            Type = type;
+            References = references;
+            World = world;
+        }
+
+        public bool Instantiate<T>(IDescription description, out T instance)
+        {
+            if (description is Null) { instance = default; return true; }
+            else if (References.TryGetValue(description, out var value)) { instance = (T)value; return true; }
+            else if (World.Container.TryGet<T, Descriptor<T>>(out var descriptor))
+                return descriptor.Instantiate(description, out instance, With<T>());
+            else if (Instantiate(description, typeof(T), out value)) { instance = (T)value; return true; }
+            else { instance = default; return false; }
+        }
+
+        public bool Instantiate(IDescription description, Type type, out object instance)
+        {
+            if (description is Null) { instance = default; return true; }
+            else if (References.TryGetValue(description, out instance)) return true;
+            else if (World.Container.TryGet<IDescriptor>(type, out var instantiator))
+                return instantiator.Instantiate(description, out instance, With(type));
+            else return false;
+        }
+
 
         public InstantiateContext With<T>() => With(TypeUtility.GetData<T>());
         public InstantiateContext With(Type type = null) => With(TypeUtility.GetData(type));
-        public InstantiateContext With(TypeData type = null) => new InstantiateContext
-        {
-            Type = type ?? Type,
-            Descriptors = Descriptors,
-            References = References
-        };
+        public InstantiateContext With(TypeData type = null) => new InstantiateContext(type ?? Type, References, World);
     }
 
-    public sealed class Descriptors : IModule
+    public static class Extensions
     {
-        readonly Container _container;
-        public Descriptors(Container container) { _container = container; }
+        public static bool Describe(this World world, object instance, Type type, out IDescription description) =>
+            new DescribeContext(new Dictionary<object, IDescription>(), world).Describe(instance, type, out description);
+        public static bool Describe<T>(this World world, in T instance, out IDescription description) =>
+            new DescribeContext(new Dictionary<object, IDescription>(), world).Describe(instance, out description);
 
-        public bool Describe(object instance, Type type, out IDescription description) =>
-            Describe(instance, out description, DescribeContext(TypeUtility.GetData(type)));
-        public bool Describe<T>(in T instance, out IDescription description) =>
-            Describe(instance, out description, DescribeContext(TypeUtility.GetData<T>()));
-
-        public bool Describe(object instance, out IDescription description, in DescribeContext context)
-        {
-            if (instance == null)
-            {
-                description = new Null();
-                return true;
-            }
-            else if (context.References.TryGetValue(instance, out description)) return true;
-            else if (_container.TryGet<IDescriptor>(context.Type, out var descriptor))
-                return descriptor.Describe(instance, out description, context);
-
-            description = default;
-            return false;
-        }
-
-        public bool Describe<T>(in T instance, out IDescription description, in DescribeContext context)
-        {
-            if (instance == null)
-            {
-                description = new Null();
-                return true;
-            }
-            else if (context.References.TryGetValue(instance, out description)) return true;
-            else if (_container.TryGet<T, Descriptor<T>>(out var descriptor))
-                return descriptor.Describe(instance, out description, context);
-            else
-                return Describe((object)instance, out description, context);
-        }
-
-        public bool Instantiate<T>(IDescription description, out T instance) =>
-            Instantiate(description, out instance, InstantiateContext(TypeUtility.GetData<T>()));
-        public bool Instantiate(IDescription description, out object instance, Type type) =>
-            Instantiate(description, out instance, InstantiateContext(TypeUtility.GetData(type)));
-
-        public bool Instantiate<T>(IDescription description, out T instance, in InstantiateContext context)
-        {
-            if (description is Null)
-            {
-                instance = default;
-                return true;
-            }
-            else if (context.References.TryGetValue(description, out var value))
-            {
-                instance = (T)value;
-                return true;
-            }
-            else if (_container.TryGet<T, Descriptor<T>>(out var descriptor))
-                return descriptor.Instantiate(description, out instance, context);
-            else if (Instantiate(description, out value, context))
-            {
-                instance = (T)value;
-                return true;
-            }
-
-            instance = default;
-            return false;
-        }
-
-        public bool Instantiate(IDescription description, out object instance, in InstantiateContext context)
-        {
-            if (description is Null)
-            {
-                instance = default;
-                return true;
-            }
-            else if (context.References.TryGetValue(description, out instance)) return true;
-            else if (_container.TryGet<IDescriptor>(context.Type, out var instantiator))
-                return instantiator.Instantiate(description, out instance, context);
-            return false;
-        }
-
-        DescribeContext DescribeContext(TypeData type) => new DescribeContext
-        {
-            Type = type,
-            Descriptors = this,
-            References = new Dictionary<object, IDescription>()
-        };
-
-        InstantiateContext InstantiateContext(TypeData type) => new InstantiateContext
-        {
-            Type = type,
-            Descriptors = this,
-            References = new Dictionary<IDescription, object>()
-        };
+        public static bool Instantiate<T>(this World world, IDescription description, out T instance) =>
+            new InstantiateContext(new Dictionary<IDescription, object>(), world).Instantiate(description, out instance);
+        public static bool Instantiate(this World world, IDescription description, Type type, out object instance) =>
+            new InstantiateContext(new Dictionary<IDescription, object>(), world).Instantiate(description, type, out instance);
     }
 
     public static class Descriptor
@@ -398,7 +348,7 @@ namespace Entia.Experiment.Serialization
 
         public override bool Instantiate(IDescription description, out IList instance, in InstantiateContext context)
         {
-            instance = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(context.Type.Arguments));
+            instance = (IList)Activator.CreateInstance(context.Type);
             context.References[description] = instance;
             if (description is ConcreteArray array && array.Items.Length == 1 &&
                 context.Instantiate(array.Items[0], out Array values))
@@ -457,7 +407,7 @@ namespace Entia.Experiment.Serialization
 
         public override bool Instantiate(IDescription description, out IDictionary instance, in InstantiateContext context)
         {
-            instance = (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(context.Type.Arguments));
+            instance = (IDictionary)Activator.CreateInstance(context.Type);
             context.References[description] = instance;
             if (description is ConcreteArray array && array.Items.Length == 2 &&
                 context.Instantiate(array.Items[0], out Array keys) &&
@@ -523,7 +473,7 @@ namespace Entia.Experiment.Serialization
                 case Abstract @object:
                     {
                         if (context.Instantiate(@object.Type, out Type type) &&
-                            context.Instantiate(@object.Description, out instance, type))
+                            context.Instantiate(@object.Description, type, out instance))
                             return true;
                         instance = default;
                         return false;
@@ -539,7 +489,7 @@ namespace Entia.Experiment.Serialization
                         {
                             var item = array.Items[i];
                             var field = fields[i];
-                            if (context.Instantiate(item, out var value, field.FieldType))
+                            if (context.Instantiate(item, field.FieldType, out var value))
                                 field.SetValue(instance, value);
                         }
                         return true;
@@ -552,7 +502,7 @@ namespace Entia.Experiment.Serialization
                         foreach (var pair in @object.Members)
                         {
                             if (type.Fields.TryGetValue(pair.Key, out var field) &&
-                                context.Instantiate(pair.Value, out var value, field.FieldType))
+                                context.Instantiate(pair.Value, field.FieldType, out var value))
                                 field.SetValue(instance, value);
                         }
                         return true;
@@ -602,7 +552,7 @@ namespace Entia.Experiment.Serialization
                         for (int i = 0; i < array.Items.Length; i++)
                         {
                             var item = array.Items[i];
-                            if (context.Instantiate(item, out var value, element)) instance.SetValue(value, i);
+                            if (context.Instantiate(item, element, out var value)) instance.SetValue(value, i);
                         }
                         return true;
                     }
@@ -614,7 +564,7 @@ namespace Entia.Experiment.Serialization
                         instance = Array.CreateInstance(element, @object.Members.Count);
                         foreach (var pair in @object.Members)
                         {
-                            if (context.Instantiate(pair.Value, out var value, element)) instance.SetValue(value, index);
+                            if (context.Instantiate(pair.Value, element, out var value)) instance.SetValue(value, index);
                             index++;
                         }
                         return true;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -145,32 +146,36 @@ namespace Entia.Core
 
         struct State
         {
+            public Type[] Types;
             public Dictionary<Type, int> Indices;
-            public List<Type> Types;
-            public List<List<int>> Super;
-            public List<List<int>> Sub;
+            public List<int>[] Super;
+            public List<int>[] Sub;
         }
 
+        static readonly ConcurrentDictionary<Type, (int index, List<int> super, List<int> sub)> _indices = new ConcurrentDictionary<Type, (int index, List<int> super, List<int> sub)>();
         static readonly Concurrent<State> _state = new State
         {
+            Types = new Type[0],
             Indices = new Dictionary<Type, int>(),
-            Types = new List<Type>(),
-            Super = new List<List<int>>(),
-            Sub = new List<List<int>>(),
+            Super = new List<int>[0],
+            Sub = new List<int>[0],
         };
 
         static bool TryGetIndices(Type type, out (int index, List<int> super, List<int> sub) indices)
         {
+            if (_indices.TryGetValue(type, out indices)) return indices.index >= 0;
             using (var read = _state.Read(true))
             {
                 var index = read.Value.Indices.TryGetValue(type, out var value) ? value : ReserveIndex(type);
                 if (index >= 0)
                 {
                     indices = (index, read.Value.Super[index], read.Value.Sub[index]);
+                    _indices.TryAdd(type, indices);
                     return true;
                 }
 
                 indices = default;
+                _indices.TryAdd(type, (index, default, default));
                 return false;
             }
         }
@@ -192,8 +197,6 @@ namespace Entia.Core
             {
                 using (var write = _state.Write())
                 {
-                    if (write.Value.Indices.TryGetValue(type, out var index)) return index;
-
                     var super = type.Bases()
                         .Concat(type.Interfaces())
                         .SelectMany(ancestor => ancestor.IsGenericType ? new[] { ancestor, ancestor.GetGenericTypeDefinition() } : new[] { ancestor })
@@ -204,11 +207,11 @@ namespace Entia.Core
                         .Select((current, i) => (type: current, index: i))
                         .Where(pair => pair.type.Is(type, true, true))
                         .ToArray();
-                    index = write.Value.Types.Count;
-                    write.Value.Types.Add(type);
+                    var index = write.Value.Types.Length;
                     write.Value.Indices[type] = index;
-                    write.Value.Super.Add(new List<int>(super.Select(pair => pair.index)));
-                    write.Value.Sub.Add(new List<int>(sub.Select(pair => pair.index)));
+                    ArrayUtility.Add(ref write.Value.Types, type);
+                    ArrayUtility.Add(ref write.Value.Super, new List<int>(super.Select(pair => pair.index)));
+                    ArrayUtility.Add(ref write.Value.Sub, new List<int>(sub.Select(pair => pair.index)));
                     foreach (var pair in super) write.Value.Sub[pair.index].Add(index);
                     return index;
                 }
@@ -254,7 +257,16 @@ namespace Entia.Core
         [ThreadSafe]
         public int Index<T>() where T : TBase => Cache<T>.Index;
         [ThreadSafe]
-        public bool TryIndex(Type concrete, out int index) => (index = GetIndex(concrete)) >= 0;
+        public bool TryIndex(Type concrete, out int index)
+        {
+            if (TryGetIndices(concrete, out var indices))
+            {
+                index = indices.index;
+                return true;
+            }
+            index = default;
+            return false;
+        }
         [ThreadSafe]
         public IEnumerable<int> Indices<T>(bool super = false, bool sub = false) where T : TBase
         {

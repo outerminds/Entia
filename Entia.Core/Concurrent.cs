@@ -112,10 +112,14 @@ namespace Entia.Core
         public static implicit operator Concurrent<T>(T value) => new Concurrent<T>(value);
 
         T _value;
-        readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+        readonly ReaderWriterLockSlim _lock;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Concurrent(T value) { _value = value; }
+        public Concurrent(T value, bool recursive = true)
+        {
+            _value = value;
+            _lock = new ReaderWriterLockSlim(recursive ? LockRecursionPolicy.SupportsRecursion : LockRecursionPolicy.NoRecursion);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadDisposable Read(bool upgradeable = false)

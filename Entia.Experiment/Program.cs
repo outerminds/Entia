@@ -636,13 +636,12 @@ namespace Entia.Experiment
         }
         static void CompareSerializers<T>(T value)
         {
-            var world = new World();
+            var container = new Container();
+            var world = new World(container);
             var serializers = world.Serializers();
             var descriptors = world.Descriptors();
 
-            var container = new Container();
-            var poulah = new Serialization.Descriptors(container);
-            poulah.Describe(value, out var description);
+            world.Describe(value, out var description);
 
             // serializers.Serialize(value, out var bytes1);
             descriptors.Serialize(value, out var bytes2);
@@ -655,23 +654,10 @@ namespace Entia.Experiment
                 bytes3 = stream.ToArray();
             }
 
-            // void OldSerialize()
-            // {
-            //     serializers.Serialize(value, out _);
-            // }
-            // void OldDeserialize()
-            // {
-            //     serializers.Deserialize(bytes1, out T _, value.GetType());
-            // }
-
-            void Describe() => poulah.Describe(value, out _);
-            void Instantiate() => poulah.Instantiate(description, out T _);
-
+            void Describe() => world.Describe(value, out _);
+            void Instantiate() => world.Instantiate(description, out T _);
             void NewSerialize() => descriptors.Serialize(value, out _);
-            void NewDeserialize()
-            {
-                descriptors.Deserialize(bytes2, out T _);
-            }
+            void NewDeserialize() => descriptors.Deserialize(bytes2, out T _);
             void BinarySerialize()
             {
                 using (var stream = new MemoryStream())
@@ -685,10 +671,11 @@ namespace Entia.Experiment
                 using (var stream = new MemoryStream(bytes3)) binary.Deserialize(stream);
             }
 
-            while (true)
+            for (int i = 0; i < 1000; i++) Test.Measure(Instantiate, new Action[] { }, 1000);
+            // while (true)
             {
-                Test.Measure(NewSerialize, new Action[] { BinarySerialize, Describe }, 1000);
-                Test.Measure(NewDeserialize, new Action[] { BinaryDeserialize, Instantiate }, 1000);
+                // Test.Measure(NewSerialize, new Action[] { BinarySerialize, Describe }, 1000);
+                // Test.Measure(NewDeserialize, new Action[] { BinaryDeserialize, Instantiate }, 1000);
                 Console.WriteLine();
             }
         }
@@ -719,12 +706,12 @@ namespace Entia.Experiment
         static void PoulahDescriptor()
         {
             var container = new Container();
-            var descriptors = new Serialization.Descriptors(container);
+            var world = new World(container);
 
             void Test<T>(T value)
             {
-                descriptors.Describe(value, out var description);
-                descriptors.Instantiate(description, out value);
+                world.Describe(value, out var description);
+                world.Instantiate(description, out value);
             }
 
             Test(new List<int> { });
@@ -763,14 +750,14 @@ namespace Entia.Experiment
             // Group2Test.Benchmark(1_000_000);
 
             // TestLaPool();
-            for (int i = 0; i < 1000; i++)
-            {
-                GroupTest.Benchmark(1000 * i);
-                // GroupTest.Benchmark(1_000);
-                // GroupTest.Benchmark(10_000);
-                // GroupTest.Benchmark(100_000);
-                // GroupTest.Benchmark(1_000_000);
-            }
+            // for (int i = 0; i < 1000; i++)
+            // {
+            //     GroupTest.Benchmark(1000 * i);
+            // GroupTest.Benchmark(1_000);
+            // GroupTest.Benchmark(10_000);
+            // GroupTest.Benchmark(100_000);
+            // GroupTest.Benchmark(1_000_000);
+            // }
         }
 
         public readonly struct BobaData : ISystem
