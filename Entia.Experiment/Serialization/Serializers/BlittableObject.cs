@@ -37,12 +37,6 @@ namespace Entia.Experiment
         }
 
         public bool Initialize(ref object instance, in DeserializeContext context) => true;
-
-        public bool Clone(object instance, out object clone, in CloneContext context)
-        {
-            clone = CloneUtility.Shallow(instance);
-            return true;
-        }
     }
 
     public sealed class BlittableObject<T> : Serializer<T> where T : unmanaged
@@ -55,11 +49,5 @@ namespace Entia.Experiment
 
         public override bool Instantiate(out T instance, in DeserializeContext context) => context.Reader.Read(out instance);
         public override bool Initialize(ref T instance, in DeserializeContext context) => true;
-
-        public override bool Clone(in T instance, out T clone, in CloneContext context)
-        {
-            clone = instance;
-            return true;
-        }
     }
 }

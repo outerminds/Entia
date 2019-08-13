@@ -171,8 +171,8 @@ namespace Entia.Modules
         public ISerializer Get(Type type) => _serializers.TryGet(type, out var serializer, true, false) ? serializer : Default(type);
         public bool Set<T>(ISerializer serializer) => _serializers.Set<T>(serializer);
         public bool Set(Type type, ISerializer serializer) => _serializers.Set(type, serializer);
-        public bool Remove<T>() => _serializers.Remove<T>(false, false);
-        public bool Remove(Type type) => _serializers.Remove(type, false, false);
+        public bool Remove<T>() => _serializers.Remove<T>();
+        public bool Remove(Type type) => _serializers.Remove(type);
         public bool Clear() => _defaults.Clear() | _serializers.Clear();
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>

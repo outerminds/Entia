@@ -11,7 +11,7 @@ namespace Entia.Modules
 
         public static TValue Default<TKey, TValue>(this TypeMap<TKey, TValue> map, Type type, Type definition = null, Type attribute = null, Func<Type, TValue> @default = null)
             where TKey : class where TValue : class =>
-            map.TryGet(type, out var value, false, false) ? value :
+            map.TryGet(type, out var value) ? value :
             map[type] = Default<TValue>(type, definition, attribute)
                 .Or((map, @default, type), state =>
                     state.map.TryGet(state.type, out var fallback, true, false) ? fallback :

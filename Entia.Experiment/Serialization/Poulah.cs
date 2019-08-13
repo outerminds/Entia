@@ -7,6 +7,8 @@ using System.Runtime.Serialization;
 using Entia.Core;
 using Entia.Modules.Serialization;
 
+// TODO: writer serializers
+// add a Lazy<IDescription> to constant
 namespace Entia.Experiment.Serialization
 {
     [Implementation(typeof(List<>), typeof(ListDescriptor<>))]
@@ -473,26 +475,10 @@ namespace Entia.Experiment.Serialization
                 case Abstract @object:
                     {
                         if (context.Instantiate(@object.Type, out Type type) &&
-                            context.Instantiate(@object.Description, type, out instance))
+                            context.Instantiate(@object.Value, type, out instance))
                             return true;
                         instance = default;
                         return false;
-                    }
-                case ConcreteArray array:
-                    {
-                        instance = FormatterServices.GetUninitializedObject(context.Type);
-                        context.References[description] = instance;
-                        var type = TypeUtility.GetData(context.Type);
-                        var fields = type.InstanceFields;
-                        var count = Math.Min(array.Items.Length, fields.Length);
-                        for (int i = 0; i < array.Items.Length; i++)
-                        {
-                            var item = array.Items[i];
-                            var field = fields[i];
-                            if (context.Instantiate(item, field.FieldType, out var value))
-                                field.SetValue(instance, value);
-                        }
-                        return true;
                     }
                 case ConcreteObject @object:
                     {
@@ -553,19 +539,6 @@ namespace Entia.Experiment.Serialization
                         {
                             var item = array.Items[i];
                             if (context.Instantiate(item, element, out var value)) instance.SetValue(value, i);
-                        }
-                        return true;
-                    }
-                case ConcreteObject @object:
-                    {
-                        var type = TypeUtility.GetData(context.Type);
-                        var element = type.Element;
-                        var index = 0;
-                        instance = Array.CreateInstance(element, @object.Members.Count);
-                        foreach (var pair in @object.Members)
-                        {
-                            if (context.Instantiate(pair.Value, element, out var value)) instance.SetValue(value, index);
-                            index++;
                         }
                         return true;
                     }
@@ -795,19 +768,262 @@ namespace Entia.Experiment.Serialization
         }
     }
 
+
+    public readonly struct SerializeContext
+    {
+        public readonly Writer Writer;
+        public readonly Dictionary<IDescription, int> References;
+        public readonly World World;
+
+        public bool Serialize(IDescription description) => throw null;
+    }
+
+    public readonly struct DeserializeContext
+    {
+        public readonly Reader Reader;
+        public readonly List<IDescription> References;
+        public readonly World World;
+
+        public bool Deserialize(out IDescription description) => throw null;
+    }
+
+    namespace Serializers
+    {
+        public interface ISerializer : ITrait
+        {
+            bool Serialize(IDescription description, in SerializeContext context);
+            bool Deserialize(out IDescription description, in DeserializeContext context);
+        }
+
+        public abstract class Serializer<T> : ISerializer where T : IDescription
+        {
+            public abstract bool Serialize(in T description, in SerializeContext context);
+            public abstract bool Deserialize(out T description, in DeserializeContext context);
+
+            bool ISerializer.Serialize(IDescription description, in SerializeContext context) =>
+                description is T casted && Serialize(casted, context);
+
+            bool ISerializer.Deserialize(out IDescription description, in DeserializeContext context)
+            {
+                if (Deserialize(out var casted, context))
+                {
+                    description = casted;
+                    return true;
+                }
+                description = default;
+                return false;
+            }
+        }
+
+
+        public sealed class Default : ISerializer
+        {
+            public enum Kinds : byte { Null, Constant, Abstract, Array, Object, Reference }
+            public enum Types : byte
+            {
+                Null,
+                Boolean, Char,
+                Byte, SByte, UShort, Short, UInt, Int, ULong, Long,
+                Float, Double, Decimal,
+                String, DateTime, TimeSpan,
+                Array, Object
+            }
+
+            static Types ToType(Type type)
+            {
+                switch (Type.GetTypeCode(type))
+                {
+                    case TypeCode.Empty: return Types.Null;
+                    case TypeCode.Boolean: return Types.Boolean;
+                    case TypeCode.Byte: return Types.Byte;
+                    case TypeCode.Char: return Types.Char;
+                    case TypeCode.DateTime: return Types.DateTime;
+                    case TypeCode.Decimal: return Types.Decimal;
+                    case TypeCode.Double: return Types.Double;
+                    case TypeCode.Int16: return Types.Short;
+                    case TypeCode.Int32: return Types.Int;
+                    case TypeCode.Int64: return Types.Long;
+                    case TypeCode.SByte: return Types.SByte;
+                    case TypeCode.Single: return Types.Float;
+                    case TypeCode.String: return Types.String;
+                    case TypeCode.UInt16: return Types.UShort;
+                    case TypeCode.UInt32: return Types.UInt;
+                    case TypeCode.UInt64: return Types.ULong;
+                }
+
+                return
+                    type == typeof(TimeSpan) ? Types.TimeSpan :
+                    type.IsArray ? Types.Array :
+                    Types.Object;
+            }
+
+            static bool WriteValue(object value, Type type, Types code, Writer writer)
+            {
+                switch (code)
+                {
+                    case Types.Null: return true;
+                    case Types.Boolean: writer.Write((bool)value); return true;
+                    case Types.Char: writer.Write((char)value); return true;
+                    case Types.Byte: writer.Write((byte)value); return true;
+                    case Types.SByte: writer.Write((sbyte)value); return true;
+                    case Types.UShort: writer.Write((ushort)value); return true;
+                    case Types.Short: writer.Write((short)value); return true;
+                    case Types.UInt: writer.Write((uint)value); return true;
+                    case Types.Int: writer.Write((int)value); return true;
+                    case Types.ULong: writer.Write((ulong)value); return true;
+                    case Types.Long: writer.Write((long)value); return true;
+                    case Types.Float: writer.Write((float)value); return true;
+                    case Types.Double: writer.Write((double)value); return true;
+                    case Types.Decimal: writer.Write((decimal)value); return true;
+                    case Types.String: writer.Write((string)value); return true;
+                    case Types.DateTime: writer.Write((DateTime)value); return true;
+                    case Types.TimeSpan: writer.Write((TimeSpan)value); return true;
+                    case Types.Array:
+                        {
+                            var array = (Array)value;
+                            var data = TypeUtility.GetData(type);
+                            var element = ToType(data.Element);
+                            writer.Write(element);
+                            writer.Write(array.Length);
+                            for (int i = 0; i < array.Length; i++)
+                            {
+                                if (WriteValue(array.GetValue(i), data.Element, element, writer)) continue;
+                                return false;
+                            }
+                            return true;
+                        }
+                    // case Types.Object:
+                    //     {
+                    //         var data = TypeUtility.GetData(type);
+
+                    //     }
+                    default: return false;
+                }
+            }
+
+            public bool Serialize(IDescription description, in SerializeContext context)
+            {
+                if (context.References.TryGetValue(description, out var index))
+                {
+                    context.Writer.Write(Kinds.Reference);
+                    context.Writer.Write(index);
+                    return true;
+                }
+
+                context.References[description] = context.References.Count;
+                switch (description)
+                {
+                    case Null _: context.Writer.Write(Kinds.Null); return true;
+                    case Constant constant:
+                        if (constant.Value is null) { context.Writer.Write(Kinds.Null); return true; }
+                        context.Writer.Write(Kinds.Constant);
+                        var type = constant.Value.GetType();
+                        var code = ToType(type);
+                        context.Writer.Write(code);
+                        return WriteValue(constant.Value, type, code, context.Writer);
+                    case Abstract @abstract:
+                        context.Writer.Write(Kinds.Abstract);
+                        return context.Serialize(@abstract.Type) && context.Serialize(@abstract.Value);
+                    case ConcreteObject @object:
+                        context.Writer.Write(Kinds.Object);
+                        context.Writer.Write(@object.Members.Count);
+                        foreach (var pair in @object.Members)
+                        {
+                            context.Writer.Write(pair.Key);
+                            if (context.Serialize(pair.Value)) continue;
+                            return false;
+                        }
+                        return true;
+                    case ConcreteArray array:
+                        context.Writer.Write(Kinds.Array);
+                        context.Writer.Write(array.Items.Length);
+                        for (int i = 0; i < array.Items.Length; i++)
+                        {
+                            if (context.Serialize(array.Items[i])) continue;
+                            return false;
+                        }
+                        return true;
+                    default: return false;
+                }
+            }
+
+            public bool Deserialize(out IDescription description, in DeserializeContext context)
+            {
+                context.Reader.Read(out Kinds kind);
+                switch (kind)
+                {
+                    case Kinds.Null: description = new Null(); return true;
+                    case Kinds.Reference:
+                        context.Reader.Read(out int index);
+                        description = context.References[index];
+                        return true;
+                    case Kinds.Constant:
+                        {
+                            context.Reader.Read(out Types type);
+                            switch (type)
+                            {
+                                case Types.Null: description = new Constant(null); return true;
+                                case Types.Boolean: { context.Reader.Read(out bool value); description = new Constant(value); return true; }
+                                case Types.Char: { context.Reader.Read(out char value); description = new Constant(value); return true; }
+                                case Types.Byte: { context.Reader.Read(out byte value); description = new Constant(value); return true; }
+                                case Types.SByte: { context.Reader.Read(out sbyte value); description = new Constant(value); return true; }
+                                case Types.UShort: { context.Reader.Read(out ushort value); description = new Constant(value); return true; }
+                                case Types.Short: { context.Reader.Read(out short value); description = new Constant(value); return true; }
+                                case Types.UInt: { context.Reader.Read(out uint value); description = new Constant(value); return true; }
+                                case Types.Int: { context.Reader.Read(out int value); description = new Constant(value); return true; }
+                                case Types.ULong: { context.Reader.Read(out ulong value); description = new Constant(value); return true; }
+                                case Types.Long: { context.Reader.Read(out long value); description = new Constant(value); return true; }
+                                case Types.Float: { context.Reader.Read(out float value); description = new Constant(value); return true; }
+                                case Types.Double: { context.Reader.Read(out double value); description = new Constant(value); return true; }
+                                case Types.Decimal: { context.Reader.Read(out decimal value); description = new Constant(value); return true; }
+                                case Types.String: { context.Reader.Read(out string value); description = new Constant(value); return true; }
+                                case Types.DateTime: { context.Reader.Read(out DateTime value); description = new Constant(value); return true; }
+                                case Types.TimeSpan: { context.Reader.Read(out TimeSpan value); description = new Constant(value); return true; }
+                            }
+                            break;
+                        }
+                    case Kinds.Abstract:
+                        {
+                            if (context.Deserialize(out var type) && context.Deserialize(out var value))
+                            {
+                                description = new Abstract(type, value);
+                                return true;
+                            }
+                            break;
+                        }
+                    case Kinds.Object:
+                        {
+                            context.Reader.Read(out int count);
+                            var members = new Dictionary<string, IDescription>(count);
+                            description = new ConcreteObject(members);
+                            for (int i = 0; i < count; i++)
+                            {
+                                if (context.Reader.Read(out string key) && context.Deserialize(out var value))
+                                    members.Add(key, value);
+                                else return false;
+                            }
+                            return true;
+                        }
+                    case Kinds.Array:
+                        {
+                            context.Reader.Read(out int count);
+                            var items = new IDescription[count];
+                            description = new ConcreteArray(items);
+                            for (int i = 0; i < items.Length; i++)
+                            {
+                                if (context.Deserialize(out items[i])) continue;
+                                return false;
+                            }
+                            return true;
+                        }
+                }
+                description = default;
+                return false;
+            }
+        }
+    }
+
     public interface IDescription { }
-
-    public interface IByteSerializer : ITrait
-    {
-        bool Serialize(IDescription description, Writer writer, World world);
-        bool Deserialize(out IDescription description, Reader reader, World world);
-    }
-
-    public interface IStringSerializer : ITrait
-    {
-        bool Serialize(IDescription description, Writer writer, World world);
-        bool Deserialize(out IDescription description, Reader reader, World world);
-    }
 
     public sealed class Null : IDescription { }
 
@@ -820,8 +1036,8 @@ namespace Entia.Experiment.Serialization
     public sealed class Abstract : IDescription
     {
         public readonly IDescription Type;
-        public readonly IDescription Description;
-        public Abstract(IDescription type, IDescription description) { Type = type; Description = description; }
+        public readonly IDescription Value;
+        public Abstract(IDescription type, IDescription value) { Type = type; Value = value; }
     }
 
     public sealed class ConcreteObject : IDescription
@@ -835,126 +1051,4 @@ namespace Entia.Experiment.Serialization
         public readonly IDescription[] Items;
         public ConcreteArray(params IDescription[] items) { Items = items; }
     }
-
-    // public static class Description
-    // {
-    //     enum Kinds : byte { Null, Byte, Single, Double, String, Type, Assembly, Object, Array, Reference }
-
-    //     public static byte[] Serialize(IDescription description)
-    //     {
-    //         using (var writer = new Writer())
-    //         {
-    //             Serialize(description, writer, new Dictionary<IDescription, ushort>());
-    //             return writer.ToArray();
-    //         }
-    //     }
-
-    //     static void Serialize(IDescription description, Writer writer, Dictionary<IDescription, ushort> references)
-    //     {
-    //         references[description] = (ushort)references.Count;
-    //         switch (description)
-    //         {
-    //             case Null _: writer.Write(Kinds.Null); break;
-    //             case ConstantObject<string> value:
-    //                 writer.Write(Kinds.String);
-    //                 writer.Write(value.Value);
-    //                 break;
-    //             case ConstantObject<byte> value:
-    //                 writer.Write(Kinds.Byte);
-    //                 writer.Write(value.Value);
-    //                 break;
-    //             case AbstractType value:
-    //                 writer.Write(Kinds.Type);
-    //                 Serialize(value.Assembly, writer, references);
-    //                 writer.Write(value.Value.FullName);
-    //                 break;
-    //             case AbstractAssembly value:
-    //                 writer.Write(Kinds.Assembly);
-    //                 writer.Write(value.Value.FullName);
-    //                 break;
-    //             case IConstantObject value:
-    //                 Serialize(Describe(value.Value), writer, references);
-    //                 break;
-    //             case ConcreteArray value:
-    //                 writer.Write(Kinds.Array);
-    //                 writer.Write(value.Items.Length);
-    //                 for (int i = 0; i < value.Items.Length; i++) Serialize(value.Items[i], writer, references);
-    //                 break;
-    //             case IConstantArray value:
-    //                 Serialize(Describe(value.Values), writer, references);
-    //                 break;
-    //             case ConcreteObject value:
-    //                 writer.Write(Kinds.Object);
-    //                 writer.Write(value.Members.Length);
-    //                 for (int i = 0; i < value.Members.Length; i++)
-    //                 {
-    //                     var member = value.Members[i];
-    //                     Serialize(member.Identifier, writer, references);
-    //                     Serialize(member.Value, writer, references);
-    //                 }
-    //                 break;
-    //             case Reference value:
-    //                 writer.Write(Kinds.Reference);
-    //                 writer.Write(references[value.Description]);
-    //                 break;
-    //         }
-    //     }
-
-    //     public static IDescription Deserialize(byte[] bytes)
-    //     {
-    //         using (var reader = new Reader(bytes))
-    //         {
-    //             return Deserialize(reader, new List<IDescription>());
-    //         }
-    //     }
-
-    //     static IDescription Deserialize(Reader reader, List<IDescription> references)
-    //     {
-    //         var index = references.Count;
-    //         references.Add(default);
-    //         reader.Read(out Kinds kind);
-    //         switch (kind)
-    //         {
-    //             case Kinds.Null: return new Null();
-    //             case Kinds.String: { reader.Read(out string value); return references[index] = new ConstantObject<string>(value); }
-    //             case Kinds.Byte: { reader.Read(out byte value); return references[index] = new ConstantObject<byte>(value); }
-    //             case Kinds.Array:
-    //                 {
-    //                     reader.Read(out int count);
-    //                     var items = new IDescription[count];
-    //                     var description = new ConcreteArray(items);
-    //                     references[index] = description;
-    //                     for (int i = 0; i < count; i++) items[i] = Deserialize(reader, references);
-    //                     return description;
-    //                 }
-    //             case Kinds.Object:
-    //                 {
-    //                     reader.Read(out int count);
-    //                     var members = new Member[count];
-    //                     var description = new ConcreteObject(members);
-    //                     references[index] = description;
-    //                     for (int i = 0; i < count; i++)
-    //                         members[i] = new Member(Deserialize(reader, references), Deserialize(reader, references));
-    //                     return description;
-    //                 }
-    //             case Kinds.Assembly:
-    //                 {
-    //                     reader.Read(out string name);
-    //                     var assembly = System.Reflection.Assembly.Load(name);
-    //                     return references[index] = new AbstractAssembly(assembly);
-    //                 }
-    //             case Kinds.Type:
-    //                 {
-    //                     var assembly = Deserialize(reader, references) as AbstractAssembly;
-    //                     reader.Read(out string name);
-    //                     var type = assembly.Value.GetType(name);
-    //                     return references[index] = new AbstractType(type, assembly);
-    //                 }
-    //             case Kinds.Reference:
-    //                 reader.Read(out ushort reference);
-    //                 return new Reference(references[reference]);
-    //             default: return new Null();
-    //         }
-    //     }
-    // }
 }

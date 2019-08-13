@@ -63,9 +63,9 @@ namespace Entia
         }
 
         [ThreadSafe]
-        public bool Has<T>() where T : struct, IPhase => _phaseToRun.Read(map => map.Has<T>(false, false));
+        public bool Has<T>() where T : struct, IPhase => _phaseToRun.Read(map => map.Has<T>());
         [ThreadSafe]
-        public bool Has(Type phase) => _phaseToRun.Read(phase, (map, state) => map.Has(state, false, false));
+        public bool Has(Type phase) => _phaseToRun.Read(phase, (map, state) => map.Has(state));
 
         [ThreadSafe]
         public bool TryState(Node node, out States state) => TryIndex(node, out var index) & TryState(index, out state);
@@ -104,13 +104,13 @@ namespace Entia
         {
             using (var read = _phaseToRun.Read(true))
             {
-                if (read.Value.TryGet<T>(out var run, false, false) && run is Run<T> casted1) return casted1;
+                if (read.Value.TryGet<T>(out var run) && run is Run<T> casted1) return casted1;
                 else
                 {
                     casted1 = Root.runner.Specialize<T>(this).Or(Cache<T>.Empty);
                     using (var write = _phaseToRun.Write())
                     {
-                        if (write.Value.TryGet<T>(out run, false, false) && run is Run<T> casted2) return casted2;
+                        if (write.Value.TryGet<T>(out run) && run is Run<T> casted2) return casted2;
                         write.Value.Set<T>(casted1);
                         return casted1;
                     }

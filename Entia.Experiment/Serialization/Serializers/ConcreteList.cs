@@ -41,17 +41,6 @@ namespace Entia.Experiment
             }
             return false;
         }
-
-        public override bool Clone(in IList instance, out IList clone, in CloneContext context)
-        {
-            clone = Instantiate(Type, instance.Count);
-            for (int i = 0; i < instance.Count; i++)
-            {
-                if (context.Descriptors.Clone(instance[i], out var value, Type, context)) clone[i] = value;
-                else return false;
-            }
-            return true;
-        }
     }
 
     public sealed class ConcreteList<T> : Serializer<List<T>>
@@ -73,17 +62,6 @@ namespace Entia.Experiment
                 return true;
             }
             return false;
-        }
-
-        public override bool Clone(in List<T> instance, out List<T> clone, in CloneContext context)
-        {
-            clone = new List<T>(instance.Count);
-            for (int i = 0; i < instance.Count; i++)
-            {
-                if (context.Descriptors.Clone(instance[i], out var value, context)) clone.Add(value);
-                else return false;
-            }
-            return true;
         }
     }
 }

@@ -36,17 +36,6 @@ namespace Entia.Experiment
             }
             return true;
         }
-
-        public bool Clone(object instance, out object clone, in CloneContext context)
-        {
-            clone = CloneUtility.Shallow(instance);
-            for (int i = 0; i < Members.Length; i++)
-            {
-                if (Members[i].Clone(instance, ref clone, context)) continue;
-                else return false;
-            }
-            return true;
-        }
     }
 
     public sealed class ConcreteObject<T> : Serializer<T>
@@ -95,17 +84,6 @@ namespace Entia.Experiment
                 // member.Deserialize(ref instance, context);
                 // context.Reader.Position = next;
                 if (Members[i].Deserialize(ref instance, context)) continue;
-                return false;
-            }
-            return true;
-        }
-
-        public override bool Clone(in T instance, out T clone, in CloneContext context)
-        {
-            clone = CloneUtility.Shallow(instance);
-            for (int i = 0; i < Members.Length; i++)
-            {
-                if (Members[i].Clone(instance, ref clone, context)) continue;
                 return false;
             }
             return true;

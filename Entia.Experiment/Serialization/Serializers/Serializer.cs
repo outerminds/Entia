@@ -12,7 +12,6 @@ namespace Entia.Experiment
         bool Serialize(object instance, in SerializeContext context);
         bool Instantiate(out object instance, in DeserializeContext context);
         bool Initialize(ref object instance, in DeserializeContext context);
-        bool Clone(object instance, out object clone, in CloneContext context);
     }
 
     public abstract class Serializer<T> : ISerializer
@@ -22,7 +21,6 @@ namespace Entia.Experiment
             Instantiate(out instance, context) && Initialize(ref instance, context);
         public abstract bool Instantiate(out T instance, in DeserializeContext context);
         public abstract bool Initialize(ref T instance, in DeserializeContext context);
-        public abstract bool Clone(in T instance, out T clone, in CloneContext context);
 
         bool ISerializer.Serialize(object instance, in SerializeContext context) => Serialize((T)instance, context);
 
@@ -46,18 +44,6 @@ namespace Entia.Experiment
                 return true;
             }
             instance = default;
-            return false;
-        }
-
-        bool ISerializer.Clone(object instance, out object clone, in CloneContext context)
-        {
-            var casted = (T)instance;
-            if (Clone(casted, out casted, context))
-            {
-                clone = casted;
-                return true;
-            }
-            clone = default;
             return false;
         }
     }

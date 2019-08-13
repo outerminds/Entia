@@ -3,10 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Entia.Core.Providers;
 
 namespace Entia.Core
 {
-    public interface ITrait { }
+    public interface ITrait :
+        IImplementation<TypeAttributeProvider>,
+        IImplementation<TraitAttributeProvider>,
+        IImplementation<TypeMemberProvider>,
+        IImplementation<TypeInterfaceProvider>,
+        IImplementation<TraitInterfaceProvider>
+    { }
     public interface IImplementation<TTrait> where TTrait : ITrait, new() { }
     public interface IImplementation<T, TTrait> where TTrait : ITrait, new() { }
 
@@ -24,6 +31,118 @@ namespace Entia.Core
             Type = type;
             Implementation = implementation;
             Arguments = arguments;
+        }
+    }
+
+    namespace Providers
+    {
+        public interface IProvider : ITrait
+        {
+            IEnumerable<ITrait> Provide(Type type, Type trait);
+        }
+
+        public sealed class TypeAttributeProvider : IProvider
+        {
+            public IEnumerable<ITrait> Provide(Type type, Type trait)
+            {
+                var data = TypeUtility.GetData(type);
+                foreach (var attribute in type.GetCustomAttributes<ImplementationAttribute>(true))
+                {
+                    if (attribute.Implementation.Type.Is(trait, true, true))
+                    {
+                        var concrete =
+                            attribute.Implementation.Type.IsGenericTypeDefinition &&
+                            data.Arguments.Length == attribute.Implementation.Arguments.Length ?
+                            attribute.Implementation.Type.MakeGenericType(data.Arguments) : attribute.Implementation.Type;
+                        yield return (ITrait)Activator.CreateInstance(concrete, attribute.Arguments);
+                    }
+                }
+            }
+        }
+
+        public sealed class TraitAttributeProvider : IProvider
+        {
+            public IEnumerable<ITrait> Provide(Type type, Type trait)
+            {
+                var typeData = TypeUtility.GetData(type);
+                var traitData = TypeUtility.GetData(trait);
+                foreach (var attribute in trait.GetCustomAttributes<ImplementationAttribute>(true))
+                {
+                    if (type.Is(attribute.Type.Type, true, true) && attribute.Implementation.Type.Is(trait, true, true))
+                    {
+                        var concrete =
+                            typeData.Definition == attribute.Type.Type &&
+                            attribute.Implementation.Type.IsGenericTypeDefinition &&
+                            typeData.Arguments.Length == attribute.Implementation.Arguments.Length ?
+                            attribute.Implementation.Type.MakeGenericType(typeData.Arguments) : attribute.Implementation.Type;
+                        yield return (ITrait)Activator.CreateInstance(concrete, attribute.Arguments);
+                    }
+                }
+            }
+        }
+
+        public sealed class TypeMemberProvider : IProvider
+        {
+            public IEnumerable<ITrait> Provide(Type type, Type trait)
+            {
+                var data = TypeUtility.GetData(type);
+                foreach (var member in data.StaticMembers)
+                {
+                    if (member.IsDefined(typeof(ImplementationAttribute), true))
+                    {
+                        switch (member)
+                        {
+                            case Type nested when nested.Is(trait, true, true):
+                                var generic = nested.IsGenericTypeDefinition ? nested.MakeGenericType(data.Arguments) : nested;
+                                yield return (ITrait)Activator.CreateInstance(generic);
+                                break;
+                            case FieldInfo field when field.FieldType.Is(trait, true, true):
+                                yield return (ITrait)field.GetValue(null);
+                                break;
+                            case PropertyInfo property when property.PropertyType.Is(trait, true, true):
+                                yield return (ITrait)property.GetValue(null);
+                                break;
+                            case MethodInfo method when method.ReturnType.Is(trait, true, true):
+                                yield return (ITrait)method.Invoke(null, Array.Empty<object>());
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        public sealed class TypeInterfaceProvider : IProvider
+        {
+            public IEnumerable<ITrait> Provide(Type type, Type trait)
+            {
+                var data = TypeUtility.GetData(type);
+                foreach (var @interface in data.Interfaces)
+                {
+                    if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IImplementation<>))
+                    {
+                        var arguments = @interface.GetGenericArguments();
+                        if (arguments[0].Is(trait, true, true))
+                            yield return (ITrait)Activator.CreateInstance(arguments[0]);
+                    }
+                }
+            }
+        }
+
+        public sealed class TraitInterfaceProvider : IProvider
+        {
+            public IEnumerable<ITrait> Provide(Type type, Type trait)
+            {
+                var data = TypeUtility.GetData(trait);
+                foreach (var @interface in data.Interfaces)
+                {
+                    if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IImplementation<,>))
+                    {
+                        var arguments = @interface.GetGenericArguments();
+                        if (type.Is(arguments[0], true, true) && arguments[1].Is(trait, true, true))
+                            yield return (ITrait)Activator.CreateInstance(arguments[1]);
+                    }
+                }
+            }
         }
     }
 
@@ -123,8 +242,27 @@ namespace Entia.Core
             return traits[trait] = CreateDefaults(type, trait);
         }
 
+        // static readonly TypeInterfaceProvider _typeProvider = new TypeInterfaceProvider();
         static ITrait[] CreateDefaults(Type type, Type trait)
         {
+            // return Enumerable.Concat(
+            //     _typeProvider.Provide(type, typeof(IProvider)),
+            //     _typeProvider.Provide(trait, typeof(IProvider)))
+            //     .OfType<IProvider>()
+            //     .SelectMany(provider => provider.Provide(type, trait))
+            //     .Some()
+            //     .Distinct()
+            //     .ToArray();
+            // return Enumerable.Concat(type.Interfaces(), trait.Interfaces())
+            //     .Where(@interface => @interface.Is(typeof(IImplementation<>), definition: true))
+            //     .Select(@interface => @interface.GetGenericArguments()[0])
+            //     .Where(argument => argument.Is<IProvider>())
+            //     .Select(argument => (IProvider)Activator.CreateInstance(argument))
+            //     .SelectMany(provider => provider.Provide(type, trait))
+            //     .Some()
+            //     .Distinct()
+            //     .ToArray();
+
             var implementations = new List<ITrait>();
             var typeData = TypeUtility.GetData(type);
             foreach (var attribute in type.GetCustomAttributes<ImplementationAttribute>(true))

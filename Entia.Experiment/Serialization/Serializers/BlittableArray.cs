@@ -42,12 +42,6 @@ namespace Entia.Experiment
         }
 
         public override bool Initialize(ref Array instance, in DeserializeContext context) => true;
-
-        public override bool Clone(in Array instance, out Array clone, in CloneContext context)
-        {
-            clone = CloneUtility.Shallow(instance);
-            return true;
-        }
     }
 
     public sealed class BlittableArray<T> : Serializer<T[]> where T : unmanaged
@@ -67,11 +61,5 @@ namespace Entia.Experiment
         }
 
         public override bool Initialize(ref T[] instance, in DeserializeContext context) => true;
-
-        public override bool Clone(in T[] instance, out T[] clone, in CloneContext context)
-        {
-            clone = CloneUtility.Shallow(instance);
-            return true;
-        }
     }
 }

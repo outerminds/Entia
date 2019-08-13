@@ -62,9 +62,12 @@ namespace Entia.Core
         public static ref T Add<T>(ref T[] array, in T item)
         {
             var index = array.Length;
-            Array.Resize(ref array, index + 1);
-            ref var slot = ref array[index];
+            var local = array;
+            Array.Resize(ref local, index + 1);
+            ref var slot = ref local[index];
             slot = item;
+            // NOTE: set the array after the item is set such that no threads can observe the slot uninitialized
+            array = local;
             return ref slot;
         }
 

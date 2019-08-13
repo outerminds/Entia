@@ -1,4 +1,3 @@
-using System;
 using Entia.Core;
 
 namespace Entia.Experiment
@@ -29,11 +28,5 @@ namespace Entia.Experiment
         }
 
         public override bool Initialize(ref TFrom instance, in DeserializeContext context) => true;
-
-        public override bool Clone(in TFrom instance, out TFrom clone, in CloneContext context)
-        {
-            clone = From(To(instance));
-            return true;
-        }
     }
 }

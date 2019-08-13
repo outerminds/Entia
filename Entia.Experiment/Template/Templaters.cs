@@ -49,8 +49,8 @@ namespace Entia.Modules
             fallback ? _defaults.Set(type, templater) : _templaters.Set(type, templater);
         public bool Has<T>() => _templaters.Has<T>(true, false) || _defaults.Has<T>(true, false);
         public bool Has(Type type) => _templaters.Has(type, true, false) || _defaults.Has(type, true, false);
-        public bool Remove<T>() => _templaters.Remove<T>(false, false) || _defaults.Remove<T>(false, false);
-        public bool Remove(Type type) => _templaters.Remove(type, false, false) || _templaters.Remove(type, false, false);
+        public bool Remove<T>() => _templaters.Remove<T>() || _defaults.Remove<T>(false, false);
+        public bool Remove(Type type) => _templaters.Remove(type) || _templaters.Remove(type);
         public bool Clear() => _templaters.Clear() | _defaults.Clear();
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         public IEnumerator<ITemplater> GetEnumerator() => _templaters.Values.Concat(_defaults.Values).GetEnumerator();

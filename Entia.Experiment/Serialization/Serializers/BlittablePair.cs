@@ -23,11 +23,5 @@ namespace Entia.Experiment
         }
 
         public override bool Initialize(ref (T[] items, int count) instance, in DeserializeContext context) => true;
-
-        public override bool Clone(in (T[] items, int count) instance, out (T[] items, int count) clone, in CloneContext context)
-        {
-            clone = (CloneUtility.Shallow(instance.items), instance.count);
-            return true;
-        }
     }
 }

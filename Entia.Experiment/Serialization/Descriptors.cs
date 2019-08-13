@@ -253,21 +253,6 @@ namespace Entia.Experiment
             return false;
         }
 
-        public bool Clone(object instance, out object clone, Type type, in CloneContext context) =>
-            Describe(type).Clone(instance, out clone, context);
-        public bool Clone<T>(in T instance, out T clone, in CloneContext context)
-        {
-            var serializer = Describe<T>();
-            if (serializer is Serializer<T> casted) return casted.Clone(instance, out clone, context);
-            else if (serializer.Clone(instance, out var value, context))
-            {
-                clone = (T)value;
-                return true;
-            }
-            clone = default;
-            return false;
-        }
-
         public IDescriptor Default<T>() => _defaults.TryGet<T>(out var descriptor) ? descriptor : Default(typeof(T));
         public IDescriptor Default(Type type) => _defaults.Default(type, typeof(IDescribable<>), typeof(DescriptorAttribute), _ => new Default());
         public bool Has<T>() => _descriptors.Has<T>(true, false);

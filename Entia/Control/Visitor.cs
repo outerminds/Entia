@@ -18,7 +18,7 @@ namespace Entia.Modules.Control
         public Node Visit(Node node) =>
             node.Value is INode value && TryGet(value.GetType(), out var visit) ? visit(node) : _default(node);
         public bool TryGet(Type type, out Func<Node, Node> visit) =>
-            _visits.TryGet(type, out visit, super: true);
+            _visits.TryGet(type, out visit, true, false);
         public bool Add<T>(Func<Node, T, Node> visit) where T : INode =>
             _visits.Set<T>(node => node.Value is T casted ? visit(node, casted) : node);
         public bool Add<T>(Action<Node, T> visit) where T : INode =>

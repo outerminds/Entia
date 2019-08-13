@@ -22,11 +22,5 @@ namespace Entia.Experiment
         }
 
         public override bool Initialize(ref Assembly instance, in DeserializeContext context) => true;
-
-        public override bool Clone(in Assembly instance, out Assembly clone, in CloneContext context)
-        {
-            clone = instance;
-            return true;
-        }
     }
 }

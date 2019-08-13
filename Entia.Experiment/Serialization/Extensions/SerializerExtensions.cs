@@ -55,21 +55,6 @@ namespace Entia.Experiment
             }
         }
 
-        public static bool Clone<T>(this ISerializer serializer, in T instance, out T clone, CloneContext context)
-        {
-            if (serializer is Serializer<T> casted) return casted.Clone(instance, out clone, context);
-            else if (serializer.Clone(instance, out var value, context))
-            {
-                clone = (T)value;
-                return true;
-            }
-            else
-            {
-                clone = default;
-                return false;
-            }
-        }
-
         public static bool Deserialize(this ISerializer serializer, out object instance, DeserializeContext context) =>
             serializer.Instantiate(out instance, context) && serializer.Initialize(ref instance, context);
     }

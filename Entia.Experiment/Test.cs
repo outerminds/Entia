@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using Entia.Core;
 
 namespace Entia.Experiment
 {
@@ -37,7 +38,11 @@ namespace Entia.Experiment
                 }
                 after?.Invoke();
 
-                return (test.Method.Name.Split("__").LastOrDefault().Split('|').FirstOrDefault(), test, total, minimum, maximum);
+                var name = test.Method.Name.Split("__").LastOrDefault().Split('|').FirstOrDefault();
+                var generic = test.Method.IsGenericMethod ?
+                    $"{name}<{string.Join(", ", test.Method.GetGenericArguments().Select(type => type.Format()))}>" :
+                    name;
+                return (generic, test, total, minimum, maximum);
             }
 
             string Justify(object value, int length)
@@ -49,7 +54,7 @@ namespace Entia.Experiment
             string Format((string name, Action test, long total, long minimum, long maximum) result, double baseTotal)
             {
                 var column = 20;
-                var name = Justify(result.name, column);
+                var name = Justify(result.name, column * 2);
                 var total = Justify(TimeSpan.FromTicks(result.total), column);
                 var ratio = Justify((result.total / baseTotal).ToString("0.000"), column / 2);
                 var average = Justify(TimeSpan.FromTicks(result.total / iterations), column);

@@ -48,19 +48,6 @@ namespace Entia.Experiment
             }
             return false;
         }
-
-        public override bool Clone(in IDictionary instance, out IDictionary clone, in CloneContext context)
-        {
-            clone = Instantiate(Key, Value, instance.Count);
-            foreach (var current in instance.Keys)
-            {
-                if (context.Descriptors.Clone(current, out var key, Key, context) &&
-                    context.Descriptors.Clone(instance[current], out var value, Value, context))
-                    clone.Add(key, value);
-                else return false;
-            }
-            return true;
-        }
     }
 
     public sealed class ConcreteDictionary<TKey, TValue> : Serializer<Dictionary<TKey, TValue>>
@@ -90,19 +77,6 @@ namespace Entia.Experiment
                 return true;
             }
             return false;
-        }
-
-        public override bool Clone(in Dictionary<TKey, TValue> instance, out Dictionary<TKey, TValue> clone, in CloneContext context)
-        {
-            clone = new Dictionary<TKey, TValue>(instance.Count);
-            foreach (var pair in instance)
-            {
-                if (context.Descriptors.Clone(pair.Key, out var key, context) &&
-                    context.Descriptors.Clone(pair.Value, out var value, context))
-                    clone.Add(key, value);
-                else return false;
-            }
-            return true;
         }
     }
 }

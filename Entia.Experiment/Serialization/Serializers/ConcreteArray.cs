@@ -40,17 +40,6 @@ namespace Entia.Experiment
             }
             return true;
         }
-
-        public override bool Clone(in Array instance, out Array clone, in CloneContext context)
-        {
-            clone = CloneUtility.Shallow(instance);
-            for (int i = 0; i < clone.Length; i++)
-            {
-                if (context.Descriptors.Clone(clone.GetValue(i), out var value, Type, context)) clone.SetValue(value, i);
-                else return false;
-            }
-            return true;
-        }
     }
 
     public sealed class ConcreteArray<T> : Serializer<T[]>
@@ -82,17 +71,6 @@ namespace Entia.Experiment
             for (int i = 0; i < instance.Length; i++)
             {
                 if (context.Descriptors.Deserialize(out instance[i], context)) continue;
-                return false;
-            }
-            return true;
-        }
-
-        public override bool Clone(in T[] instance, out T[] clone, in CloneContext context)
-        {
-            clone = CloneUtility.Shallow(instance);
-            for (int i = 0; i < clone.Length; i++)
-            {
-                if (context.Descriptors.Clone(clone[i], out clone[i], context)) continue;
                 return false;
             }
             return true;

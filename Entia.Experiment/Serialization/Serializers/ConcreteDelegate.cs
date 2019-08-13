@@ -60,12 +60,6 @@ namespace Entia.Experiment
         }
 
         public override bool Initialize(ref Delegate instance, in DeserializeContext context) => true;
-
-        public override bool Clone(in Delegate instance, out Delegate clone, in CloneContext context)
-        {
-            clone = CloneUtility.Shallow(instance);
-            return true;
-        }
     }
 
     public sealed class ConcreteDelegate<T> : Serializer<T> where T : Delegate
@@ -120,11 +114,5 @@ namespace Entia.Experiment
         }
 
         public override bool Initialize(ref T instance, in DeserializeContext context) => true;
-
-        public override bool Clone(in T instance, out T clone, in CloneContext context)
-        {
-            clone = CloneUtility.Shallow(instance);
-            return true;
-        }
     }
 }

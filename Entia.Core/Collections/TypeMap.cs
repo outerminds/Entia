@@ -16,7 +16,7 @@ namespace Entia.Core
             public (Type type, TValue value) Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get { using (var read = _state.Read()) return (read.Value.Types[_index], _map._values.items[_index]); }
+                get => (_entries[_index].Type, _map._values[_index].value);
             }
             object IEnumerator.Current => Current;
 
@@ -33,8 +33,8 @@ namespace Entia.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                while (++_index < _map._allocated.Length)
-                    if (_map._allocated[_index]) return true;
+                while (++_index < _map._values.Length)
+                    if (_map._values[_index].allocated) return true;
 
                 return false;
             }
@@ -50,7 +50,7 @@ namespace Entia.Core
             public Type Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _state.Read(_index, (in State state, in int index) => state.Types[index]);
+                get => _entries[_index].Type;
             }
             object IEnumerator.Current => Current;
 
@@ -67,8 +67,8 @@ namespace Entia.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                while (++_index < _map._allocated.Length)
-                    if (_map._allocated[_index]) return true;
+                while (++_index < _map._values.Length)
+                    if (_map._values[_index].allocated) return true;
 
                 return false;
             }
@@ -95,7 +95,7 @@ namespace Entia.Core
             public ref TValue Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => ref _map._values.items[_index];
+                get => ref _map._values[_index].value;
             }
             TValue IEnumerator<TValue>.Current => Current;
             object IEnumerator.Current => Current;
@@ -113,8 +113,8 @@ namespace Entia.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                while (++_index < _map._allocated.Length)
-                    if (_map._allocated[_index]) return true;
+                while (++_index < _map._values.Length)
+                    if (_map._values[_index].allocated) return true;
 
                 return false;
             }
@@ -139,85 +139,59 @@ namespace Entia.Core
         [ThreadSafe]
         static class Cache<T> where T : TBase
         {
-            public static readonly int Index = GetIndex(typeof(T));
-            public static readonly List<int> Super = _state.Read(state => state.Super[Index]);
-            public static readonly List<int> Sub = _state.Read(state => state.Sub[Index]);
+            public static readonly Entry Entry = GetEntry(typeof(T));
         }
 
-        struct State
+        sealed class Entry
         {
-            public Type[] Types;
-            public Dictionary<Type, int> Indices;
-            public List<int>[] Super;
-            public List<int>[] Sub;
-        }
+            public readonly Type Type;
+            public readonly int Index;
+            public readonly Entry[] Super;
+            public Entry[] Sub;
 
-        static readonly ConcurrentDictionary<Type, (int index, List<int> super, List<int> sub)> _indices = new ConcurrentDictionary<Type, (int index, List<int> super, List<int> sub)>();
-        static readonly Concurrent<State> _state = new State
-        {
-            Types = new Type[0],
-            Indices = new Dictionary<Type, int>(),
-            Super = new List<int>[0],
-            Sub = new List<int>[0],
-        };
-
-        static bool TryGetIndices(Type type, out (int index, List<int> super, List<int> sub) indices)
-        {
-            if (_indices.TryGetValue(type, out indices)) return indices.index >= 0;
-            using (var read = _state.Read(true))
+            public Entry(Type type, int index, Entry[] super, Entry[] sub)
             {
-                var index = read.Value.Indices.TryGetValue(type, out var value) ? value : ReserveIndex(type);
-                if (index >= 0)
-                {
-                    indices = (index, read.Value.Super[index], read.Value.Sub[index]);
-                    _indices.TryAdd(type, indices);
-                    return true;
-                }
-
-                indices = default;
-                _indices.TryAdd(type, (index, default, default));
-                return false;
+                Type = type;
+                Index = index;
+                Super = super;
+                Sub = sub;
             }
         }
 
+        static Entry[] _entries = { };
+        static readonly ConcurrentDictionary<Type, Entry> _typeToEntry = new ConcurrentDictionary<Type, Entry>();
+        static readonly object _lock = new object();
+
         [ThreadSafe]
-        static int GetIndex(Type concrete)
+        static Entry GetEntry(Type concrete)
         {
-            using (var read = _state.Read(true))
-            {
-                if (read.Value.Indices.TryGetValue(concrete, out var index)) return index;
-                return ReserveIndex(concrete);
-            }
+            if (_typeToEntry.TryGetValue(concrete, out var entry)) return entry;
+            return CreateEntry(concrete);
         }
 
         [ThreadSafe]
-        static int ReserveIndex(Type type)
+        static Entry CreateEntry(Type type)
         {
             if (type.Is<TBase>())
             {
-                using (var write = _state.Write())
+                lock (_lock)
                 {
-                    var super = type.Bases()
-                        .Concat(type.Interfaces())
+                    if (_typeToEntry.TryGetValue(type, out var entry)) return entry;
+                    var data = TypeUtility.GetData(type);
+                    var super = data.Bases
+                        .Concat(data.Interfaces)
                         .SelectMany(ancestor => ancestor.IsGenericType ? new[] { ancestor, ancestor.GetGenericTypeDefinition() } : new[] { ancestor })
                         .Where(TypeUtility.Is<TBase>)
-                        .Select(current => (type: current, index: GetIndex(current)))
+                        .Select(GetEntry)
                         .ToArray();
-                    var sub = write.Value.Types
-                        .Select((current, i) => (type: current, index: i))
-                        .Where(pair => pair.type.Is(type, true, true))
-                        .ToArray();
-                    var index = write.Value.Types.Length;
-                    write.Value.Indices[type] = index;
-                    ArrayUtility.Add(ref write.Value.Types, type);
-                    ArrayUtility.Add(ref write.Value.Super, new List<int>(super.Select(pair => pair.index)));
-                    ArrayUtility.Add(ref write.Value.Sub, new List<int>(sub.Select(pair => pair.index)));
-                    foreach (var pair in super) write.Value.Sub[pair.index].Add(index);
-                    return index;
+                    var sub = _entries.Where(current => current.Type.Is(type, true, true)).ToArray();
+                    entry = new Entry(type, _entries.Length, super, sub);
+                    ArrayUtility.Add(ref _entries, entry);
+                    for (int i = 0; i < super.Length; i++) ArrayUtility.Add(ref super[i].Sub, entry);
+                    return _typeToEntry[type] = entry;
                 }
             }
-
-            return -1;
+            return default;
         }
 
         [ThreadSafe]
@@ -227,27 +201,27 @@ namespace Entia.Core
         [ThreadSafe]
         public ref TValue this[int index]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (Has(index)) return ref _values.items[index];
+                if (Has(index)) return ref _values[index].value;
                 throw new IndexOutOfRangeException();
             }
         }
         public TValue this[Type type]
         {
             [ThreadSafe]
-            get => TryGet(type, out var value, false, false) ? value : throw new IndexOutOfRangeException();
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => TryGet(type, out var value) ? value : throw new IndexOutOfRangeException();
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => Set(type, value);
         }
+        public int Count => _local.Count;
 
-        (TValue[] items, int count) _values;
-        bool[] _allocated;
+        (TValue value, bool allocated)[] _values;
+        readonly Dictionary<Type, Entry> _local = new Dictionary<Type, Entry>();
 
-        public TypeMap(int capacity = 4)
-        {
-            _values = (new TValue[capacity], 0);
-            _allocated = new bool[capacity];
-        }
+        public TypeMap(int capacity = 4) { _values = new (TValue, bool)[capacity]; }
 
         public TypeMap(params (Type type, TValue value)[] pairs) : this()
         {
@@ -255,162 +229,109 @@ namespace Entia.Core
         }
 
         [ThreadSafe]
-        public int Index<T>() where T : TBase => Cache<T>.Index;
+        public int Index<T>() where T : TBase => Cache<T>.Entry.Index;
+
         [ThreadSafe]
         public bool TryIndex(Type concrete, out int index)
         {
-            if (TryGetIndices(concrete, out var indices))
+            if (_typeToEntry.TryGetValue(concrete, out var entry))
             {
-                index = indices.index;
+                index = entry.Index;
                 return true;
             }
             index = default;
             return false;
         }
+
         [ThreadSafe]
-        public IEnumerable<int> Indices<T>(bool super = false, bool sub = false) where T : TBase
-        {
-            yield return Cache<T>.Index;
-            if (super) for (int i = 0; i < Cache<T>.Super.Count; i++) yield return Cache<T>.Super[i];
-            if (sub) for (int i = 0; i < Cache<T>.Sub.Count; i++) yield return Cache<T>.Sub[i];
-        }
+        public IEnumerable<int> Indices<T>(bool super = false, bool sub = false) where T : TBase =>
+            Indices(Cache<T>.Entry, super, sub);
+
         [ThreadSafe]
         public IEnumerable<int> Indices(Type type, bool super = false, bool sub = false)
         {
-            if (TryGetIndices(type, out var indices))
-            {
-                yield return indices.index;
-                if (super) for (int i = 0; i < indices.super.Count; i++) yield return indices.super[i];
-                if (sub) for (int i = 0; i < indices.sub.Count; i++) yield return indices.sub[i];
-            }
+            if (_typeToEntry.TryGetValue(type, out var entry)) return Indices(entry, super, sub);
+            return Array.Empty<int>();
         }
 
         [ThreadSafe]
-        public ref TValue Get<T>(out bool success, bool super = false, bool sub = false) where T : TBase
+        public ref TValue Get(Type type, out bool success)
         {
-            ref var value = ref Get(Cache<T>.Index, out success);
-            if (success) return ref value;
-            if (super)
-            {
-                value = ref Get(Cache<T>.Super, out success);
-                if (success) return ref value;
-            }
-            if (sub)
-            {
-                value = ref Get(Cache<T>.Sub, out success);
-                if (success) return ref value;
-            }
-
-            return ref Dummy<TValue>.Value;
-        }
-
-        [ThreadSafe]
-        public ref TValue Get(Type type, out bool success, bool super = false, bool sub = false)
-        {
-            if (TryGetIndices(type, out var indices))
-            {
-                ref var value = ref Get(indices.index, out success);
-                if (success) return ref value;
-                if (super)
-                {
-                    value = ref Get(indices.super, out success);
-                    if (success) return ref value;
-                }
-                if (sub)
-                {
-                    value = ref Get(indices.sub, out success);
-                    if (success) return ref value;
-                }
-            }
-
+            if (_local.TryGetValue(type, out var entry)) return ref Get(entry, out success);
             success = false;
             return ref Dummy<TValue>.Value;
         }
-
         [ThreadSafe]
-        public ref TValue Get(int index, out bool success)
+        public ref TValue Get(Type type, out bool success, bool super, bool sub)
         {
-            if (success = Has(index)) return ref _values.items[index];
+            if (_local.TryGetValue(type, out var entry)) return ref Get(entry, out success, super, sub);
+            success = false;
             return ref Dummy<TValue>.Value;
         }
+        [ThreadSafe]
+        public ref TValue Get<T>(out bool success) where T : TBase => ref Get(Cache<T>.Entry, out success);
+        [ThreadSafe]
+        public ref TValue Get<T>(out bool success, bool super, bool sub) where T : TBase => ref Get(Cache<T>.Entry, out success, super, sub);
+        [ThreadSafe]
+        public ref TValue Get(int index, out bool success) => ref Get(_entries[index], out success);
+        [ThreadSafe]
+        public ref TValue Get(int index, out bool success, bool super, bool sub) => ref Get(_entries[index], out success, super, sub);
 
         [ThreadSafe]
-        public bool TryGet<T>(out TValue value, bool super = false, bool sub = false) where T : TBase =>
-            TryGet(Cache<T>.Index, out value) || (super && TryGet(Cache<T>.Super, out value)) || (sub && TryGet(Cache<T>.Sub, out value));
-
-        [ThreadSafe]
-        public bool TryGet(Type type, out TValue value, bool super = false, bool sub = false)
+        public bool TryGet(Type type, out TValue value)
         {
-            if (TryGetIndices(type, out var indices))
-                return TryGet(indices.index, out value) ||
-                    (super && TryGet(indices.super, out value)) ||
-                    (sub && TryGet(indices.sub, out value));
-
+            if (_local.TryGetValue(type, out var entry)) return TryGet(entry, out value);
             value = default;
             return false;
         }
-
         [ThreadSafe]
-        public bool TryGet(int index, out TValue value)
+        public bool TryGet(Type type, out TValue value, bool super, bool sub)
         {
-            if (Has(index))
-            {
-                value = _values.items[index];
-                return true;
-            }
-
+            if (_local.TryGetValue(type, out var entry)) return TryGet(entry, out value, super, sub);
             value = default;
             return false;
         }
-
-        public bool Set<T>(in TValue value) where T : TBase => Set(Cache<T>.Index, value);
-        public bool Set<T>(in TValue value, out int index) where T : TBase => Set(index = Cache<T>.Index, value);
-        public bool Set(Type type, in TValue value) => TryIndex(type, out var index) && Set(index, value);
-        public bool Set(Type type, in TValue value, out int index) => TryIndex(type, out index) && Set(index, value);
-        public bool Set(int index, in TValue value)
-        {
-            ArrayUtility.Ensure(ref _values.items, index + 1);
-            ArrayUtility.Ensure(ref _allocated, index + 1);
-            _values.items[index] = value;
-            if (_allocated[index].Change(true))
-            {
-                _values.count++;
-                return true;
-            }
-
-            return false;
-        }
+        [ThreadSafe]
+        public bool TryGet<T>(out TValue value) where T : TBase => TryGet(Cache<T>.Entry, out value);
+        [ThreadSafe]
+        public bool TryGet<T>(out TValue value, bool super, bool sub) where T : TBase => TryGet(Cache<T>.Entry, out value, super, sub);
+        [ThreadSafe]
+        public bool TryGet(int index, out TValue value) => TryGet(_entries[index], out value);
+        [ThreadSafe]
+        public bool TryGet(int index, out TValue value, bool super, bool sub) => TryGet(_entries[index], out value, super, sub);
 
         [ThreadSafe]
-        public bool Has(Type type, bool super = false, bool sub = false) => TryGetIndices(type, out var indices) &&
-            (Has(indices.index) || (super && Has(indices.super) || (sub && Has(indices.sub))));
+        public bool Has(Type type) => _local.TryGetValue(type, out var entry) && Has(entry);
         [ThreadSafe]
-        public bool Has<T>(bool super = false, bool sub = false) where T : TBase =>
-            Has(Cache<T>.Index) || (super && Has(Cache<T>.Super)) || (sub && Has(Cache<T>.Sub));
+        public bool Has(Type type, bool super, bool sub) => _local.TryGetValue(type, out var entry) && Has(entry, super, sub);
         [ThreadSafe]
-        public bool Has(int index) => index >= 0 && index < _allocated.Length && _allocated[index];
+        public bool Has<T>() where T : TBase => Has(Cache<T>.Entry);
+        [ThreadSafe]
+        public bool Has<T>(bool super, bool sub) where T : TBase => Has(Cache<T>.Entry, super, sub);
+        [ThreadSafe]
+        public bool Has(int index) => Has(_entries[index]);
+        [ThreadSafe]
+        public bool Has(int index, bool super, bool sub) => Has(_entries[index], super, sub);
 
-        public bool Remove<T>(bool super = false, bool sub = false) where T : TBase =>
-            Remove(Cache<T>.Index) | (super && Remove(Cache<T>.Super)) | (sub && Remove(Cache<T>.Sub));
-        public bool Remove(Type type, bool super = false, bool sub = false) => TryGetIndices(type, out var indices) &&
-            Remove(indices.index) | (super && Remove(indices.super)) | (sub && Remove(indices.sub));
-        public bool Remove(int index)
-        {
-            if (Has(index))
-            {
-                _values.items[index] = default;
-                _values.count--;
-                _allocated[index] = false;
-                return true;
-            }
+        public bool Set<T>(in TValue value) where T : TBase => Set(Cache<T>.Entry, value);
+        public bool Set(Type type, in TValue value) => Set(GetEntry(type), value);
+        public bool Set(int index, in TValue value) => Set(_entries[index], value);
 
-            return false;
-        }
+        public bool Remove<T>() where T : TBase => Remove(Cache<T>.Entry);
+        public bool Remove<T>(bool super, bool sub) where T : TBase => Remove(Cache<T>.Entry, super, sub);
+        public bool Remove(Type type) => _local.TryGetValue(type, out var entry) && Remove(entry);
+        public bool Remove(Type type, bool super, bool sub) => _local.TryGetValue(type, out var entry) && Remove(entry, super, sub);
+        public bool Remove(int index) => Remove(_entries[index]);
+        public bool Remove(int index, bool super, bool sub) => Remove(_entries[index], super, sub);
 
         public bool Clear()
         {
-            _allocated.Clear();
-            return _values.Clear();
+            if (_local.TryClear())
+            {
+                _values.Clear();
+                return true;
+            }
+            return false;
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
@@ -419,17 +340,46 @@ namespace Entia.Core
         IEnumerator<(Type type, TValue value)> IEnumerable<(Type type, TValue value)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        bool TryGet(List<int> indices, out TValue value)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool TryGet(Entry entry, out TValue value, bool super, bool sub) =>
+            TryGet(entry, out value) ||
+            (super && TryGet(entry.Super, out value)) ||
+            (sub && TryGet(entry.Sub, out value));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool TryGet(Entry entry, out TValue value)
         {
-            value = Get(indices, out var success);
-            return success;
+            if (entry.Index < _values.Length)
+            {
+                ref var pair = ref _values[entry.Index];
+                value = pair.value;
+                return pair.allocated;
+            }
+            value = default;
+            return false;
         }
 
-        ref TValue Get(List<int> indices, out bool success)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool TryGet(Entry[] entries, out TValue value)
         {
-            for (int i = 0; i < indices.Count; i++)
+            for (int i = 0; i < entries.Length; i++) if (TryGet(entries[i], out value)) return true;
+            value = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        ref TValue Get(Entry entry, out bool success, bool super, bool sub)
+        {
+            ref var value = ref Get(entry, out success);
+            if (success) return ref value;
+            if (super)
             {
-                ref var value = ref Get(indices[i], out success);
+                value = ref Get(entry.Super, out success);
+                if (success) return ref value;
+            }
+            if (sub)
+            {
+                value = ref Get(entry.Sub, out success);
                 if (success) return ref value;
             }
 
@@ -437,17 +387,88 @@ namespace Entia.Core
             return ref Dummy<TValue>.Value;
         }
 
-        bool Has(List<int> indices)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        ref TValue Get(Entry entry, out bool success)
         {
-            for (int i = 0; i < indices.Count; i++) if (Has(indices[i])) return true;
+            if (entry.Index < _values.Length)
+            {
+                ref var pair = ref _values[entry.Index];
+                success = pair.allocated;
+                return ref pair.value;
+            }
+            success = false;
+            return ref Dummy<TValue>.Value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        ref TValue Get(Entry[] entries, out bool success)
+        {
+            for (int i = 0; i < entries.Length; i++)
+            {
+                ref var value = ref Get(entries[i], out success);
+                if (success) return ref value;
+            }
+
+            success = false;
+            return ref Dummy<TValue>.Value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool Has(Entry entry, bool super, bool sub) =>
+            Has(entry) || (super && Has(entry.Super) || (sub && Has(entry.Sub)));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool Has(Entry entry) => entry.Index < _values.Length && _values[entry.Index].allocated;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool Has(Entry[] entries)
+        {
+            for (int i = 0; i < entries.Length; i++) if (Has(entries[i])) return true;
             return false;
         }
 
-        bool Remove(List<int> indices)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool Set(Entry entry, in TValue value)
+        {
+            ArrayUtility.Ensure(ref _values, entry.Index + 1);
+            ref var pair = ref _values[entry.Index];
+            pair.value = value;
+            if (pair.allocated.Change(true))
+            {
+                _local[entry.Type] = entry;
+                return true;
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool Remove(Entry entry, bool super, bool sub) =>
+            Remove(entry) | (super && Remove(entry.Super)) | (sub && Remove(entry.Sub));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool Remove(Entry entry)
+        {
+            if (Has(entry.Index) && _local.Remove(entry.Type))
+            {
+                _values[entry.Index] = default;
+                return true;
+            }
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool Remove(Entry[] entries)
         {
             var removed = false;
-            for (int i = 0; i < indices.Count; i++) removed |= Remove(indices[i]);
+            for (int i = 0; i < entries.Length; i++) removed |= Remove(entries[i]);
             return removed;
+        }
+
+        IEnumerable<int> Indices(Entry entry, bool super, bool sub)
+        {
+            yield return entry.Index;
+            if (super) for (int i = 0; i < entry.Super.Length; i++) yield return entry.Super[i].Index;
+            if (sub) for (int i = 0; i < entry.Sub.Length; i++) yield return entry.Sub[i].Index;
         }
     }
 }

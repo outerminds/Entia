@@ -10,11 +10,5 @@ namespace Entia.Experiment
 
         public override bool Instantiate(out string instance, in DeserializeContext context) => context.Reader.Read(out instance);
         public override bool Initialize(ref string instance, in DeserializeContext context) => true;
-
-        public override bool Clone(in string instance, out string clone, in CloneContext context)
-        {
-            clone = instance;
-            return true;
-        }
     }
 }

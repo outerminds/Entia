@@ -38,11 +38,11 @@ namespace Entia.Core
         {
             using (var read = _providers.Read(true))
             {
-                if (read.Value.TryGet(type, out var provider, false, false) && provider.reflection is Func<object> casted1) return casted1;
+                if (read.Value.TryGet(type, out var provider) && provider.reflection is Func<object> casted1) return casted1;
                 var reflection = CreateProvider(type);
                 using (var write = _providers.Write())
                 {
-                    if (write.Value.TryGet(type, out provider, false, false) && provider.reflection is Func<object> casted2) return casted2;
+                    if (write.Value.TryGet(type, out provider) && provider.reflection is Func<object> casted2) return casted2;
                     write.Value.Set(type, (default, reflection));
                     return reflection;
                 }

@@ -148,12 +148,6 @@ namespace Entia.Experiment
 
         public override bool Initialize(ref Type instance, in DeserializeContext context) => true;
 
-        public override bool Clone(in Type instance, out Type clone, in CloneContext context)
-        {
-            clone = instance;
-            return true;
-        }
-
         bool SerializeType(Type instance, in SerializeContext context)
         {
             context.Writer.Write(Kinds.Type);

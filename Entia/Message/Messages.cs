@@ -56,10 +56,10 @@ namespace Entia.Modules
         {
             using (var read = _emitters.Read(true))
             {
-                if (read.Value.TryGet<T>(out var emitter, false, false) && emitter is Emitter<T> casted1) return casted1;
+                if (read.Value.TryGet<T>(out var emitter) && emitter is Emitter<T> casted1) return casted1;
                 using (var write = _emitters.Write())
                 {
-                    if (write.Value.TryGet<T>(out emitter, false, false) && emitter is Emitter<T> casted2) return casted2;
+                    if (write.Value.TryGet<T>(out emitter) && emitter is Emitter<T> casted2) return casted2;
                     write.Value.Set<T>(casted2 = new Emitter<T>());
                     return casted2;
                 }
@@ -70,10 +70,10 @@ namespace Entia.Modules
         {
             using (var read = _emitters.Read(true))
             {
-                if (read.Value.TryGet(type, out var emitter, false, false)) return emitter;
+                if (read.Value.TryGet(type, out var emitter)) return emitter;
                 using (var write = _emitters.Write())
                 {
-                    if (write.Value.TryGet(type, out emitter, false, false)) return emitter;
+                    if (write.Value.TryGet(type, out emitter)) return emitter;
                     var generic = typeof(Emitter<>).MakeGenericType(type);
                     write.Value.Set(type, emitter = Activator.CreateInstance(generic) as IEmitter);
                     return emitter;
@@ -140,39 +140,39 @@ namespace Entia.Modules
 
         public bool Has<T>() where T : struct, IMessage
         {
-            using (var read = _emitters.Read()) return read.Value.Has<T>(false, false);
+            using (var read = _emitters.Read()) return read.Value.Has<T>();
         }
 
         public bool Has(Type type)
         {
-            using (var read = _emitters.Read()) return read.Value.Has(type, false, false);
+            using (var read = _emitters.Read()) return read.Value.Has(type);
         }
 
         public bool Has(IEmitter emitter)
         {
-            using (var read = _emitters.Read()) return read.Value.TryGet(emitter.Type, out var value, false, false) && value == emitter;
+            using (var read = _emitters.Read()) return read.Value.TryGet(emitter.Type, out var value) && value == emitter;
         }
 
         public bool Has<T>(Emitter<T> emitter) where T : struct, IMessage
         {
-            using (var read = _emitters.Read()) return read.Value.TryGet<T>(out var value, false, false) && value == emitter;
+            using (var read = _emitters.Read()) return read.Value.TryGet<T>(out var value) && value == emitter;
         }
 
         public bool Has(IReceiver receiver)
         {
-            using (var read = _emitters.Read()) return read.Value.TryGet(receiver.Type, out var emitter, false, false) && emitter.Has(receiver);
+            using (var read = _emitters.Read()) return read.Value.TryGet(receiver.Type, out var emitter) && emitter.Has(receiver);
         }
 
         public bool Has<T>(Receiver<T> receiver) where T : struct, IMessage
         {
-            using (var read = _emitters.Read()) return read.Value.TryGet<T>(out var emitter, false, false) && emitter.Has(receiver);
+            using (var read = _emitters.Read()) return read.Value.TryGet<T>(out var emitter) && emitter.Has(receiver);
         }
 
         public bool Remove<T>(Emitter<T> emitter) where T : struct, IMessage
         {
             using (var write = _emitters.Write())
             {
-                if (Has(emitter) && write.Value.Remove<T>(false, false))
+                if (Has(emitter) && write.Value.Remove<T>())
                 {
                     emitter.Clear();
                     return true;
@@ -186,7 +186,7 @@ namespace Entia.Modules
         {
             using (var write = _emitters.Write())
             {
-                if (Has(emitter) && write.Value.Remove(emitter.Type, false, false))
+                if (Has(emitter) && write.Value.Remove(emitter.Type))
                 {
                     emitter.Clear();
                     return true;
@@ -222,7 +222,7 @@ namespace Entia.Modules
         {
             using (var read = _emitters.Read())
             {
-                if (read.Value.TryGet<T>(out var value, false, false) && value is Emitter<T> casted)
+                if (read.Value.TryGet<T>(out var value) && value is Emitter<T> casted)
                 {
                     emitter = casted;
                     return true;
@@ -235,7 +235,7 @@ namespace Entia.Modules
 
         bool TryEmitter(Type type, out IEmitter emitter)
         {
-            using (var read = _emitters.Read()) return read.Value.TryGet(type, out emitter, false, false);
+            using (var read = _emitters.Read()) return read.Value.TryGet(type, out emitter);
         }
     }
 }
