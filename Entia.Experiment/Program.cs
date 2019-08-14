@@ -614,15 +614,15 @@ namespace Entia.Experiment
             //     () => new Entity(),
             // );
             // var value = (new Position[1000], new Velocity[1000], new Mass[1000]);
-            // var value = new Dictionary<object, object>();
-            // value[1] = "2";
-            // value["3"] = 4;
-            // value[DateTime.Now] = TimeSpan.MaxValue;
-            // value[TimeSpan.MinValue] = DateTime.UtcNow;
-            // value[new object()] = value;
-            // value[new Position[100]] = new Velocity[100];
-            // value[new List<Mass>(new Mass[100])] = new List<Lifetime>(new Lifetime[100]);
-            // CompareSerializers(value);
+            var value = new Dictionary<object, object>();
+            value[1] = "2";
+            value["3"] = 4;
+            value[DateTime.Now] = TimeSpan.MaxValue;
+            value[TimeSpan.MinValue] = DateTime.UtcNow;
+            value[new object()] = value;
+            value[new Position[100]] = new Velocity[100];
+            value[new List<Mass>(new Mass[100])] = new List<Lifetime>(new Lifetime[100]);
+            CompareSerializers(value);
             var values = new Dictionary<Position, Velocity>();
             for (int i = 0; i < 100; i++) values[new Position { X = i }] = new Velocity { Y = 1 };
             CompareSerializers((values, new List<Position>(new Position[100]), new List<Velocity>(new Velocity[100])));

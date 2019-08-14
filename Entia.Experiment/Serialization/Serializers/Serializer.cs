@@ -9,7 +9,40 @@ using static Entia.Experiment.Serializers.Serializer;
 
 namespace Entia.Experiment.Serializers
 {
-    public interface ISerializer : ITrait, IImplementation<object, Default>
+    [Implementation(typeof(List<>), typeof(ConcreteList<>))]
+    [Implementation(typeof(Dictionary<,>), typeof(ConcreteDictionary<,>))]
+    [Implementation(typeof(ValueTuple<,>), typeof(ConcreteTuple<,>))]
+    [Implementation(typeof(ValueTuple<,,>), typeof(ConcreteTuple<,,>))]
+    [Implementation(typeof(ValueTuple<,,,>), typeof(ConcreteTuple<,,,>))]
+    [Implementation(typeof(ValueTuple<,,,,>), typeof(ConcreteTuple<,,,,>))]
+    [Implementation(typeof(ValueTuple<,,,,,>), typeof(ConcreteTuple<,,,,,>))]
+    [Implementation(typeof(ValueTuple<,,,,,,>), typeof(ConcreteTuple<,,,,,,>))]
+    public interface ISerializer : ITrait,
+        IImplementation<bool, BlittableObject<bool>>, IImplementation<bool[], BlittableArray<bool>>,
+        IImplementation<char, BlittableObject<char>>, IImplementation<char[], BlittableArray<char>>,
+        IImplementation<byte, BlittableObject<byte>>, IImplementation<byte[], BlittableArray<byte>>,
+        IImplementation<sbyte, BlittableObject<sbyte>>, IImplementation<sbyte[], BlittableArray<sbyte>>,
+        IImplementation<ushort, BlittableObject<ushort>>, IImplementation<ushort[], BlittableArray<ushort>>,
+        IImplementation<short, BlittableObject<short>>, IImplementation<short[], BlittableArray<short>>,
+        IImplementation<uint, BlittableObject<uint>>, IImplementation<uint[], BlittableArray<uint>>,
+        IImplementation<int, BlittableObject<int>>, IImplementation<int[], BlittableArray<int>>,
+        IImplementation<ulong, BlittableObject<ulong>>, IImplementation<ulong[], BlittableArray<ulong>>,
+        IImplementation<long, BlittableObject<long>>, IImplementation<long[], BlittableArray<long>>,
+        IImplementation<float, BlittableObject<float>>, IImplementation<float[], BlittableArray<float>>,
+        IImplementation<double, BlittableObject<double>>, IImplementation<double[], BlittableArray<double>>,
+        IImplementation<decimal, BlittableObject<decimal>>, IImplementation<decimal[], BlittableArray<decimal>>,
+        IImplementation<DateTime, BlittableObject<DateTime>>, IImplementation<DateTime[], BlittableArray<DateTime>>,
+        IImplementation<TimeSpan, BlittableObject<TimeSpan>>, IImplementation<TimeSpan[], BlittableArray<TimeSpan>>,
+
+        IImplementation<string, ConcreteString>,
+        IImplementation<Assembly, AbstractAssembly>,
+        IImplementation<Module, AbstractModule>,
+        IImplementation<Type, AbstractType>,
+        IImplementation<MethodInfo, AbstractMethod>,
+        IImplementation<MemberInfo, AbstractMember>,
+
+        IImplementation<Unit, BlittableObject<Unit>>, IImplementation<Unit[], BlittableArray<Unit>>,
+        IImplementation<object, Default>
     {
         bool Serialize(object instance, in SerializeContext context);
         bool Instantiate(out object instance, in DeserializeContext context);
@@ -57,59 +90,17 @@ namespace Entia.Experiment.Serializers
             ISerializer Create()
             {
                 var data = TypeUtility.GetData(type);
-                switch (data.Code)
+                if (type.IsArray)
                 {
-                    case TypeCode.Boolean: return Blittable.Object<bool>();
-                    case TypeCode.Byte: return Blittable.Object<byte>();
-                    case TypeCode.Char: return Blittable.Object<char>();
-                    case TypeCode.DateTime: return Blittable.Object<DateTime>();
-                    case TypeCode.Decimal: return Blittable.Object<decimal>();
-                    case TypeCode.Double: return Blittable.Object<double>();
-                    case TypeCode.Int16: return Blittable.Object<short>();
-                    case TypeCode.Int32: return Blittable.Object<int>();
-                    case TypeCode.Int64: return Blittable.Object<long>();
-                    case TypeCode.SByte: return Blittable.Object<sbyte>();
-                    case TypeCode.Single: return Blittable.Object<float>();
-                    case TypeCode.UInt16: return Blittable.Object<ushort>();
-                    case TypeCode.UInt32: return Blittable.Object<uint>();
-                    case TypeCode.UInt64: return Blittable.Object<ulong>();
-                    case TypeCode.String: return String();
-                    default:
-                        if (type.IsArray)
-                        {
-                            var element = TypeUtility.GetData(data.Element);
-                            switch (element.Code)
-                            {
-                                case TypeCode.Boolean: return Blittable.Array<bool>();
-                                case TypeCode.Byte: return Blittable.Array<byte>();
-                                case TypeCode.Char: return Blittable.Array<char>();
-                                case TypeCode.DateTime: return Blittable.Array<DateTime>();
-                                case TypeCode.Decimal: return Blittable.Array<decimal>();
-                                case TypeCode.Double: return Blittable.Array<double>();
-                                case TypeCode.Int16: return Blittable.Array<short>();
-                                case TypeCode.Int32: return Blittable.Array<int>();
-                                case TypeCode.Int64: return Blittable.Array<long>();
-                                case TypeCode.SByte: return Blittable.Array<sbyte>();
-                                case TypeCode.Single: return Blittable.Array<float>();
-                                case TypeCode.UInt16: return Blittable.Array<ushort>();
-                                case TypeCode.UInt32: return Blittable.Array<uint>();
-                                case TypeCode.UInt64: return Blittable.Array<ulong>();
-                                default:
-                                    if (element.Size is int size) return Blittable.Array(element, size);
-                                    else return Array(element);
-                            }
-                        }
-                        else if (data.Size is int size) return Blittable.Object(data, size);
-                        else if (type.Is<Type>()) return Serializer.Reflection.Type();
-                        else if (type.Is<Assembly>()) return Serializer.Reflection.Assembly();
-                        else if (type.Is<Module>()) return Serializer.Reflection.Module();
-                        else if (type.Is<MethodInfo>()) return Serializer.Reflection.Method();
-                        else if (type.Is<MemberInfo>()) return Serializer.Reflection.Member();
-                        else if (type.Is<Delegate>()) return Delegate(type);
-                        else if (type.Is(typeof(List<>), definition: true)) return List(data.Arguments[0]);
-                        else if (type.Is(typeof(Dictionary<,>), definition: true)) return Dictionary(data.Arguments[0], data.Arguments[1]);
-                        else return Object(type);
+                    var element = TypeUtility.GetData(data.Element);
+                    if (element.Size is int size) return Blittable.Array(element, size);
+                    else return Array(element);
                 }
+                else if (data.Size is int size) return Blittable.Object(data, size);
+                else if (type.Is<Delegate>()) return Delegate(type);
+                else if (type.Is(typeof(List<>))) return List(data.Arguments[0]);
+                else if (type.Is(typeof(Dictionary<,>))) return Dictionary(data.Arguments[0], data.Arguments[1]);
+                else return Object(type);
             }
 
             yield return Create();
@@ -128,24 +119,15 @@ namespace Entia.Experiment.Serializers
 
         public static class Blittable
         {
-            public static Serializer<(T[] items, int count)> Pair<T>() where T : unmanaged => new BlittablePair<T>();
+            public static Serializer<(T[] items, int count)> PairArray<T>() where T : unmanaged => Map(
+                (in (T[], int) pair) => pair.ToArray(),
+                (in T[] items) => (items, items.Length),
+                Array<T>());
 
             public static Serializer<T[]> Array<T>() where T : unmanaged => new BlittableArray<T>();
-            public static ISerializer Array(Type type, int size)
-            {
-                if (TryInvoke(nameof(Array), type, out ISerializer value)) return value;
-                return new BlittableArray(type, size);
-            }
-
+            public static ISerializer Array(Type type, int size) => new BlittableArray(type, size);
             public static Serializer<T> Object<T>() where T : unmanaged => new BlittableObject<T>();
-            public static ISerializer Object(Type type, int size)
-            {
-                if (TryInvoke(nameof(Object), type, out ISerializer value)) return value;
-                return new BlittableObject(type, size);
-            }
-
-            static bool TryInvoke<T>(string name, Type type, out T value, params object[] arguments) =>
-                Serializer.TryInvoke(typeof(Blittable).StaticMethods(), name, type, out value, arguments);
+            public static ISerializer Object(Type type, int size) => new BlittableObject(type, size);
         }
 
         public static class Reflection
@@ -157,17 +139,16 @@ namespace Entia.Experiment.Serializers
             public static Serializer<MemberInfo> Member() => new AbstractMember();
         }
 
-        public static Serializer<string> String() => new ConcreteString();
+        public static Serializer<TFrom> Map<TFrom, TTo>(InFunc<TFrom, TTo> to, InFunc<TTo, TFrom> from, Serializer<TTo> serializer = null) =>
+            new Mapper<TFrom, TTo>(to, from, serializer);
+
+        public static Serializer<(T[] items, int count)> PairArray<T>() => Map(
+            (in (T[], int) pair) => pair.ToArray(),
+            (in T[] items) => (items, items.Length),
+            Array<T>());
 
         public static Serializer<T[]> Array<T>() => new ConcreteArray<T>();
-        public static ISerializer Array(Type type)
-        {
-            if (TryInvoke(nameof(Array), type, out ISerializer value)) return value;
-            return new ConcreteArray(type);
-        }
-
-        public static Serializer<TFrom> Map<TFrom, TTo>(InFunc<TFrom, TTo> to, InFunc<TTo, TFrom> from) => new Mapper<TFrom, TTo>(to, from);
-
+        public static ISerializer Array(Type type) => new ConcreteArray(type);
         public static Serializer<T> Object<T>(Func<T> construct, params IMember<T>[] members) => new ConcreteObject<T>(construct, members);
         public static Serializer<T> Object<T>(params IMember<T>[] members) => new ConcreteObject<T>(members);
         public static ISerializer Object(Type type, params IMember[] members) => new ConcreteObject(type, members);
@@ -178,67 +159,17 @@ namespace Entia.Experiment.Serializers
             return Object(type, members);
         }
 
-        public static Serializer<T> Delegate<T>() where T : Delegate => new ConcreteDelegate<T>();
-        public static ISerializer Delegate(Type type)
-        {
-            if (TryInvoke(nameof(Delegate), type, out ISerializer value)) return value;
-            return new ConcreteDelegate(type);
-        }
-
+        public static Serializer<string> String() => new ConcreteString();
+        public static ISerializer Delegate(Type type) => new ConcreteDelegate(type);
         public static Serializer<List<T>> List<T>() => new ConcreteList<T>();
-        public static ISerializer List(Type type)
-        {
-            if (TryInvoke(nameof(List), type, out ISerializer value)) return value;
-            return new ConcreteList(type);
-        }
-
+        public static ISerializer List(Type type) => new ConcreteList(type);
         public static Serializer<Dictionary<TKey, TValue>> Dictionary<TKey, TValue>() => new ConcreteDictionary<TKey, TValue>();
-        public static ISerializer Dictionary(Type key, Type value)
-        {
-            if (TryInvoke(nameof(Dictionary), new[] { key, value }, out ISerializer serializer)) return serializer;
-            return new ConcreteDictionary(key, value);
-        }
-
-        static bool TryGeneric(ISerializer serializer, out Type type)
-        {
-            if (serializer.GetType().Bases().TryFirst(@base => @base.Is(typeof(Serializer<>), definition: true), out var generic) &&
-                generic.GetGenericArguments().TryFirst(out type)) return true;
-            type = default;
-            return false;
-        }
-
-        static bool TryInvoke(string name, ISerializer serializer, out ISerializer value, params object[] arguments)
-        {
-            if (TryGeneric(serializer, out var type) && TryInvoke(name, type, out value, arguments)) return true;
-            value = default;
-            return false;
-        }
-
-        static bool TryInvoke<T>(string name, Type type, out T value, params object[] arguments) =>
-            TryInvoke(name, new[] { type }, out value, arguments);
-        static bool TryInvoke<T>(string name, Type[] types, out T value, params object[] arguments) =>
-            TryInvoke(typeof(Serializer).StaticMethods(), name, types, out value, arguments);
-        static bool TryInvoke<T>(MethodInfo[] methods, string name, Type type, out T value, params object[] arguments) =>
-            TryInvoke(methods, name, new[] { type }, out value, arguments);
-        static bool TryInvoke<T>(MethodInfo[] methods, string name, Type[] types, out T value, params object[] arguments)
-        {
-            if (methods.TryFirst(
-                current =>
-                    current.IsGenericMethod &&
-                    current.Name == name &&
-                    current.GetGenericArguments().Length == types.Length &&
-                    current.GetParameters().Length == arguments.Length,
-                out var method))
-            {
-                try
-                {
-                    value = (T)method.MakeGenericMethod(types).Invoke(null, arguments);
-                    return true;
-                }
-                catch { }
-            }
-            value = default;
-            return false;
-        }
+        public static ISerializer Dictionary(Type key, Type value) => new ConcreteDictionary(key, value);
+        public static Serializer<(T1, T2)> Tuple<T1, T2>() => new ConcreteTuple<T1, T2>();
+        public static Serializer<(T1, T2, T3)> Tuple<T1, T2, T3>() => new ConcreteTuple<T1, T2, T3>();
+        public static Serializer<(T1, T2, T3, T4)> Tuple<T1, T2, T3, T4>() => new ConcreteTuple<T1, T2, T3, T4>();
+        public static Serializer<(T1, T2, T3, T4, T5)> Tuple<T1, T2, T3, T4, T5>() => new ConcreteTuple<T1, T2, T3, T4, T5>();
+        public static Serializer<(T1, T2, T3, T4, T5, T6)> Tuple<T1, T2, T3, T4, T5, T6>() => new ConcreteTuple<T1, T2, T3, T4, T5, T6>();
+        public static Serializer<(T1, T2, T3, T4, T5, T6, T7)> Tuple<T1, T2, T3, T4, T5, T6, T7>() => new ConcreteTuple<T1, T2, T3, T4, T5, T6, T7>();
     }
 }

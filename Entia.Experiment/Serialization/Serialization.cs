@@ -11,13 +11,6 @@ namespace Entia.Experiment.Serializationz
 
     public readonly struct SerializeContext
     {
-        static class Cache<T>
-        {
-            public static readonly InFunc<T, bool> IsNull = typeof(T).IsValueType ?
-                new InFunc<T, bool>((in T _) => false) :
-                new InFunc<T, bool>((in T value) => value == null);
-        }
-
         public readonly Writer Writer;
         public readonly Dictionary<object, int> References;
         public readonly World World;
@@ -66,12 +59,13 @@ namespace Entia.Experiment.Serializationz
 
         public bool Serialize<T>(in T instance)
         {
-            if (Cache<T>.IsNull(instance))
+            var box = (object)instance;
+            if (box is null)
             {
                 Writer.Write(Kinds.Null);
                 return true;
             }
-            else if (References.TryGetValue(instance, out var index))
+            else if (References.TryGetValue(box, out var index))
             {
                 Writer.Write(Kinds.Reference);
                 Writer.Write(index);
@@ -79,7 +73,7 @@ namespace Entia.Experiment.Serializationz
             }
 
             var dynamic = instance.GetType();
-            var reference = References[instance] = References.Count;
+            var reference = References[box] = References.Count;
             if (typeof(T) == dynamic)
             {
                 Writer.Write(Kinds.Concrete);
