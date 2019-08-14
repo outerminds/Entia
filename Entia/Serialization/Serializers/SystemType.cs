@@ -20,7 +20,7 @@ namespace Entia.Serializers
             typeof(Option<>), typeof(Result<>),
             typeof(Box<>), typeof(Box<>.Read),
             typeof(Slice<>), typeof(Slice<>.Read),
-            typeof(SwissList<>), typeof(SwitchList<>), typeof(TypeMap<,>),
+            typeof(TypeMap<,>),
             typeof(Disposable<>)
         };
 

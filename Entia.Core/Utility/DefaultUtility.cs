@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Reflection;
 using Entia.Core.Documentation;
 
@@ -24,10 +23,9 @@ namespace Entia.Core
             using (var read = _providers.Read(true))
             {
                 if (read.Value.TryGet<T>(out var provider, false, false) && provider.generic is Func<T> casted1) return casted1;
-                var (generic, reflection) = CreateProviders<T>();
                 using (var write = _providers.Write())
                 {
-                    if (write.Value.TryGet<T>(out provider, false, false) && provider.generic is Func<T> casted2) return casted2;
+                    var (generic, reflection) = CreateProviders<T>();
                     write.Value.Set<T>((generic, reflection));
                     return generic;
                 }
@@ -39,10 +37,9 @@ namespace Entia.Core
             using (var read = _providers.Read(true))
             {
                 if (read.Value.TryGet(type, out var provider) && provider.reflection is Func<object> casted1) return casted1;
-                var reflection = CreateProvider(type);
                 using (var write = _providers.Write())
                 {
-                    if (write.Value.TryGet(type, out provider) && provider.reflection is Func<object> casted2) return casted2;
+                    var reflection = CreateProvider(type);
                     write.Value.Set(type, (default, reflection));
                     return reflection;
                 }
