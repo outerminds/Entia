@@ -1,7 +1,7 @@
 using System;
-using Entia.Core;
+using Entia.Experiment.Serializationz;
 
-namespace Entia.Experiment
+namespace Entia.Experiment.Serializers
 {
     public sealed class ConcreteArray : Serializer<Array>
     {
@@ -14,7 +14,7 @@ namespace Entia.Experiment
             context.Writer.Write(instance.Length);
             for (int i = 0; i < instance.Length; i++)
             {
-                if (context.Descriptors.Serialize(instance.GetValue(i), Type, context)) continue;
+                if (context.Serialize(instance.GetValue(i), Type)) continue;
                 return false;
             }
             return true;
@@ -35,7 +35,7 @@ namespace Entia.Experiment
         {
             for (int i = 0; i < instance.Length; i++)
             {
-                if (context.Descriptors.Deserialize(out var value, Type, context)) instance.SetValue(value, i);
+                if (context.Deserialize(out var value, Type)) instance.SetValue(value, i);
                 else return false;
             }
             return true;
@@ -49,7 +49,7 @@ namespace Entia.Experiment
             context.Writer.Write(instance.Length);
             for (int i = 0; i < instance.Length; i++)
             {
-                if (context.Descriptors.Serialize(instance[i], context)) continue;
+                if (context.Serialize(instance[i])) continue;
                 return false;
             }
             return true;
@@ -70,7 +70,7 @@ namespace Entia.Experiment
         {
             for (int i = 0; i < instance.Length; i++)
             {
-                if (context.Descriptors.Deserialize(out instance[i], context)) continue;
+                if (context.Deserialize(out instance[i])) continue;
                 return false;
             }
             return true;

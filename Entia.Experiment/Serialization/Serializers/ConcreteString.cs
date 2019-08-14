@@ -1,4 +1,6 @@
-namespace Entia.Experiment
+using Entia.Experiment.Serializationz;
+
+namespace Entia.Experiment.Serializers
 {
     public sealed class ConcreteString : Serializer<string>
     {

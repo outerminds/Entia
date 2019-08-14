@@ -1,15 +1,16 @@
 using System.Reflection;
+using Entia.Experiment.Serializationz;
 
-namespace Entia.Experiment
+namespace Entia.Experiment.Serializers
 {
     public sealed class AbstractModule : Serializer<Module>
     {
         public override bool Serialize(in Module instance, in SerializeContext context) =>
-            context.Descriptors.Serialize(instance.Assembly, instance.Assembly.GetType(), context);
+            context.Serialize(instance.Assembly, instance.Assembly.GetType());
 
         public override bool Instantiate(out Module instance, in DeserializeContext context)
         {
-            if (context.Descriptors.Deserialize(out Assembly assembly, context))
+            if (context.Deserialize(out Assembly assembly))
             {
                 instance = assembly.ManifestModule;
                 return true;

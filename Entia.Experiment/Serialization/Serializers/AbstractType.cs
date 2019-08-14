@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Entia.Core;
+using Entia.Experiment.Serializationz;
 using Entia.Modules.Message;
 
-namespace Entia.Experiment
+namespace Entia.Experiment.Serializers
 {
     public sealed class AbstractType : Serializer<Type>
     {
@@ -131,7 +132,7 @@ namespace Entia.Experiment
                         }
                     case Kinds.Type:
                         {
-                            if (context.Reader.Read(out int token) && context.Descriptors.Deserialize(out Module module, context))
+                            if (context.Reader.Read(out int token) && context.Deserialize(out Module module))
                             {
                                 instance = module.ResolveType(token);
                                 return true;
@@ -152,7 +153,7 @@ namespace Entia.Experiment
         {
             context.Writer.Write(Kinds.Type);
             context.Writer.Write(instance.MetadataToken);
-            return context.Descriptors.Serialize(instance.Module, instance.Module.GetType(), context);
+            return context.Serialize(instance.Module, instance.Module.GetType());
         }
     }
 }

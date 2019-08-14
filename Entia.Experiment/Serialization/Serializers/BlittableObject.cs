@@ -1,9 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
-using Entia.Core;
+using Entia.Experiment.Serializationz;
 
-namespace Entia.Experiment
+namespace Entia.Experiment.Serializers
 {
     public sealed class BlittableObject : ISerializer
     {

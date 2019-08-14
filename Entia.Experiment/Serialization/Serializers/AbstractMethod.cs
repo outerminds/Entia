@@ -1,15 +1,16 @@
 using System;
 using System.Reflection;
 using Entia.Core;
+using Entia.Experiment.Serializationz;
 
-namespace Entia.Experiment
+namespace Entia.Experiment.Serializers
 {
     public sealed class AbstractMethod : Serializer<MethodInfo>
     {
         public override bool Serialize(in MethodInfo instance, in SerializeContext context)
         {
             context.Writer.Write(instance.MetadataToken);
-            if (context.Descriptors.Serialize(instance.DeclaringType, instance.DeclaringType.GetType(), context))
+            if (context.Serialize(instance.DeclaringType, instance.DeclaringType.GetType()))
             {
                 if (instance.IsGenericMethod)
                 {
@@ -18,7 +19,7 @@ namespace Entia.Experiment
                     for (int i = 0; i < arguments.Length; i++)
                     {
                         var argument = arguments[i];
-                        if (context.Descriptors.Serialize(argument, argument.GetType(), context)) continue;
+                        if (context.Serialize(argument, argument.GetType())) continue;
                         return false;
                     }
                 }
@@ -29,7 +30,7 @@ namespace Entia.Experiment
 
         public override bool Instantiate(out MethodInfo instance, in DeserializeContext context)
         {
-            if (context.Reader.Read(out int token) && context.Descriptors.Deserialize(out Type declaring, context))
+            if (context.Reader.Read(out int token) && context.Deserialize(out Type declaring))
             {
                 instance = declaring.Method(token);
                 if (instance.IsGenericMethodDefinition)
@@ -39,7 +40,7 @@ namespace Entia.Experiment
                         var arguments = new Type[count];
                         for (int i = 0; i < arguments.Length; i++)
                         {
-                            if (context.Descriptors.Deserialize(out arguments[i], context)) continue;
+                            if (context.Deserialize(out arguments[i])) continue;
                             return false;
                         }
                         instance = instance.MakeGenericMethod(arguments);

@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using Entia.Core;
+using Entia.Experiment.Serializationz;
 
 namespace Entia.Experiment
 {
@@ -12,11 +13,10 @@ namespace Entia.Experiment
 
         public Field(Getter get) { Get = get; }
 
-        public bool Serialize(in T instance, in SerializeContext context) =>
-            context.Descriptors.Serialize(Get(instance), context);
+        public bool Serialize(in T instance, in SerializeContext context) => context.Serialize(Get(instance));
         public bool Deserialize(ref T instance, in DeserializeContext context)
         {
-            if (context.Descriptors.Deserialize(out TValue value, context))
+            if (context.Deserialize(out TValue value))
             {
                 UnsafeUtility.Set(Get(instance), value);
                 return true;
@@ -35,11 +35,10 @@ namespace Entia.Experiment
 
         public Property(Getter get, Setter set) { Get = get; Set = set; }
 
-        public bool Serialize(in T instance, in SerializeContext context) =>
-            context.Descriptors.Serialize(Get(instance), context);
+        public bool Serialize(in T instance, in SerializeContext context) => context.Serialize(Get(instance));
         public bool Deserialize(ref T instance, in DeserializeContext context)
         {
-            if (context.Descriptors.Deserialize(out TValue value, context))
+            if (context.Deserialize(out TValue value))
             {
                 Set(ref instance, value);
                 return true;
@@ -69,11 +68,11 @@ namespace Entia.Experiment
         }
 
         public bool Serialize(object instance, in SerializeContext context) =>
-            context.Descriptors.Serialize(Get(instance), Type, context);
+            context.Serialize(Get(instance), Type);
 
         public bool Deserialize(object instance, in DeserializeContext context)
         {
-            if (context.Descriptors.Deserialize(out var value, Type, context))
+            if (context.Deserialize(out var value, Type))
             {
                 Set(instance, value);
                 return true;

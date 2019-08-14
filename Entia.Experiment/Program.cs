@@ -1,5 +1,6 @@
 ﻿using Entia.Core;
 using Entia.Experiment.Serialization;
+using Entia.Experiment.Serializationz;
 using Entia.Injectables;
 using Entia.Messages;
 using Entia.Modules;
@@ -550,55 +551,47 @@ namespace Entia.Experiment
         static void Serializer2()
         {
             var world = new World();
-            var descriptors = world.Descriptors();
             byte[] bytes;
             bool success;
 
             var type = typeof(Program);
-            success = descriptors.Serialize(type, type.GetType(), out bytes);
-            success = descriptors.Deserialize(bytes, out type);
+            success = world.Serialize(type, type.GetType(), out bytes);
+            success = world.Deserialize(bytes, out type);
 
             var array = new int[] { 1, 2, 3, 4 };
-            success = descriptors.Serialize(array, out bytes);
-            success = descriptors.Deserialize(bytes, out array);
+            success = world.Serialize(array, out bytes);
+            success = world.Deserialize(bytes, out array);
 
             var cycle = new Cyclic();
             cycle.A = cycle;
-            success = descriptors.Serialize(cycle, out bytes);
-            success = descriptors.Deserialize(bytes, out cycle);
+            success = world.Serialize(cycle, out bytes);
+            success = world.Deserialize(bytes, out cycle);
 
-            success = descriptors.Serialize(null, typeof(object), out bytes);
-            success = descriptors.Deserialize(bytes, out object @null);
+            success = world.Serialize(null, typeof(object), out bytes);
+            success = world.Deserialize(bytes, out object @null);
 
             var function = new Func<int>(() => 321);
-            success = descriptors.Serialize(function, out bytes);
-            success = descriptors.Deserialize(bytes, out function);
+            success = world.Serialize(function, out bytes);
+            success = world.Deserialize(bytes, out function);
             var value = function();
 
             var action = new Action(() => value += 1);
-            success = descriptors.Serialize(action, out bytes, action.Target);
-            success = descriptors.Deserialize(bytes, out action, action.Target);
+            success = world.Serialize(action, out bytes, action.Target);
+            success = world.Deserialize(bytes, out action, action.Target);
             action();
 
             var reaction = new Entia.Modules.Message.Reaction<OnCreate>();
-            success = descriptors.Serialize(reaction, out bytes);
-            success = descriptors.Deserialize(bytes, out reaction);
+            success = world.Serialize(reaction, out bytes);
+            success = world.Deserialize(bytes, out reaction);
 
             var emitter = new Entia.Modules.Message.Emitter<OnCreate>();
-            success = descriptors.Serialize(emitter, out bytes);
-            success = descriptors.Deserialize(bytes, out emitter);
+            success = world.Serialize(emitter, out bytes);
+            success = world.Deserialize(bytes, out emitter);
 
             var entities = world.Entities();
             for (int i = 0; i < 100; i++) entities.Create();
-            success = descriptors.Serialize(entities, out bytes);
-            success = descriptors.Deserialize(bytes, out entities);
-
-            // var fett = new Fett();
-            // success = descriptors.Serialize(fett, out bytes);
-            // success = descriptors.Deserialize(bytes, out fett);
-            // descriptors.Set(Fett.Serializer);
-            // success = descriptors.Serialize(fett, out bytes);
-            // success = descriptors.Deserialize(bytes, out fett);
+            success = world.Serialize(entities, out bytes);
+            success = world.Deserialize(bytes, out entities);
         }
 
         static void CompareSerializers()
@@ -639,13 +632,9 @@ namespace Entia.Experiment
         {
             var container = new Container();
             var world = new World(container);
-            var serializers = world.Serializers();
-            var descriptors = world.Descriptors();
 
             world.Describe(value, out var description);
-
-            // serializers.Serialize(value, out var bytes1);
-            descriptors.Serialize(value, out var bytes2);
+            world.Serialize(value, out var bytes2);
 
             byte[] bytes3;
             var binary = new BinaryFormatter();
@@ -657,8 +646,8 @@ namespace Entia.Experiment
 
             void Describe() => world.Describe(value, out _);
             void Instantiate() => world.Instantiate(description, out T _);
-            void NewSerialize() => descriptors.Serialize(value, out _);
-            void NewDeserialize() => descriptors.Deserialize(bytes2, out T _);
+            void NewSerialize() => world.Serialize(value, out _);
+            void NewDeserialize() => world.Deserialize(bytes2, out T _);
             void BinarySerialize()
             {
                 using (var stream = new MemoryStream())
@@ -807,7 +796,7 @@ namespace Entia.Experiment
             // Traitz();
             // PoulahDescriptor();
             // Serializer1();
-            // Serializer2();
+            Serializer2();
             CompareSerializers();
             // SuperUnsafe();
             // Performance();

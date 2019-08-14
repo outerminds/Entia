@@ -1,6 +1,7 @@
 using Entia.Core;
+using Entia.Experiment.Serializationz;
 
-namespace Entia.Experiment
+namespace Entia.Experiment.Serializers
 {
     public sealed class Mapper<TFrom, TTo> : Serializer<TFrom>
     {
@@ -14,11 +15,11 @@ namespace Entia.Experiment
         }
 
         public override bool Serialize(in TFrom instance, in SerializeContext context) =>
-            context.Descriptors.Serialize(To(instance), context);
+            context.Serialize(To(instance));
 
         public override bool Instantiate(out TFrom instance, in DeserializeContext context)
         {
-            if (context.Descriptors.Deserialize(out TTo value, context))
+            if (context.Deserialize(out TTo value))
             {
                 instance = From(value);
                 return true;

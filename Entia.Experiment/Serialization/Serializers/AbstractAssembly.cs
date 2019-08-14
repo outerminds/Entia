@@ -1,6 +1,7 @@
 using System.Reflection;
+using Entia.Experiment.Serializationz;
 
-namespace Entia.Experiment
+namespace Entia.Experiment.Serializers
 {
     public sealed class AbstractAssembly : Serializer<Assembly>
     {

@@ -2,8 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Entia.Experiment.Serializationz;
 
-namespace Entia.Experiment
+namespace Entia.Experiment.Serializers
 {
     public sealed class ConcreteDictionary : Serializer<IDictionary>
     {
@@ -19,9 +20,7 @@ namespace Entia.Experiment
             context.Writer.Write(instance.Count);
             foreach (var key in instance.Keys)
             {
-                if (context.Descriptors.Serialize(key, Key, context) &&
-                    context.Descriptors.Serialize(instance[key], Value, context))
-                    continue;
+                if (context.Serialize(key, Key) && context.Serialize(instance[key], Value)) continue;
                 return false;
             }
             return true;
@@ -39,8 +38,7 @@ namespace Entia.Experiment
             {
                 for (int i = 0; i < count; i++)
                 {
-                    if (context.Descriptors.Deserialize(out var key, Key, context) &&
-                        context.Descriptors.Deserialize(out var value, Value, context))
+                    if (context.Deserialize(out var key, Key) && context.Deserialize(out var value, Value))
                         instance.Add(key, value);
                     else return false;
                 }
@@ -58,7 +56,7 @@ namespace Entia.Experiment
             var values = new TValue[instance.Count];
             var index = 0;
             foreach (var pair in instance) { keys[index] = pair.Key; values[index] = pair.Value; index++; }
-            return context.Descriptors.Serialize(keys, context) && context.Descriptors.Serialize(values, context);
+            return context.Serialize(keys) && context.Serialize(values);
         }
 
         public override bool Instantiate(out Dictionary<TKey, TValue> instance, in DeserializeContext context)
@@ -69,8 +67,8 @@ namespace Entia.Experiment
 
         public override bool Initialize(ref Dictionary<TKey, TValue> instance, in DeserializeContext context)
         {
-            if (context.Descriptors.Deserialize(out TKey[] keys, context) &&
-                context.Descriptors.Deserialize(out TValue[] values, context) &&
+            if (context.Deserialize(out TKey[] keys) &&
+                context.Deserialize(out TValue[] values) &&
                 keys.Length == values.Length)
             {
                 for (int i = 0; i < keys.Length; i++) instance.Add(keys[i], values[i]);

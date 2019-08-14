@@ -1,8 +1,8 @@
 using System;
 using System.Reflection;
-using Entia.Core;
+using Entia.Experiment.Serializationz;
 
-namespace Entia.Experiment
+namespace Entia.Experiment.Serializers
 {
     public sealed class ConcreteDelegate : Serializer<Delegate>
     {
@@ -17,8 +17,8 @@ namespace Entia.Experiment
             if (invocations.Length == 1)
             {
                 return
-                    context.Descriptors.Serialize(instance.Method, instance.Method.GetType(), context) &&
-                    context.Descriptors.Serialize(instance.Target, context);
+                    context.Serialize(instance.Method, instance.Method.GetType()) &&
+                    context.Serialize(instance.Target);
             }
             else
             {
@@ -37,8 +37,7 @@ namespace Entia.Experiment
             {
                 if (count == 1)
                 {
-                    if (context.Descriptors.Deserialize(out MethodInfo method, context) &&
-                        context.Descriptors.Deserialize(out object target, context))
+                    if (context.Deserialize(out MethodInfo method) && context.Deserialize(out object target))
                     {
                         instance = Delegate.CreateDelegate(Type, target, method);
                         return true;
@@ -71,8 +70,8 @@ namespace Entia.Experiment
             if (invocations.Length == 1)
             {
                 return
-                    context.Descriptors.Serialize(instance.Method, instance.Method.GetType(), context) &&
-                    context.Descriptors.Serialize(instance.Target, context);
+                    context.Serialize(instance.Method, instance.Method.GetType()) &&
+                    context.Serialize(instance.Target);
             }
             else
             {
@@ -91,8 +90,8 @@ namespace Entia.Experiment
             {
                 if (count == 1)
                 {
-                    if (context.Descriptors.Deserialize(out MethodInfo method, context) &&
-                        context.Descriptors.Deserialize(out object target, context))
+                    if (context.Deserialize(out MethodInfo method) &&
+                        context.Deserialize(out object target))
                     {
                         instance = (T)Delegate.CreateDelegate(typeof(T), target, method);
                         return true;

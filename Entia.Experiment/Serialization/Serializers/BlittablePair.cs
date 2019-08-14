@@ -1,6 +1,6 @@
-using Entia.Core;
+using Entia.Experiment.Serializationz;
 
-namespace Entia.Experiment
+namespace Entia.Experiment.Serializers
 {
     public sealed class BlittablePair<T> : Serializer<(T[] items, int count)> where T : unmanaged
     {

@@ -1,8 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Entia.Experiment.Serializationz;
 
-namespace Entia.Experiment
+namespace Entia.Experiment.Serializers
 {
     public sealed class ConcreteList : Serializer<IList>
     {
@@ -16,7 +17,7 @@ namespace Entia.Experiment
             context.Writer.Write(instance.Count);
             for (int i = 0; i < instance.Count; i++)
             {
-                if (context.Descriptors.Serialize(instance[i], Type, context)) continue;
+                if (context.Serialize(instance[i], Type)) continue;
                 return false;
             }
             return true;
@@ -34,7 +35,7 @@ namespace Entia.Experiment
             {
                 for (int i = 0; i < count; i++)
                 {
-                    if (context.Descriptors.Deserialize(out var value, Type, context)) instance.Add(value);
+                    if (context.Deserialize(out var value, Type)) instance.Add(value);
                     else return false;
                 }
                 return true;
@@ -46,7 +47,7 @@ namespace Entia.Experiment
     public sealed class ConcreteList<T> : Serializer<List<T>>
     {
         public override bool Serialize(in List<T> instance, in SerializeContext context) =>
-            context.Descriptors.Serialize(instance.ToArray(), context);
+            context.Serialize(instance.ToArray());
 
         public override bool Instantiate(out List<T> instance, in DeserializeContext context)
         {
@@ -56,7 +57,7 @@ namespace Entia.Experiment
 
         public override bool Initialize(ref List<T> instance, in DeserializeContext context)
         {
-            if (context.Descriptors.Deserialize(out T[] values, context))
+            if (context.Deserialize(out T[] values))
             {
                 instance.AddRange(values);
                 return true;
