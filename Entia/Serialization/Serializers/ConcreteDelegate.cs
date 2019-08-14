@@ -1,8 +1,8 @@
 using System;
 using System.Reflection;
-using Entia.Experiment.Serializationz;
+using Entia.Serialization;
 
-namespace Entia.Experiment.Serializers
+namespace Entia.Serializers
 {
     public sealed class ConcreteDelegate : Serializer<Delegate>
     {

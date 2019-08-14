@@ -1,10 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using Entia.Experiment.Serializationz;
+using Entia.Serialization;
 
-namespace Entia.Experiment.Serializers
+namespace Entia.Serializers
 {
     public sealed class ConcreteDictionary : Serializer<IDictionary>
     {
@@ -50,13 +49,22 @@ namespace Entia.Experiment.Serializers
 
     public sealed class ConcreteDictionary<TKey, TValue> : Serializer<Dictionary<TKey, TValue>>
     {
+        public readonly Serializer<TKey[]> Keys;
+        public readonly Serializer<TValue[]> Values;
+
+        public ConcreteDictionary(Serializer<TKey[]> keys = null, Serializer<TValue[]> values = null)
+        {
+            Keys = keys;
+            Values = values;
+        }
+
         public override bool Serialize(in Dictionary<TKey, TValue> instance, in SerializeContext context)
         {
             var keys = new TKey[instance.Count];
             var values = new TValue[instance.Count];
             var index = 0;
             foreach (var pair in instance) { keys[index] = pair.Key; values[index] = pair.Value; index++; }
-            return context.Serialize(keys) && context.Serialize(values);
+            return context.Serialize(keys, Keys) && context.Serialize(values, Values);
         }
 
         public override bool Instantiate(out Dictionary<TKey, TValue> instance, in DeserializeContext context)

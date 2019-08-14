@@ -7,7 +7,6 @@ using System.Runtime.CompilerServices;
 using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Serializers;
-using Entia.Serializables;
 
 namespace Entia.Modules.Message
 {
@@ -26,7 +25,7 @@ namespace Entia.Modules.Message
     }
 
     [ThreadSafe]
-    public sealed class Emitter<T> : IEmitter, ISerializable<Emitter<T>.Serializer>, IEnumerable<Receiver<T>> where T : struct, IMessage
+    public sealed class Emitter<T> : IEmitter, IEnumerable<Receiver<T>> where T : struct, IMessage
     {
         public struct Disposable : IDisposable
         {
@@ -48,38 +47,17 @@ namespace Entia.Modules.Message
             public void Dispose() => _emitter.Remove(_receiver);
         }
 
-        sealed class Serializer : Serializer<Emitter<T>>
-        {
-            public override bool Serialize(in Emitter<T> instance, TypeData dynamic, TypeData @static, in WriteContext context)
-            {
-                var success = context.Serializers.Serialize(instance.Reaction, context);
-                var receivers = instance._receivers.Keys.ToArray();
-                context.Writer.Write(receivers.Length);
-                for (int i = 0; i < receivers.Length; i++) success &= context.Serializers.Serialize(receivers[i], context);
-                return success;
-            }
-
-            public override bool Instantiate(out Emitter<T> instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                instance = new Emitter<T>();
-                return true;
-            }
-
-            public override bool Deserialize(ref Emitter<T> instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                var success = context.Serializers.Deserialize(out Reaction<T> reaction, context);
-                UnsafeUtility.Set(instance.Reaction, reaction);
-                context.Reader.Read(out int count);
-                for (int i = 0; i < count; i++)
-                {
-                    success &= context.Serializers.Deserialize(out Receiver<T> receiver, context);
-                    instance.Add(receiver);
-                }
-                return success;
-            }
-        }
-
         static readonly InFunc<T, bool> _empty = (in T _) => false;
+
+        [Implementation]
+        static readonly Serializer<Emitter<T>> _serializer = Serializer.Object(
+            () => new Emitter<T>(),
+            Serializer.Member.Field((in Emitter<T> emitter) => ref emitter.Reaction),
+            Serializer.Member.Property(
+                (in Emitter<T> emitter) => emitter._receivers.Keys.ToArray(),
+                (ref Emitter<T> emitter, in Receiver<T>[] receivers) => { for (int i = 0; i < receivers.Length; i++) emitter.Add(receivers[i]); },
+                Serializer.Array<Receiver<T>>())
+        );
 
         public readonly Reaction<T> Reaction = new Reaction<T>();
 

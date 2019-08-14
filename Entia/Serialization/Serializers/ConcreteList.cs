@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Entia.Experiment.Serializationz;
+using Entia.Serialization;
 
-namespace Entia.Experiment.Serializers
+namespace Entia.Serializers
 {
     public sealed class ConcreteList : Serializer<IList>
     {

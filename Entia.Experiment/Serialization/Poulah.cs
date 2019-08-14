@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using Entia.Core;
 using Entia.Modules.Serialization;
+using Entia.Serialization;
 
 // TODO: writer serializers
 // add a Lazy<IDescription> to constant

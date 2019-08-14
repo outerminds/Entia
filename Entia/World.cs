@@ -4,15 +4,15 @@ using Entia.Dependers;
 using Entia.Injectables;
 using Entia.Injectors;
 using Entia.Modules;
-using Entia.Serializables;
 using Entia.Serializers;
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Entia
 {
-    public sealed class World : IClearable, IInjectable, ISerializable<World.Serializer>, IEnumerable<TypeMap<IModule, IModule>.ValueEnumerator, IModule>
+    public sealed class World : IClearable, IInjectable, IEnumerable<TypeMap<IModule, IModule>.ValueEnumerator, IModule>
     {
         struct State
         {
@@ -20,40 +20,17 @@ namespace Entia
             public ulong Count;
         }
 
-        sealed class Serializer : Serializer<World>
-        {
-            public override bool Serialize(in World instance, TypeData dynamic, TypeData @static, in WriteContext context)
-            {
-                var success = true;
-                var count = context.Writer.Reserve<uint>();
-                foreach (var module in instance._modules.Values)
-                {
-                    count.Value++;
-                    success &= context.Serializers.Serialize(module, context);
-                }
-                return success;
-            }
-            public override bool Instantiate(out World instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                instance = new World();
-                return true;
-            }
-            public override bool Deserialize(ref World instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                var success = context.Reader.Read(out uint count);
-                for (var i = 0u; i < count; i++)
-                {
-                    if (context.Serializers.Deserialize(out IModule module, context)) instance.Set(module);
-                    else success = false;
-                }
-                return success;
-            }
-        }
-
         [Implementation]
-        static Injector<World> Injector => Injectors.Injector.From(context => context.World);
+        static readonly Serializer<World> _serializer = Serializer.Object(
+            () => new World(),
+            Serializer.Member.Property(
+                (in World world) => world._modules.Values.ToArray(),
+                (ref World world, in IModule[] modules) => { for (int i = 0; i < modules.Length; i++) world.Set(modules[i]); })
+        );
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From(new Dependencies.Unknown());
+        static readonly Injector<World> _injector = Injector.From(context => context.World);
+        [Implementation]
+        static readonly IDepender _depender = Depender.From(new Dependencies.Unknown());
 
         static readonly Concurrent<State> _state = new State { Worlds = new Dictionary<ulong, WeakReference<World>>() };
 
@@ -92,20 +69,21 @@ namespace Entia
             }
         }
 
-        public readonly Container Container;
+        public readonly Container Container = new Container();
 
         readonly ulong _identifier;
         readonly TypeMap<IModule, IModule> _modules = new TypeMap<IModule, IModule>();
         IResolvable[] _resolvables = Array.Empty<IResolvable>();
 
-        public World(Container container = null)
+        public World(params IModule[] modules)
         {
-            Container = container ?? new Container();
             using (var write = _state.Write())
             {
                 _identifier = ++write.Value.Count;
                 write.Value.Worlds[_identifier] = new WeakReference<World>(this);
             }
+
+            for (int i = 0; i < modules.Length; i++) Set(modules[i]);
         }
 
         ~World()

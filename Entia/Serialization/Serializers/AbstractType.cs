@@ -2,16 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Entia.Core;
-using Entia.Experiment.Serializationz;
+using Entia.Serialization;
 using Entia.Modules.Message;
 
-namespace Entia.Experiment.Serializers
+namespace Entia.Serializers
 {
     public sealed class AbstractType : Serializer<Type>
     {
         enum Kinds : byte { None, Type, Array, Pointer, Generic, Definition }
 
-        static readonly Type[] _definitions = {
+        static readonly Type[] _definitions =
+        {
             #region System
             typeof(Nullable<>),
             typeof(List<>),
@@ -27,7 +28,7 @@ namespace Entia.Experiment.Serializers
             typeof(Option<>), typeof(Result<>),
             typeof(Box<>), typeof(Box<>.Read),
             typeof(Slice<>), typeof(Slice<>.Read),
-            typeof(SwissList<>), typeof(SwitchList<>), typeof(TypeMap<,>),
+            typeof(TypeMap<,>),
             typeof(Disposable<>),
             #endregion
 
@@ -61,7 +62,7 @@ namespace Entia.Experiment.Serializers
                     context.Writer.Write((byte)index);
                     return true;
                 }
-                else return SerializeType(instance, context);
+                else return TrySerialize(instance, context);
             }
             else if (instance.IsGenericType)
             {
@@ -79,7 +80,7 @@ namespace Entia.Experiment.Serializers
                 }
                 return false;
             }
-            else return SerializeType(instance, context);
+            else return TrySerialize(instance, context);
         }
 
         public override bool Instantiate(out Type instance, in DeserializeContext context)
@@ -149,7 +150,7 @@ namespace Entia.Experiment.Serializers
 
         public override bool Initialize(ref Type instance, in DeserializeContext context) => true;
 
-        bool SerializeType(Type instance, in SerializeContext context)
+        bool TrySerialize(Type instance, in SerializeContext context)
         {
             context.Writer.Write(Kinds.Type);
             context.Writer.Write(instance.MetadataToken);

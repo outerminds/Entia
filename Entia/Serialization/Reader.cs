@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Entia.Modules.Serialization
+namespace Entia.Serialization
 {
     public unsafe sealed class Reader : IDisposable
     {

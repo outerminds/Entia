@@ -1,9 +1,9 @@
 using System;
 using System.Reflection;
 using Entia.Core;
-using Entia.Experiment.Serializationz;
+using Entia.Serialization;
 
-namespace Entia.Experiment.Serializers
+namespace Entia.Serializers
 {
     public sealed class AbstractMethod : Serializer<MethodInfo>
     {

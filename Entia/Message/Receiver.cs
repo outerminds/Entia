@@ -6,7 +6,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Serializables;
 using Entia.Serializers;
 
 namespace Entia.Modules.Message
@@ -25,7 +24,7 @@ namespace Entia.Modules.Message
     }
 
     [ThreadSafe]
-    public sealed class Receiver<T> : IReceiver, ISerializable<Receiver<T>.Serializer> where T : struct, IMessage
+    public sealed class Receiver<T> : IReceiver where T : struct, IMessage
     {
         [ThreadSafe]
         public readonly struct Enumerable : IEnumerable<Enumerator, T>
@@ -73,37 +72,14 @@ namespace Entia.Modules.Message
             public void Dispose() => _receiver = default;
         }
 
-        sealed class Serializer : Serializer<Receiver<T>>
-        {
-            public override bool Serialize(in Receiver<T> instance, TypeData dynamic, TypeData @static, in WriteContext context)
-            {
-                var messages = instance._messages.ToArray();
-                var success = true;
-                context.Writer.Write(instance._capacity);
-                context.Writer.Write(messages.Length);
-                for (int i = 0; i < messages.Length; i++) success &= context.Serializers.Serialize(messages[i], context);
-                return success;
-            }
-
-            public override bool Instantiate(out Receiver<T> instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                var success = context.Reader.Read(out int capacity);
-                instance = new Receiver<T>(capacity);
-                return success;
-            }
-
-            public override bool Deserialize(ref Receiver<T> instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                var success = context.Reader.Read(out int count);
-                for (int i = 0; i < count; i++)
-                {
-                    success &= context.Serializers.Deserialize(out T message, context);
-                    instance._messages.Enqueue(message);
-                }
-
-                return success;
-            }
-        }
+        [Implementation]
+        static readonly Serializer<Receiver<T>> _serializer = Serializer.Object(
+            () => new Receiver<T>(),
+            Serializer.Member.Field((in Receiver<T> receiver) => ref receiver._capacity),
+            Serializer.Member.Property(
+                (in Receiver<T> receiver) => receiver._messages.ToArray(),
+                (ref Receiver<T> receiver, in T[] messages) => { for (int i = 0; i < messages.Length; i++) receiver._messages.Enqueue(messages[i]); })
+        );
 
         public T[] Messages => _messages.ToArray();
         public int Count => _messages.Count;

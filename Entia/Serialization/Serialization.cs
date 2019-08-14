@@ -2,27 +2,30 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Entia.Core;
-using Entia.Experiment.Serializers;
-using Entia.Modules.Serialization;
+using Entia.Serializers;
+using System.Runtime.InteropServices;
 
-namespace Entia.Experiment.Serializationz
+namespace Entia.Serialization
 {
     public enum Kinds : byte { None, Null, Abstract, Concrete, Reference }
 
     public readonly struct SerializeContext
     {
+        public readonly Type Type;
         public readonly Writer Writer;
         public readonly Dictionary<object, int> References;
         public readonly World World;
 
-        public SerializeContext(Writer writer, Dictionary<object, int> references, World world)
+        public SerializeContext(Writer writer, Dictionary<object, int> references, World world) : this(null, writer, references, world) { }
+        public SerializeContext(Type type, Writer writer, Dictionary<object, int> references, World world)
         {
+            Type = type;
             Writer = writer;
             References = references;
             World = world;
         }
 
-        public bool Serialize(object instance, Type type)
+        public bool Serialize(object instance, Type type, ISerializer serializer = null)
         {
             if (instance is null)
             {
@@ -42,22 +45,17 @@ namespace Entia.Experiment.Serializationz
             {
                 Writer.Write(Kinds.Concrete);
                 Writer.Write(reference);
-                return
-                    World.Container.TryGet<ISerializer>(dynamic, out var serializer) &&
-                    serializer.Serialize(instance, this);
+                return TrySerialize(instance, type, serializer);
             }
             else
             {
                 Writer.Write(Kinds.Abstract);
                 Writer.Write(reference);
-                return
-                    Serialize(dynamic, dynamic.GetType()) &&
-                    World.Container.TryGet<ISerializer>(dynamic, out var serializer) &&
-                    serializer.Serialize(instance, this);
+                return Serialize(dynamic, dynamic.GetType()) && TrySerialize(instance, dynamic, serializer);
             }
         }
 
-        public bool Serialize<T>(in T instance)
+        public bool Serialize<T>(in T instance, ISerializer serializer = null)
         {
             var box = (object)instance;
             if (box is null)
@@ -78,36 +76,49 @@ namespace Entia.Experiment.Serializationz
             {
                 Writer.Write(Kinds.Concrete);
                 Writer.Write(reference);
-                return
-                    World.Container.TryGet<T, ISerializer>(out var serializer) &&
-                    serializer.Serialize<T>(instance, this);
+                return TrySerialize<T>(instance, serializer);
             }
             else
             {
                 Writer.Write(Kinds.Abstract);
                 Writer.Write(reference);
-                return
-                    Serialize(dynamic, dynamic.GetType()) &&
-                    World.Container.TryGet<ISerializer>(dynamic, out var serializer) &&
-                    serializer.Serialize<T>(instance, this);
+                return Serialize(dynamic, dynamic.GetType()) && TrySerialize(box, dynamic, serializer);
             }
+        }
+
+        public SerializeContext With<T>() => With(typeof(T));
+        public SerializeContext With(Type type = null) => new SerializeContext(type ?? Type, Writer, References, World);
+
+        bool TrySerialize<T>(in T instance, ISerializer serializer)
+        {
+            if (serializer is null) return World.Container.TryGet<T, ISerializer>(out serializer) && serializer.Serialize<T>(instance, With<T>());
+            return serializer.Serialize<T>(instance, With<T>());
+        }
+
+        bool TrySerialize(object instance, Type type, ISerializer serializer)
+        {
+            if (serializer is null) return World.Container.TryGet<ISerializer>(type, out serializer) && serializer.Serialize(instance, With(type));
+            return serializer.Serialize(instance, With(type));
         }
     }
 
     public readonly struct DeserializeContext
     {
+        public readonly Type Type;
         public readonly Reader Reader;
         public readonly object[] References;
         public readonly World World;
 
-        public DeserializeContext(Reader reader, object[] references, World world)
+        public DeserializeContext(Reader reader, object[] references, World world) : this(null, reader, references, world) { }
+        public DeserializeContext(Type type, Reader reader, object[] references, World world)
         {
+            Type = type;
             Reader = reader;
             References = references;
             World = world;
         }
 
-        public bool Deserialize(out object instance, Type type)
+        public bool Deserialize(out object instance, Type type, ISerializer serializer = null)
         {
             if (Reader.Read(out Kinds kind))
             {
@@ -124,12 +135,12 @@ namespace Entia.Experiment.Serializationz
                     case Kinds.Abstract:
                         {
                             if (Reader.Read(out int reference) && Deserialize(out Type dynamic))
-                                return Deserialize(out instance, dynamic, reference);
+                                return TryDeserialize(out instance, dynamic, reference, serializer);
                             break;
                         }
                     case Kinds.Concrete:
                         {
-                            if (Reader.Read(out int reference)) return Deserialize(out instance, type, reference);
+                            if (Reader.Read(out int reference)) return TryDeserialize(out instance, type, reference, serializer);
                             break;
                         }
                 }
@@ -138,7 +149,7 @@ namespace Entia.Experiment.Serializationz
             return false;
         }
 
-        public bool Deserialize<T>(out T instance)
+        public bool Deserialize<T>(out T instance, ISerializer serializer = null)
         {
             if (Reader.Read(out Kinds kind))
             {
@@ -156,7 +167,7 @@ namespace Entia.Experiment.Serializationz
                         {
                             if (Reader.Read(out int reference) &&
                                 Deserialize(out Type dynamic) &&
-                                Deserialize(out var value, dynamic, reference))
+                                TryDeserialize(out var value, dynamic, reference, serializer))
                             {
                                 instance = (T)value;
                                 return true;
@@ -165,7 +176,7 @@ namespace Entia.Experiment.Serializationz
                         }
                     case Kinds.Concrete:
                         {
-                            if (Reader.Read(out int reference)) return Deserialize(out instance, reference);
+                            if (Reader.Read(out int reference)) return TryDeserialize(out instance, reference, serializer);
                             break;
                         }
                 }
@@ -174,12 +185,17 @@ namespace Entia.Experiment.Serializationz
             return false;
         }
 
-        bool Deserialize(out object instance, Type type, int reference)
+        public DeserializeContext With<T>() => With(typeof(T));
+        public DeserializeContext With(Type type = null) => new DeserializeContext(type ?? Type, Reader, References, World);
+
+        bool TryDeserialize(out object instance, Type type, int reference, ISerializer serializer)
         {
-            if (World.Container.TryGet<ISerializer>(type, out var serializer) && serializer.Instantiate(out instance, this))
+            var context = With(type);
+            if ((serializer is ISerializer || World.Container.TryGet<ISerializer>(type, out serializer)) &&
+                serializer.Instantiate(out instance, context))
             {
                 References[reference] = instance;
-                if (serializer.Initialize(ref instance, this))
+                if (serializer.Initialize(ref instance, context))
                 {
                     References[reference] = instance;
                     return true;
@@ -189,12 +205,14 @@ namespace Entia.Experiment.Serializationz
             return false;
         }
 
-        bool Deserialize<T>(out T instance, int reference)
+        bool TryDeserialize<T>(out T instance, int reference, ISerializer serializer)
         {
-            if (World.Container.TryGet<T, ISerializer>(out var serializer) && serializer.Instantiate(out instance, this))
+            var context = With<T>();
+            if ((serializer is ISerializer || World.Container.TryGet<T, ISerializer>(out serializer)) &&
+                serializer.Instantiate(out instance, context))
             {
                 References[reference] = instance;
-                if (serializer.Initialize(ref instance, this))
+                if (serializer.Initialize(ref instance, context))
                 {
                     References[reference] = instance;
                     return true;
@@ -239,13 +257,16 @@ namespace Entia.Experiment.Serializationz
             typeof(TimeSpan), typeof(TimeSpan[]), typeof(TimeSpan*), typeof(TimeSpan?),
             typeof(string), typeof(string[]),
             typeof(object), typeof(object[]),
+
             typeof(object).Module.GetType(), typeof(object).Assembly.GetType(),
             typeof(Members).GetType(),
             typeof(Members).GetField(nameof(Members.Field)).GetType(),
             typeof(Members).GetProperty(nameof(Members.Property)).GetType(),
             typeof(Members).GetMethod(nameof(Members.Method)).GetType(),
             typeof(Action), typeof(Pointer),
-            typeof(World), typeof(Entity),
+
+            typeof(World),
+            typeof(Entity), typeof(Entity[]), typeof(Entity*), typeof(Entity?),
             typeof(BitMask), typeof(Unit), typeof(Disposable)
         };
 
@@ -356,6 +377,12 @@ namespace Entia.Experiment.Serializationz
 
         public static bool Deserialize(this ISerializer serializer, out object instance, DeserializeContext context) =>
             serializer.Instantiate(out instance, context) && serializer.Initialize(ref instance, context);
+
+        public static unsafe void Fix(this byte[] bytes, out GCHandle handle, out byte* pointer)
+        {
+            handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+            pointer = (byte*)handle.AddrOfPinnedObject();
+        }
 
         static SerializeContext Context(this World world, Writer writer, params object[] references)
         {

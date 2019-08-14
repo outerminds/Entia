@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using Entia.Core;
 
-namespace Entia.Modules.Serialization
+namespace Entia.Serialization
 {
     public sealed unsafe class Writer : IDisposable
     {

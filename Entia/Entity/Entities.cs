@@ -2,7 +2,6 @@
 using Entia.Core.Documentation;
 using Entia.Messages;
 using Entia.Modules.Message;
-using Entia.Serializables;
 using Entia.Serializers;
 using System;
 using System.Collections;
@@ -14,7 +13,7 @@ namespace Entia.Modules
     /// <summary>
     /// Module that manages entities.
     /// </summary>
-    public sealed class Entities : IModule, IClearable, IResolvable, ISerializable<Entities.Serializer>, IEnumerable<Entities.Enumerator, Entity>
+    public sealed class Entities : IModule, IClearable, IResolvable, IEnumerable<Entities.Enumerator, Entity>
     {
         [Flags]
         enum States : byte { None = 0, All = byte.MaxValue, Allocated = 1 << 0, Alive = 1 << 1 }
@@ -77,44 +76,18 @@ namespace Entia.Modules
             }
         }
 
-        sealed class Serializer : Serializer<Entities>
-        {
-            public override bool Serialize(in Entities instance, TypeData dynamic, TypeData @static, in WriteContext context)
-            {
-                context.Serializers.Serialize(instance._onCreate, context);
-                context.Serializers.Serialize(instance._onPreDestroy, context);
-                context.Serializers.Serialize(instance._onPostDestroy, context);
-
-                context.Writer.Write(instance._data.count);
-                context.Writer.Write(instance._data.items, instance._data.count);
-                context.Writer.Write(instance._free.count);
-                context.Writer.Write(instance._free.items, instance._free.count);
-                context.Writer.Write(instance._frozen.count);
-                context.Writer.Write(instance._frozen.items, instance._frozen.count);
-                return true;
-            }
-
-            public override bool Deserialize(ref Entities instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                context.Serializers.Deserialize(out Emitter<OnCreate> onCreate, context);
-                UnsafeUtility.Set(instance._onCreate, onCreate);
-                context.Serializers.Deserialize(out Emitter<OnPreDestroy> onPreDestroy, context);
-                UnsafeUtility.Set(instance._onPreDestroy, onPreDestroy);
-                context.Serializers.Deserialize(out Emitter<OnPostDestroy> onPostDestroy, context);
-                UnsafeUtility.Set(instance._onPostDestroy, onPostDestroy);
-
-                context.Reader.Read(out int dataCount);
-                context.Reader.Read(out Data[] dataItems, dataCount);
-                instance._data = (dataItems, dataCount);
-                context.Reader.Read(out int freeCount);
-                context.Reader.Read(out int[] freeItems, freeCount);
-                instance._free = (freeItems, freeCount);
-                context.Reader.Read(out int frozenCount);
-                context.Reader.Read(out int[] frozenItems, frozenCount);
-                instance._frozen = (frozenItems, frozenCount);
-                return true;
-            }
-        }
+        [Implementation]
+        static readonly Serializer<Entities> _serializer = Serializer.Object(
+            Serializer.Member.Field((in Entities entities) => ref entities._onCreate),
+            Serializer.Member.Field((in Entities entities) => ref entities._onPreDestroy),
+            Serializer.Member.Field((in Entities entities) => ref entities._onPostDestroy),
+            Serializer.Member.Field((in Entities entities) => ref entities._data,
+                Serializer.TupleArray(Serializer.Blittable.Array<Data>())),
+            Serializer.Member.Field((in Entities entities) => ref entities._free,
+                Serializer.TupleArray(Serializer.Blittable.Array<int>())),
+            Serializer.Member.Field((in Entities entities) => ref entities._frozen,
+                Serializer.TupleArray(Serializer.Blittable.Array<int>()))
+        );
 
         /// <summary>
         /// Gets the current entity capacity.

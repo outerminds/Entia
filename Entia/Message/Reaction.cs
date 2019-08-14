@@ -1,6 +1,5 @@
 ﻿using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Serializables;
 using Entia.Serializers;
 using System;
 using System.Collections;
@@ -21,28 +20,15 @@ namespace Entia.Modules.Message
     }
 
     [ThreadSafe]
-    public sealed class Reaction<T> : IReaction, ISerializable<Reaction<T>.Serializer> where T : struct, IMessage
+    public sealed class Reaction<T> : IReaction where T : struct, IMessage
     {
         static readonly InAction<T> _empty = (in T _) => { };
 
-        sealed class Serializer : Serializer<Reaction<T>>
-        {
-            public override bool Serialize(in Reaction<T> instance, TypeData dynamic, TypeData @static, in WriteContext context) =>
-                context.Serializers.Serialize(instance._reaction, context);
-
-            public override bool Instantiate(out Reaction<T> instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                instance = new Reaction<T>();
-                return true;
-            }
-
-            public override bool Deserialize(ref Reaction<T> instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                var success = context.Serializers.Deserialize(out InAction<T> reaction, context);
-                instance._reaction = reaction;
-                return success;
-            }
-        }
+        [Implementation]
+        static readonly Serializer<Reaction<T>> _serializer = Serializer.Object(
+            () => new Reaction<T>(),
+            Serializer.Member.Field((in Reaction<T> reaction) => ref reaction._reaction)
+        );
 
         public InAction<T> React
         {

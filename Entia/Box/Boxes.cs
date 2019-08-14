@@ -13,50 +13,28 @@ namespace Entia.Modules
     {
         struct Data
         {
+            [Implementation]
+            static readonly Serializer<Data> _serializer = Serializer.Map(
+                (in Data data) => (data.Box, data.Map),
+                (in (Box box, Dictionary<object, Box> map) pair) => new Data { Box = pair.box, Map = pair.map },
+                Serializer.Tuple<Box, Dictionary<object, Box>>(default, Serializer.Dictionary<object, Box>()));
+
             public Box Box;
             public Dictionary<object, Box> Map;
         }
 
-        sealed class Serializer : Serializer<Boxes>
-        {
-            public override bool Serialize(in Boxes instance, TypeData dynamic, TypeData @static, in WriteContext context)
-            {
-                var success = true;
-                var count = context.Writer.Reserve<uint>();
-                using (var read = instance._boxes.Read())
+        [Implementation]
+        static readonly Serializer<Boxes> _serializer = Serializer.Object(
+            () => new Boxes(),
+            Serializer.Member.Property(
+                (in Boxes boxes) => boxes._boxes.Read(value => (value.Keys.ToArray(), value.Values.ToArray())),
+                (ref Boxes boxes, in (Type[], Data[]) pair) =>
                 {
-                    foreach (var (type, data) in read.Value)
-                    {
-                        count.Value++;
-                        success &= context.Serializers.Serialize(type, context);
-                        success &= context.Serializers.Serialize(data, context);
-                    }
-                }
-                return success;
-            }
-
-            public override bool Instantiate(out Boxes instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                instance = new Boxes();
-                return true;
-            }
-
-            public override bool Deserialize(ref Boxes instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                var success = context.Reader.Read(out uint count);
-                using (var write = instance._boxes.Write())
-                {
-                    for (int i = 0; i < count; i++)
-                    {
-                        if (context.Serializers.Deserialize(out Type type, context) &
-                            context.Serializers.Deserialize(out Data data, context))
-                            write.Value[type] = data;
-                        else success = false;
-                    }
-                }
-                return success;
-            }
-        }
+                    var (keys, values) = pair;
+                    using (var write = boxes._boxes.Write())
+                        for (int i = 0; i < keys.Length; i++) write.Value.Set(keys[i], values[i]);
+                })
+        );
 
         readonly Concurrent<TypeMap<object, Data>> _boxes = new TypeMap<object, Data>();
 

@@ -1,22 +1,27 @@
 using System;
 using System.Reflection;
 using Entia.Core;
-using Entia.Experiment.Serializationz;
+using Entia.Serialization;
 
-namespace Entia.Experiment
+namespace Entia.Serializers
 {
     public sealed class Field<T, TValue> : IMember<T>
     {
         public delegate ref readonly TValue Getter(in T instance);
 
         public readonly Getter Get;
+        public readonly Serializer<TValue> Serializer;
 
-        public Field(Getter get) { Get = get; }
+        public Field(Getter get, Serializer<TValue> serializer = null)
+        {
+            Get = get;
+            Serializer = serializer;
+        }
 
-        public bool Serialize(in T instance, in SerializeContext context) => context.Serialize(Get(instance));
+        public bool Serialize(in T instance, in SerializeContext context) => context.Serialize(Get(instance), Serializer);
         public bool Deserialize(ref T instance, in DeserializeContext context)
         {
-            if (context.Deserialize(out TValue value))
+            if (context.Deserialize(out TValue value, Serializer))
             {
                 UnsafeUtility.Set(Get(instance), value);
                 return true;
@@ -32,13 +37,19 @@ namespace Entia.Experiment
 
         public readonly Getter Get;
         public readonly Setter Set;
+        public readonly Serializer<TValue> Serializer;
 
-        public Property(Getter get, Setter set) { Get = get; Set = set; }
+        public Property(Getter get, Setter set, Serializer<TValue> serializer = null)
+        {
+            Get = get;
+            Set = set;
+            Serializer = serializer;
+        }
 
-        public bool Serialize(in T instance, in SerializeContext context) => context.Serialize(Get(instance));
+        public bool Serialize(in T instance, in SerializeContext context) => context.Serialize(Get(instance), Serializer);
         public bool Deserialize(ref T instance, in DeserializeContext context)
         {
-            if (context.Deserialize(out TValue value))
+            if (context.Deserialize(out TValue value, Serializer))
             {
                 Set(ref instance, value);
                 return true;
@@ -52,27 +63,28 @@ namespace Entia.Experiment
         public readonly Type Type;
         public readonly Func<object, object> Get;
         public readonly Action<object, object> Set;
+        public readonly ISerializer Serializer;
 
-        public Reflection(FieldInfo field)
+        public Reflection(FieldInfo field, ISerializer serializer = null)
         {
             Type = field.FieldType;
             Get = field.GetValue;
             Set = field.SetValue;
+            Serializer = serializer;
         }
 
-        public Reflection(PropertyInfo property)
+        public Reflection(PropertyInfo property, ISerializer serializer = null)
         {
             Type = property.PropertyType;
             Get = property.GetValue;
             Set = property.SetValue;
+            Serializer = serializer;
         }
 
-        public bool Serialize(object instance, in SerializeContext context) =>
-            context.Serialize(Get(instance), Type);
-
+        public bool Serialize(object instance, in SerializeContext context) => context.Serialize(Get(instance), Type, Serializer);
         public bool Deserialize(object instance, in DeserializeContext context)
         {
-            if (context.Deserialize(out var value, Type))
+            if (context.Deserialize(out var value, Type, Serializer))
             {
                 Set(instance, value);
                 return true;

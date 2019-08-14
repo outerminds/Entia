@@ -1,7 +1,6 @@
 ﻿using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Modules.Message;
-using Entia.Serializables;
 using Entia.Serializers;
 using System;
 using System.Collections;
@@ -11,46 +10,22 @@ using System.Linq;
 namespace Entia.Modules
 {
     [ThreadSafe]
-    public sealed class Messages : IModule, IClearable, ISerializable<Messages.Serializer>, IEnumerable<IEmitter>
+    public sealed class Messages : IModule, IClearable, IEnumerable<IEmitter>
     {
-        readonly Concurrent<TypeMap<IMessage, IEmitter>> _emitters = new TypeMap<IMessage, IEmitter>();
+        [Implementation]
+        static readonly Serializer<Messages> _serializer = Serializer.Object(
+            () => new Messages(),
+            Serializer.Member.Property(
+                (in Messages messages) => messages._emitters.Read(emitters => emitters.Values.ToArray()),
+                (ref Messages messages, in IEmitter[] emitters) =>
+                {
+                    using (var writer = messages._emitters.Write())
+                        foreach (var emitter in emitters) writer.Value.Set(emitter.Type, emitter);
+                },
+                Serializer.Array<IEmitter>())
+        );
 
-        sealed class Serializer : Serializer<Messages>
-        {
-            public override bool Serialize(in Messages instance, TypeData dynamic, TypeData @static, in WriteContext context)
-            {
-                var success = true;
-                var count = context.Writer.Reserve<uint>();
-                using (var read = instance._emitters.Read())
-                {
-                    foreach (var emitter in read.Value.Values)
-                    {
-                        count.Value++;
-                        success &= context.Serializers.Serialize(emitter, context);
-                    }
-                }
-                return success;
-            }
-            public override bool Instantiate(out Messages instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                instance = new Messages();
-                return true;
-            }
-            public override bool Deserialize(ref Messages instance, TypeData dynamic, TypeData @static, in ReadContext context)
-            {
-                var success = context.Reader.Read(out uint count);
-                using (var write = instance._emitters.Write())
-                {
-                    for (var i = 0u; i < count; i++)
-                    {
-                        if (context.Serializers.Deserialize(out IEmitter emitter, context))
-                            write.Value[emitter.Type] = emitter;
-                        else success = false;
-                    }
-                }
-                return success;
-            }
-        }
+        readonly Concurrent<TypeMap<IMessage, IEmitter>> _emitters = new TypeMap<IMessage, IEmitter>();
 
         public Emitter<T> Emitter<T>() where T : struct, IMessage
         {
