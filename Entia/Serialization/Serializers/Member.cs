@@ -63,6 +63,7 @@ namespace Entia.Serializers
         public readonly Type Type;
         public readonly Func<object, object> Get;
         public readonly Action<object, object> Set;
+        public readonly MemberInfo Member;
         public readonly ISerializer Serializer;
 
         public Reflection(FieldInfo field, ISerializer serializer = null)
@@ -70,6 +71,7 @@ namespace Entia.Serializers
             Type = field.FieldType;
             Get = field.GetValue;
             Set = field.SetValue;
+            Member = field;
             Serializer = serializer;
         }
 
@@ -78,6 +80,7 @@ namespace Entia.Serializers
             Type = property.PropertyType;
             Get = property.GetValue;
             Set = property.SetValue;
+            Member = property;
             Serializer = serializer;
         }
 

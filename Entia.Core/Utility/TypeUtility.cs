@@ -238,18 +238,10 @@ namespace Entia.Core
         public const BindingFlags Static = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
         public const BindingFlags All = Instance | Static;
 
-        public static IEnumerable<Assembly> AllAssemblies => AppDomain.CurrentDomain.GetAssemblies();
-        public static IEnumerable<Type> AllTypes
-        {
-            get
-            {
-                foreach (var assembly in AllAssemblies)
-                {
-                    try { foreach (var type in assembly.GetTypes()) yield return type; }
-                    finally { }
-                }
-            }
-        }
+        public static IEnumerable<Assembly> AllAssemblies =>
+            AppDomain.CurrentDomain.GetAssemblies();
+        public static IEnumerable<Type> AllTypes =>
+            AllAssemblies.Select(assembly => Option.Try(() => assembly.GetTypes())).Choose().SelectMany(_ => _);
 
         static readonly ConcurrentDictionary<Type, TypeData> _typeToData = new ConcurrentDictionary<Type, TypeData>();
 

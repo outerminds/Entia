@@ -21,16 +21,16 @@ namespace Entia
         }
 
         [Implementation]
-        static readonly Serializer<World> _serializer = Serializer.Object(
+        static Serializer<World> _serializer => Serializer.Object(
             () => new World(),
             Serializer.Member.Property(
                 (in World world) => world._modules.Values.ToArray(),
                 (ref World world, in IModule[] modules) => { for (int i = 0; i < modules.Length; i++) world.Set(modules[i]); })
         );
         [Implementation]
-        static readonly Injector<World> _injector = Injector.From(context => context.World);
+        static Injector<World> _injector => Injector.From(context => context.World);
         [Implementation]
-        static readonly IDepender _depender = Depender.From(new Dependencies.Unknown());
+        static IDepender _depender => Depender.From(new Dependencies.Unknown());
 
         static readonly Concurrent<State> _state = new State { Worlds = new Dictionary<ulong, WeakReference<World>>() };
 

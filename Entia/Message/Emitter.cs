@@ -50,7 +50,7 @@ namespace Entia.Modules.Message
         static readonly InFunc<T, bool> _empty = (in T _) => false;
 
         [Implementation]
-        static readonly Serializer<Emitter<T>> _serializer = Serializer.Object(
+        static Serializer<Emitter<T>> _serializer => Serializer.Object(
             () => new Emitter<T>(),
             Serializer.Member.Field((in Emitter<T> emitter) => ref emitter.Reaction),
             Serializer.Member.Property(

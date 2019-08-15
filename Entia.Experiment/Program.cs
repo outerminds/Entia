@@ -478,6 +478,7 @@ namespace Entia.Experiment
             var node = Json.Parse(text);
         }
 
+        [Serializable]
         public class Cyclic { public Cyclic A; }
 
         static void Serializer()
@@ -525,43 +526,30 @@ namespace Entia.Experiment
             success = world.Serialize(entities, out bytes);
             success = world.Deserialize(bytes, out entities);
 
-            world.Serialize(world, out bytes);
-            world.Deserialize(bytes, out world);
+            success = world.Serialize(world, out bytes);
+            success = world.Deserialize(bytes, out world);
         }
 
         static void CompareSerializers()
         {
-            // Serializer.Object(
-            //     () => new World(),
-            //     Serializer.Member.Property(
-            //         (in World world) => world.ToArray(),
-            //         (ref World world, in IModule[] modules) => { for (int i = 0; i < modules.Length; i++) world.Set(modules[i]); })
-            // );
-            // Serializer.Blittable.Object<Entity>();
-            // Serializer.Blittable.Array<Entity>();
-            // Serializer.Object(
-            //     () => new List<Entity>(),
-            //     Serializer.Member.Property(
-            //         (in List<Entity> list) => list.ToArray(),
-            //         (ref List<Entity> list, in Entity[] values) => list.AddRange(values))
-            // );
-            // Serializer.Object(
-            //     () => new Entity(),
-            // );
-            // var value = (new Position[1000], new Velocity[1000], new Mass[1000]);
+            const int size = 10;
             var value = new Dictionary<object, object>();
             value[1] = "2";
             value["3"] = 4;
             value[DateTime.Now] = TimeSpan.MaxValue;
             value[TimeSpan.MinValue] = DateTime.UtcNow;
             value[new object()] = value;
-            value[new Position[100]] = new Velocity[100];
-            value[new List<Mass>(new Mass[100])] = new List<Lifetime>(new Lifetime[100]);
-            CompareSerializers(value);
+            value[new Position[size]] = new Velocity[size];
+            value[new List<Mass>(new Mass[size])] = new List<Lifetime>(new Lifetime[size]);
+            var cyclic = new Cyclic();
+            cyclic.A = new Cyclic { A = new Cyclic { A = cyclic } };
+            value[cyclic] = cyclic.A;
+
             var values = new Dictionary<Position, Velocity>();
             for (int i = 0; i < 100; i++) values[new Position { X = i }] = new Velocity { Y = 1 };
-            CompareSerializers((values, new List<Position>(new Position[100]), new List<Velocity>(new Velocity[100])));
-            // CompareSerializers(new List<Position>(new Position[1000]));
+            value[(1, "2", byte.MaxValue, short.MinValue)] = (values, new List<Position>(new Position[size]), new List<Velocity>(new Velocity[size]));
+
+            CompareSerializers(value);
         }
         static void CompareSerializers<T>(T value)
         {
@@ -577,8 +565,8 @@ namespace Entia.Experiment
                 bytes3 = stream.ToArray();
             }
 
-            void Describe() => world.Describe(value, out _);
-            void Instantiate() => world.Instantiate(description, out T _);
+            // void Describe() => world.Describe(value, out _);
+            // void Instantiate() => world.Instantiate(description, out T _);
             void NewSerialize() => world.Serialize(value, out _);
             void NewDeserialize() => world.Deserialize(bytes2, out T _);
             void BinarySerialize()
@@ -596,8 +584,10 @@ namespace Entia.Experiment
 
             while (true)
             {
-                Test.Measure(NewSerialize, new Action[] { BinarySerialize, Describe }, 1000);
-                Test.Measure(NewDeserialize, new Action[] { BinaryDeserialize, Instantiate }, 1000);
+                // Test.Measure(NewSerialize, new Action[] { BinarySerialize, Describe }, 1000);
+                // Test.Measure(NewDeserialize, new Action[] { BinaryDeserialize, Instantiate }, 1000);
+                Test.Measure(NewSerialize, new Action[] { BinarySerialize }, 1000);
+                Test.Measure(NewDeserialize, new Action[] { BinaryDeserialize }, 1000);
                 Console.WriteLine();
             }
         }
@@ -728,7 +718,7 @@ namespace Entia.Experiment
             // Traitz();
             // PoulahDescriptor();
             // Serializer1();
-            Serializer();
+            // Serializer();
             CompareSerializers();
             // SuperUnsafe();
             // Performance();

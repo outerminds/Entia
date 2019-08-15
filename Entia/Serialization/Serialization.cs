@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Entia.Core;
 using Entia.Serializers;
 using System.Runtime.InteropServices;
@@ -44,14 +43,12 @@ namespace Entia.Serialization
             if (type == dynamic)
             {
                 Writer.Write(Kinds.Concrete);
-                Writer.Write(reference);
-                return TrySerialize(instance, type, serializer);
+                return Serialize(instance, type, reference, serializer);
             }
             else
             {
                 Writer.Write(Kinds.Abstract);
-                Writer.Write(reference);
-                return Serialize(dynamic, dynamic.GetType()) && TrySerialize(instance, dynamic, serializer);
+                return Serialize(dynamic, dynamic.GetType()) && Serialize(instance, dynamic, reference, serializer);
             }
         }
 
@@ -75,30 +72,32 @@ namespace Entia.Serialization
             if (typeof(T) == dynamic)
             {
                 Writer.Write(Kinds.Concrete);
-                Writer.Write(reference);
-                return TrySerialize<T>(instance, serializer);
+                return Serialize<T>(instance, reference, serializer);
             }
             else
             {
                 Writer.Write(Kinds.Abstract);
-                Writer.Write(reference);
-                return Serialize(dynamic, dynamic.GetType()) && TrySerialize(box, dynamic, serializer);
+                return Serialize(dynamic, dynamic.GetType()) && Serialize(box, dynamic, reference, serializer);
             }
         }
 
         public SerializeContext With<T>() => With(typeof(T));
         public SerializeContext With(Type type = null) => new SerializeContext(type ?? Type, Writer, References, World);
 
-        bool TrySerialize<T>(in T instance, ISerializer serializer)
+        bool Serialize<T>(in T instance, int reference, ISerializer serializer)
         {
-            if (serializer is null) return World.Container.TryGet<T, ISerializer>(out serializer) && serializer.Serialize<T>(instance, With<T>());
-            return serializer.Serialize<T>(instance, With<T>());
+            var context = With<T>();
+            Writer.Write(reference);
+            if (serializer is ISerializer) return serializer.Serialize<T>(instance, context);
+            return World.Container.TryGet<T, ISerializer>(out serializer) && serializer.Serialize<T>(instance, context);
         }
 
-        bool TrySerialize(object instance, Type type, ISerializer serializer)
+        bool Serialize(object instance, Type type, int reference, ISerializer serializer)
         {
-            if (serializer is null) return World.Container.TryGet<ISerializer>(type, out serializer) && serializer.Serialize(instance, With(type));
-            return serializer.Serialize(instance, With(type));
+            var context = With(type);
+            Writer.Write(reference);
+            if (serializer is ISerializer) return serializer.Serialize(instance, context);
+            return World.Container.TryGet<ISerializer>(type, out serializer) && serializer.Serialize(instance, context);
         }
     }
 
@@ -134,13 +133,13 @@ namespace Entia.Serialization
                         break;
                     case Kinds.Abstract:
                         {
-                            if (Reader.Read(out int reference) && Deserialize(out Type dynamic))
-                                return TryDeserialize(out instance, dynamic, reference, serializer);
+                            if (Deserialize(out Type dynamic) && Reader.Read(out int reference))
+                                return Deserialize(out instance, dynamic, reference, serializer);
                             break;
                         }
                     case Kinds.Concrete:
                         {
-                            if (Reader.Read(out int reference)) return TryDeserialize(out instance, type, reference, serializer);
+                            if (Reader.Read(out int reference)) return Deserialize(out instance, type, reference, serializer);
                             break;
                         }
                 }
@@ -165,9 +164,9 @@ namespace Entia.Serialization
                         break;
                     case Kinds.Abstract:
                         {
-                            if (Reader.Read(out int reference) &&
-                                Deserialize(out Type dynamic) &&
-                                TryDeserialize(out var value, dynamic, reference, serializer))
+                            if (Deserialize(out Type dynamic) &&
+                                Reader.Read(out int reference) &&
+                                Deserialize(out var value, dynamic, reference, serializer))
                             {
                                 instance = (T)value;
                                 return true;
@@ -176,7 +175,7 @@ namespace Entia.Serialization
                         }
                     case Kinds.Concrete:
                         {
-                            if (Reader.Read(out int reference)) return TryDeserialize(out instance, reference, serializer);
+                            if (Reader.Read(out int reference)) return Deserialize(out instance, reference, serializer);
                             break;
                         }
                 }
@@ -188,7 +187,7 @@ namespace Entia.Serialization
         public DeserializeContext With<T>() => With(typeof(T));
         public DeserializeContext With(Type type = null) => new DeserializeContext(type ?? Type, Reader, References, World);
 
-        bool TryDeserialize(out object instance, Type type, int reference, ISerializer serializer)
+        bool Deserialize(out object instance, Type type, int reference, ISerializer serializer)
         {
             var context = With(type);
             if ((serializer is ISerializer || World.Container.TryGet<ISerializer>(type, out serializer)) &&
@@ -205,7 +204,7 @@ namespace Entia.Serialization
             return false;
         }
 
-        bool TryDeserialize<T>(out T instance, int reference, ISerializer serializer)
+        bool Deserialize<T>(out T instance, int reference, ISerializer serializer)
         {
             var context = With<T>();
             if ((serializer is ISerializer || World.Container.TryGet<T, ISerializer>(out serializer)) &&
@@ -237,38 +236,6 @@ namespace Entia.Serialization
             [Preserve]
             public Members(object field, object property) { Field = field; Property = property; }
         }
-
-        static readonly object[] _references = {
-            typeof(bool), typeof(bool[]), typeof(bool*), typeof(bool?),
-            typeof(char), typeof(char[]), typeof(char*), typeof(char?),
-            typeof(byte), typeof(byte[]), typeof(byte*), typeof(byte?),
-            typeof(sbyte), typeof(sbyte[]), typeof(sbyte*), typeof(sbyte?),
-            typeof(short), typeof(short[]), typeof(short*), typeof(short?),
-            typeof(ushort), typeof(ushort[]), typeof(ushort*), typeof(ushort?),
-            typeof(int), typeof(int[]), typeof(int*), typeof(int?),
-            typeof(uint), typeof(uint[]), typeof(uint*), typeof(uint?),
-            typeof(long), typeof(long[]), typeof(long*), typeof(long?),
-            typeof(ulong), typeof(ulong[]), typeof(ulong*), typeof(ulong?),
-            typeof(float), typeof(float[]), typeof(float*), typeof(float?),
-            typeof(double), typeof(double[]), typeof(double*), typeof(double?),
-            typeof(decimal), typeof(decimal[]), typeof(decimal*), typeof(decimal?),
-            typeof(IntPtr), typeof(IntPtr[]), typeof(IntPtr*), typeof(IntPtr?),
-            typeof(DateTime), typeof(DateTime[]), typeof(DateTime*), typeof(DateTime?),
-            typeof(TimeSpan), typeof(TimeSpan[]), typeof(TimeSpan*), typeof(TimeSpan?),
-            typeof(string), typeof(string[]),
-            typeof(object), typeof(object[]),
-
-            typeof(object).Module.GetType(), typeof(object).Assembly.GetType(),
-            typeof(Members).GetType(),
-            typeof(Members).GetField(nameof(Members.Field)).GetType(),
-            typeof(Members).GetProperty(nameof(Members.Property)).GetType(),
-            typeof(Members).GetMethod(nameof(Members.Method)).GetType(),
-            typeof(Action), typeof(Pointer),
-
-            typeof(World),
-            typeof(Entity), typeof(Entity[]), typeof(Entity*), typeof(Entity?),
-            typeof(BitMask), typeof(Unit), typeof(Disposable)
-        };
 
         public static bool Serialize<T>(this World world, in T instance, out byte[] bytes, params object[] references)
         {
@@ -386,8 +353,7 @@ namespace Entia.Serialization
 
         static SerializeContext Context(this World world, Writer writer, params object[] references)
         {
-            var map = new Dictionary<object, int>(_references.Length + references.Length);
-            for (int i = 0; i < _references.Length; i++) map.Add(_references[i], map.Count);
+            var map = new Dictionary<object, int>(references.Length);
             for (int i = 0; i < references.Length; i++) map.Add(references[i], map.Count);
             return new SerializeContext(writer, map, world);
         }
@@ -395,8 +361,7 @@ namespace Entia.Serialization
         static DeserializeContext Context(this World world, Reader reader, int count, params object[] references)
         {
             var array = new object[count];
-            Array.Copy(_references, 0, array, 0, _references.Length);
-            Array.Copy(references, 0, array, _references.Length, references.Length);
+            Array.Copy(references, 0, array, 0, references.Length);
             return new DeserializeContext(reader, array, world);
         }
     }

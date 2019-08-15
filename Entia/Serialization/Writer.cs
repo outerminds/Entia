@@ -8,8 +8,8 @@ namespace Entia.Serialization
     {
         public readonly ref struct Pointer<T> where T : unmanaged
         {
-            public ref T Value => ref *(T*)_writer._pointer;
-            public ref T this[int index] => ref ((T*)_writer._pointer)[index];
+            public ref T Value => ref *(T*)(_writer._pointer + _position);
+            public ref T this[int index] => ref ((T*)(_writer._pointer + _position))[index];
 
             readonly int _position;
             readonly Writer _writer;
@@ -70,6 +70,8 @@ namespace Entia.Serialization
 
         byte* Reserve(int count)
         {
+            if (count <= 0) return _pointer;
+
             var position = _bytes.count;
             _bytes.count += count;
             if (_bytes.Ensure())

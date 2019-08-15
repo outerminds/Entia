@@ -25,7 +25,7 @@ namespace Entia.Modules.Message
         static readonly InAction<T> _empty = (in T _) => { };
 
         [Implementation]
-        static readonly Serializer<Reaction<T>> _serializer = Serializer.Object(
+        static Serializer<Reaction<T>> _serializer => Serializer.Object(
             () => new Reaction<T>(),
             Serializer.Member.Field((in Reaction<T> reaction) => ref reaction._reaction)
         );

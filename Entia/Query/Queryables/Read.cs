@@ -28,9 +28,9 @@ namespace Entia.Queryables
         }
 
         [Querier]
-        static readonly Querier _querier = new Querier();
+        static Querier _querier => new Querier();
         [Implementation]
-        static readonly IDepender _depender = Depender.From<T>(new Read(typeof(T)));
+        static IDepender _depender => Depender.From<T>(new Read(typeof(T)));
 
         public ref readonly T Value
         {

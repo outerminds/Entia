@@ -77,7 +77,7 @@ namespace Entia.Modules
         }
 
         [Implementation]
-        static readonly Serializer<Entities> _serializer = Serializer.Object(
+        static Serializer<Entities> _serializer => Serializer.Object(
             Serializer.Member.Field((in Entities entities) => ref entities._onCreate),
             Serializer.Member.Field((in Entities entities) => ref entities._onPreDestroy),
             Serializer.Member.Field((in Entities entities) => ref entities._onPostDestroy),

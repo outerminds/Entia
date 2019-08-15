@@ -6,6 +6,7 @@ using Entia.Dependers;
 using Entia.Modules;
 using Entia.Modules.Query;
 using Entia.Queriers;
+using Entia.Serializers;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace Entia
     /// <seealso cref="IDependable" />
     [ThreadSafe]
     [DebuggerTypeProxy(typeof(Entity.View))]
-    public readonly struct Entity : IEquatable<Entity>, IComparable<Entity>, Queryables.IQueryable<Entity.Querier>, IDependable
+    public readonly struct Entity : IEquatable<Entity>, IComparable<Entity>, Queryables.IQueryable, IDependable
     {
         sealed class View
         {
@@ -104,7 +105,11 @@ namespace Entia
         public static readonly Entity Zero;
 
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From(new Read(typeof(Entity)));
+        static Serializer<Entity> _serializer => Serializer.Blittable.Object<Entity>();
+        [Implementation]
+        static IDepender _depender => Depender.From(new Read(typeof(Entity)));
+        [Querier]
+        static Querier _querier => new Querier();
 
         /// <summary>
         /// Implements the operator ==.

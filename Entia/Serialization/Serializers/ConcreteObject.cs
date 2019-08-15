@@ -15,8 +15,10 @@ namespace Entia.Serializers
         {
             for (int i = 0; i < Members.Length; i++)
             {
-                if (Members[i].Serialize(instance, context)) continue;
-                return false;
+                var member = Members[i];
+                var next = context.Writer.Reserve<int>();
+                if (member.Serialize(instance, context)) next.Value = context.Writer.Position;
+                else return false;
             }
             return true;
         }
@@ -31,7 +33,12 @@ namespace Entia.Serializers
         {
             for (int i = 0; i < Members.Length; i++)
             {
-                if (Members[i].Deserialize(instance, context)) continue;
+                var member = Members[i];
+                if (context.Reader.Read(out int next))
+                {
+                    member.Deserialize(instance, context);
+                    context.Reader.Position = next;
+                }
                 else return false;
             }
             return true;
@@ -52,19 +59,12 @@ namespace Entia.Serializers
 
         public override bool Serialize(in T instance, in SerializeContext context)
         {
-            // TODO: tolerant deserialize
             for (int i = 0; i < Members.Length; i++)
             {
-                // var member = Members[i];
-                // var next = context.Writer.Reserve<int>();
-                // if (member.Serialize(instance, context))
-                // {
-                //     next.Value = context.Writer.Position;
-                //     continue;
-                // }
-                // return false;
-                if (Members[i].Serialize(instance, context)) continue;
-                return false;
+                var member = Members[i];
+                var next = context.Writer.Reserve<int>();
+                if (member.Serialize(instance, context)) next.Value = context.Writer.Position;
+                else return false;
             }
             return true;
         }
@@ -79,12 +79,13 @@ namespace Entia.Serializers
         {
             for (int i = 0; i < Members.Length; i++)
             {
-                // var member = Members[i];
-                // context.Reader.Read(out int next);
-                // member.Deserialize(ref instance, context);
-                // context.Reader.Position = next;
-                if (Members[i].Deserialize(ref instance, context)) continue;
-                return false;
+                var member = Members[i];
+                if (context.Reader.Read(out int next))
+                {
+                    member.Deserialize(ref instance, context);
+                    context.Reader.Position = next;
+                }
+                else return false;
             }
             return true;
         }

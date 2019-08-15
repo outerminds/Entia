@@ -73,7 +73,7 @@ namespace Entia.Modules.Message
         }
 
         [Implementation]
-        static readonly Serializer<Receiver<T>> _serializer = Serializer.Object(
+        static Serializer<Receiver<T>> _serializer => Serializer.Object(
             () => new Receiver<T>(),
             Serializer.Member.Field((in Receiver<T> receiver) => ref receiver._capacity),
             Serializer.Member.Property(

@@ -153,18 +153,19 @@ namespace Entia.Serializers
 
         public static Serializer<string> String() => new ConcreteString();
         public static ISerializer Delegate(Type type) => new ConcreteDelegate(type);
-        public static Serializer<List<T>> List<T>() => new ConcreteList<T>();
+        public static Serializer<T?> Nullable<T>(Serializer<T> value = null) where T : struct => new ConcreteNullable<T>(value);
+        public static Serializer<List<T>> List<T>(Serializer<T[]> values = null) => new ConcreteList<T>(values);
         public static ISerializer List(Type type) => new ConcreteList(type);
         public static Serializer<Dictionary<TKey, TValue>> Dictionary<TKey, TValue>(Serializer<TKey[]> keys = null, Serializer<TValue[]> values = null) => new ConcreteDictionary<TKey, TValue>(keys, values);
         public static ISerializer Dictionary(Type key, Type value) => new ConcreteDictionary(key, value);
-        public static Serializer<(T1, T2)> Tuple<T1, T2>(Serializer<T1> serializer1 = null, Serializer<T2> serializer2 = null) => new ConcreteTuple<T1, T2>(serializer1, serializer2);
-        public static Serializer<(T1, T2, T3)> Tuple<T1, T2, T3>(Serializer<T1> serializer1 = null, Serializer<T2> serializer2 = null, Serializer<T3> serializer3 = null) => new ConcreteTuple<T1, T2, T3>(serializer1, serializer2, serializer3);
-        public static Serializer<(T1, T2, T3, T4)> Tuple<T1, T2, T3, T4>(Serializer<T1> serializer1 = null, Serializer<T2> serializer2 = null, Serializer<T3> serializer3 = null, Serializer<T4> serializer4 = null) => new ConcreteTuple<T1, T2, T3, T4>(serializer1, serializer2, serializer3, serializer4);
-        public static Serializer<(T1, T2, T3, T4, T5)> Tuple<T1, T2, T3, T4, T5>(Serializer<T1> serializer1 = null, Serializer<T2> serializer2 = null, Serializer<T3> serializer3 = null, Serializer<T4> serializer4 = null, Serializer<T5> serializer5 = null) => new ConcreteTuple<T1, T2, T3, T4, T5>(serializer1, serializer2, serializer3, serializer4, serializer5);
-        public static Serializer<(T1, T2, T3, T4, T5, T6)> Tuple<T1, T2, T3, T4, T5, T6>(Serializer<T1> serializer1 = null, Serializer<T2> serializer2 = null, Serializer<T3> serializer3 = null, Serializer<T4> serializer4 = null, Serializer<T5> serializer5 = null, Serializer<T6> serializer6 = null) => new ConcreteTuple<T1, T2, T3, T4, T5, T6>(serializer1, serializer2, serializer3, serializer4, serializer5, serializer6);
-        public static Serializer<(T1, T2, T3, T4, T5, T6, T7)> Tuple<T1, T2, T3, T4, T5, T6, T7>(Serializer<T1> serializer1 = null, Serializer<T2> serializer2 = null, Serializer<T3> serializer3 = null, Serializer<T4> serializer4 = null, Serializer<T5> serializer5 = null, Serializer<T6> serializer6 = null, Serializer<T7> serializer7 = null) => new ConcreteTuple<T1, T2, T3, T4, T5, T6, T7>(serializer1, serializer2, serializer3, serializer4, serializer5, serializer6, serializer7);
+        public static Serializer<(T1, T2)> Tuple<T1, T2>(Serializer<T1> item1 = null, Serializer<T2> item2 = null) => new ConcreteTuple<T1, T2>(item1, item2);
+        public static Serializer<(T1, T2, T3)> Tuple<T1, T2, T3>(Serializer<T1> item1 = null, Serializer<T2> item2 = null, Serializer<T3> item3 = null) => new ConcreteTuple<T1, T2, T3>(item1, item2, item3);
+        public static Serializer<(T1, T2, T3, T4)> Tuple<T1, T2, T3, T4>(Serializer<T1> item1 = null, Serializer<T2> item2 = null, Serializer<T3> item3 = null, Serializer<T4> item4 = null) => new ConcreteTuple<T1, T2, T3, T4>(item1, item2, item3, item4);
+        public static Serializer<(T1, T2, T3, T4, T5)> Tuple<T1, T2, T3, T4, T5>(Serializer<T1> item1 = null, Serializer<T2> item2 = null, Serializer<T3> item3 = null, Serializer<T4> item4 = null, Serializer<T5> item5 = null) => new ConcreteTuple<T1, T2, T3, T4, T5>(item1, item2, item3, item4, item5);
+        public static Serializer<(T1, T2, T3, T4, T5, T6)> Tuple<T1, T2, T3, T4, T5, T6>(Serializer<T1> item1 = null, Serializer<T2> item2 = null, Serializer<T3> item3 = null, Serializer<T4> item4 = null, Serializer<T5> item5 = null, Serializer<T6> item6 = null) => new ConcreteTuple<T1, T2, T3, T4, T5, T6>(item1, item2, item3, item4, item5, item6);
+        public static Serializer<(T1, T2, T3, T4, T5, T6, T7)> Tuple<T1, T2, T3, T4, T5, T6, T7>(Serializer<T1> item1 = null, Serializer<T2> item2 = null, Serializer<T3> item3 = null, Serializer<T4> item4 = null, Serializer<T5> item5 = null, Serializer<T6> item6 = null, Serializer<T7> item7 = null) => new ConcreteTuple<T1, T2, T3, T4, T5, T6, T7>(item1, item2, item3, item4, item5, item6, item7);
 
-        public static Serializer<(T[] items, int count)> TupleArray<T>(Serializer<T[]> array = null) =>
-            Serializer.Map((in (T[], int) pair) => pair.ToArray(), (in T[] items) => (items, items.Length), array);
+        public static Serializer<(T[] items, int count)> TupleArray<T>(Serializer<T[]> values = null) =>
+            Serializer.Map((in (T[], int) pair) => pair.ToArray(), (in T[] items) => (items, items.Length), values);
     }
 }

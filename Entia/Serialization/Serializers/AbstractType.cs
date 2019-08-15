@@ -4,16 +4,51 @@ using System.Reflection;
 using Entia.Core;
 using Entia.Serialization;
 using Entia.Modules.Message;
+using Entia.Modules.Group;
+using Entia.Modules.Query;
+using System.Linq;
 
 namespace Entia.Serializers
 {
     public sealed class AbstractType : Serializer<Type>
     {
-        enum Kinds : byte { None, Type, Array, Pointer, Generic, Definition }
+        enum Kinds : byte { None, Type, Array, Pointer, Generic, Reference }
 
-        static readonly Type[] _definitions =
+        [Preserve]
+        readonly struct Members
         {
+            [Preserve]
+            public readonly object Field;
+            [Preserve]
+            public object Property { get; }
+            [Preserve]
+            public void Method() { }
+            [Preserve]
+            public Members(object field, object property) { Field = field; Property = property; }
+        }
+
+        static readonly Type[] _references = {
             #region System
+            typeof(bool), typeof(bool[]), typeof(bool*), typeof(bool?),
+            typeof(char), typeof(char[]), typeof(char*), typeof(char?),
+            typeof(byte), typeof(byte[]), typeof(byte*), typeof(byte?),
+            typeof(sbyte), typeof(sbyte[]), typeof(sbyte*), typeof(sbyte?),
+            typeof(short), typeof(short[]), typeof(short*), typeof(short?),
+            typeof(ushort), typeof(ushort[]), typeof(ushort*), typeof(ushort?),
+            typeof(int), typeof(int[]), typeof(int*), typeof(int?),
+            typeof(uint), typeof(uint[]), typeof(uint*), typeof(uint?),
+            typeof(long), typeof(long[]), typeof(long*), typeof(long?),
+            typeof(ulong), typeof(ulong[]), typeof(ulong*), typeof(ulong?),
+            typeof(float), typeof(float[]), typeof(float*), typeof(float?),
+            typeof(double), typeof(double[]), typeof(double*), typeof(double?),
+            typeof(decimal), typeof(decimal[]), typeof(decimal*), typeof(decimal?),
+            typeof(IntPtr), typeof(IntPtr[]), typeof(IntPtr*), typeof(IntPtr?),
+            typeof(DateTime), typeof(DateTime[]), typeof(DateTime*), typeof(DateTime?),
+            typeof(TimeSpan), typeof(TimeSpan[]), typeof(TimeSpan*), typeof(TimeSpan?),
+            typeof(string), typeof(string[]),
+            typeof(Action), typeof(Action[]),
+            typeof(object), typeof(object[]),
+
             typeof(Nullable<>),
             typeof(List<>),
             typeof(Dictionary<,>),
@@ -23,7 +58,18 @@ namespace Entia.Serializers
             typeof(Func<>), typeof(Func<,>), typeof(Func<,,>), typeof(Func<,,,>), typeof(Func<,,,,>), typeof(Func<,,,,,>), typeof(Func<,,,,,,>),
             #endregion
 
+            #region Reflection
+            typeof(object).GetType(), typeof(object).Module.GetType(), typeof(object).Assembly.GetType(),
+            typeof(Members).GetField(nameof(Members.Field)).GetType(),
+            typeof(Members).GetProperty(nameof(Members.Property)).GetType(),
+            typeof(Members).GetMethod(nameof(Members.Method)).GetType(),
+            typeof(Pointer),
+            #endregion
+
             #region Entia.Core
+            typeof(Unit), typeof(Unit[]), typeof(Unit*), typeof(Unit?),
+            typeof(BitMask), typeof(Disposable),
+
             typeof(Concurrent<>),
             typeof(Option<>), typeof(Result<>),
             typeof(Box<>), typeof(Box<>.Read),
@@ -33,13 +79,27 @@ namespace Entia.Serializers
             #endregion
 
             #region Entia
+            typeof(World),
+            typeof(Entity), typeof(Entity[]), typeof(Entity*), typeof(Entity?),
+            typeof(Query),
+
             typeof(Emitter<>), typeof(Receiver<>), typeof(Reaction<>),
+            typeof(Group<>), typeof(Query<>),
             #endregion
         };
+        static readonly Dictionary<Type, ushort> _indices = _references
+            .Select((type, index) => (type, index))
+            .ToDictionary(pair => pair.type, pair => (ushort)pair.index);
 
         public override bool Serialize(in Type instance, in SerializeContext context)
         {
-            if (instance.IsArray)
+            if (_indices.TryGetValue(instance, out var index))
+            {
+                context.Writer.Write(Kinds.Reference);
+                context.Writer.Write(index);
+                return true;
+            }
+            else if (instance.IsArray)
             {
                 var rank = instance.GetArrayRank();
                 var element = instance.GetElementType();
@@ -53,18 +113,7 @@ namespace Entia.Serializers
                 var element = instance.GetElementType();
                 return Serialize(element, context);
             }
-            else if (instance.IsGenericTypeDefinition)
-            {
-                var index = Array.IndexOf(_definitions, instance);
-                if (index >= 0)
-                {
-                    context.Writer.Write(Kinds.Definition);
-                    context.Writer.Write((byte)index);
-                    return true;
-                }
-                else return TrySerialize(instance, context);
-            }
-            else if (instance.IsGenericType)
+            else if (instance.IsConstructedGenericType)
             {
                 context.Writer.Write(Kinds.Generic);
                 var definition = instance.GetGenericTypeDefinition();
@@ -80,7 +129,12 @@ namespace Entia.Serializers
                 }
                 return false;
             }
-            else return TrySerialize(instance, context);
+            else
+            {
+                context.Writer.Write(Kinds.Type);
+                context.Writer.Write(instance.MetadataToken);
+                return context.Serialize(instance.Module, instance.Module.GetType());
+            }
         }
 
         public override bool Instantiate(out Type instance, in DeserializeContext context)
@@ -89,6 +143,15 @@ namespace Entia.Serializers
             {
                 switch (kind)
                 {
+                    case Kinds.Reference:
+                        {
+                            if (context.Reader.Read(out ushort index))
+                            {
+                                instance = _references[index];
+                                return true;
+                            }
+                            break;
+                        }
                     case Kinds.Array:
                         {
                             if (context.Reader.Read(out byte rank) && Deserialize(out var element, context))
@@ -122,15 +185,6 @@ namespace Entia.Serializers
                             }
                             break;
                         }
-                    case Kinds.Definition:
-                        {
-                            if (context.Reader.Read(out byte index))
-                            {
-                                instance = _definitions[index];
-                                return true;
-                            }
-                            break;
-                        }
                     case Kinds.Type:
                         {
                             if (context.Reader.Read(out int token) && context.Deserialize(out Module module))
@@ -140,8 +194,7 @@ namespace Entia.Serializers
                             }
                             break;
                         }
-                    default:
-                        instance = default; return false;
+                    default: instance = default; return false;
                 }
             }
             instance = default;
@@ -149,12 +202,5 @@ namespace Entia.Serializers
         }
 
         public override bool Initialize(ref Type instance, in DeserializeContext context) => true;
-
-        bool TrySerialize(Type instance, in SerializeContext context)
-        {
-            context.Writer.Write(Kinds.Type);
-            context.Writer.Write(instance.MetadataToken);
-            return context.Serialize(instance.Module, instance.Module.GetType());
-        }
     }
 }

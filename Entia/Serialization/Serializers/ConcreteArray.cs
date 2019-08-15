@@ -45,6 +45,8 @@ namespace Entia.Serializers
     public sealed class ConcreteArray<T> : Serializer<T[]>
     {
         public readonly Serializer<T> Element;
+
+        public ConcreteArray() { }
         public ConcreteArray(Serializer<T> element = null) { Element = element; }
 
         public override bool Serialize(in T[] instance, in SerializeContext context)

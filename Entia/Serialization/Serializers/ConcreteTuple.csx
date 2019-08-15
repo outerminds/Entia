@@ -16,19 +16,19 @@ IEnumerable<string> Generate(int depth)
         var parameters = string.Join(", ", generics);
         var constructor = string.Join(
             ", ",
-            generics.Select((generic, index) => $"Serializer<{generic}> serializer{index + 1} = null"));
+            generics.Select((generic, index) => $"Serializer<{generic}> item{index + 1} = null"));
         var fields = string.Join(
             " ",
-            generics.Select((generic, index) => $"public readonly Serializer<{generic}> Serializer{index + 1};"));
+            generics.Select((generic, index) => $"public readonly Serializer<{generic}> Item{index + 1};"));
         var initializers = string.Join(
             " ",
-            generics.Select((generic, index) => $"Serializer{index + 1} = serializer{index + 1};"));
+            generics.Select((generic, index) => $"Item{index + 1} = item{index + 1};"));
         var serialize = string.Join(
             " && ",
-            generics.Select((_, index) => $"context.Serialize(instance.Item{index + 1}, Serializer{index + 1})"));
+            generics.Select((_, index) => $"context.Serialize(instance.Item{index + 1}, Item{index + 1})"));
         var deserialize = string.Join(
             " && ",
-            generics.Select((generic, index) => $"context.Deserialize(out {generic} item{index + 1}, Serializer{index + 1})"));
+            generics.Select((generic, index) => $"context.Deserialize(out {generic} item{index + 1}, Item{index + 1})"));
         var tuple = $"({string.Join(", ", generics.Select((_, index) => $"item{index + 1}"))})";
 
         yield return
@@ -36,6 +36,7 @@ $@"    public sealed class ConcreteTuple<{parameters}> : Serializer<({parameters
     {{
         {fields}
 
+        public ConcreteTuple() {{ }}
         public ConcreteTuple({constructor})
         {{
             {initializers}

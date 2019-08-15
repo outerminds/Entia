@@ -4,12 +4,17 @@ namespace Entia.Serializers
 {
     public sealed class ConcreteNullable<T> : Serializer<T?> where T : struct
     {
+        public readonly Serializer<T> Value;
+
+        public ConcreteNullable() { }
+        public ConcreteNullable(Serializer<T> value = null) { Value = value; }
+
         public override bool Serialize(in T? instance, in SerializeContext context)
         {
             if (instance is T value)
             {
                 context.Writer.Write(true);
-                return context.Serialize(value);
+                return context.Serialize(value, Value);
             }
             else
             {
@@ -24,7 +29,7 @@ namespace Entia.Serializers
             {
                 if (has)
                 {
-                    if (context.Deserialize(out T value)) { instance = value; return true; }
+                    if (context.Deserialize(out T value, Value)) { instance = value; return true; }
                 }
                 else { instance = default; return true; }
             }

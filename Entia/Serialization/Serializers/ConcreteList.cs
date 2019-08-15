@@ -46,6 +46,11 @@ namespace Entia.Serializers
 
     public sealed class ConcreteList<T> : Serializer<List<T>>
     {
+        public readonly Serializer<T[]> Values;
+
+        public ConcreteList() { }
+        public ConcreteList(Serializer<T[]> values = null) { Values = values; }
+
         public override bool Serialize(in List<T> instance, in SerializeContext context) =>
             context.Serialize(instance.ToArray());
 

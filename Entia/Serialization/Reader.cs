@@ -7,6 +7,7 @@ namespace Entia.Serialization
     {
         public readonly byte[] Bytes;
         public int Position;
+        public int Remaining => Bytes.Length - Position;
 
         readonly GCHandle _handle;
         readonly byte* _pointer;
@@ -66,14 +67,14 @@ namespace Entia.Serialization
         public bool Read(IntPtr bytes, int count) => Read((byte*)bytes, count);
         public bool Read(byte* bytes, int count)
         {
-            count = Math.Min(Bytes.Length - Position, count);
-            if (count > 0)
+            if (count <= 0) return true;
+            else if (count <= Remaining)
             {
                 Buffer.MemoryCopy(_pointer + Position, bytes, count, count);
                 Position += count;
                 return true;
             }
-            return false;
+            else return false;
         }
 
         public void Dispose() => _handle.Free();

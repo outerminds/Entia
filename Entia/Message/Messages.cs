@@ -13,7 +13,7 @@ namespace Entia.Modules
     public sealed class Messages : IModule, IClearable, IEnumerable<IEmitter>
     {
         [Implementation]
-        static readonly Serializer<Messages> _serializer = Serializer.Object(
+        static Serializer<Messages> _serializer => Serializer.Object(
             () => new Messages(),
             Serializer.Member.Property(
                 (in Messages messages) => messages._emitters.Read(emitters => emitters.Values.ToArray()),

@@ -52,6 +52,7 @@ namespace Entia.Serializers
         public readonly Serializer<TKey[]> Keys;
         public readonly Serializer<TValue[]> Values;
 
+        public ConcreteDictionary() { }
         public ConcreteDictionary(Serializer<TKey[]> keys = null, Serializer<TValue[]> values = null)
         {
             Keys = keys;

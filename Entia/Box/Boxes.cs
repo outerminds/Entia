@@ -14,7 +14,7 @@ namespace Entia.Modules
         struct Data
         {
             [Implementation]
-            static readonly Serializer<Data> _serializer = Serializer.Map(
+            static Serializer<Data> _serializer => Serializer.Map(
                 (in Data data) => (data.Box, data.Map),
                 (in (Box box, Dictionary<object, Box> map) pair) => new Data { Box = pair.box, Map = pair.map },
                 Serializer.Tuple<Box, Dictionary<object, Box>>(default, Serializer.Dictionary<object, Box>()));
@@ -24,7 +24,7 @@ namespace Entia.Modules
         }
 
         [Implementation]
-        static readonly Serializer<Boxes> _serializer = Serializer.Object(
+        static Serializer<Boxes> _serializer => Serializer.Object(
             () => new Boxes(),
             Serializer.Member.Property(
                 (in Boxes boxes) => boxes._boxes.Read(value => (value.Keys.ToArray(), value.Values.ToArray())),
