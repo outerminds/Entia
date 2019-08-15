@@ -1,8 +1,5 @@
 using System;
-using System.Runtime.CompilerServices;
-using Entia.Core;
 using Entia.Resolvers;
-using Entia.Modules;
 
 namespace Entia.Resolvables
 {

@@ -22,6 +22,8 @@ namespace Entia.Queriers
             World = world;
             Include = include;
         }
+
+        public Context With(States? include = null) => new Context(Segment, World, include ?? Include);
     }
 
     public interface IQuerier

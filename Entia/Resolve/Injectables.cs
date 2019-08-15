@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Entia.Core;
 using Entia.Injectors;
 using Entia.Modules;
-using Entia.Resolvables;
 
 namespace Entia.Injectables
 {
@@ -13,7 +10,7 @@ namespace Entia.Injectables
         public readonly struct Entities : IInjectable
         {
             [Implementation]
-            static Injector<Entities> Injector => Injectors.Injector.From(context =>
+            static Injector<Entities> _injector => Injector.From(context =>
                 new Entities(context.World.Resolvers(), context.World.Entities()));
 
             readonly Modules.Resolvers _resolvers;
@@ -42,7 +39,8 @@ namespace Entia.Injectables
         public readonly struct Components : IInjectable
         {
             [Implementation]
-            static Injector<Components> Injector => Injectors.Injector.From(context => new Components(context.World.Resolvers(), context.World.Components()));
+            static Injector<Components> _injector => Injector.From(context =>
+                new Components(context.World.Resolvers(), context.World.Components()));
 
             readonly Modules.Resolvers _resolvers;
             readonly Modules.Components _components;
@@ -78,7 +76,7 @@ namespace Entia.Injectables
         }
 
         [Implementation]
-        static Injector<Defer> Injector => Injectors.Injector.From(context => new Defer(context.World.Resolvers()));
+        static Injector<Defer> _injector => Injector.From(context => new Defer(context.World.Resolvers()));
 
         readonly Modules.Resolvers _resolvers;
 

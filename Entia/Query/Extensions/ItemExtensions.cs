@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Entia.Core;
 using Entia.Core.Documentation;
 
