@@ -27,7 +27,7 @@ namespace Entia.Queryables
             }
         }
 
-        [Querier]
+        [Implementation]
         static Querier _querier => new Querier();
         [Implementation]
         static IDepender _depender => Depender.From<T>(new Read(typeof(T)));

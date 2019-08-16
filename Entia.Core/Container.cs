@@ -139,6 +139,26 @@ namespace Entia.Core
         {
             bool Is(Type current, Type other) => current.Is<IProvider>() || current.Is(other, true, true);
 
+            Type Concrete(TypeData data, ImplementationAttribute attribute)
+            {
+                var implementation = attribute.Implementation;
+                if (implementation.Type.IsGenericTypeDefinition)
+                {
+                    if (attribute.Type is TypeData)
+                    {
+                        if (attribute.Type.Type.IsGenericTypeDefinition &&
+                            attribute.Type.Arguments.Length == implementation.Arguments.Length &&
+                            data.Type.Hierarchy().TryFirst(child =>
+                                child.IsGenericType && child.GetGenericTypeDefinition() == attribute.Type, out var definition))
+                            return implementation.Type.MakeGenericType(definition.GetGenericArguments());
+                        return implementation.Type.MakeGenericType(data);
+                    }
+                    else if (data.Arguments.Length == implementation.Arguments.Length)
+                        return implementation.Type.MakeGenericType(data.Arguments);
+                }
+                return implementation.Type;
+            }
+
             IEnumerable<Option<ITrait>> Create()
             {
                 var typeData = TypeUtility.GetData(type);
@@ -148,10 +168,7 @@ namespace Entia.Core
                     {
                         yield return Option.Try(() =>
                         {
-                            var concrete =
-                                attribute.Implementation.Type.IsGenericTypeDefinition &&
-                                typeData.Arguments.Length == attribute.Implementation.Arguments.Length ?
-                                attribute.Implementation.Type.MakeGenericType(typeData.Arguments) : attribute.Implementation.Type;
+                            var concrete = Concrete(typeData, attribute);
                             return Activator.CreateInstance(concrete, attribute.Arguments);
                         }).Cast<ITrait>();
                     }
@@ -197,11 +214,7 @@ namespace Entia.Core
                     {
                         yield return Option.Try(() =>
                         {
-                            var concrete =
-                                typeData.Definition == attribute.Type.Type &&
-                                attribute.Implementation.Type.IsGenericTypeDefinition &&
-                                typeData.Arguments.Length == attribute.Implementation.Arguments.Length ?
-                                attribute.Implementation.Type.MakeGenericType(typeData.Arguments) : attribute.Implementation.Type;
+                            var concrete = Concrete(typeData, attribute);
                             return Activator.CreateInstance(concrete, attribute.Arguments);
                         }).Cast<ITrait>();
                     }

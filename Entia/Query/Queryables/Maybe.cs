@@ -1,3 +1,4 @@
+using Entia.Core;
 using Entia.Core.Documentation;
 using Entia.Modules;
 using Entia.Modules.Query;
@@ -19,7 +20,7 @@ namespace Entia.Queryables
             }
         }
 
-        [Querier]
+        [Implementation]
         static readonly Querier _querier = new Querier();
 
         public static implicit operator Maybe<T>(in T value) => new Maybe<T>(value);

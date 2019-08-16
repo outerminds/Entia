@@ -37,7 +37,7 @@ namespace Entia.Queryables
 
         public static implicit operator Read<T>(in Write<T> write) => new Read<T>(write._index, write._array, write.State);
 
-        [Querier]
+        [Implementation]
         static Querier _querier => new Querier();
         [Implementation]
         static IDepender _depender => Depender.From<T>(new Write(typeof(T)));

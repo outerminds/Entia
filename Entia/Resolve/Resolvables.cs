@@ -1,21 +1,24 @@
 using System;
+using Entia.Core;
 using Entia.Resolvers;
 
 namespace Entia.Resolvables
 {
     public interface IResolvable { }
-    public interface IResolvable<T> : IResolvable where T : IResolver, new() { }
 
-    public readonly struct Do<T> : IResolvable<Do<T>.Resolver>
+    public readonly struct Do<T> : IResolvable
     {
-        sealed class Resolver : Resolver<Do<T>>
+        sealed class Resolver : IResolver<Do<T>>
         {
-            public override bool Resolve(in Do<T> resolvable)
+            public bool Resolve(in Do<T> resolvable)
             {
                 resolvable.Action(resolvable.State);
                 return true;
             }
         }
+
+        [Implementation]
+        static readonly Resolver _resolver = new Resolver();
 
         public readonly T State;
         public readonly Action<T> Action;

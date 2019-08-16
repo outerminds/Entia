@@ -108,7 +108,7 @@ namespace Entia
         static Serializer<Entity> _serializer => Serializer.Blittable.Object<Entity>();
         [Implementation]
         static IDepender _depender => Depender.From(new Read(typeof(Entity)));
-        [Querier]
+        [Implementation]
         static Querier _querier => new Querier();
 
         /// <summary>

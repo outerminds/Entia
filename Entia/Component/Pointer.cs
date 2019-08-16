@@ -41,7 +41,7 @@ namespace Entia.Modules.Component
             }
         }
 
-        [Querier]
+        [Implementation]
         static readonly Querier _querier = new Querier();
     }
 }

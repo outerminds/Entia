@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using Entia.Core;
 using Entia.Resolvables;
 using Entia.Resolvers;
-using Entia.Modules;
-using System.Linq;
-using System.Collections;
 
 namespace Entia.Modules
 {
     public delegate bool Resolve<T>(in T resolvable);
 
-    public sealed class Resolvers : IModule, IClearable, Modules.IResolvable, IEnumerable<IResolver>
+    public sealed class Resolvers : IModule, Modules.IResolvable
     {
         struct Data
         {
@@ -34,10 +31,8 @@ namespace Entia.Modules
             }
         }
 
-        readonly TypeMap<Resolvables.IResolvable, IResolver> _defaults = new TypeMap<Resolvables.IResolvable, IResolver>();
-        readonly TypeMap<Resolvables.IResolvable, IResolver> _resolvers = new TypeMap<Resolvables.IResolvable, IResolver>();
-        readonly TypeMap<Resolvables.IResolvable, Data> _data = new TypeMap<Resolvables.IResolvable, Data>();
         readonly World _world;
+        readonly TypeMap<Resolvables.IResolvable, Data> _data = new TypeMap<Resolvables.IResolvable, Data>();
         ((int data, int resolvable)[] items, int count) _queue = (new (int, int)[32], 0);
 
         public Resolvers(World world) { _world = world; }
@@ -57,7 +52,7 @@ namespace Entia.Modules
             return _queue.count.Change(0) || resolved;
         }
 
-        public void Defer<T>(in T resolvable) where T : struct, Resolvables.IResolvable
+        public bool Defer<T>(in T resolvable) where T : struct, Resolvables.IResolvable
         {
             var dataIndex = _data.Index<T>();
             ref var data = ref _data.Get(dataIndex, out var success);
@@ -66,49 +61,39 @@ namespace Entia.Modules
                 var index = data.Count++;
                 ArrayUtility.EnsureSet(ref data.Resolvables, resolvable, index);
                 _queue.Push((dataIndex, index));
+                return true;
             }
-            else
+            else if (TryCreateData(resolvable, out var created))
             {
-                _data.Set(dataIndex, CreateData(resolvable));
+                _data.Set(dataIndex, created);
                 _queue.Push((dataIndex, 0));
+                return true;
             }
+            return false;
         }
 
-        public void Defer(Action @do) => Defer(@do, action => action());
-        public void Defer(Action<World> @do) => Defer(_world, @do);
-        public void Defer<T>(in T state, Action<T> @do) => Defer(new Do<T>(state, @do));
-        public void Defer<T>(in T state, Action<T, World> @do) => Defer((state, world: _world, @do), input => input.@do(input.state, input.world));
+        public bool Defer(Action @do) => Defer(@do, action => action());
+        public bool Defer(Action<World> @do) => Defer(_world, @do);
+        public bool Defer<T>(in T state, Action<T> @do) => Defer(new Do<T>(state, @do));
+        public bool Defer<T>(in T state, Action<T, World> @do) => Defer((state, world: _world, @do), input => input.@do(input.state, input.world));
 
-        public Resolver<T> Default<T>() where T : struct, Resolvables.IResolvable =>
-            _defaults.Default(typeof(T), typeof(Resolvables.IResolvable<>), typeof(ResolverAttribute), _ => new Default<T>()) as Resolver<T>;
-        public IResolver Default(Type resolvable) =>
-            _defaults.Default(resolvable, typeof(Resolvables.IResolvable<>), typeof(ResolverAttribute), typeof(Default<>));
-
-        public bool Has<T>() where T : struct, Resolvables.IResolvable => _resolvers.Has<T>(true, false);
-        public bool Has(Type resolvable) => _resolvers.Has(resolvable, true, false);
-        public Resolver<T> Get<T>() where T : struct, Resolvables.IResolvable => _resolvers.TryGet<T>(out var resolver, true, false) && resolver is Resolver<T> casted ? casted : Default<T>();
-        public IResolver Get(Type resolvable) => _resolvers.TryGet(resolvable, out var resolver, true, false) ? resolver : Default(resolvable);
-        public bool Set<T>(Resolver<T> resolver) where T : struct, Resolvables.IResolvable => _resolvers.Set<T>(resolver);
-        public bool Set(Type resolvable, IResolver resolver) => _resolvers.Set(resolvable, resolver);
-        public bool Remove<T>() where T : struct, Resolvables.IResolvable => _resolvers.Remove<T>();
-        public bool Remove(Type resolvable) => _resolvers.Remove(resolvable);
-        public bool Clear() => _defaults.Clear() | _resolvers.Clear();
-        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
-        public IEnumerator<IResolver> GetEnumerator() => _resolvers.Values.Concat(_defaults.Values).GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        Data CreateData<T>(in T resolvable) where T : struct, Resolvables.IResolvable
+        bool TryCreateData<T>(in T resolvable, out Data data) where T : struct, Resolvables.IResolvable
         {
-            var resolver = Default<T>();
-            Resolve<T> resolve = resolver.Resolve;
-            var resolvables = new T[8];
-            resolvables[0] = resolvable;
-            return new Data
+            if (_world.Container.TryGet<T, IResolver<T>>(out var resolver))
             {
-                Resolve = (array, index) => resolve(((T[])array)[index]),
-                Resolvables = resolvables,
-                Count = 1
-            };
+                var resolve = new Resolve<T>(resolver.Resolve);
+                var resolvables = new T[8];
+                resolvables[0] = resolvable;
+                data = new Data
+                {
+                    Resolve = (array, index) => resolve(((T[])array)[index]),
+                    Resolvables = resolvables,
+                    Count = 1
+                };
+                return true;
+            }
+            data = default;
+            return false;
         }
     }
 }

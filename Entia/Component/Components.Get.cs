@@ -9,6 +9,9 @@ namespace Entia.Modules
 {
     public sealed partial class Components
     {
+        static Exception MissingComponent(Entity entity, Type type) =>
+            new InvalidOperationException($"Missing component of type '{type.Format()}' on entity '{entity}'. Returning a dummy reference instead.");
+
         /// <summary>
         /// Gets a component of type <typeref name="T"/> associated with the entity <paramref name="entity"/>.
         /// If the component is missing, a <see cref="OnException"/> message will be emitted.
@@ -21,7 +24,7 @@ namespace Entia.Modules
         public ref T Get<T>(Entity entity, States include = States.All) where T : struct, IComponent
         {
             if (TryStore<T>(entity, out var store, out var adjusted, include)) return ref store[adjusted];
-            _onException.Emit(new OnException { Exception = ExceptionUtility.MissingComponent(entity, typeof(T)) });
+            _onException.Emit(new OnException { Exception = MissingComponent(entity, typeof(T)) });
             return ref Dummy<T>.Value;
         }
 
@@ -124,7 +127,7 @@ namespace Entia.Modules
         public IComponent Get(Entity entity, Type type, States include = States.All)
         {
             if (TryGet(entity, type, out var component, include)) return component;
-            _onException.Emit(new OnException { Exception = ExceptionUtility.MissingComponent(entity, type) });
+            _onException.Emit(new OnException { Exception = MissingComponent(entity, type) });
             return null;
         }
 

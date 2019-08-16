@@ -3,17 +3,15 @@ using Entia.Modules.Component;
 using Entia.Modules.Query;
 using Entia.Queriers;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
 namespace Entia.Modules
 {
-    public sealed class Queriers : IModule, IClearable, IEnumerable<IQuerier>
+    public sealed class Queriers : IModule
     {
         readonly World _world;
-        readonly TypeMap<Queryables.IQueryable, IQuerier> _defaults = new TypeMap<Queryables.IQueryable, IQuerier>();
         readonly Dictionary<MemberInfo, IQuerier> _queriers = new Dictionary<MemberInfo, IQuerier>();
 
         public Queriers(World world) { _world = world; }
@@ -30,25 +28,19 @@ namespace Entia.Modules
             querier.TryQuery(new Context(segment, _world, include), out query);
 
         public Querier<T> Default<T>() where T : struct, Queryables.IQueryable =>
-            _defaults.Default(typeof(T), typeof(Queryables.IQueryable<>), typeof(QuerierAttribute), _ => new Default<T>()) as Querier<T>;
+            _world.Container.Get<T, Querier<T>>().FirstOrDefault() ?? new Default<T>();
         public IQuerier Default(Type queryable) =>
             queryable.TryAsPointer(out var pointer) ? Default(pointer) :
-            _defaults.Default(queryable, typeof(Queryables.IQueryable<>), typeof(QuerierAttribute), typeof(Default<>));
+            _world.Container.Get<IQuerier>(queryable).FirstOrDefault() ??
+            (IQuerier)Activator.CreateInstance(typeof(Default<>).MakeGenericType(queryable));
 
-        public bool Has<T>() where T : struct, Queryables.IQueryable => Has(typeof(T));
-        public bool Has(Type queryable) => _queriers.ContainsKey(queryable);
-
-        public Querier<T> Get<T>() where T : struct, Queryables.IQueryable
-        {
-            if (_queriers.TryGetValue(typeof(T), out var querier) && querier is Querier<T> casted) return casted;
-            _queriers[typeof(T)] = casted = Default<T>().All(typeof(T)).Include(typeof(T));
-            return casted;
-        }
-
+        public Querier<T> Get<T>() where T : struct, Queryables.IQueryable => Get<T>(typeof(T));
         public Querier<T> Get<T>(MemberInfo member) where T : struct, Queryables.IQueryable
         {
             if (_queriers.TryGetValue(member, out var querier) && querier is Querier<T> casted) return casted;
-            _queriers[member] = casted = Default<T>().All(typeof(T), member).Include(member, typeof(T));
+            _queriers[member] = casted = typeof(T) == member ?
+                Default<T>().All(member).Include(member) :
+                Default<T>().All(typeof(T), member).Include(member, typeof(T));
             return casted;
         }
 
@@ -68,17 +60,9 @@ namespace Entia.Modules
                 (member as MethodInfo)?.ReturnType;
             return _queriers[member] =
                 queryable == null ? new False() :
+                queryable == member ?
+                Default(queryable).All(member).Include(member) :
                 Default(queryable).All(queryable, member).Include(member, queryable);
         }
-
-        public bool Set<T>(Querier<T> querier) where T : struct, Queryables.IQueryable => _queriers.Set(typeof(T), querier);
-        public bool Set(Type queryable, IQuerier querier) => _queriers.Set(queryable, querier);
-        public bool Remove<T>() where T : struct, Queryables.IQueryable => _queriers.Remove(typeof(T));
-        public bool Remove(Type queryable) => _queriers.Remove(queryable);
-        public bool Clear() => _defaults.Clear() | _queriers.TryClear();
-
-        /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
-        public IEnumerator<IQuerier> GetEnumerator() => _queriers.Values.Concat(_defaults.Values).GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
