@@ -1,23 +1,25 @@
 using System;
+using System.Reflection;
 using System.Runtime.Serialization;
+using Entia.Core;
 using Entia.Serialization;
 
 namespace Entia.Serializers
 {
     public sealed class ConcreteObject : ISerializer
     {
-        public readonly Type Type;
-        public readonly IMember[] Members;
+        public readonly FieldInfo[] Fields;
 
-        public ConcreteObject(Type type, params IMember[] members) { Type = type; Members = members; }
+        public ConcreteObject(params FieldInfo[] fields) { Fields = fields; }
 
         public bool Serialize(object instance, in SerializeContext context)
         {
-            for (int i = 0; i < Members.Length; i++)
+            for (int i = 0; i < Fields.Length; i++)
             {
-                var member = Members[i];
+                var field = Fields[i];
                 var next = context.Writer.Reserve<int>();
-                if (member.Serialize(instance, context)) next.Value = context.Writer.Position;
+                if (context.Serialize(field.GetValue(instance), field.FieldType))
+                    next.Value = context.Writer.Position;
                 else return false;
             }
             return true;
@@ -25,18 +27,18 @@ namespace Entia.Serializers
 
         public bool Instantiate(out object instance, in DeserializeContext context)
         {
-            instance = FormatterServices.GetUninitializedObject(Type);
+            instance = FormatterServices.GetUninitializedObject(context.Type);
             return true;
         }
 
         public bool Initialize(ref object instance, in DeserializeContext context)
         {
-            for (int i = 0; i < Members.Length; i++)
+            for (int i = 0; i < Fields.Length; i++)
             {
-                var member = Members[i];
                 if (context.Reader.Read(out int next))
                 {
-                    member.Deserialize(instance, context);
+                    var field = Fields[i];
+                    if (context.Deserialize(out var value, field.FieldType)) field.SetValue(instance, value);
                     context.Reader.Position = next;
                 }
                 else return false;

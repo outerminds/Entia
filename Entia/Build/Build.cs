@@ -1,3 +1,4 @@
+using Entia.Buildables;
 using Entia.Builders;
 using Entia.Core;
 using Entia.Nodes;
@@ -24,5 +25,8 @@ namespace Entia.Build
     {
         public static Result<IRunner> Build(this World world, Node node, Node root) =>
             new Context(root, world).Build(node);
+
+        public static void Add<T>(this Container container, Builder<T> builder) where T : struct, IBuildable =>
+            container.Add<T, IBuilder>(builder);
     }
 }

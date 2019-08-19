@@ -289,16 +289,6 @@ namespace Entia.Core
             return element != null;
         }
 
-        public static bool Is(object value, Type type, bool hierarchy = false, bool definition = false)
-        {
-            switch (value)
-            {
-                case null: return false;
-                case Type current: return current.Is(type, hierarchy, definition);
-                default: return value.GetType().Is(type, hierarchy, definition);
-            }
-        }
-
         public static bool Is(this Type type, Type other, bool hierarchy = false, bool definition = false) =>
             type == other ||
             (hierarchy ? type.Hierarchy().Any(child => child.Is(other, false, definition)) : other.IsAssignableFrom(type)) ||
@@ -306,7 +296,17 @@ namespace Entia.Core
 
         public static bool Is<T>(this Type type) => typeof(T).IsAssignableFrom(type);
 
-        public static bool Is<T>(this object value)
+        public static bool Is(object value, Type type, bool hierarchy = false, bool definition = false)
+        {
+            switch (value)
+            {
+                case null: return type.IsClass;
+                case Type current: return current.Is(type, hierarchy, definition);
+                default: return value.GetType().Is(type, hierarchy, definition);
+            }
+        }
+
+        public static bool Is<T>(object value)
         {
             switch (value)
             {

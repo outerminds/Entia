@@ -4,23 +4,14 @@ using Entia.Serialization;
 using Entia.Injectables;
 using Entia.Messages;
 using Entia.Modules;
-using Entia.Modules.Serialization;
-using Entia.Nodes;
 using Entia.Queryables;
 using Entia.Systems;
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Threading;
-using System.Threading.Tasks;
-using static Entia.Nodes.Node;
+using Entia.Serializers;
 
 namespace Entia.Experiment
 {
@@ -130,49 +121,6 @@ namespace Entia.Experiment
             }
         }
 
-        public class Boba
-        {
-            public int Simon;
-            public List<int> Karl;
-        }
-
-        public struct Game : IResource
-        {
-            public bool Quit;
-        }
-
-        public struct DoQuit : IMessage { }
-
-        static void Simple1()
-        {
-            var world = new World();
-            var node = Node.Sequence(
-                System<Systems.A>(),
-                System<Systems.B>(),
-                System<Systems.C>()
-            );
-            var game = world.Resources().Box<Game>();
-            // var result = world.Controllers().Run(node, () => !game[0].Quit);
-        }
-
-        static void Simple2()
-        {
-            var world = new World();
-            var node = Node.Sequence(
-                System<Systems.A>(),
-                System<Systems.B>(),
-                System<Systems.C>()
-            );
-
-            // if (world.Controllers().Control(node).TryValue(out var controller))
-            // {
-            //     ref var game = ref world.Resources().Get<Game>();
-            //     controller.Initialize();
-            //     while (!game.Quit) controller.Run();
-            //     controller.Dispose();
-            // }
-        }
-
         static void TypeMap()
         {
             var (super, sub) = (false, false);
@@ -192,220 +140,6 @@ namespace Entia.Experiment
             var value9 = map.Get<IList>(out var success9, super, sub);
         }
 
-        class Shiatsi { public ulong A; }
-        static void TestLaPool()
-        {
-            var pool = new Nursery<Shiatsi>(() => new Shiatsi(), boba => boba.A++);
-
-            for (var i = 0; i < 10; i++)
-            {
-                var tasks = Enumerable.Range(0, 10).Select(_ => Task.Run(() => Enumerable.Range(0, 100_000).AsParallel().Select(index => pool.Allocate()).ToArray())).ToArray();
-                var items = Task.WhenAll(tasks).Result.SelectMany(_ => _).ToArray();
-                if (items.Distinct().Some().SequenceEqual(items)) Console.WriteLine($"YUUSSSS");
-                else
-                {
-                    Console.WriteLine("SHEISSSSS");
-                    Console.ReadKey();
-                }
-                pool.Free();
-            }
-        }
-
-        delegate void Original<T1, T2>(ref T1 value, in T2 state);
-        unsafe delegate void Casted(void* value, void* state);
-
-        [StructLayout(LayoutKind.Sequential)]
-        struct Datalou<T, TState>
-        {
-            public Original<T, TState> Resolve;
-            public TState State;
-        }
-
-        struct Datalou
-        {
-            public Casted Resolve;
-            public Unit State;
-        }
-
-        unsafe static void VeryUnsafe()
-        {
-            var original = new Original<int, int>((ref int a, in int b) => a += b);
-            var casted = Unsafe.As<Casted>(original);
-            var value = 123;
-            var pointer = Unsafe.AsPointer(ref value);
-            casted(pointer, pointer);
-        }
-
-        unsafe static void ExtremeUnsafe()
-        {
-            var datalou = new Datalou<int, (string, string)>
-            {
-                Resolve = (ref int value, in (string, string) state) => value = state.Item1.GetHashCode() + state.Item2.GetHashCode(),
-                State = ("Karl", "McTavish")
-            };
-            var dataloos = new byte[64];
-            Unsafe.Copy(Unsafe.AsPointer(ref dataloos[0]), ref datalou);
-            ref var dataloo = ref Unsafe.As<byte, Datalou>(ref dataloos[0]);
-            var actual = 1;
-            var expected = "Karl".GetHashCode() + "McTavish".GetHashCode();
-            var valuePointer = Unsafe.AsPointer(ref actual);
-            var statePointer = Unsafe.AsPointer(ref dataloo.State);
-            dataloo.Resolve(valuePointer, statePointer);
-        }
-
-        unsafe struct Palionque
-        {
-            public int Current => *Pointer;
-
-            public int Index;
-            public int* Pointer;
-        }
-
-        unsafe static void SadisticalyUnsafe()
-        {
-            Palionque Create()
-            {
-                var value = new Palionque();
-                value.Pointer = (int*)Unsafe.AsPointer(ref value.Index);
-                return value;
-            }
-
-            var a = Create();
-            var b = a;
-            a.Index++;
-            b.Index++;
-        }
-
-        unsafe static void PleaseStopThisMadness()
-        {
-            TTarget Cast1<TSource, TTarget>(ref TSource source)
-            {
-                var sourceReference = __makeref(source);
-                var target = default(TTarget);
-                var targetReference = __makeref(target);
-                *(IntPtr*)&targetReference = *(IntPtr*)&sourceReference;
-                return __refvalue(targetReference, TTarget);
-            }
-
-            T Cast2<T>(ref byte source)
-            {
-                var sourceReference = __makeref(source);
-                var target = default(T);
-                var targetReference = __makeref(target);
-                *(IntPtr*)&targetReference = *(IntPtr*)&sourceReference;
-                return __refvalue(targetReference, T);
-            }
-
-            void Cast3<TSource, TTarget>(ref TSource source, ref TTarget target)
-            {
-                var sourceReference = __makeref(source);
-                var targetReference = __makeref(target);
-                *(IntPtr*)&targetReference = *(IntPtr*)&sourceReference;
-                target = __refvalue(targetReference, TTarget);
-            }
-
-            var position1 = new Position { X = 1, Y = 2, Z = 3 };
-            var velocity1 = Cast1<Position, Velocity>(ref position1);
-            velocity1.X++;
-
-            var data2 = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
-            var velocity2 = Cast2<Velocity>(ref data2[0]);
-
-            var position3 = new Position { X = 1, Y = 2, Z = 3 };
-            var velocity3 = new Velocity();
-            Cast3(ref position3, ref velocity3);
-        }
-
-        static unsafe void* AsPointer<T>(ref T value)
-        {
-            var reference = __makeref(value);
-            return *(void**)&reference;
-        }
-
-        static unsafe ref T ToRef<T>(void* pointer)
-        {
-            var span = new Span<T>(pointer, 1);
-            return ref span[0];
-        }
-
-        static unsafe void DoesItAllocate()
-        {
-            Array a = new int[] { 1, 2, 3 };
-            Array b = new int[] { 4, 5, 6 };
-            while (true) Array.Copy(a, 0, b, 0, 2);
-        }
-
-        static void InParameters()
-        {
-            void Set<T>(in T source, T value)
-            {
-                Unsafe.AsRef(source) = value;
-            }
-
-            var position = new Position { };
-            Set(position.X, 123);
-        }
-
-        static void DebugView()
-        {
-            var world1 = new World();
-            world1.Resources().Set(new Resources.Debug { Name = "World1" });
-            var world2 = new World();
-            var random = new Random();
-
-
-            for (int i = 0; i < 100; i++)
-            {
-                var world = random.NextDouble() < 0.5 ? world1 : world2;
-                var entity = world.Entities().Create();
-                world.Components().Set(entity, new Components.Debug { Name = $"Index {i}" });
-
-                if (random.NextDouble() < 0.5)
-                    world.Components().Set(entity, new Position { X = i + 1, Y = i + 2, Z = i + 3 });
-                else
-                    world.Components().Set(entity, new Velocity { X = i + 1, Y = i + 2, Z = i + 3 });
-            }
-
-            var entities = world1.Entities().ToArray();
-
-            byte[] Allocate(int amount) => new byte[amount];
-
-            for (int i = 0; i < 1000; i++)
-            {
-                Allocate(4096);
-                world1 = world2 = new World();
-                Allocate(8192);
-            }
-
-            var instances = World.Instances();
-        }
-
-        static void Performance()
-        {
-            var count = 0;
-            void Run()
-            {
-                var world = new World();
-                var entities = world.Entities();
-                while (true)
-                {
-                    var entity = entities.Create();
-                    entities.Destroy(entity);
-                    world.Resolve();
-                    count++;
-                }
-            }
-            Task.Run(Run);
-
-            var timer = new Timer(_ =>
-            {
-                var current = count;
-                count = 0;
-                Console.WriteLine(current);
-            }, default, TimeSpan.Zero, TimeSpan.FromSeconds(1));
-            while (true) { }
-        }
-
         public unsafe struct QueryC : Queryables.IQueryable
         {
             public Velocity* P2;
@@ -423,63 +157,11 @@ namespace Entia.Experiment
             public Velocity* P7;
             public Position* P8;
         }
-        static unsafe void Layout()
-        {
-            // int IndexOf(IntPtr pointer, int size)
-            // {
-            //     var bytes = (byte*)pointer;
-            //     for (int i = 0; i < size; i++) if (bytes[i] == 0) return i;
-            //     return -1;
-            // }
-
-            (FieldInfo, int)[] For<T>()
-            {
-                var fields = typeof(T).InstanceFields();
-                var size = UnsafeUtility.Size<T>();
-                var count = size / sizeof(uint);
-                var bytes = new byte[size];
-                bytes.Fill(byte.MaxValue);
-                var instance = UnsafeUtility.As<byte, T>(ref bytes[0]);
-                var layout = new (FieldInfo field, int offset)[fields.Length];
-                for (int i = 0; i < fields.Length; i++)
-                {
-                    var field = fields[i];
-                    object box = instance;
-                    field.SetValue(box, default);
-                    // var offset = IndexOf(UnsafeUtility.Unbox(box), size);
-                    // layout[i] = (field, offset);
-                }
-                Array.Sort(layout, (a, b) => a.offset.CompareTo(b.offset));
-                return layout;
-            }
-
-            For<QueryC>();
-        }
-
-        static unsafe void SuperUnsafe()
-        {
-            var positions = new Position[32];
-            var array = positions as Array;
-            var target = (void*)UnsafeUtility.AsPointer(ref positions[0]);
-            // var bytes = new byte[positions.Length * UnsafeUtility.Size<Position>()];
-            // for (int i = 0; i < bytes.Length; i++) bytes[i] = 19;
-            // fixed (byte* source = bytes) Buffer.MemoryCopy(source, target, bytes.Length, bytes.Length);
-
-            var size = positions.Length * UnsafeUtility.Size<Position>();
-            var @string = new string('a', size / sizeof(char));
-            fixed (char* source = @string) Buffer.MemoryCopy(source, target, size, size);
-        }
-
-        static void TestJson()
-        {
-            var text = @"{ ""a "": [4.4
-            ,
-            ""aofiu"", true, { ""b"": null }]    }";
-            var node = Json.Parse(text);
-        }
 
         [Serializable]
         public class Cyclic { public Cyclic A; }
+        public struct BlittableA { public int A, B; }
+        public struct NonBlittableA { public int A; public string B; }
 
         static void Serializer()
         {
@@ -528,6 +210,12 @@ namespace Entia.Experiment
 
             success = world.Serialize(world, out bytes);
             success = world.Deserialize(bytes, out world);
+
+            success = world.Serialize(new NonBlittableA { A = 1, B = "Boba" }, out bytes);
+            success = world.Deserialize(bytes, out BlittableA ba);
+
+            success = world.Serialize(new BlittableA { A = 1, B = 2 }, out bytes);
+            success = world.Deserialize(bytes, out NonBlittableA nba);
         }
 
         static void CompareSerializers()
@@ -544,9 +232,10 @@ namespace Entia.Experiment
             var cyclic = new Cyclic();
             cyclic.A = new Cyclic { A = new Cyclic { A = cyclic } };
             value[cyclic] = cyclic.A;
+            value[new string[] { "Boba", "Fett", "Jango" }] = new byte[512];
 
             var values = new Dictionary<Position, Velocity>();
-            for (int i = 0; i < 100; i++) values[new Position { X = i }] = new Velocity { Y = 1 };
+            for (int i = 0; i < size; i++) values[new Position { X = i }] = new Velocity { Y = 1 };
             value[(1, "2", byte.MaxValue, short.MinValue)] = (values, new List<Position>(new Position[size]), new List<Velocity>(new Velocity[size]));
 
             CompareSerializers(value);
@@ -554,7 +243,14 @@ namespace Entia.Experiment
         static void CompareSerializers<T>(T value)
         {
             var world = new World();
-            world.Describe(value, out var description);
+            world.Container.Add(new Serializers.BlittableObject<Position>());
+            world.Container.Add(new Serializers.BlittableArray<Position>());
+            world.Container.Add(new Serializers.BlittableObject<Velocity>());
+            world.Container.Add(new Serializers.BlittableArray<Velocity>());
+            world.Container.Add(new Serializers.BlittableObject<Mass>());
+            world.Container.Add(new Serializers.BlittableArray<Mass>());
+            world.Container.Add(new Serializers.BlittableObject<Lifetime>());
+            world.Container.Add(new Serializers.BlittableArray<Lifetime>());
             world.Serialize(value, out var bytes2);
 
             byte[] bytes3;
@@ -565,10 +261,8 @@ namespace Entia.Experiment
                 bytes3 = stream.ToArray();
             }
 
-            // void Describe() => world.Describe(value, out _);
-            // void Instantiate() => world.Instantiate(description, out T _);
-            void NewSerialize() => world.Serialize(value, out _);
-            void NewDeserialize() => world.Deserialize(bytes2, out T _);
+            void NewSerialize() => world.Serialize(value, out var a);
+            void NewDeserialize() => world.Deserialize(bytes2, out T a);
             void BinarySerialize()
             {
                 using (var stream = new MemoryStream())
@@ -584,35 +278,10 @@ namespace Entia.Experiment
 
             while (true)
             {
-                // Test.Measure(NewSerialize, new Action[] { BinarySerialize, Describe }, 1000);
-                // Test.Measure(NewDeserialize, new Action[] { BinaryDeserialize, Instantiate }, 1000);
                 Test.Measure(NewSerialize, new Action[] { BinarySerialize }, 1000);
                 Test.Measure(NewDeserialize, new Action[] { BinaryDeserialize }, 1000);
                 Console.WriteLine();
             }
-        }
-
-        interface IMambo : ITrait { }
-        interface INumba : ITrait { }
-        interface IFive : ITrait, IImplementation<string, Karlz.C>, IImplementation<object, Five> { }
-        sealed class Five : IFive { }
-        struct Karlz : IImplementation<Karlz.B>
-        {
-            [Implementation]
-            public sealed class A : IMambo { }
-            public sealed class B : INumba { }
-            public sealed class C : IFive { }
-
-            // [Implementation]
-            static readonly C D = new C();
-        }
-
-        static void Traitz()
-        {
-            Container.TryDefault<Karlz, IMambo>(out var mambo);
-            Container.TryDefault<Karlz, INumba>(out var numba);
-            Container.TryDefault<Karlz, IFive>(out var five);
-            Container.TryDefault<string, IFive>(out var b);
         }
 
         static void PoulahDescriptor()
@@ -633,83 +302,6 @@ namespace Entia.Experiment
             var cyclic = new Cyclic();
             cyclic.A = cyclic;
             Test(cyclic);
-        }
-
-        static void TypeMapBenchmark()
-        {
-            var dictionary = new Dictionary<Type, object>();
-            var intDictionary = new Dictionary<int, object>();
-            var concurrent = new ConcurrentDictionary<Type, object>();
-            var map = new TypeMap<object, object>();
-            var index = map.Index<int>();
-            var value = default(object);
-            void Add<T>(T current)
-            {
-                intDictionary[map.Index<T>()] = concurrent[typeof(T)] = dictionary[typeof(T)] = current; map[typeof(T)] = current;
-            }
-            Add(byte.MaxValue);
-            Add(sbyte.MaxValue);
-            Add(ushort.MaxValue);
-            Add(short.MaxValue);
-            Add(uint.MaxValue);
-            Add(int.MaxValue);
-            Add(ulong.MaxValue);
-            Add(long.MaxValue);
-            Add(float.MaxValue);
-            Add(double.MaxValue);
-            Add(decimal.MaxValue);
-            Add(new object());
-            Add(new Unit());
-            Add(new Cyclic());
-            Add(DateTime.MaxValue);
-            Add(TimeSpan.MaxValue);
-            Add(dictionary);
-            Add(intDictionary);
-            Add(concurrent);
-            Add(map);
-            var array = map.Values.ToArray();
-
-            void ArrayGet() => value = array[index];
-            void DictionaryIndexer<T>() => value = dictionary[typeof(T)];
-            void DictionaryTryGet<T>() => dictionary.TryGetValue(typeof(T), out value);
-            void IntDictionaryIndexer<T>() => value = intDictionary[map.Index<T>()];
-            void IntDictionaryTryGet<T>() => intDictionary.TryGetValue(map.Index<T>(), out value);
-            void IntDictionaryTryGetIndex() => intDictionary.TryGetValue(index, out value);
-            void ConcurrentIndexer<T>() => value = concurrent[typeof(T)];
-            void ConcurrentTryGet<T>() => concurrent.TryGetValue(typeof(T), out value);
-            void MapIndexer<T>() => value = map[typeof(T)];
-            void MapGet<T>() => value = map.Get<T>(out _);
-            void MapGetIndex() => value = map[index];
-            void MapTryGet<T>() => map.TryGet(typeof(T), out value);
-            void MapTryGetT<T>() => map.TryGet<T>(out value);
-            void MapTryGetIndex() => map.TryGet(index, out value);
-
-            while (true)
-            {
-                Test.Measure(DictionaryIndexer<int>, new Action[]
-                {
-                    ArrayGet,
-                    DictionaryTryGet<int>,
-                    DictionaryTryGet<Action>,
-                    IntDictionaryIndexer<int>,
-                    IntDictionaryTryGet<int>,
-                    IntDictionaryTryGet<Action>,
-                    IntDictionaryTryGetIndex,
-                    ConcurrentIndexer<int>,
-                    ConcurrentTryGet<int>,
-                    ConcurrentTryGet<Action>,
-                    MapIndexer<int>,
-                    MapGet<int>,
-                    MapGet<Action>,
-                    MapGetIndex,
-                    MapTryGet<int>,
-                    MapTryGet<Action>,
-                    MapTryGetT<int>,
-                    MapTryGetT<Action>,
-                    MapTryGetIndex
-                }, 100_000);
-                Console.WriteLine();
-            }
         }
 
         static void Main()

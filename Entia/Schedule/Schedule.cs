@@ -31,5 +31,7 @@ namespace Entia.Schedule
     {
         public static Phase[] Schedule(this World world, ISchedulable instance, Controller controller) =>
             new Context(controller, world).Schedule(instance);
+        public static void Add<T>(this Container container, Scheduler<T> scheduler) where T : ISchedulable =>
+            container.Add<T, IScheduler>(scheduler);
     }
 }

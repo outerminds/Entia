@@ -12,7 +12,7 @@ namespace Entia.Serializers
 {
     public sealed class AbstractType : Serializer<Type>
     {
-        enum Kinds : byte { None, Type, Array, Pointer, Generic, Reference }
+        enum Kinds : byte { None, Type, Array, RankArray, Pointer, Generic, Reference }
 
         [Preserve]
         readonly struct Members
@@ -103,8 +103,12 @@ namespace Entia.Serializers
             {
                 var rank = instance.GetArrayRank();
                 var element = instance.GetElementType();
-                context.Writer.Write(Kinds.Array);
-                context.Writer.Write((byte)rank);
+                if (rank > 1)
+                {
+                    context.Writer.Write(Kinds.RankArray);
+                    context.Writer.Write((byte)rank);
+                }
+                else context.Writer.Write(Kinds.Array);
                 return Serialize(element, context);
             }
             else if (instance.IsPointer)
@@ -153,6 +157,15 @@ namespace Entia.Serializers
                             break;
                         }
                     case Kinds.Array:
+                        {
+                            if (Deserialize(out var element, context))
+                            {
+                                instance = element.MakeArrayType();
+                                return true;
+                            }
+                            break;
+                        }
+                    case Kinds.RankArray:
                         {
                             if (context.Reader.Read(out byte rank) && Deserialize(out var element, context))
                             {

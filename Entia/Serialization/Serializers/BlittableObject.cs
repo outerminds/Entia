@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using Entia.Serialization;
@@ -7,10 +6,9 @@ namespace Entia.Serializers
 {
     public sealed class BlittableObject : ISerializer
     {
-        readonly Type Type;
         readonly int Size;
 
-        public BlittableObject(Type type, int size) { Type = type; Size = size; }
+        public BlittableObject(int size) { Size = size; }
 
         public bool Serialize(object instance, in SerializeContext context)
         {
@@ -26,7 +24,7 @@ namespace Entia.Serializers
 
         public bool Instantiate(out object instance, in DeserializeContext context)
         {
-            instance = FormatterServices.GetUninitializedObject(Type);
+            instance = FormatterServices.GetUninitializedObject(context.Type);
             var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
             try
             {

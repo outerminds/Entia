@@ -5,16 +5,16 @@ namespace Entia.Serializers
 {
     public sealed class ConcreteArray : Serializer<Array>
     {
-        public readonly Type Type;
+        public readonly Type Element;
 
-        public ConcreteArray(Type type) { Type = type; }
+        public ConcreteArray(Type element) { Element = element; }
 
         public override bool Serialize(in Array instance, in SerializeContext context)
         {
             context.Writer.Write(instance.Length);
             for (int i = 0; i < instance.Length; i++)
             {
-                if (context.Serialize(instance.GetValue(i), Type)) continue;
+                if (context.Serialize(instance.GetValue(i), Element)) continue;
                 return false;
             }
             return true;
@@ -24,7 +24,7 @@ namespace Entia.Serializers
         {
             if (context.Reader.Read(out int count))
             {
-                instance = Array.CreateInstance(Type, count);
+                instance = Array.CreateInstance(Element, count);
                 return true;
             }
             instance = default;
@@ -35,7 +35,7 @@ namespace Entia.Serializers
         {
             for (int i = 0; i < instance.Length; i++)
             {
-                if (context.Deserialize(out var value, Type)) instance.SetValue(value, i);
+                if (context.Deserialize(out var value, Element)) instance.SetValue(value, i);
                 else return false;
             }
             return true;

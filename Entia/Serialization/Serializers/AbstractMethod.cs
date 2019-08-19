@@ -30,9 +30,11 @@ namespace Entia.Serializers
 
         public override bool Instantiate(out MethodInfo instance, in DeserializeContext context)
         {
-            if (context.Reader.Read(out int token) && context.Deserialize(out Type declaring))
+            if (context.Reader.Read(out int token) &&
+                context.Deserialize(out Type declaring) &&
+                declaring.Method(token) is MethodInfo method)
             {
-                instance = declaring.Method(token);
+                instance = method;
                 if (instance.IsGenericMethodDefinition)
                 {
                     if (context.Reader.Read(out int count))

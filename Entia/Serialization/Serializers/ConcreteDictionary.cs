@@ -1,52 +1,8 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using Entia.Serialization;
 
 namespace Entia.Serializers
 {
-    public sealed class ConcreteDictionary : Serializer<IDictionary>
-    {
-        public readonly Type Key;
-        public readonly Type Value;
-        public ConcreteDictionary(Type key, Type value) { Key = key; Value = value; }
-
-        static IDictionary Instantiate(Type key, Type value, int capacity = 0) =>
-            Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(key, value), capacity) as IDictionary;
-
-        public override bool Serialize(in IDictionary instance, in SerializeContext context)
-        {
-            context.Writer.Write(instance.Count);
-            foreach (var key in instance.Keys)
-            {
-                if (context.Serialize(key, Key) && context.Serialize(instance[key], Value)) continue;
-                return false;
-            }
-            return true;
-        }
-
-        public override bool Instantiate(out IDictionary instance, in DeserializeContext context)
-        {
-            instance = Instantiate(Key, Value);
-            return true;
-        }
-
-        public override bool Initialize(ref IDictionary instance, in DeserializeContext context)
-        {
-            if (context.Reader.Read(out int count))
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    if (context.Deserialize(out var key, Key) && context.Deserialize(out var value, Value))
-                        instance.Add(key, value);
-                    else return false;
-                }
-                return true;
-            }
-            return false;
-        }
-    }
-
     public sealed class ConcreteDictionary<TKey, TValue> : Serializer<Dictionary<TKey, TValue>>
     {
         public readonly Serializer<TKey[]> Keys;

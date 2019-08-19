@@ -6,10 +6,6 @@ namespace Entia.Serializers
 {
     public sealed class ConcreteDelegate : Serializer<Delegate>
     {
-        public readonly Type Type;
-
-        public ConcreteDelegate(Type type) { Type = type; }
-
         public override bool Serialize(in Delegate instance, in SerializeContext context)
         {
             var invocations = instance.GetInvocationList();
@@ -39,7 +35,7 @@ namespace Entia.Serializers
                 {
                     if (context.Deserialize(out MethodInfo method) && context.Deserialize(out object target))
                     {
-                        instance = Delegate.CreateDelegate(Type, target, method);
+                        instance = Delegate.CreateDelegate(context.Type, target, method);
                         return true;
                     }
                 }

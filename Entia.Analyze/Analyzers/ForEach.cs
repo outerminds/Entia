@@ -44,7 +44,7 @@ namespace Entia.Analyze.Analyzers
 			var symbols = new Symbols(global);
 
 			if (context.Node is ForEachStatementSyntax statement &&
-				!statement.Type.Is<RefTypeSyntax>() &&
+				!(statement.Type is RefTypeSyntax) &&
 				statement.Expression is ExpressionSyntax expression &&
 				context.SemanticModel.GetTypeInfo(expression).Type is INamedTypeSymbol symbol &&
 				symbol.IsValueType &&

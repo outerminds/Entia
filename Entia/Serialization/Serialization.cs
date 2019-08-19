@@ -67,7 +67,7 @@ namespace Entia.Serialization
                 return true;
             }
 
-            var dynamic = instance.GetType();
+            var dynamic = box.GetType();
             var reference = References[box] = References.Count;
             if (typeof(T) == dynamic)
             {
@@ -133,7 +133,7 @@ namespace Entia.Serialization
                         break;
                     case Kinds.Abstract:
                         {
-                            if (Deserialize(out Type dynamic) && Reader.Read(out int reference))
+                            if (Deserialize(out Type dynamic) && dynamic.Is(type) && Reader.Read(out int reference))
                                 return Deserialize(out instance, dynamic, reference, serializer);
                             break;
                         }
@@ -164,8 +164,7 @@ namespace Entia.Serialization
                         break;
                     case Kinds.Abstract:
                         {
-                            if (Deserialize(out Type dynamic) &&
-                                Reader.Read(out int reference) &&
+                            if (Deserialize(out Type dynamic) && dynamic.Is<T>() && Reader.Read(out int reference) &&
                                 Deserialize(out var value, dynamic, reference, serializer))
                             {
                                 instance = (T)value;
@@ -191,7 +190,8 @@ namespace Entia.Serialization
         {
             var context = With(type);
             if ((serializer is ISerializer || World.Container.TryGet<ISerializer>(type, out serializer)) &&
-                serializer.Instantiate(out instance, context))
+                serializer.Instantiate(out instance, context) &&
+                TypeUtility.Is(instance, type))
             {
                 References[reference] = instance;
                 if (serializer.Initialize(ref instance, context))
@@ -236,6 +236,9 @@ namespace Entia.Serialization
             [Preserve]
             public Members(object field, object property) { Field = field; Property = property; }
         }
+
+        public static void Add<T>(this Container container, Serializer<T> serializer) =>
+            container.Add<T, ISerializer>(serializer);
 
         public static bool Serialize<T>(this World world, in T instance, out byte[] bytes, params object[] references)
         {

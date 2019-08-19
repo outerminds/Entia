@@ -1,16 +1,14 @@
 using System;
 using System.Runtime.InteropServices;
-using Entia.Core;
 using Entia.Serialization;
 
 namespace Entia.Serializers
 {
     public sealed class BlittableArray : Serializer<Array>
     {
-        readonly Type Type;
         readonly int Size;
 
-        public BlittableArray(Type type, int size) { Type = type; Size = size; }
+        public BlittableArray(int size) { Size = size; }
 
         public override bool Serialize(in Array instance, in SerializeContext context)
         {
@@ -29,7 +27,7 @@ namespace Entia.Serializers
         {
             if (context.Reader.Read(out int count))
             {
-                instance = Array.CreateInstance(Type, count);
+                instance = Array.CreateInstance(context.Type, count);
                 var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
                 try
                 {

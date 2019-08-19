@@ -41,5 +41,7 @@ namespace Entia.Injection
             new Context(world).Inject(member);
         public static Result<object> Inject(this World world, Type injectable, MemberInfo member = null) =>
             new Context(world).Inject(injectable, member);
+        public static void Add<T>(this Container container, Injector<T> injector) where T : IInjectable =>
+            container.Add<T, IInjector>(injector);
     }
 }
