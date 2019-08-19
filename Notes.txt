@@ -1,4 +1,6 @@
 ﻿TODO:
+- Serialization:
+	- 
 - remove most usage of 'Concurrent<>' in favor of 'ConcurrentDictionary<>'
 	- in 'ComponentUtility'
 	- in 'DefaultUtility'

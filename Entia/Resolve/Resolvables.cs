@@ -8,9 +8,9 @@ namespace Entia.Resolvables
 
     public readonly struct Do<T> : IResolvable
     {
-        sealed class Resolver : IResolver<Do<T>>
+        sealed class Resolver : Resolver<Do<T>>
         {
-            public bool Resolve(in Do<T> resolvable)
+            public override bool Resolve(in Do<T> resolvable)
             {
                 resolvable.Action(resolvable.State);
                 return true;

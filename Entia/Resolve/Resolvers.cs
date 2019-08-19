@@ -79,7 +79,7 @@ namespace Entia.Modules
 
         bool TryCreateData<T>(in T resolvable, out Data data) where T : struct, Resolvables.IResolvable
         {
-            if (_world.Container.TryGet<T, IResolver<T>>(out var resolver))
+            if (_world.Container.TryGet<T, Resolver<T>>(out var resolver))
             {
                 var resolve = new Resolve<T>(resolver.Resolve);
                 var resolvables = new T[8];
