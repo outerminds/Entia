@@ -231,9 +231,19 @@ namespace Entia.Core
                 }
             }
 
+            IEnumerable<ITrait> Flatten(ITrait instance)
+            {
+                yield return instance;
+                if (instance is IProvider provider)
+                {
+                    foreach (var implementation in provider.Provide(type, trait))
+                        foreach (var inner in Flatten(implementation)) yield return inner;
+                }
+            }
+
             return Create()
                 .Choose()
-                .SelectMany(instance => (instance as IProvider)?.Provide(type, trait) ?? new[] { instance })
+                .SelectMany(Flatten)
                 .OfType(trait, true, true)
                 .Distinct()
                 .ToArray();

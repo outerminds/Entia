@@ -7,21 +7,26 @@ using System.Runtime.InteropServices;
 namespace Entia.Serialization
 {
     public enum Kinds : byte { None, Null, Abstract, Concrete, Reference }
+    public enum Options { None = 0, All = ~None, Blittable = 1 << 0 }
 
     public readonly struct SerializeContext
     {
         public readonly Type Type;
+        public readonly Options Options;
         public readonly Writer Writer;
         public readonly Dictionary<object, int> References;
         public readonly World World;
 
-        public SerializeContext(Writer writer, Dictionary<object, int> references, World world) : this(null, writer, references, world) { }
-        public SerializeContext(Type type, Writer writer, Dictionary<object, int> references, World world)
+        public SerializeContext(Writer writer, Dictionary<object, int> references, World world, Options options = Options.None) :
+            this(null, writer, references, world, options)
+        { }
+        public SerializeContext(Type type, Writer writer, Dictionary<object, int> references, World world, Options options = Options.None)
         {
             Type = type;
             Writer = writer;
             References = references;
             World = world;
+            Options = options;
         }
 
         public bool Serialize(object instance, Type type, ISerializer serializer = null)
@@ -81,8 +86,8 @@ namespace Entia.Serialization
             }
         }
 
-        public SerializeContext With<T>() => With(typeof(T));
-        public SerializeContext With(Type type = null) => new SerializeContext(type ?? Type, Writer, References, World);
+        public SerializeContext With<T>(Options? options = null) => With(typeof(T), options);
+        public SerializeContext With(Type type = null, Options? options = null) => new SerializeContext(type ?? Type, Writer, References, World, options ?? Options);
 
         bool Serialize<T>(in T instance, int reference, ISerializer serializer)
         {
@@ -107,14 +112,18 @@ namespace Entia.Serialization
         public readonly Reader Reader;
         public readonly object[] References;
         public readonly World World;
+        public readonly Options Options;
 
-        public DeserializeContext(Reader reader, object[] references, World world) : this(null, reader, references, world) { }
-        public DeserializeContext(Type type, Reader reader, object[] references, World world)
+        public DeserializeContext(Reader reader, object[] references, World world, Options options = Options.None) :
+            this(null, reader, references, world, options)
+        { }
+        public DeserializeContext(Type type, Reader reader, object[] references, World world, Options options = Options.None)
         {
             Type = type;
             Reader = reader;
             References = references;
             World = world;
+            Options = options;
         }
 
         public bool Deserialize(out object instance, Type type, ISerializer serializer = null)
@@ -183,8 +192,9 @@ namespace Entia.Serialization
             return false;
         }
 
-        public DeserializeContext With<T>() => With(typeof(T));
-        public DeserializeContext With(Type type = null) => new DeserializeContext(type ?? Type, Reader, References, World);
+        public DeserializeContext With<T>(Options? options = null) => With(typeof(T));
+        public DeserializeContext With(Type type = null, Options? options = null) =>
+            new DeserializeContext(type ?? Type, Reader, References, World, options ?? Options);
 
         bool Deserialize(out object instance, Type type, int reference, ISerializer serializer)
         {
@@ -240,12 +250,14 @@ namespace Entia.Serialization
         public static void Add<T>(this Container container, Serializer<T> serializer) =>
             container.Add<T, ISerializer>(serializer);
 
-        public static bool Serialize<T>(this World world, in T instance, out byte[] bytes, params object[] references)
+        public static bool Has(this Options options, Options option) => (options & option) == option;
+
+        public static bool Serialize<T>(this World world, in T instance, out byte[] bytes, Options options = Options.None, params object[] references)
         {
             using (var writer = new Writer())
             {
                 var count = writer.Reserve<int>();
-                var context = world.Context(writer, references);
+                var context = world.Context(writer, options, references);
                 if (context.Serialize(instance))
                 {
                     count.Value = context.References.Count;
@@ -257,12 +269,12 @@ namespace Entia.Serialization
             }
         }
 
-        public static bool Serialize(this World world, object instance, Type type, out byte[] bytes, params object[] references)
+        public static bool Serialize(this World world, object instance, Type type, out byte[] bytes, Options options = Options.None, params object[] references)
         {
             using (var writer = new Writer())
             {
                 var count = writer.Reserve<int>();
-                var context = world.Context(writer, references);
+                var context = world.Context(writer, options, references);
                 if (context.Serialize(instance, type))
                 {
                     count.Value = context.References.Count;
@@ -274,21 +286,21 @@ namespace Entia.Serialization
             }
         }
 
-        public static bool Deserialize<T>(this World world, byte[] bytes, out T instance, params object[] references)
+        public static bool Deserialize<T>(this World world, byte[] bytes, out T instance, Options options = Options.None, params object[] references)
         {
             using (var reader = new Reader(bytes))
             {
                 reader.Read(out int count);
-                return world.Context(reader, count, references).Deserialize(out instance);
+                return world.Context(reader, count, options, references).Deserialize(out instance);
             }
         }
 
-        public static bool Deserialize(this World world, byte[] bytes, out object instance, Type type, params object[] references)
+        public static bool Deserialize(this World world, byte[] bytes, out object instance, Type type, Options options = Options.None, params object[] references)
         {
             using (var reader = new Reader(bytes))
             {
                 reader.Read(out int count);
-                return world.Context(reader, count, references).Deserialize(out instance, type);
+                return world.Context(reader, count, options, references).Deserialize(out instance, type);
             }
         }
 
@@ -354,18 +366,18 @@ namespace Entia.Serialization
             pointer = (byte*)handle.AddrOfPinnedObject();
         }
 
-        static SerializeContext Context(this World world, Writer writer, params object[] references)
+        static SerializeContext Context(this World world, Writer writer, Options options, params object[] references)
         {
             var map = new Dictionary<object, int>(references.Length);
             for (int i = 0; i < references.Length; i++) map.Add(references[i], map.Count);
-            return new SerializeContext(writer, map, world);
+            return new SerializeContext(writer, map, world, options);
         }
 
-        static DeserializeContext Context(this World world, Reader reader, int count, params object[] references)
+        static DeserializeContext Context(this World world, Reader reader, int count, Options options, params object[] references)
         {
             var array = new object[count];
             Array.Copy(references, 0, array, 0, references.Length);
-            return new DeserializeContext(reader, array, world);
+            return new DeserializeContext(reader, array, world, options);
         }
     }
 }

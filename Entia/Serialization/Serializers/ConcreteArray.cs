@@ -1,4 +1,6 @@
 using System;
+using System.Runtime.InteropServices;
+using Entia.Core;
 using Entia.Serialization;
 
 namespace Entia.Serializers
@@ -7,17 +9,33 @@ namespace Entia.Serializers
     {
         public readonly Type Element;
 
-        public ConcreteArray(Type element) { Element = element; }
+        readonly TypeData _data;
+
+        public ConcreteArray(Type element) { Element = element; _data = Element; }
 
         public override bool Serialize(in Array instance, in SerializeContext context)
         {
             context.Writer.Write(instance.Length);
-            for (int i = 0; i < instance.Length; i++)
+            if (context.Options.Has(Options.Blittable) && _data.Size is int size)
             {
-                if (context.Serialize(instance.GetValue(i), Element)) continue;
-                return false;
+                var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
+                try
+                {
+                    var pointer = handle.AddrOfPinnedObject();
+                    context.Writer.Write(pointer, size, instance.Length);
+                    return true;
+                }
+                finally { handle.Free(); }
             }
-            return true;
+            else
+            {
+                for (int i = 0; i < instance.Length; i++)
+                {
+                    if (context.Serialize(instance.GetValue(i), Element)) continue;
+                    return false;
+                }
+                return true;
+            }
         }
 
         public override bool Instantiate(out Array instance, in DeserializeContext context)
@@ -33,12 +51,25 @@ namespace Entia.Serializers
 
         public override bool Initialize(ref Array instance, in DeserializeContext context)
         {
-            for (int i = 0; i < instance.Length; i++)
+            if (context.Options.Has(Options.Blittable) && _data.Size is int size)
             {
-                if (context.Deserialize(out var value, Element)) instance.SetValue(value, i);
-                else return false;
+                var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
+                try
+                {
+                    var pointer = handle.AddrOfPinnedObject();
+                    return context.Reader.Read(pointer, size, instance.Length);
+                }
+                finally { handle.Free(); }
             }
-            return true;
+            else
+            {
+                for (int i = 0; i < instance.Length; i++)
+                {
+                    if (context.Deserialize(out var value, Element)) instance.SetValue(value, i);
+                    else return false;
+                }
+                return true;
+            }
         }
     }
 

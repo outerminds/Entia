@@ -102,7 +102,7 @@ namespace Entia.Serializers
         {
             var data = TypeUtility.GetData(type);
             if (type.IsArray) yield return Array(data.Element);
-            else yield return Object(data.InstanceFields);
+            else yield return Object(type);
         }
     }
 
@@ -119,9 +119,7 @@ namespace Entia.Serializers
         public static class Blittable
         {
             public static Serializer<T[]> Array<T>() where T : unmanaged => new BlittableArray<T>();
-            public static ISerializer Array(int size) => new BlittableArray(size);
             public static Serializer<T> Object<T>() where T : unmanaged => new BlittableObject<T>();
-            public static ISerializer Object(int size) => new BlittableObject(size);
         }
 
         public static class Reflection
@@ -140,8 +138,7 @@ namespace Entia.Serializers
         public static ISerializer Array(Type element) => new ConcreteArray(element);
         public static Serializer<T> Object<T>(Func<T> construct, params IMember<T>[] members) => new ConcreteObject<T>(construct, members);
         public static Serializer<T> Object<T>(params IMember<T>[] members) => new ConcreteObject<T>(members);
-        public static ISerializer Object(Type type) => Object(type.InstanceFields());
-        public static ISerializer Object(params FieldInfo[] fields) => new ConcreteObject(fields);
+        public static ISerializer Object(Type type) => new ConcreteObject(type);
         public static Serializer<ISerializable> Serializable() => new SerializableObject();
         public static Serializer<string> String() => new ConcreteString();
         public static ISerializer Delegate() => new ConcreteDelegate();

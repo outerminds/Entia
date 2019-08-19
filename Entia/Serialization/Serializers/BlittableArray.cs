@@ -1,48 +1,7 @@
-using System;
-using System.Runtime.InteropServices;
 using Entia.Serialization;
 
 namespace Entia.Serializers
 {
-    public sealed class BlittableArray : Serializer<Array>
-    {
-        readonly int Size;
-
-        public BlittableArray(int size) { Size = size; }
-
-        public override bool Serialize(in Array instance, in SerializeContext context)
-        {
-            context.Writer.Write(instance.Length);
-            var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
-            try
-            {
-                var pointer = handle.AddrOfPinnedObject();
-                context.Writer.Write(pointer, Size, instance.Length);
-                return true;
-            }
-            finally { handle.Free(); }
-        }
-
-        public override bool Instantiate(out Array instance, in DeserializeContext context)
-        {
-            if (context.Reader.Read(out int count))
-            {
-                instance = Array.CreateInstance(context.Type, count);
-                var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
-                try
-                {
-                    var pointer = handle.AddrOfPinnedObject();
-                    return context.Reader.Read(pointer, Size, count);
-                }
-                finally { handle.Free(); }
-            }
-            instance = default;
-            return false;
-        }
-
-        public override bool Initialize(ref Array instance, in DeserializeContext context) => true;
-    }
-
     public sealed class BlittableArray<T> : Serializer<T[]> where T : unmanaged
     {
         public override bool Serialize(in T[] instance, in SerializeContext context)

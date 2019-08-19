@@ -191,8 +191,8 @@ namespace Entia.Experiment
             var value = function();
 
             var action = new Action(() => value += 1);
-            success = world.Serialize(action, out bytes, action.Target);
-            success = world.Deserialize(bytes, out action, action.Target);
+            success = world.Serialize(action, out bytes, default, action.Target);
+            success = world.Deserialize(bytes, out action, default, action.Target);
             action();
 
             var reaction = new Entia.Modules.Message.Reaction<OnCreate>();
@@ -220,7 +220,7 @@ namespace Entia.Experiment
 
         static void CompareSerializers()
         {
-            const int size = 10;
+            const int size = 100;
             var value = new Dictionary<object, object>();
             value[1] = "2";
             value["3"] = 4;
@@ -242,27 +242,34 @@ namespace Entia.Experiment
         }
         static void CompareSerializers<T>(T value)
         {
-            var world = new World();
-            world.Container.Add(new Serializers.BlittableObject<Position>());
-            world.Container.Add(new Serializers.BlittableArray<Position>());
-            world.Container.Add(new Serializers.BlittableObject<Velocity>());
-            world.Container.Add(new Serializers.BlittableArray<Velocity>());
-            world.Container.Add(new Serializers.BlittableObject<Mass>());
-            world.Container.Add(new Serializers.BlittableArray<Mass>());
-            world.Container.Add(new Serializers.BlittableObject<Lifetime>());
-            world.Container.Add(new Serializers.BlittableArray<Lifetime>());
-            world.Serialize(value, out var bytes2);
+            var world1 = new World();
+            var world2 = new World();
+            world2.Container.Add(new Serializers.BlittableObject<Position>());
+            world2.Container.Add(new Serializers.BlittableArray<Position>());
+            world2.Container.Add(new Serializers.BlittableObject<Velocity>());
+            world2.Container.Add(new Serializers.BlittableArray<Velocity>());
+            world2.Container.Add(new Serializers.BlittableObject<Mass>());
+            world2.Container.Add(new Serializers.BlittableArray<Mass>());
+            world2.Container.Add(new Serializers.BlittableObject<Lifetime>());
+            world2.Container.Add(new Serializers.BlittableArray<Lifetime>());
+            world1.Serialize(value, out var bytes1, Options.Blittable);
+            world1.Serialize(value, out var bytes2);
+            world2.Serialize(value, out var bytes3);
 
-            byte[] bytes3;
+            byte[] bytes4;
             var binary = new BinaryFormatter();
             using (var stream = new MemoryStream())
             {
                 binary.Serialize(stream, value);
-                bytes3 = stream.ToArray();
+                bytes4 = stream.ToArray();
             }
 
-            void NewSerialize() => world.Serialize(value, out var a);
-            void NewDeserialize() => world.Deserialize(bytes2, out T a);
+            void BlittableSerialize() => world1.Serialize(value, out var a, Options.Blittable);
+            void BlittableDeserialize() => world1.Deserialize(bytes1, out T a, Options.Blittable);
+            void NoneSerialize() => world1.Serialize(value, out var a);
+            void NoneDeserialize() => world1.Deserialize(bytes2, out T a);
+            void ManualSerialize() => world2.Serialize(value, out var a);
+            void ManualDeserialize() => world2.Deserialize(bytes3, out T a);
             void BinarySerialize()
             {
                 using (var stream = new MemoryStream())
@@ -273,13 +280,13 @@ namespace Entia.Experiment
             }
             void BinaryDeserialize()
             {
-                using (var stream = new MemoryStream(bytes3)) binary.Deserialize(stream);
+                using (var stream = new MemoryStream(bytes4)) binary.Deserialize(stream);
             }
 
             while (true)
             {
-                Test.Measure(NewSerialize, new Action[] { BinarySerialize }, 1000);
-                Test.Measure(NewDeserialize, new Action[] { BinaryDeserialize }, 1000);
+                Test.Measure(BlittableSerialize, new Action[] { NoneSerialize, ManualSerialize, BinarySerialize }, 1000);
+                Test.Measure(BlittableDeserialize, new Action[] { NoneDeserialize, ManualDeserialize, BinaryDeserialize }, 1000);
                 Console.WriteLine();
             }
         }

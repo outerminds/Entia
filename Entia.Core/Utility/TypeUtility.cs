@@ -345,6 +345,7 @@ namespace Entia.Core
         public static bool IsDefault(object value) => value is null || value.Equals(GetData(value.GetType()).Default);
         public static bool IsPrimitive(object value) => value is null || value.GetType().IsPrimitive;
         public static bool IsCyclic(this Type type) => GetData(type).IsCyclic;
+        public static int? Size(this Type type) => GetData(type).Size;
         public static MemberInfo Member(this Type type, int token) => GetData(type).Members.TryGetValue(token, out var member) ? member : default;
         public static FieldInfo Field(this Type type, int token) => type.Member(token) as FieldInfo;
         public static PropertyInfo Property(this Type type, int token) => type.Member(token) as PropertyInfo;
