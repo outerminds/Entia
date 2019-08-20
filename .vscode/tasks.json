@@ -30,7 +30,7 @@
 			"command": "dotnet",
 			"type": "process",
 			"group": "build",
-			"args": ["publish", "${workspaceFolder}/Entia.sln", "/p:Version=1.3.0", "--configuration", "Release"],
+			"args": ["publish", "${workspaceFolder}/Entia.sln", "/p:Version=1.4.0", "--configuration", "Release"],
 			"problemMatcher": "$msCompile"
 		},
 		{
