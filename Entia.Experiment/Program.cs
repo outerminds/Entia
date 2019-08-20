@@ -291,61 +291,10 @@ namespace Entia.Experiment
             }
         }
 
-        static void PoulahDescriptor()
-        {
-            var world = new World();
-
-            void Test<T>(T value)
-            {
-                world.Describe(value, out var description);
-                world.Instantiate(description, out value);
-            }
-
-            Test(new List<int> { });
-            Test((object)new List<int> { });
-            Test(new { A = 1, B = 2 });
-            Test(new[] { 0, 1, 2, 3 });
-            Test(new object[] { 0, "A", DateTime.Now, TimeSpan.MaxValue, new List<int> { 1, 2, 3 } });
-            var cyclic = new Cyclic();
-            cyclic.A = cyclic;
-            Test(cyclic);
-        }
-
         static void Main()
         {
-            // TypeMapBenchmark();
-            // Traitz();
-            // PoulahDescriptor();
-            // Serializer1();
             // Serializer();
             CompareSerializers();
-            // SuperUnsafe();
-            // Performance();
-            // Layout();
-            // DebugView();
-            // ComponentTest.Run();
-            // ParallelTest.Run();
-            // TypeMap();
-
-            // Group3Test.Benchmark(1_000);
-            // Group3Test.Benchmark(10_000);
-            // Group3Test.Benchmark(100_000);
-            // Group3Test.Benchmark(1_000_000);
-
-            // Group2Test.Benchmark(1_000);
-            // Group2Test.Benchmark(10_000);
-            // Group2Test.Benchmark(100_000);
-            // Group2Test.Benchmark(1_000_000);
-
-            // TestLaPool();
-            // for (int i = 0; i < 1000; i++)
-            // {
-            //     GroupTest.Benchmark(1000 * i);
-            // GroupTest.Benchmark(1_000);
-            // GroupTest.Benchmark(10_000);
-            // GroupTest.Benchmark(100_000);
-            // GroupTest.Benchmark(1_000_000);
-            // }
         }
 
         public readonly struct BobaData : ISystem
