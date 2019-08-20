@@ -1,6 +1,4 @@
-﻿using Entia.Dependables;
-
-namespace Entia.Injectables
+﻿namespace Entia.Injectables
 {
-    public interface IInjectable : IDependable { }
+    public interface IInjectable { }
 }

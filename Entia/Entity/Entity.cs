@@ -1,6 +1,5 @@
 ﻿using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependers;
 using Entia.Modules;
@@ -18,10 +17,9 @@ namespace Entia
     /// Represents a world-unique identifier used to logically group components.
     /// </summary>
     /// <seealso cref="Queryables.IQueryable" />
-    /// <seealso cref="IDependable" />
     [ThreadSafe]
     [DebuggerTypeProxy(typeof(Entity.View))]
-    public readonly struct Entity : IEquatable<Entity>, IComparable<Entity>, Queryables.IQueryable, IDependable
+    public readonly struct Entity : IEquatable<Entity>, IComparable<Entity>, Queryables.IQueryable
     {
         sealed class View
         {

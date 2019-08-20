@@ -1,16 +1,15 @@
-﻿using Entia.Analyzables;
-using Entia.Core;
+﻿using Entia.Core;
 using Entia.Dependencies;
 using System.Linq;
 
 namespace Entia.Analysis
 {
-    public interface IAnalyzer : ITrait, IImplementation<IAnalyzable, Default>
+    public interface IAnalyzer : ITrait, IImplementation<object, Default>
     {
         Result<IDependency[]> Analyze(in Context context);
     }
 
-    public abstract class Analyzer<T> : IAnalyzer where T : struct, IAnalyzable
+    public abstract class Analyzer<T> : IAnalyzer where T : struct
     {
         public abstract Result<IDependency[]> Analyze(in T data, in Context context);
         Result<IDependency[]> IAnalyzer.Analyze(in Context context) => Result.Cast<T>(context.Node.Value)

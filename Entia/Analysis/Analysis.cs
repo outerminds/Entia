@@ -1,5 +1,4 @@
 using System.Linq;
-using Entia.Analyzables;
 using Entia.Core;
 using Entia.Dependencies;
 using Entia.Nodes;
@@ -27,7 +26,7 @@ namespace Entia.Analysis
         public static Result<IDependency[]> Analyze(this World world, Node node, Node root) =>
             new Context(root, world).Analyze(node);
 
-        public static void Add<T>(this Container container, Analyzer<T> analyzer) where T : struct, IAnalyzable =>
+        public static void Add<T>(this Container container, Analyzer<T> analyzer) where T : struct =>
             container.Add<T, IAnalyzer>(analyzer);
     }
 }

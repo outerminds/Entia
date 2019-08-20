@@ -1,15 +1,13 @@
 ﻿using Entia.Core;
-using Entia.Dependables;
 using Entia.Dependencies;
 using Entia.Dependency;
-using Entia.Modules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Entia.Dependers
 {
-    public interface IDepender : ITrait, IImplementation<IDependable, Default>
+    public interface IDepender : ITrait, IImplementation<object, Default>
     {
         IEnumerable<IDependency> Depend(in Context context);
     }

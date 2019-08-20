@@ -1,6 +1,4 @@
-﻿using Entia.Analyzables;
-using Entia.Buildables;
-using Entia.Core;
+﻿using Entia.Core;
 using Entia.Systems;
 using System;
 using System.Linq;
@@ -11,7 +9,7 @@ namespace Entia.Nodes
     /// <summary>
     /// Tag interface that all nodes must implement.
     /// </summary>
-    public interface INode : IAnalyzable, IBuildable { }
+    public interface INode { }
     public interface IWrapper : INode { }
     public interface IAtomic : INode { }
 

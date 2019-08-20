@@ -1,14 +1,15 @@
 using System;
 using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Dependables;
+using Entia.Dependencies;
+using Entia.Dependers;
 using Entia.Queriers;
 using Entia.Queryables;
 
 namespace Entia.Modules.Component
 {
     [ThreadSafe]
-    public readonly struct Pointer<T> : IQueryable, IDependable where T : struct, IComponent
+    public readonly struct Pointer<T> : IQueryable where T : struct, IComponent
     {
         unsafe sealed class Querier : IQuerier
         {
@@ -43,5 +44,7 @@ namespace Entia.Modules.Component
 
         [Implementation]
         static readonly Querier _querier = new Querier();
+        [Implementation]
+        static readonly IDepender _depender = Depender.From<T>(new Write(typeof(T)));
     }
 }

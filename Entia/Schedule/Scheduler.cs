@@ -2,7 +2,6 @@
 using Entia.Core;
 using Entia.Modules.Schedule;
 using Entia.Schedule;
-using Entia.Schedulables;
 
 namespace Entia.Schedulers
 {
@@ -12,7 +11,7 @@ namespace Entia.Schedulers
         Phase[] Schedule(in Context context);
     }
 
-    public abstract class Scheduler<T> : IScheduler where T : ISchedulable
+    public abstract class Scheduler<T> : IScheduler
     {
         public abstract Type[] Phases { get; }
         public abstract Phase[] Schedule(in T instance, in Context context);
