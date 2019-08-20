@@ -220,7 +220,7 @@ namespace Entia.Experiment
 
         static void CompareSerializers()
         {
-            const int size = 100;
+            const int size = 10;
             var value = new Dictionary<object, object>();
             value[1] = "2";
             value["3"] = 4;

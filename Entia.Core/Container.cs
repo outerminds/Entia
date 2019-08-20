@@ -165,35 +165,29 @@ namespace Entia.Core
                 foreach (var attribute in type.GetCustomAttributes<ImplementationAttribute>(true))
                 {
                     if (Is(attribute.Implementation.Type, trait))
-                    {
-                        yield return Option.Try(() =>
-                        {
-                            var concrete = Concrete(typeData, attribute);
-                            return Activator.CreateInstance(concrete, attribute.Arguments);
-                        }).Cast<ITrait>();
-                    }
+                        yield return GetInstance(Concrete(typeData, attribute), attribute.Arguments);
                 }
 
                 foreach (var member in typeData.StaticMembers)
                 {
-                    if (member.IsDefined(typeof(ImplementationAttribute), true))
+                    foreach (var attribute in member.GetCustomAttributes<ImplementationAttribute>(true))
                     {
-                        yield return Option.Try(() =>
+                        switch (member)
                         {
-                            switch (member)
-                            {
-                                case Type nested when Is(nested, trait):
-                                    var generic = nested.IsGenericTypeDefinition ? nested.MakeGenericType(typeData.Arguments) : nested;
-                                    return Activator.CreateInstance(generic);
-                                case FieldInfo field when Is(field.FieldType, trait):
-                                    return field.GetValue(null);
-                                case PropertyInfo property when Is(property.PropertyType, trait):
-                                    return property.GetValue(null);
-                                case MethodInfo method when Is(method.ReturnType, trait):
-                                    return method.Invoke(null, Array.Empty<object>());
-                                default: return default;
-                            }
-                        }).Cast<ITrait>();
+                            case Type nested when Is(nested, trait):
+                                var generic = nested.IsGenericTypeDefinition ? nested.MakeGenericType(typeData.Arguments) : nested;
+                                yield return GetInstance(generic, attribute.Arguments);
+                                break;
+                            case FieldInfo field when Is(field.FieldType, trait):
+                                yield return Option.Try(() => field.GetValue(null)).Cast<ITrait>();
+                                break;
+                            case PropertyInfo property when Is(property.PropertyType, trait):
+                                yield return Option.Try(() => property.GetValue(null)).Cast<ITrait>();
+                                break;
+                            case MethodInfo method when Is(method.ReturnType, trait):
+                                yield return Option.Try(() => method.Invoke(null, attribute.Arguments)).Cast<ITrait>();
+                                break;
+                        }
                     }
                 }
 
@@ -202,8 +196,7 @@ namespace Entia.Core
                     if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IImplementation<>))
                     {
                         var arguments = @interface.GetGenericArguments();
-                        if (Is(arguments[0], trait))
-                            yield return Option.Try(() => Activator.CreateInstance(arguments[0])).Cast<ITrait>();
+                        if (Is(arguments[0], trait)) yield return GetInstance(arguments[0]);
                     }
                 }
 
@@ -211,13 +204,7 @@ namespace Entia.Core
                 foreach (var attribute in trait.GetCustomAttributes<ImplementationAttribute>(true))
                 {
                     if (type.Is(attribute.Type.Type, true, true) && Is(attribute.Implementation.Type, trait))
-                    {
-                        yield return Option.Try(() =>
-                        {
-                            var concrete = Concrete(typeData, attribute);
-                            return Activator.CreateInstance(concrete, attribute.Arguments);
-                        }).Cast<ITrait>();
-                    }
+                        yield return GetInstance(Concrete(typeData, attribute), attribute.Arguments);
                 }
 
                 foreach (var @interface in traitData.Interfaces)
@@ -226,7 +213,7 @@ namespace Entia.Core
                     {
                         var arguments = @interface.GetGenericArguments();
                         if (type.Is(arguments[0], true, true) && Is(arguments[1], trait))
-                            yield return Option.Try(() => Activator.CreateInstance(arguments[1])).Cast<ITrait>();
+                            yield return GetInstance(arguments[1]);
                     }
                 }
             }
@@ -248,6 +235,9 @@ namespace Entia.Core
                 .Distinct()
                 .ToArray();
         }
+
+        static Option<ITrait> GetInstance(Type type, params object[] arguments) =>
+            Option.Try(() => Activator.CreateInstance(type, arguments)).Cast<ITrait>();
 
         readonly TypeMap<object, TypeMap<ITrait, ITrait[]>> _implementations = new TypeMap<object, TypeMap<ITrait, ITrait[]>>();
 

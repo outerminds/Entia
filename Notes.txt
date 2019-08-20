@@ -1,12 +1,4 @@
 ﻿TODO:
-- Serialization:
-	- Blittable breaks when:
-		- a blittable type becomes non-blittable
-		- a non-blittable type becomes blittable
-		- fields are reordered
-		- a field is removed
-		- a field is inserted between other fields
-		: merge 'ConcreteObject' and 'BlittableObject' such that a tag will be added to determine how the object was serialized
 - remove most usage of 'Concurrent<>' in favor of 'ConcurrentDictionary<>'
 	- in 'ComponentUtility'
 	- in 'DefaultUtility'
