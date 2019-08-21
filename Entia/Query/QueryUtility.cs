@@ -45,6 +45,18 @@ namespace Entia.Modules.Query
             return false;
         }
 
+        public static bool TryAsPointer(this Type type, out Type pointer)
+        {
+            if (type.IsPointer && type.GetElementType() is Type element && ComponentUtility.IsConcrete(element))
+            {
+                pointer = typeof(Pointer<>).MakeGenericType(element);
+                return true;
+            }
+
+            pointer = default;
+            return false;
+        }
+
         public static Box<Data> Segments<T>(this World world, MemberInfo member) where T : struct, IQueryable
         {
             var boxes = world.Boxes();

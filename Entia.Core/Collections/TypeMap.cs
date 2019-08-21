@@ -163,10 +163,17 @@ namespace Entia.Core
         static readonly object _lock = new object();
 
         [ThreadSafe]
-        static Entry GetEntry(Type concrete)
+        static bool TryGetEntry(Type type, out Entry entry)
         {
-            if (_typeToEntry.TryGetValue(concrete, out var entry)) return entry;
-            return CreateEntry(concrete);
+            entry = GetEntry(type);
+            return entry != null;
+        }
+
+        [ThreadSafe]
+        static Entry GetEntry(Type type)
+        {
+            if (_typeToEntry.TryGetValue(type, out var entry)) return entry;
+            return CreateEntry(type);
         }
 
         [ThreadSafe]
@@ -216,10 +223,10 @@ namespace Entia.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => Set(type, value);
         }
-        public int Count => _local.Count;
+        public int Count => _count;
 
         (TValue value, bool allocated)[] _values;
-        readonly Dictionary<Type, Entry> _local = new Dictionary<Type, Entry>();
+        int _count;
 
         public TypeMap(int capacity = 4) { _values = new (TValue, bool)[capacity]; }
 
@@ -232,9 +239,9 @@ namespace Entia.Core
         public int Index<T>() where T : TBase => Cache<T>.Entry.Index;
 
         [ThreadSafe]
-        public bool TryIndex(Type concrete, out int index)
+        public bool TryIndex(Type type, out int index)
         {
-            if (_typeToEntry.TryGetValue(concrete, out var entry))
+            if (TryGetEntry(type, out var entry))
             {
                 index = entry.Index;
                 return true;
@@ -257,14 +264,14 @@ namespace Entia.Core
         [ThreadSafe]
         public ref TValue Get(Type type, out bool success)
         {
-            if (_local.TryGetValue(type, out var entry)) return ref Get(entry, out success);
+            if (TryGetEntry(type, out var entry)) return ref Get(entry, out success);
             success = false;
             return ref Dummy<TValue>.Value;
         }
         [ThreadSafe]
         public ref TValue Get(Type type, out bool success, bool super, bool sub)
         {
-            if (_local.TryGetValue(type, out var entry)) return ref Get(entry, out success, super, sub);
+            if (TryGetEntry(type, out var entry)) return ref Get(entry, out success, super, sub);
             success = false;
             return ref Dummy<TValue>.Value;
         }
@@ -280,14 +287,14 @@ namespace Entia.Core
         [ThreadSafe]
         public bool TryGet(Type type, out TValue value)
         {
-            if (_local.TryGetValue(type, out var entry)) return TryGet(entry, out value);
+            if (TryGetEntry(type, out var entry)) return TryGet(entry, out value);
             value = default;
             return false;
         }
         [ThreadSafe]
         public bool TryGet(Type type, out TValue value, bool super, bool sub)
         {
-            if (_local.TryGetValue(type, out var entry)) return TryGet(entry, out value, super, sub);
+            if (TryGetEntry(type, out var entry)) return TryGet(entry, out value, super, sub);
             value = default;
             return false;
         }
@@ -301,9 +308,9 @@ namespace Entia.Core
         public bool TryGet(int index, out TValue value, bool super, bool sub) => TryGet(_entries[index], out value, super, sub);
 
         [ThreadSafe]
-        public bool Has(Type type) => _local.TryGetValue(type, out var entry) && Has(entry);
+        public bool Has(Type type) => TryGetEntry(type, out var entry) && Has(entry);
         [ThreadSafe]
-        public bool Has(Type type, bool super, bool sub) => _local.TryGetValue(type, out var entry) && Has(entry, super, sub);
+        public bool Has(Type type, bool super, bool sub) => TryGetEntry(type, out var entry) && Has(entry, super, sub);
         [ThreadSafe]
         public bool Has<T>() where T : TBase => Has(Cache<T>.Entry);
         [ThreadSafe]
@@ -319,14 +326,14 @@ namespace Entia.Core
 
         public bool Remove<T>() where T : TBase => Remove(Cache<T>.Entry);
         public bool Remove<T>(bool super, bool sub) where T : TBase => Remove(Cache<T>.Entry, super, sub);
-        public bool Remove(Type type) => _local.TryGetValue(type, out var entry) && Remove(entry);
-        public bool Remove(Type type, bool super, bool sub) => _local.TryGetValue(type, out var entry) && Remove(entry, super, sub);
+        public bool Remove(Type type) => TryGetEntry(type, out var entry) && Remove(entry);
+        public bool Remove(Type type, bool super, bool sub) => TryGetEntry(type, out var entry) && Remove(entry, super, sub);
         public bool Remove(int index) => Remove(_entries[index]);
         public bool Remove(int index, bool super, bool sub) => Remove(_entries[index], super, sub);
 
         public bool Clear()
         {
-            if (_local.TryClear())
+            if (_count > 0)
             {
                 _values.Clear();
                 return true;
@@ -435,7 +442,7 @@ namespace Entia.Core
             pair.value = value;
             if (pair.allocated.Change(true))
             {
-                _local[entry.Type] = entry;
+                _count++;
                 return true;
             }
             return false;
@@ -448,9 +455,10 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool Remove(Entry entry)
         {
-            if (Has(entry.Index) && _local.Remove(entry.Type))
+            if (Has(entry.Index))
             {
                 _values[entry.Index] = default;
+                _count--;
                 return true;
             }
             return false;

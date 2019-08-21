@@ -294,7 +294,8 @@ namespace Entia.Experiment
         static void Main()
         {
             // Serializer();
-            CompareSerializers();
+            TypeMapTest.Benchmark();
+            // CompareSerializers();
         }
 
         public readonly struct BobaData : ISystem

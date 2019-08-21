@@ -6,7 +6,7 @@ using Entia.Core;
 
 namespace Entia.Experiment
 {
-    public static class TypeMap
+    public static class TypeMapTest
     {
         [Serializable]
         public class Cyclic { public Cyclic A; }

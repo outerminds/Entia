@@ -8,7 +8,7 @@ using Entia.Queryables;
 
 namespace Entia.Modules.Component
 {
-    [ThreadSafe]
+    [Preserve, ThreadSafe]
     public readonly struct Pointer<T> : IQueryable where T : struct, IComponent
     {
         unsafe sealed class Querier : IQuerier

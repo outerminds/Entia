@@ -179,13 +179,13 @@ namespace Entia.Core
                                 yield return GetInstance(generic, attribute.Arguments);
                                 break;
                             case FieldInfo field when Is(field.FieldType, trait):
-                                yield return Option.Try(() => field.GetValue(null)).Cast<ITrait>();
+                                yield return Option.Cast<ITrait>(field.GetValue(null));
                                 break;
                             case PropertyInfo property when Is(property.PropertyType, trait):
-                                yield return Option.Try(() => property.GetValue(null)).Cast<ITrait>();
+                                yield return Option.Cast<ITrait>(property.GetValue(null));
                                 break;
                             case MethodInfo method when Is(method.ReturnType, trait):
-                                yield return Option.Try(() => method.Invoke(null, attribute.Arguments)).Cast<ITrait>();
+                                yield return Option.Cast<ITrait>(method.Invoke(null, attribute.Arguments));
                                 break;
                         }
                     }
@@ -237,7 +237,7 @@ namespace Entia.Core
         }
 
         static Option<ITrait> GetInstance(Type type, params object[] arguments) =>
-            Option.Try(() => Activator.CreateInstance(type, arguments)).Cast<ITrait>();
+            Option.Cast<ITrait>(Activator.CreateInstance(type, arguments));
 
         readonly TypeMap<object, TypeMap<ITrait, ITrait[]>> _implementations = new TypeMap<object, TypeMap<ITrait, ITrait[]>>();
 

@@ -12,4 +12,9 @@ namespace Entia.Systems
     {
         void React(in T message);
     }
+    // public interface IOnAdd<T> : ISystem where T : struct, IComponent
+    // {
+    //     // iou
+    //     void OnAdd(Entity entity, ref T component);
+    // }
 }

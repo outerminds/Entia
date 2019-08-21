@@ -28,10 +28,11 @@ namespace Entia.Modules
             querier.TryQuery(new Context(segment, _world, include), out query);
 
         public Querier<T> Default<T>() where T : struct, Queryables.IQueryable =>
-            _world.Container.Get<T, Querier<T>>().FirstOrDefault() ?? new Default<T>();
+            _world.Container.TryGet(typeof(T), typeof(Querier<T>), out var querier) && querier is Querier<T> casted ?
+            casted : new Default<T>();
         public IQuerier Default(Type queryable) =>
             queryable.TryAsPointer(out var pointer) ? Default(pointer) :
-            _world.Container.Get<IQuerier>(queryable).FirstOrDefault() ??
+            _world.Container.TryGet<IQuerier>(queryable, out var querier) ? querier :
             (IQuerier)Activator.CreateInstance(typeof(Default<>).MakeGenericType(queryable));
 
         public Querier<T> Get<T>() where T : struct, Queryables.IQueryable => Get<T>(typeof(T));

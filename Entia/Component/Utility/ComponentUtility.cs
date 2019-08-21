@@ -165,18 +165,6 @@ namespace Entia.Modules.Component
         public static bool IsConcrete(Type type) => GetKind(type) == Kinds.Concrete;
         public static bool IsAbstract(Type type) => GetKind(type) == Kinds.Abstract;
 
-        public static bool TryAsPointer(this Type type, out Type pointer)
-        {
-            if (type.IsPointer && type.GetElementType() is Type element && IsConcrete(element))
-            {
-                pointer = typeof(Pointer<>).MakeGenericType(element);
-                return true;
-            }
-
-            pointer = default;
-            return false;
-        }
-
         public static BitMask[] GetMasks(params Type[] types)
         {
             var (concrete, @abstract) = types.Where(ComponentUtility.IsValid).Split(ComponentUtility.IsConcrete);
