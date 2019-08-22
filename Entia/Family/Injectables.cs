@@ -24,11 +24,11 @@ namespace Entia.Injectables
             public Entity Root(Entity entity) => _families.Root(entity);
             public IEnumerable<Entity> Roots() => _families.Roots();
             public IEnumerable<Entity> Ancestors(Entity child) => _families.Ancestors(child);
-            public IEnumerable<Entity> Descendants(Entity parent, From from) => _families.Descendants(parent, from);
+            public IEnumerable<Entity> Descendants(Entity parent, From from = From.Top) => _families.Descendants(parent, from);
             public Entity Parent(Entity child) => _families.Parent(child);
             public Slice<Entity>.Read Children(Entity parent) => _families.Children(parent);
             public IEnumerable<Entity> Siblings(Entity child) => _families.Siblings(child);
-            public IEnumerable<Entity> Family(Entity entity, From from) => _families.Family(entity, from);
+            public IEnumerable<Entity> Family(Entity entity, From from = From.Top) => _families.Family(entity, from);
             public bool Has(Entity parent, Entity child) => _families.Has(parent, child);
         }
 
@@ -47,7 +47,7 @@ namespace Entia.Injectables
         [ThreadSafe]
         public IEnumerable<Entity> Ancestors(Entity child) => _families.Ancestors(child);
         [ThreadSafe]
-        public IEnumerable<Entity> Descendants(Entity parent, From from) => _families.Descendants(parent, from);
+        public IEnumerable<Entity> Descendants(Entity parent, From from = From.Top) => _families.Descendants(parent, from);
         [ThreadSafe]
         public Entity Parent(Entity child) => _families.Parent(child);
         [ThreadSafe]
@@ -55,7 +55,7 @@ namespace Entia.Injectables
         [ThreadSafe]
         public IEnumerable<Entity> Siblings(Entity child) => _families.Siblings(child);
         [ThreadSafe]
-        public IEnumerable<Entity> Family(Entity entity, From from) => _families.Family(entity, from);
+        public IEnumerable<Entity> Family(Entity entity, From from = From.Top) => _families.Family(entity, from);
         [ThreadSafe]
         public bool Has(Entity parent, Entity child) => _families.Has(parent, child);
         public bool Adopt(Entity parent, Entity child) => _families.Adopt(parent, child);
