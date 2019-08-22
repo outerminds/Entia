@@ -1,5 +1,4 @@
 ﻿using Entia.Core;
-using Entia.Experiment.Serialization;
 using Entia.Serialization;
 using Entia.Injectables;
 using Entia.Messages;
@@ -9,9 +8,9 @@ using Entia.Systems;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using Entia.Serializers;
 
 namespace Entia.Experiment
 {
@@ -291,10 +290,28 @@ namespace Entia.Experiment
             }
         }
 
+        static void TestFamilies()
+        {
+            var world = new World();
+            var entities = world.Entities();
+            var families = world.Families();
+
+            var parent = entities.Create();
+            var middle = entities.Create();
+            var child = entities.Create();
+            var success1 = families.Adopt(parent, middle);
+            var success2 = families.Adopt(middle, child);
+            var success3 = families.Adopt(child, parent);
+            var family = families.Family(parent).ToArray();
+            var descendants = families.Descendants(parent).ToArray();
+            var ancestors = families.Ancestors(child).ToArray();
+        }
+
         static void Main()
         {
+            TestFamilies();
             // Serializer();
-            TypeMapTest.Benchmark();
+            // TypeMapTest.Benchmark();
             // CompareSerializers();
         }
 

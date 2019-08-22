@@ -57,36 +57,54 @@ namespace Entia.Test
     public class DestroyEntity : Action<World, Model>
     {
         Entity _entity;
+        Entity[] _entities;
         OnPreDestroy[] _onPreDestroy;
         OnPostDestroy[] _onPostDestroy;
 
         public override bool Pre(World value, Model model)
         {
-            if (value.Entities().Count <= 0) return false;
-            _entity = value.Entities().ElementAt(model.Random.Next(value.Entities().Count));
+            var entities = value.Entities();
+            var families = value.Families();
+            if (entities.Count <= 0) return false;
+            _entity = entities.ElementAt(model.Random.Next(entities.Count));
+            _entities = families.Descendants(_entity).Prepend(_entity).ToArray();
             return true;
         }
         public override void Do(World value, Model model)
         {
             var messages = value.Messages();
+            var families = value.Families();
             using (var onPreDestroy = messages.Receive<OnPreDestroy>())
             using (var onPostDestroy = messages.Receive<OnPostDestroy>())
             {
                 value.Entities().Destroy(_entity);
-                model.Entities.Remove(_entity);
-                model.Components.Remove(_entity);
+                foreach (var entity in _entities)
+                {
+                    model.Entities.Remove(entity);
+                    model.Components.Remove(entity);
+                }
                 _onPreDestroy = onPreDestroy.Pop().ToArray();
                 _onPostDestroy = onPostDestroy.Pop().ToArray();
             }
         }
-        public override Property Check(World value, Model model) =>
-            model.Entities.Except(value.Entities()).None().Label("Entities.Except().None()")
-            .And(value.Entities().Has(_entity).Not().Label("Entities.Has()"))
-            .And(value.Entities().Destroy(_entity).Not().Label("Entities.Destroy()"))
-            .And((value.Entities().Count == model.Entities.Count).Label("Entities.Count"))
-            .And((_onPreDestroy.Length == _onPostDestroy.Length).Label("OnDestroy.Length"))
-            .And((_onPreDestroy.Length == 1 && _onPreDestroy[0].Entity == _entity).Label("OnPreDestroy"))
-            .And((_onPostDestroy.Length == 1 && _onPostDestroy[0].Entity == _entity).Label("OnPostDestroy"));
+        public override Property Check(World value, Model model)
+        {
+            return PropertyUtility.All(Tests());
+
+            IEnumerable<(bool tests, string label)> Tests()
+            {
+                yield return (model.Entities.Except(value.Entities()).None(), "Entities.Except().None()");
+                yield return (value.Entities().Has(_entity).Not(), "Entities.Has()");
+                yield return (value.Entities().Destroy(_entity).Not(), "Entities.Destroy()");
+                yield return (value.Entities().Count == model.Entities.Count, "Entities.Count");
+                yield return (_onPreDestroy.Length == _entities.Length, "OnPreDestroy.Length");
+                yield return (_onPreDestroy.First().Entity == _entity, "OnPreDestroy.First() == entity");
+                yield return (_onPreDestroy.Select(message => message.Entity).Except(_entities).None(), "OnPostDestroy.Except(entities).None()");
+                yield return (_onPostDestroy.Length == _entities.Length, "OnPostDestroy.Length");
+                yield return (_onPostDestroy.Select(message => message.Entity).Except(_entities).None(), "OnPostDestroy.Except(entities).None()");
+                yield return (_onPostDestroy.Last().Entity == _entity, "OnPostDestroy.Last() == entity");
+            }
+        }
         public override string ToString() => $"{GetType().Format()}({_entity})";
     }
 

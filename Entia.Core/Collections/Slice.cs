@@ -48,8 +48,8 @@ namespace Entia.Core
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => ref _array[_offset + index];
             }
-            public int Count { get; }
 
+            public readonly int Count;
             readonly T[] _array;
             readonly int _offset;
 
@@ -112,8 +112,8 @@ namespace Entia.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref _array[_offset + index];
         }
-        public int Count { get; }
 
+        public readonly int Count;
         readonly T[] _array;
         readonly int _offset;
 

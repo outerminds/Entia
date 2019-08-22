@@ -1,17 +1,13 @@
-﻿using Entia.Components;
-using Entia.Core;
+﻿using Entia.Core;
 using Entia.Injectables;
 using Entia.Modules;
-using Entia.Modules.Query;
+using Entia.Modules.Family;
 using Entia.Queryables;
 using Entia.Systems;
 using FsCheck;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 namespace Entia.Test
 {
@@ -162,7 +158,7 @@ namespace Entia.Test
 
             #region Entities
                 (100, Gen.Fresh(() => new CreateEntity().ToAction())),
-                (10, Gen.Fresh(() => new DestroyEntity().ToAction())),
+                (5, Gen.Fresh(() => new DestroyEntity().ToAction())),
                 (1, Gen.Fresh(() => new ClearEntities().ToAction())),
             #endregion
 
@@ -226,6 +222,11 @@ namespace Entia.Test
                 (1, Gen.Fresh(() => new ClearComponents().ToAction())),
             #endregion
 
+            #region Families
+                (25, Gen.Fresh(() => new AdoptEntity().ToAction())),
+                (25, Gen.Fresh(() => new RejectEntity().ToAction())),
+            #endregion
+
             #region Groups
                 (1, Gen.Fresh(() => new GetGroup<Read<ComponentA>>().ToAction())),
                 (1, Gen.Fresh(() => new GetGroup<All<Read<ComponentB>, Write<ComponentC<Unit>>>>().ToAction())),
@@ -278,6 +279,7 @@ namespace Entia.Test
             IEnumerable<(bool test, string label)> Tests(World world, Model model)
             {
                 var entities = world.Entities();
+                var families = world.Families();
                 var components = world.Components();
 
                 #region World
@@ -323,6 +325,17 @@ namespace Entia.Test
                 yield return (entities.All(entity => components.Get(entity).All(component => model.Components[entity].Contains(component.GetType()))), "model.Components.ContainsKey()");
 
                 yield return (model.Components.All(pair => pair.Value.All(type => components.Has(pair.Key, type))), "components.Has()");
+                #endregion
+
+                #region Families
+                var allFamilies = families.Roots().SelectMany(root => families.Family(root, From.Top)).ToArray();
+                yield return (entities.All(entity => families.Parent(entity) || families.Roots().Contains(entity)), "entities.All(Parent(entity) || families.Roots().Contains(entity))");
+                yield return (families.Roots().None(root => families.Parent(root)), "families.Roots().None(Parent(root))");
+                yield return (entities.All(entity => families.Parent(entity) == families.Ancestors(entity).FirstOrDefault()), "entities.All(families.Parent(entity) == families.Ancestors(entity).First())");
+                yield return (allFamilies.Except(entities).None(), "allFamilies.Except(entities).None()");
+                yield return (allFamilies.Distinct().SequenceEqual(allFamilies), "allFamilies.Distinct().SequenceEquals(allFamilies)");
+                yield return (entities.All(entity => families.Siblings(entity).All(sibling => families.Parent(sibling) == families.Parent(entity))), "families.Siblings(entity).All(Parent(sibling) == Parent(entity))");
+                yield return (entities.All(entity => families.Family(entity).Contains(entity)), "families.Family(entity).Contains(entity)");
                 #endregion
 
                 #region Groups

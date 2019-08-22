@@ -17,7 +17,7 @@ namespace Entia.Modules
     {
         struct Relationships
         {
-            public static Relationships Empty = new Relationships { Children = (Array.Empty<Entity>(), 0) };
+            public static readonly Relationships Empty = new Relationships { Children = (Array.Empty<Entity>(), 0) };
 
             public Entity Entity;
             public Entity Parent;
@@ -29,8 +29,7 @@ namespace Entia.Modules
         readonly Emitter<OnReject> _onReject;
         Relationships[] _relationships;
 
-        public Families(Messages messages, Entities entities) :
-            this(messages, entities, new Relationships[entities.Count])
+        public Families(Messages messages, Entities entities) : this(messages, entities, new Relationships[entities.Count])
         {
             foreach (var entity in entities) Initialize(entity);
         }
@@ -83,7 +82,7 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
-        public IEnumerable<Entity> Descendants(Entity parent, From from)
+        public IEnumerable<Entity> Descendants(Entity parent, From from = From.Top)
         {
             if (TryGetRelationships(parent, out var relationships))
             {
@@ -110,7 +109,12 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
-        public IEnumerable<Entity> Family(Entity entity, From from) => Descendants(Root(entity), from);
+        public IEnumerable<Entity> Family(Entity entity, From from = From.Top)
+        {
+            var root = Root(entity);
+            yield return root;
+            foreach (var descendant in Descendants(root, from)) yield return descendant;
+        }
 
         [ThreadSafe]
         public bool Has(Entity parent, Entity child)
@@ -223,7 +227,11 @@ namespace Entia.Modules
         {
             ref var relationships = ref _relationships[entity.Index];
             Reject(ref relationships);
-            for (int i = relationships.Children.count - 1; i >= 0; i--) _entities.Destroy(relationships.Children.items[i]);
+            for (int i = relationships.Children.count - 1; i >= 0; i--)
+            {
+                var child = relationships.Children.items[i];
+                if (RejectAt(i, ref relationships)) _entities.Destroy(child);
+            }
             relationships.Entity = default;
         }
 
@@ -255,11 +263,20 @@ namespace Entia.Modules
         {
             if (parent.Entity == child.Entity) return false;
 
-            ref var relationships = ref GetRelationships(child.Parent, out var success);
-            if (success) Reject(ref relationships, ref child);
+            // NOTE: the child must be rejected from its current parent
+            Reject(ref child);
+            // NOTE: all ancestors must be rejected from the child's children to ensure that no family loop is created
+            Reject(ref child, ref parent);
+            ref var relationships = ref GetRelationships(parent.Parent, out var success);
+            while (success)
+            {
+                if (Reject(ref child, ref relationships)) break;
+                relationships = ref GetRelationships(relationships.Parent, out success);
+            }
+
             parent.Children.Insert(Math.Min(parent.Children.count, index), child.Entity);
             child.Parent = parent.Entity;
-            _onAdopt.Emit(new OnAdopt { Parent = parent.Entity, Child = child.Entity });
+            _onAdopt.Emit(new OnAdopt { Parent = parent.Entity, Child = child.Entity, Index = index });
             return true;
         }
 
@@ -269,7 +286,8 @@ namespace Entia.Modules
             return success && Reject(ref relationships, ref child);
         }
 
-        bool Reject(ref Relationships parent, ref Relationships child) => RejectAt(parent.Children.IndexOf(child.Entity), ref parent, ref child);
+        bool Reject(ref Relationships parent, ref Relationships child) =>
+            child.Parent == parent.Entity && RejectAt(parent.Children.IndexOf(child.Entity), ref parent, ref child);
 
         bool RejectAt(int index, ref Relationships parent)
         {
@@ -282,7 +300,7 @@ namespace Entia.Modules
             if (parent.Children.RemoveAt(index))
             {
                 child.Parent = default;
-                _onReject.Emit(new OnReject { Parent = parent.Entity, Child = child.Entity });
+                _onReject.Emit(new OnReject { Parent = parent.Entity, Child = child.Entity, Index = index });
                 return true;
             }
             return false;
