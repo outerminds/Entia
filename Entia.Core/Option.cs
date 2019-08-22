@@ -102,6 +102,12 @@ namespace Entia.Core
         public static Some<Unit> Some() => new Some<Unit>(default);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static None None() => new None();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> From<T>(T value) where T : class =>
+            value is null ? None().AsOption<T>() : Some(value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> From<T>(T? value) where T : struct =>
+            value is null ? None().AsOption<T>() : Some(value.Value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Try<T>(Func<T> @try)

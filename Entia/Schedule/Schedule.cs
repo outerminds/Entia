@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Entia.Core;
 using Entia.Modules.Schedule;
@@ -19,6 +20,9 @@ namespace Entia.Schedule
             World = world;
         }
 
+        public Type[] Phases(Type type) => World.Container.Get<IScheduler>(type)
+            .SelectMany(this, (scheduler, state) => scheduler.Phases)
+            .ToArray();
         public Phase[] Schedule(object instance) => World.Container.Get<IScheduler>(instance.GetType())
             .SelectMany(this, (scheduler, state) => scheduler.Schedule(state.With(instance)))
             .ToArray();

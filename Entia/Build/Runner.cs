@@ -12,7 +12,7 @@ namespace Entia.Build
     {
         object Instance { get; }
         IEnumerable<Type> Phases();
-        IEnumerable<Phase> Phases(Controller controller);
+        IEnumerable<Phase> Schedule(Controller controller);
         Option<Run<T>> Specialize<T>(Controller controller) where T : struct, IPhase;
     }
 }

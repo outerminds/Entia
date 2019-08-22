@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Entia.Build;
 using Entia.Builders;
 using Entia.Core;
@@ -17,18 +18,15 @@ namespace Entia.Nodes
             public Runner(IRunner child) { Child = child; }
 
             public IEnumerable<Type> Phases() => Child.Phases();
-            public IEnumerable<Phase> Phases(Controller controller) => Child.Phases(controller);
+            public IEnumerable<Phase> Schedule(Controller controller) => Child.Schedule(controller);
             public Option<Run<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
                 var run = Child.Specialize<T>(controller).TryValue(out var child) ? child : default;
-                var set = new HashSet<object>();
-                foreach (var phase in Phases(controller))
-                {
-                    if (phase.Target == Phase.Targets.Root && phase.Type == typeof(T) && set.Add(phase.Distinct) && phase.Delegate is Run<T> @delegate)
-                        run += @delegate;
-                }
-                if (run == null) return Option.None();
-                return run;
+                foreach (var phase in Schedule(controller)
+                    .Where(phase => phase.Target == Phase.Targets.Root)
+                    .DistinctBy(phase => phase.Distinct))
+                    run += phase.Delegate as Run<T>;
+                return Option.From(run);
             }
         }
 

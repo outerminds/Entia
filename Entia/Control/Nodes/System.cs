@@ -32,22 +32,18 @@ namespace Entia.Nodes
             }
 
             public IEnumerable<Type> Phases() => Schedulers.SelectMany(scheduler => scheduler.Phases);
-            public IEnumerable<Phase> Phases(Controller controller) =>
+            public IEnumerable<Phase> Schedule(Controller controller) =>
                 _phases.TryGetValue(controller, out var phases) ? phases :
-                _phases[controller] = Schedulers
-                    .SelectMany(scheduler => new Schedule.Context(controller, controller.World).Schedule(System))
-                    .ToArray();
+                // NOTE: do not filter phases here to allow parent nodes to receive all phases
+                _phases[controller] = new Schedule.Context(controller, controller.World).Schedule(System).ToArray();
             public Option<Run<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
                 var run = default(Run<T>);
-                var set = new HashSet<object>();
-                foreach (var phase in Phases(controller))
-                {
-                    if (phase.Target == Phase.Targets.System && phase.Type == typeof(T) && set.Add(phase.Distinct) && phase.Delegate is Run<T> @delegate)
-                        run += @delegate;
-                }
-                if (run == null) return Option.None();
-                return run;
+                foreach (var phase in Schedule(controller)
+                    .Where(phase => phase.Target == Phase.Targets.System)
+                    .DistinctBy(phase => phase.Distinct))
+                    run += phase.Delegate as Run<T>;
+                return Option.From(run);
             }
         }
 

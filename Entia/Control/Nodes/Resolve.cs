@@ -17,7 +17,7 @@ namespace Entia.Nodes
             public Runner(IRunner child) { Child = child; }
 
             public IEnumerable<Type> Phases() => Child.Phases();
-            public IEnumerable<Phase> Phases(Controller controller) => Child.Phases(controller);
+            public IEnumerable<Phase> Schedule(Controller controller) => Child.Schedule(controller);
             public Option<Run<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
                 if (Child.Specialize<T>(controller).TryValue(out var child))
