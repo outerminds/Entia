@@ -1,5 +1,4 @@
 ﻿using Entia.Modules.Component;
-using System;
 
 namespace Entia.Messages
 {

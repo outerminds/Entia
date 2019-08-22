@@ -97,22 +97,6 @@ namespace Entia.Modules.Component
             }
         }
 
-        public Segment Clone()
-        {
-            var clone = new Segment(Index, Mask, Types, Components, Tags, Entities.Clone());
-            if (Entities.count == 0) return clone;
-
-            for (int j = 0; j < Components.Length; j++)
-            {
-                ref readonly var type = ref Components[j];
-                var index = GetStoreIndex(type);
-                var source = _stores[index];
-                var target = clone._stores[index];
-                Array.Copy(source, target, Entities.count);
-            }
-            return clone;
-        }
-
         /// <summary>
         /// Tries the get the component store of provided component <paramref name="type"/>.
         /// </summary>

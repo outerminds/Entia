@@ -85,9 +85,10 @@ namespace Entia.Modules
             else if (data.Transient is int transient)
             {
                 // NOTE: prioritize the segment store
-                TryGetTransientStore(transient, metadata, out store, out adjusted);
                 // NOTE: if the slot has the component, then the store must not be null
-                return Has(_slots.items[transient], metadata, include);
+                return
+                    TryGetTransientStore(transient, metadata, out store, out adjusted) &&
+                    Has(_slots.items[transient], metadata, include);
             }
 
             adjusted = default;
