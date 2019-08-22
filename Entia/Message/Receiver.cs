@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Serializers;
+using Entia.Experimental.Serializers;
 
 namespace Entia.Modules.Message
 {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Entia.Core;
 using Entia.Core.Documentation;
-using Entia.Serializers;
+using Entia.Experimental.Serializers;
 
 namespace Entia.Modules
 {

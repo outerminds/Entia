@@ -2,9 +2,9 @@ using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using Entia.Core;
-using Entia.Serialization;
+using Entia.Experimental.Serialization;
 
-namespace Entia.Serializers
+namespace Entia.Experimental.Serializers
 {
     public sealed class ConcreteObject : ISerializer
     {

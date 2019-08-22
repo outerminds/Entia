@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Entia.Serialization;
+using Entia.Experimental.Serialization;
 
-namespace Entia.Serializers
+namespace Entia.Experimental.Serializers
 {
     public sealed class ConcreteDictionary<TKey, TValue> : Serializer<Dictionary<TKey, TValue>>
     {

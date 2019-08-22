@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Entia.Core;
-using Entia.Serializers;
+using Entia.Experimental.Serializers;
 using System.Runtime.InteropServices;
 
-namespace Entia.Serialization
+namespace Entia.Experimental.Serialization
 {
     public enum Kinds : byte { None, Null, Abstract, Concrete, Reference }
     public enum Options { None = 0, All = ~None, Blittable = 1 << 0 }

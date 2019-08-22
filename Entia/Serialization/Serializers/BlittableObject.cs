@@ -1,6 +1,6 @@
-using Entia.Serialization;
+using Entia.Experimental.Serialization;
 
-namespace Entia.Serializers
+namespace Entia.Experimental.Serializers
 {
     public sealed class BlittableObject<T> : Serializer<T> where T : unmanaged
     {

@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Entia.Core;
-using Entia.Serialization;
+using Entia.Experimental.Serialization;
 using Entia.Modules.Message;
 using Entia.Modules.Group;
 using Entia.Modules.Query;
 using System.Linq;
 
-namespace Entia.Serializers
+namespace Entia.Experimental.Serializers
 {
     public sealed class AbstractType : Serializer<Type>
     {

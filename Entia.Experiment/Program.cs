@@ -1,5 +1,5 @@
 ﻿using Entia.Core;
-using Entia.Serialization;
+using Entia.Experimental.Serialization;
 using Entia.Injectables;
 using Entia.Messages;
 using Entia.Modules;
@@ -243,14 +243,14 @@ namespace Entia.Experiment
         {
             var world1 = new World();
             var world2 = new World();
-            world2.Container.Add(new Serializers.BlittableObject<Position>());
-            world2.Container.Add(new Serializers.BlittableArray<Position>());
-            world2.Container.Add(new Serializers.BlittableObject<Velocity>());
-            world2.Container.Add(new Serializers.BlittableArray<Velocity>());
-            world2.Container.Add(new Serializers.BlittableObject<Mass>());
-            world2.Container.Add(new Serializers.BlittableArray<Mass>());
-            world2.Container.Add(new Serializers.BlittableObject<Lifetime>());
-            world2.Container.Add(new Serializers.BlittableArray<Lifetime>());
+            world2.Container.Add(new Experimental.Serializers.BlittableObject<Position>());
+            world2.Container.Add(new Experimental.Serializers.BlittableArray<Position>());
+            world2.Container.Add(new Experimental.Serializers.BlittableObject<Velocity>());
+            world2.Container.Add(new Experimental.Serializers.BlittableArray<Velocity>());
+            world2.Container.Add(new Experimental.Serializers.BlittableObject<Mass>());
+            world2.Container.Add(new Experimental.Serializers.BlittableArray<Mass>());
+            world2.Container.Add(new Experimental.Serializers.BlittableObject<Lifetime>());
+            world2.Container.Add(new Experimental.Serializers.BlittableArray<Lifetime>());
             world1.Serialize(value, out var bytes1, Options.Blittable);
             world1.Serialize(value, out var bytes2);
             world2.Serialize(value, out var bytes3);

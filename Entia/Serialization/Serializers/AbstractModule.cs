@@ -1,7 +1,7 @@
 using System.Reflection;
-using Entia.Serialization;
+using Entia.Experimental.Serialization;
 
-namespace Entia.Serializers
+namespace Entia.Experimental.Serializers
 {
     public sealed class AbstractModule : Serializer<Module>
     {

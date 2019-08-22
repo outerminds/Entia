@@ -5,10 +5,10 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using Entia.Core;
 using Entia.Core.Providers;
-using Entia.Serialization;
-using static Entia.Serializers.Serializer;
+using Entia.Experimental.Serialization;
+using static Entia.Experimental.Serializers.Serializer;
 
-namespace Entia.Serializers
+namespace Entia.Experimental.Serializers
 {
     [Implementation(typeof(Nullable<>), typeof(ConcreteNullable<>))]
     [Implementation(typeof(List<>), typeof(ConcreteList<>))]
@@ -112,8 +112,8 @@ namespace Entia.Serializers
         {
             public static IMember<T> Field<T, TValue>(Field<T, TValue>.Getter get, Serializer<TValue> serializer = null) => new Field<T, TValue>(get, serializer);
             public static IMember<T> Property<T, TValue>(Property<T, TValue>.Getter get, Property<T, TValue>.Setter set, Serializer<TValue> serializer = null) => new Property<T, TValue>(get, set, serializer);
-            public static IMember Reflection(FieldInfo field, ISerializer serializer = null) => new Serializers.Reflection(field, serializer);
-            public static IMember Reflection(PropertyInfo property, ISerializer serializer = null) => new Serializers.Reflection(property, serializer);
+            public static IMember Reflection(FieldInfo field, ISerializer serializer = null) => new Experimental.Serializers.Reflection(field, serializer);
+            public static IMember Reflection(PropertyInfo property, ISerializer serializer = null) => new Experimental.Serializers.Reflection(property, serializer);
         }
 
         public static class Blittable

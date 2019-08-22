@@ -1,9 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
 using Entia.Core;
-using Entia.Serialization;
+using Entia.Experimental.Serialization;
 
-namespace Entia.Serializers
+namespace Entia.Experimental.Serializers
 {
     public sealed class ConcreteArray : Serializer<Array>
     {
