@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Entia.Core;
 using Entia.Core.Documentation;
+using Entia.Experimental.Serializers;
 using Entia.Messages;
 using Entia.Modules.Family;
 using Entia.Modules.Message;
@@ -19,10 +21,42 @@ namespace Entia.Modules
         {
             public static readonly Relationships Empty = new Relationships { Children = (Array.Empty<Entity>(), 0) };
 
+            [Implementation]
+            static Serializer<Relationships> _serializer => Serializer.Map(
+                (in Relationships relationship) =>
+                {
+                    var count = relationship.Children.count;
+                    var current = new Entity[count + 2];
+                    current[0] = relationship.Entity;
+                    current[1] = relationship.Parent;
+                    if (count > 0) Array.Copy(relationship.Children.items, 0, current, 2, count);
+                    return current;
+                },
+                (in Entity[] entities) =>
+                {
+                    var count = entities.Length - 2;
+                    var children = new Entity[count];
+                    if (count > 0) Array.Copy(entities, 2, children, 0, count);
+                    return new Relationships
+                    {
+                        Entity = entities[0],
+                        Parent = entities[1],
+                        Children = (children, count)
+                    };
+                });
+
             public Entity Entity;
             public Entity Parent;
             public (Entity[] items, int count) Children;
         }
+
+        [Implementation]
+        static Serializer<Families> _serializer => Serializer.Object(
+            Serializer.Member.Field((in Families families) => ref families._entities),
+            Serializer.Member.Field((in Families families) => ref families._onAdopt),
+            Serializer.Member.Field((in Families families) => ref families._onReject),
+            Serializer.Member.Field((in Families families) => ref families._relationships,
+                Serializer.Array<Relationships>()));
 
         readonly Entities _entities;
         readonly Emitter<OnAdopt> _onAdopt;
