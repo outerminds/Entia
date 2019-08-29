@@ -1,6 +1,7 @@
 bin/
 obj/
 .vs/
+.ionide/
 Releases/
 Release/
 .vscode/solution-explorer
