@@ -41,8 +41,6 @@ namespace Entia.Core
 
     public readonly struct Failure : IResult
     {
-        public static readonly Failure Empty = new Failure(new string[0]);
-
         Result.Tags IResult.Tag => Result.Tags.Failure;
 
         public readonly string[] Messages;
@@ -56,7 +54,7 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator None(in Failure failure) => Option.None();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Failure(in None none) => Empty;
+        public static implicit operator Failure(in None none) => Result.Failure();
     }
 
     public readonly struct Result<T> : IResult
@@ -122,7 +120,7 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Success<Unit> Success() => new Success<Unit>(default);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Failure Failure() => Core.Failure.Empty;
+        public static Failure Failure() => new Failure(Array.Empty<string>());
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Failure Failure(params string[] messages) => new Failure(messages);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -240,6 +238,10 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Success<TOut> Map<TIn, TOut>(in this Success<TIn> success, Func<TIn, TOut> map) => map(success.Value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T> Filter<T>(in this Success<T> success, Func<T, bool> filter) => filter(success.Value) ? success.AsResult() : Failure();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T> Filter<T, TState>(in this Success<T> success, in TState state, Func<T, TState, bool> filter) => filter(success.Value, state) ? success.AsResult() : Failure();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Success<T> Flatten<T>(in this Success<Success<T>> success) => success.Value;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Failure Flatten(in this Success<Failure> success) => success.Value;
@@ -302,6 +304,34 @@ namespace Entia.Core
             if (result.TryValue(out var value)) return map(value, state);
             else if (result.TryFailure(out var failure)) return failure;
             else return Failure();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T> Filter<T>(in this Result<T> result, Func<T, bool> filter)
+        {
+            if (result.TryValue(out var value)) return filter(value) ? result : Failure();
+            else return result;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T> Filter<T, TState>(in this Result<T> result, in TState state, Func<T, TState, bool> filter)
+        {
+            if (result.TryValue(out var value)) return filter(value, state) ? result : Failure();
+            else return result;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TOut Fold<TIn, TOut>(in this Result<TIn> result, in TOut seed, Func<TOut, TIn, TOut> fold)
+        {
+            if (result.TryValue(out var value)) return fold(seed, value);
+            else return seed;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TOut Fold<TIn, TOut, TState>(in this Result<TIn> result, in TOut seed, in TState state, Func<TOut, TIn, TState, TOut> fold)
+        {
+            if (result.TryValue(out var value)) return fold(seed, value, state);
+            else return seed;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

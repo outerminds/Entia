@@ -46,6 +46,26 @@ namespace Entia.Core
 
     public readonly struct Option<T> : IOption
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Option<T>(in Some<T> some) => new Option<T>(Option.Tags.Some, some.Value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Option<T>(in T value) => new Option<T>(Option.Tags.Some, value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Option<T>(in None none) => new Option<T>(Option.Tags.None, default);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Option<Unit>(in Option<T> option) => new Option<Unit>(option.Tag, default);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator bool(in Option<T> option) => option.Tag == Option.Tags.Some;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Some<T>(in Option<T> option) => option.Tag == Option.Tags.Some ?
+            Option.Some(option._value) : throw new InvalidCastException();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator None(in Option<T> option) => option.Tag == Option.Tags.None ?
+            Option.None() : throw new InvalidCastException();
+
         public Option.Tags Tag { get; }
 
         readonly T _value;
@@ -70,26 +90,6 @@ namespace Entia.Core
                 default: return base.ToString();
             }
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Option<T>(in Some<T> some) => new Option<T>(Option.Tags.Some, some.Value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Option<T>(in T value) => new Option<T>(Option.Tags.Some, value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Option<T>(in None none) => new Option<T>(Option.Tags.None, default);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Option<Unit>(in Option<T> option) => new Option<Unit>(option.Tag, default);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator bool(in Option<T> option) => option.Tag == Option.Tags.Some;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator Some<T>(in Option<T> option) => option.Tag == Option.Tags.Some ?
-            Option.Some(option._value) : throw new InvalidCastException();
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator None(in Option<T> option) => option.Tag == Option.Tags.None ?
-            Option.None() : throw new InvalidCastException();
     }
 
     public static class Option
@@ -179,6 +179,12 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Some<TOut> Map<TIn, TOut>(in this Some<TIn> some, Func<TIn, TOut> map) => map(some.Value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Some<TOut> Map<TIn, TOut, TState>(in this Some<TIn> some, in TState state, Func<TIn, TState, TOut> map) => map(some.Value, state);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> Filter<T>(in this Some<T> some, Func<T, bool> filter) => filter(some.Value) ? some.AsOption() : None();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> Filter<T, TState>(in this Some<T> some, in TState state, Func<T, TState, bool> filter) => filter(some.Value, state) ? some.AsOption() : None();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Some<T> Flatten<T>(in this Some<Some<T>> some) => some.Value;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static None Flatten(in this Some<None> some) => some.Value;
@@ -241,6 +247,34 @@ namespace Entia.Core
             if (option.TryValue(out var value)) return map(value, state);
             else if (option.IsNone()) return None();
             else return None();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> Filter<T>(in this Option<T> option, Func<T, bool> filter)
+        {
+            if (option.TryValue(out var value)) return filter(value) ? option : None();
+            else return None();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> Filter<T, TState>(in this Option<T> option, in TState state, Func<T, TState, bool> filter)
+        {
+            if (option.TryValue(out var value)) return filter(value, state) ? option : None();
+            else return None();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TOut Fold<TIn, TOut>(in this Option<TIn> option, in TOut seed, Func<TOut, TIn, TOut> fold)
+        {
+            if (option.TryValue(out var value)) return fold(seed, value);
+            else return seed;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TOut Fold<TIn, TOut, TState>(in this Option<TIn> option, in TOut seed, in TState state, Func<TOut, TIn, TState, TOut> fold)
+        {
+            if (option.TryValue(out var value)) return fold(seed, value, state);
+            else return seed;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

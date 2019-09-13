@@ -21,7 +21,7 @@ namespace Entia.Injectors
                         .All()
                         .Return(instance);
                 case FieldInfo field: return context.Inject<ISystem>(field.FieldType);
-                default: return Failure.Empty;
+                default: return Result.Failure();
             }
         }
     }
