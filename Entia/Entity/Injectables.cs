@@ -20,9 +20,9 @@ namespace Entia.Injectables
         public sealed class Read : IInjectable, IEnumerable<Entities.Enumerator, Entity>
         {
             [Implementation]
-            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Entities()));
+            static Injector<Read> _injector => Injector.From(context => new Read(context.World.Entities()));
             [Implementation]
-            static IDepender Depender => Dependers.Depender.From(new Dependencies.Read(typeof(Entity)));
+            static IDepender _depender => Depender.From(new Dependencies.Read(typeof(Entity)));
 
             /// <inheritdoc cref="Entities.Count"/>
             public int Count => _entities.Count;
@@ -45,9 +45,9 @@ namespace Entia.Injectables
         }
 
         [Implementation]
-        static Injector<AllEntities> Injector => Injectors.Injector.From(context => new AllEntities(context.World.Entities()));
+        static Injector<AllEntities> _injector => Injector.From(context => new AllEntities(context.World.Entities()));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From(
+        static IDepender _depender => Depender.From(
             new Dependencies.Write(typeof(Entity)),
             new Dependencies.Emit(typeof(Messages.OnCreate)),
             new Dependencies.Emit(typeof(Messages.OnPreDestroy)),

@@ -87,16 +87,6 @@ namespace Entia
             public override string ToString() => $"{{ {Component}, {State} }}";
         }
 
-        sealed class Querier : Querier<Entity>
-        {
-            public override bool TryQuery(in Context context, out Query<Entity> query)
-            {
-                var segment = context.Segment;
-                query = new Query<Entity>(index => segment.Entities.items[index]);
-                return true;
-            }
-        }
-
         /// <summary>
         /// A zero initialized entity that will always be invalid.
         /// </summary>
@@ -105,9 +95,9 @@ namespace Entia
         [Implementation]
         static Serializer<Entity> _serializer => Serializer.Blittable.Object<Entity>();
         [Implementation]
-        static IDepender _depender => Depender.From(new Read(typeof(Entity)));
+        static Querier<Entity> _querier => Querier.From(context => new Query<Entity>(index => context.Segment.Entities.items[index]));
         [Implementation]
-        static Querier _querier => new Querier();
+        static IDepender _depender => Depender.From(new Read(typeof(Entity)));
 
         /// <summary>
         /// Implements the operator ==.

@@ -19,8 +19,6 @@ namespace Entia.Modules
     {
         struct Relationships
         {
-            public static readonly Relationships Empty = new Relationships { Children = (Array.Empty<Entity>(), 0) };
-
             [Implementation]
             static Serializer<Relationships> _serializer => Serializer.Map(
                 (in Relationships relationship) =>
@@ -104,7 +102,7 @@ namespace Entia.Modules
         public Slice<Entity>.Read Children(Entity parent)
         {
             ref var relationships = ref GetRelationships(parent, out var success);
-            return success ? relationships.Children.Slice() : Dummy<Entity>.Array.Zero;
+            return success ? relationships.Children.Slice() : Dummy<Entity>.Read.Array.Zero;
         }
 
         [ThreadSafe]

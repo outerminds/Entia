@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Reflection;
 using Entia.Core;
@@ -105,6 +106,17 @@ namespace Entia.Queriers
     [ThreadSafe]
     public static class Querier
     {
+        sealed class Provider<T> : Querier<T> where T : struct, Queryables.IQueryable
+        {
+            readonly Func<Context, Query<T>> _provider;
+            public Provider(Func<Context, Query<T>> provider) { _provider = provider; }
+            public override bool TryQuery(in Context context, out Query<T> query)
+            {
+                query = _provider(context);
+                return true;
+            }
+        }
+
         sealed class Try : IQuerier
         {
             readonly TryInFunc<Context, Query> _try;
@@ -118,6 +130,8 @@ namespace Entia.Queriers
             public Try(TryInFunc<Context, Query<T>> @try) { _try = @try; }
             public override bool TryQuery(in Context context, out Query<T> query) => _try(context, out query);
         }
+
+        public static Querier<T> From<T>(Func<Context, Query<T>> provider) where T : struct, Queryables.IQueryable => new Provider<T>(provider);
 
         public static IQuerier From(ICustomAttributeProvider provider) => All(provider.GetCustomAttributes(true).OfType<IQuerier>().ToArray());
 
