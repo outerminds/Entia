@@ -34,8 +34,12 @@ namespace Entia.Modules.Message
             readonly Emitter<T> _emitter;
             readonly Receiver<T> _receiver;
 
-            public bool TryPop(out T message) => _receiver.TryPop(out message);
-            public Receiver<T>.Enumerable Pop() => _receiver.Pop();
+            [Obsolete("Use " + nameof(TryMessage) + " instead.")]
+            public bool TryPop(out T message) => TryMessage(out message);
+            [Obsolete("Use " + nameof(Messages) + " instead.")]
+            public Receiver<T>.Enumerable Pop() => Messages();
+            public bool TryMessage(out T message) => _receiver.TryMessage(out message);
+            public Receiver<T>.Enumerable Messages() => _receiver.Messages();
 
             public Disposable(Emitter<T> emitter, int capacity = -1)
             {

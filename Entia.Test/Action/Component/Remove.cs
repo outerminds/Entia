@@ -33,7 +33,7 @@ namespace Entia.Test
             {
                 _success = value.Components().Remove(_entity, _type, _include);
                 model.Components[_entity].Remove(_type, _include);
-                _onRemove = onRemove.Pop().ToArray();
+                _onRemove = onRemove.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)
@@ -91,8 +91,8 @@ namespace Entia.Test
             {
                 _success = value.Components().Remove<T>(_entity, _include);
                 model.Components[_entity].Remove(typeof(T), _include);
-                _onRemove = onRemove.Pop().ToArray();
-                _onRemoveT = onRemoveT.Pop().ToArray();
+                _onRemove = onRemove.Messages().ToArray();
+                _onRemoveT = onRemoveT.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)

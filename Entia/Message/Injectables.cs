@@ -57,8 +57,12 @@ namespace Entia.Injectables
 
         readonly Modules.Message.Receiver<T> _receiver;
         public Receiver(Modules.Message.Receiver<T> receiver) { _receiver = receiver; }
-        public bool TryPop(out T message) => _receiver.TryPop(out message);
-        public Modules.Message.Receiver<T>.Enumerable Pop(int count = int.MaxValue) => _receiver.Pop(count);
+        [Obsolete("Use " + nameof(TryMessage) + " instead.")]
+        public bool TryPop(out T message) => TryMessage(out message);
+        [Obsolete("Use " + nameof(Messages) + " instead.")]
+        public Modules.Message.Receiver<T>.Enumerable Pop(int count = int.MaxValue) => Messages(count);
+        public bool TryMessage(out T message) => _receiver.TryMessage(out message);
+        public Modules.Message.Receiver<T>.Enumerable Messages(int count = int.MaxValue) => _receiver.Messages();
         public bool Clear() => _receiver.Clear();
     }
 

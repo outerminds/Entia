@@ -31,7 +31,7 @@ namespace Entia.Test
             using (var onAdopt = messages.Receive<OnAdopt>())
             {
                 _success = families.Adopt(_parent, _child);
-                _onAdopt = onAdopt.Pop().ToArray();
+                _onAdopt = onAdopt.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)
@@ -95,7 +95,7 @@ namespace Entia.Test
             using (var onReject = messages.Receive<OnReject>())
             {
                 _success = families.Reject(_child);
-                _onReject = onReject.Pop().ToArray();
+                _onReject = onReject.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)

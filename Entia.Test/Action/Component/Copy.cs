@@ -43,7 +43,7 @@ namespace Entia.Test
                 _success = components.Copy<T>(_source, _target, _include);
                 _copies = components.Get(_target).Where(Is).ToArray();
                 foreach (var component in _copies) model.Components[_target].Set(component.GetType());
-                _onAdd = onAdd.Pop().ToArray();
+                _onAdd = onAdd.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)
@@ -116,7 +116,7 @@ namespace Entia.Test
                 _success = components.Copy(_source, _target, _type, _include);
                 _copies = components.Get(_target).Where(Is).ToArray();
                 foreach (var component in _copies) model.Components[_target].Set(component.GetType());
-                _onAdd = onAdd.Pop().ToArray();
+                _onAdd = onAdd.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)
@@ -185,7 +185,7 @@ namespace Entia.Test
                 _success = components.Copy(_source, _target, _include);
                 _copies = components.Get(_target).ToArray();
                 foreach (var component in _copies) model.Components[_target].Set(component.GetType());
-                _onAdd = onAdd.Pop().ToArray();
+                _onAdd = onAdd.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)

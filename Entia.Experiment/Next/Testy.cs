@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
+using System.Linq;
 using Entia.Core;
 
 namespace Entia.Experiment.Next
@@ -139,6 +140,12 @@ namespace Entia.Experiment.Next
     public sealed class Node
     {
         public static Node System(Func<World, System> provider) => throw null;
+        public static Node System(Func<World, Execution> provider) =>
+            System(world => new System(provider(world)));
+        public static Node System(Func<World, Execution[]> provider) =>
+            System(world => new System(provider(world)));
+        public static Node System(Func<World, IEnumerable<Execution>> provider) =>
+            System(world => new System(provider(world).ToArray()));
         public static Node Sequence(params Node[] nodes) => throw null;
     }
 
@@ -239,14 +246,33 @@ namespace Entia.Experiment.Next
                 Execution.Create(Phases.Run, Run),
                 Execution.Create(Phases.Dispose, Dispose));
         }
+
+        public static IEnumerable<Execution> Motion2(World world)
+        {
+            var query = Query.All(Query.Write(Components.Position), Query.Read(Components.Velocity));
+            var group = world.Groups.Get(query);
+            world.Components.Get(default, Components.D2.Position);
+            world.Components.Get(default, Components.D3.Position);
+
+            yield return Execution.Create(Phases.Initialize, () => { });
+            yield return Execution.Create(Phases.Dispose, () => { });
+            yield return Execution.Create(Phases.Run, delta =>
+            {
+                foreach (var item in group)
+                {
+                    ref var position = ref item.Value1.Value;
+                    ref readonly var velocity = ref item.Value2.Value;
+                    position += velocity;
+                }
+            });
+        }
     }
 
     public static partial class Nodes
     {
         public static readonly Node Main = Node.Sequence(
             Node.System(Systems.Motion),
-            Node.System(Systems.Motion),
-            Node.System(Systems.Motion)
+            Node.System(Systems.Motion2)
         );
     }
 

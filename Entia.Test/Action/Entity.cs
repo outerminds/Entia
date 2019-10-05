@@ -23,7 +23,7 @@ namespace Entia.Test
                 _entity = entities.Create();
                 model.Entities.Add(_entity);
                 model.Components.Add(_entity, new ComponentModel());
-                _onCreate = onCreate.Pop().ToArray();
+                _onCreate = onCreate.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)
@@ -83,8 +83,8 @@ namespace Entia.Test
                     model.Entities.Remove(entity);
                     model.Components.Remove(entity);
                 }
-                _onPreDestroy = onPreDestroy.Pop().ToArray();
-                _onPostDestroy = onPostDestroy.Pop().ToArray();
+                _onPreDestroy = onPreDestroy.Messages().ToArray();
+                _onPostDestroy = onPostDestroy.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)
@@ -128,8 +128,8 @@ namespace Entia.Test
                 value.Entities().Clear();
                 model.Entities.Clear();
                 model.Components.Clear();
-                _onPreDestroy = onPreDestroy.Pop().ToArray();
-                _onPostDestroy = onPostDestroy.Pop().ToArray();
+                _onPreDestroy = onPreDestroy.Messages().ToArray();
+                _onPostDestroy = onPostDestroy.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model) =>

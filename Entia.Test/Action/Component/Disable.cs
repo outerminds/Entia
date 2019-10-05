@@ -32,7 +32,7 @@ namespace Entia.Test
             {
                 _success = value.Components().Disable(_entity, _type);
                 model.Components[_entity].Disable(_type);
-                _onDisable = onDisable.Pop().ToArray();
+                _onDisable = onDisable.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)
@@ -110,8 +110,8 @@ namespace Entia.Test
             {
                 _success = value.Components().Disable<T>(_entity);
                 model.Components[_entity].Disable(typeof(T));
-                _onDisable = onDisable.Pop().ToArray();
-                _onDisableT = onDisableT.Pop().ToArray();
+                _onDisable = onDisable.Messages().ToArray();
+                _onDisableT = onDisableT.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)

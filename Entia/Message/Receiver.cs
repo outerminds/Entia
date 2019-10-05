@@ -12,13 +12,12 @@ namespace Entia.Modules.Message
 {
     public interface IReceiver
     {
-        IMessage[] Messages { get; }
         Type Type { get; }
         int Count { get; }
         int Capacity { get; set; }
 
-        bool TryPop(out IMessage message);
-        IEnumerable<IMessage> Pop();
+        bool TryMessage(out IMessage message);
+        IEnumerable<IMessage> Messages(int count = int.MaxValue);
         bool Receive(IMessage message);
         bool Clear();
     }
@@ -81,7 +80,6 @@ namespace Entia.Modules.Message
                 (ref Receiver<T> receiver, in T[] messages) => { for (int i = 0; i < messages.Length; i++) receiver._messages.Enqueue(messages[i]); })
         );
 
-        public T[] Messages => _messages.ToArray();
         public int Count => _messages.Count;
         public int Capacity
         {
@@ -89,7 +87,6 @@ namespace Entia.Modules.Message
             set => Trim(_capacity = value);
         }
 
-        IMessage[] IReceiver.Messages => Messages.Cast<IMessage>().ToArray();
         Type IReceiver.Type => typeof(T);
 
         readonly ConcurrentQueue<T> _messages = new ConcurrentQueue<T>();
@@ -97,10 +94,14 @@ namespace Entia.Modules.Message
 
         public Receiver(int capacity = -1) { _capacity = capacity; }
 
+        [Obsolete("Use " + nameof(TryMessage) + " instead.")]
+        public bool TryPop(out T message) => TryMessage(out message);
+        [Obsolete("Use " + nameof(Messages) + " instead.")]
+        public Enumerable Pop(int count = int.MaxValue) => Messages();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryPop(out T message) => _messages.TryDequeue(out message);
+        public bool TryMessage(out T message) => _messages.TryDequeue(out message);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerable Pop(int count = int.MaxValue) => new Enumerable(count, this);
+        public Enumerable Messages(int count = int.MaxValue) => new Enumerable(count, this);
 
         public bool Receive(in T message)
         {
@@ -124,9 +125,9 @@ namespace Entia.Modules.Message
             lock (_messages) { while (_messages.Count > count) _messages.TryDequeue(out _); }
         }
 
-        bool IReceiver.TryPop(out IMessage message)
+        bool IReceiver.TryMessage(out IMessage message)
         {
-            if (TryPop(out var casted))
+            if (TryMessage(out var casted))
             {
                 message = casted;
                 return true;
@@ -136,7 +137,7 @@ namespace Entia.Modules.Message
             return false;
         }
 
-        IEnumerable<IMessage> IReceiver.Pop() => Pop().Cast<IMessage>();
+        IEnumerable<IMessage> IReceiver.Messages(int count) => Messages(count).Cast<IMessage>();
         bool IReceiver.Receive(IMessage message) => message is T casted && Receive(casted);
     }
 }

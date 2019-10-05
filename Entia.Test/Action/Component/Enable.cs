@@ -32,7 +32,7 @@ namespace Entia.Test
             {
                 _success = value.Components().Enable(_entity, _type);
                 model.Components[_entity].Enable(_type);
-                _onEnable = onEnable.Pop().ToArray();
+                _onEnable = onEnable.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)
@@ -110,8 +110,8 @@ namespace Entia.Test
             {
                 _success = value.Components().Enable<T>(_entity);
                 model.Components[_entity].Enable(typeof(T));
-                _onEnable = onEnable.Pop().ToArray();
-                _onEnableT = onEnableT.Pop().ToArray();
+                _onEnable = onEnable.Messages().ToArray();
+                _onEnableT = onEnableT.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)

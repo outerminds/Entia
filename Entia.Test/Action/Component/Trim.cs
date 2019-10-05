@@ -43,7 +43,7 @@ namespace Entia.Test
                 _success = components.Trim(_source, _target, _include);
                 _trimmed = components.Get(_target, _include).ToArray();
                 foreach (var type in _exceeding) model.Components[_target].Remove(type, _include);
-                _onRemove = onRemove.Pop().ToArray();
+                _onRemove = onRemove.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)

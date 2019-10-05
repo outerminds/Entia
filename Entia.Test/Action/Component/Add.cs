@@ -39,8 +39,8 @@ namespace Entia.Test
             {
                 _success = value.Components().Set(_entity, _component);
                 model.Components[_entity].Set(typeof(TConcrete));
-                _onAdd = onAdd.Pop().ToArray();
-                _onAddT = onAddT.Pop().ToArray();
+                _onAdd = onAdd.Messages().ToArray();
+                _onAddT = onAddT.Messages().ToArray();
             }
         }
         public override Property Check(World value, Model model)
