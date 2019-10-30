@@ -122,7 +122,8 @@ namespace Entia.Core
         {
             if (array == null) return 0;
             var hash = 0;
-            foreach (var item in array) hash ^= EqualityComparer<T>.Default.GetHashCode(item);
+            var comparer = EqualityComparer<T>.Default;
+            foreach (var item in array) hash ^= comparer.GetHashCode(item);
             return hash;
         }
 
@@ -130,7 +131,8 @@ namespace Entia.Core
         public static int GetHashCode<T>((T[] items, int count) array)
         {
             var hash = array.count;
-            for (int i = 0; i < array.count; i++) hash ^= EqualityComparer<T>.Default.GetHashCode(array.items[i]);
+            var comparer = EqualityComparer<T>.Default;
+            for (int i = 0; i < array.count; i++) hash ^= comparer.GetHashCode(array.items[i]);
             return hash;
         }
     }

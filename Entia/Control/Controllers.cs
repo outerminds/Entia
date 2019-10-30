@@ -1,4 +1,5 @@
-﻿using Entia.Build;
+﻿using Entia.Analysis;
+using Entia.Build;
 using Entia.Core;
 using Entia.Nodes;
 using System;
@@ -39,6 +40,7 @@ namespace Entia.Modules
             states = new Controller.States[count];
 
             // TODO: put analysis back in when it works properly
+            // if (_world.Analyze(root, root).TryFailure(out var failure)) return failure;
             return _world.Build(root, root)
                 .Map(runner => _controllers[node] = new Controller((root, runner), _world, nodes, runners, states));
         }

@@ -68,9 +68,8 @@ namespace Entia
         {
             using (var template = Use())
             {
-                template.Instantiate();
-                template.Initialize();
-                return template.Value;
+                return Result.All(template.Instantiate(), template.Initialize(), template.Value)
+                    .Map(values => values.value3);
             }
         }
 
