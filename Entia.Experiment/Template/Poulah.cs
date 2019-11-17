@@ -177,6 +177,7 @@ namespace Entia.Experimental.Templaters
         public readonly object Value;
         public readonly List<IValue> Values;
         public readonly Dictionary<object, int> Indices;
+        // NOTE: used to refer to external values
         public readonly Dictionary<object, Guid> References;
         public readonly World World;
 

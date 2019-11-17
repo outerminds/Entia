@@ -31,28 +31,24 @@ namespace Entia.Nodes
         public readonly INode Value;
         public readonly Node[] Children;
 
-        int? _hash;
+        readonly Lazy<int> _hash;
 
         Node(string name, INode value, params Node[] children)
         {
             Name = name;
             Value = value;
             Children = children;
+            _hash = new Lazy<int>(() => (name, value).GetHashCode() ^ ArrayUtility.GetHashCode(children));
         }
 
-        public bool Equals(Node other)
-        {
-            if (ReferenceEquals(this, other)) return true;
-            if (other == null) return false;
-            return Equals(Name, other.Name) && Equals(Value, other.Value) && Children.SequenceEqual(other.Children);
-        }
+        public bool Equals(Node other) =>
+            ReferenceEquals(this, other) ? true :
+            other is null ? false :
+            _hash.Value == other._hash.Value &&
+            (Name, Value) == (other.Name, other.Value) &&
+            Children.SequenceEqual(other.Children);
         public override bool Equals(object obj) => obj is Node node && Equals(node);
-        public override int GetHashCode()
-        {
-            if (_hash is int hash) return hash;
-            _hash = hash = (Name, Value).GetHashCode() ^ ArrayUtility.GetHashCode(Children);
-            return hash;
-        }
+        public override int GetHashCode() => _hash.Value;
         public override string ToString() => string.IsNullOrWhiteSpace(Name) ? $"[{string.Join(", ", Children.AsEnumerable())}]" : Name;
     }
 }
