@@ -38,7 +38,7 @@ namespace Entia.Nodes
             Name = name;
             Value = value;
             Children = children;
-            _hash = new Lazy<int>(() => (name, value).GetHashCode() ^ ArrayUtility.GetHashCode(children));
+            _hash = new Lazy<int>(() => (Name, Value).GetHashCode() ^ ArrayUtility.GetHashCode(Children));
         }
 
         public bool Equals(Node other) =>
