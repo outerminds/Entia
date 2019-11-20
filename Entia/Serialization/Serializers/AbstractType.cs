@@ -50,12 +50,14 @@ namespace Entia.Experimental.Serializers
             typeof(object), typeof(object[]),
 
             typeof(Nullable<>),
-            typeof(List<>),
-            typeof(Dictionary<,>),
+            typeof(List<>), typeof(LinkedList<>), typeof(LinkedListNode<>),
+            typeof(Stack<>), typeof(Queue<>), typeof(HashSet<>), typeof(Dictionary<,>),
+            typeof(SortedDictionary<,>), typeof(SortedList<,>), typeof(SortedSet<>),
             typeof(Tuple<>), typeof(Tuple<,>), typeof(Tuple<,,>), typeof(Tuple<,,,>), typeof(Tuple<,,,,>), typeof(Tuple<,,,,,>), typeof(Tuple<,,,,,,>),
             typeof(ValueTuple<>), typeof(ValueTuple<,>), typeof(ValueTuple<,,>), typeof(ValueTuple<,,,>), typeof(ValueTuple<,,,,>), typeof(ValueTuple<,,,,,>), typeof(ValueTuple<,,,,,,>),
             typeof(Action<>), typeof(Action<,>), typeof(Action<,,>), typeof(Action<,,,>), typeof(Action<,,,,>), typeof(Action<,,,,,>), typeof(Action<,,,,,,>),
             typeof(Func<>), typeof(Func<,>), typeof(Func<,,>), typeof(Func<,,,>), typeof(Func<,,,,>), typeof(Func<,,,,,>), typeof(Func<,,,,,,>),
+            typeof(Predicate<>), typeof(Comparison<>),
             #endregion
 
             #region Reflection
