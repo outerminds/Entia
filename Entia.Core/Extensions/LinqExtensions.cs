@@ -311,7 +311,7 @@ namespace Entia.Core
                     for (var i = 0; i < items.Length; i++)
                     {
                         foreach (var combination in items.Skip(i + 1).Combinations(size - 1))
-                            yield return combination.Prepend(items[i]).ToArray();
+                            yield return combination.Prepend(items[i]);
                     }
                 }
             }

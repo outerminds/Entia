@@ -252,7 +252,7 @@ namespace Entia.Core
 
         public bool TryGet(Type type, Type trait, out ITrait implementation)
         {
-            if (_implementations.TryGet(type, out var traits) &&
+            if (_implementations.TryGet(type, out var traits, true, false) &&
                 traits.TryGet(trait, out var implementations) &&
                 implementations.TryFirst(out implementation))
                 return true;
@@ -260,7 +260,7 @@ namespace Entia.Core
         }
         public bool TryGet<TTrait>(Type type, out TTrait implementation) where TTrait : ITrait
         {
-            if (_implementations.TryGet(type, out var traits) &&
+            if (_implementations.TryGet(type, out var traits, true, false) &&
                 traits.TryGet<TTrait>(out var implementations) &&
                 implementations.TryFirst(out var value))
             {
@@ -271,7 +271,7 @@ namespace Entia.Core
         }
         public bool TryGet<T, TTrait>(out TTrait implementation) where TTrait : ITrait
         {
-            if (_implementations.TryGet<T>(out var traits) &&
+            if (_implementations.TryGet<T>(out var traits, true, false) &&
                 traits.TryGet<TTrait>(out var implementations) &&
                 implementations.TryFirst(out var value))
             {
@@ -281,18 +281,18 @@ namespace Entia.Core
             return TryDefault<T, TTrait>(out implementation);
         }
 
-        public bool Has<T>() => _implementations.Has<T>();
-        public bool Has(Type type) => _implementations.Has(type);
+        public bool Has<T>() => _implementations.Has<T>(true, false);
+        public bool Has(Type type) => _implementations.Has(type, true, false);
         public bool Has<T, TTrait>() where TTrait : ITrait =>
-            _implementations.TryGet<T>(out var map) &&
+            _implementations.TryGet<T>(out var map, true, false) &&
             map.TryGet<TTrait>(out var implementations) &&
             implementations.Length > 0;
         public bool Has<TTrait>(Type type) where TTrait : ITrait =>
-            _implementations.TryGet(type, out var map) &&
+            _implementations.TryGet(type, out var map, true, false) &&
             map.TryGet<TTrait>(out var implementations) &&
             implementations.Length > 0;
         public bool Has(Type type, Type trait) =>
-            _implementations.TryGet(type, out var map) &&
+            _implementations.TryGet(type, out var map, true, false) &&
             map.TryGet(trait, out var implementations) &&
             implementations.Length > 0;
 
@@ -347,7 +347,7 @@ namespace Entia.Core
         ref ITrait[] GetImplementations(Type type, Type trait)
         {
             var traits =
-                _implementations.TryGet(type, out var map) ? map :
+                _implementations.TryGet(type, out var map, true, false) ? map :
                 _implementations[type] = new TypeMap<ITrait, ITrait[]>();
             if (traits.TryIndex(trait, out var index)) return ref GetImplementations(index, traits);
             throw new ArgumentException(nameof(trait));
@@ -356,7 +356,7 @@ namespace Entia.Core
         ref ITrait[] GetImplementations<TTrait>(Type type) where TTrait : ITrait
         {
             var traits =
-                _implementations.TryGet(type, out var map) ? map :
+                _implementations.TryGet(type, out var map, true, false) ? map :
                 _implementations[type] = new TypeMap<ITrait, ITrait[]>();
             return ref GetImplementations(traits.Index<TTrait>(), traits);
         }
@@ -364,7 +364,7 @@ namespace Entia.Core
         ref ITrait[] GetImplementations<T, TTrait>() where TTrait : ITrait
         {
             var traits =
-                _implementations.TryGet<T>(out var map) ? map :
+                _implementations.TryGet<T>(out var map, true, false) ? map :
                 _implementations[typeof(T)] = new TypeMap<ITrait, ITrait[]>();
             return ref GetImplementations(traits.Index<TTrait>(), traits);
         }

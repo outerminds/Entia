@@ -27,7 +27,7 @@ namespace Entia.Nodes
                                 new[] { runner },
                                 (group, current) =>
                                 {
-                                    var nodes = group.Append(current).ToArray();
+                                    var nodes = group.Append(current);
                                     var parallel = Node.Parallel(nodes);
                                     var result = world.Analyze(parallel, root);
                                     return result.IsSuccess() ? nodes : group;

@@ -225,5 +225,44 @@ namespace Entia.Core
 
         public static (T[] items, int count) Clone<T>(in this (T[] items, int count) array) =>
             (array.items.Clone() as T[], array.count);
+
+        public static TResult[] Select<TSource, TResult>(this TSource[] source, Func<TSource, TResult> selector)
+        {
+            var results = new TResult[source.Length];
+            for (int i = 0; i < source.Length; i++) results[i] = selector(source[i]);
+            return results;
+        }
+
+        public static TSource[] Prepend<TSource>(this TSource[] source, params TSource[] values)
+        {
+            var results = new TSource[source.Length + values.Length];
+            Array.Copy(values, 0, results, 0, values.Length);
+            Array.Copy(source, 0, results, values.Length, source.Length);
+            return results;
+        }
+
+        public static TSource[] Append<TSource>(this TSource[] source, params TSource[] values) => values.Prepend(source);
+
+        public static (TSource1, TSource2)[] Zip<TSource1, TSource2>(this TSource1[] source1, TSource2[] source2)
+        {
+            var count = Math.Min(source1.Length, source2.Length);
+            var results = new (TSource1, TSource2)[count];
+            for (int i = 0; i < source1.Length; i++) results[i] = (source1[i], source2[i]);
+            return results;
+        }
+
+        public static (TSource1, TSource2)[] Zip<TSource1, TSource2>(this (TSource1[], TSource2[]) source) =>
+            source.Item1.Zip(source.Item2);
+
+        public static (TSource1[], TSource2[]) Unzip<TSource1, TSource2>(this (TSource1, TSource2)[] source)
+        {
+            var results = (new TSource1[source.Length], new TSource2[source.Length]);
+            for (int i = 0; i < source.Length; i++)
+            {
+                results.Item1[i] = source[i].Item1;
+                results.Item2[i] = source[i].Item2;
+            }
+            return results;
+        }
     }
 }

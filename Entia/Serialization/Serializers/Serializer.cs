@@ -10,6 +10,26 @@ using static Entia.Experimental.Serializers.Serializer;
 
 namespace Entia.Experimental.Serializers
 {
+    #region System
+    [Implementation(typeof(bool), typeof(BlittableObject<bool>)), Implementation(typeof(bool[]), typeof(BlittableArray<bool>))]
+    [Implementation(typeof(char), typeof(BlittableObject<char>)), Implementation(typeof(char[]), typeof(BlittableArray<char>))]
+    [Implementation(typeof(byte), typeof(BlittableObject<byte>)), Implementation(typeof(byte[]), typeof(BlittableArray<byte>))]
+    [Implementation(typeof(sbyte), typeof(BlittableObject<sbyte>)), Implementation(typeof(sbyte[]), typeof(BlittableArray<sbyte>))]
+    [Implementation(typeof(ushort), typeof(BlittableObject<ushort>)), Implementation(typeof(ushort[]), typeof(BlittableArray<ushort>))]
+    [Implementation(typeof(short), typeof(BlittableObject<short>)), Implementation(typeof(short[]), typeof(BlittableArray<short>))]
+    [Implementation(typeof(uint), typeof(BlittableObject<uint>)), Implementation(typeof(uint[]), typeof(BlittableArray<uint>))]
+    [Implementation(typeof(int), typeof(BlittableObject<int>)), Implementation(typeof(int[]), typeof(BlittableArray<int>))]
+    [Implementation(typeof(ulong), typeof(BlittableObject<ulong>)), Implementation(typeof(ulong[]), typeof(BlittableArray<ulong>))]
+    [Implementation(typeof(long), typeof(BlittableObject<long>)), Implementation(typeof(long[]), typeof(BlittableArray<long>))]
+    [Implementation(typeof(float), typeof(BlittableObject<float>)), Implementation(typeof(float[]), typeof(BlittableArray<float>))]
+    [Implementation(typeof(double), typeof(BlittableObject<double>)), Implementation(typeof(double[]), typeof(BlittableArray<double>))]
+    [Implementation(typeof(decimal), typeof(BlittableObject<decimal>)), Implementation(typeof(decimal[]), typeof(BlittableArray<decimal>))]
+    [Implementation(typeof(DateTime), typeof(BlittableObject<DateTime>)), Implementation(typeof(DateTime[]), typeof(BlittableArray<DateTime>))]
+    [Implementation(typeof(TimeSpan), typeof(BlittableObject<TimeSpan>)), Implementation(typeof(TimeSpan[]), typeof(BlittableArray<TimeSpan>))]
+    [Implementation(typeof(Guid), typeof(BlittableObject<Guid>)), Implementation(typeof(Guid[]), typeof(BlittableArray<Guid>))]
+    [Implementation(typeof(string), typeof(ConcreteString)), Implementation(typeof(string[]), typeof(ConcreteArray<string>))]
+    [Implementation(typeof(Delegate), typeof(ConcreteDelegate)), Implementation(typeof(Delegate[]), typeof(ConcreteArray<Delegate>))]
+
     [Implementation(typeof(Nullable<>), typeof(ConcreteNullable<>))]
     [Implementation(typeof(List<>), typeof(ConcreteList<>))]
     [Implementation(typeof(Dictionary<,>), typeof(ConcreteDictionary<,>))]
@@ -19,43 +39,24 @@ namespace Entia.Experimental.Serializers
     [Implementation(typeof(ValueTuple<,,,,>), typeof(ConcreteTuple<,,,,>))]
     [Implementation(typeof(ValueTuple<,,,,,>), typeof(ConcreteTuple<,,,,,>))]
     [Implementation(typeof(ValueTuple<,,,,,,>), typeof(ConcreteTuple<,,,,,,>))]
-    public interface ISerializer : ITrait,
-    #region System
-        IImplementation<bool, BlittableObject<bool>>, IImplementation<bool[], BlittableArray<bool>>,
-        IImplementation<char, BlittableObject<char>>, IImplementation<char[], BlittableArray<char>>,
-        IImplementation<byte, BlittableObject<byte>>, IImplementation<byte[], BlittableArray<byte>>,
-        IImplementation<sbyte, BlittableObject<sbyte>>, IImplementation<sbyte[], BlittableArray<sbyte>>,
-        IImplementation<ushort, BlittableObject<ushort>>, IImplementation<ushort[], BlittableArray<ushort>>,
-        IImplementation<short, BlittableObject<short>>, IImplementation<short[], BlittableArray<short>>,
-        IImplementation<uint, BlittableObject<uint>>, IImplementation<uint[], BlittableArray<uint>>,
-        IImplementation<int, BlittableObject<int>>, IImplementation<int[], BlittableArray<int>>,
-        IImplementation<ulong, BlittableObject<ulong>>, IImplementation<ulong[], BlittableArray<ulong>>,
-        IImplementation<long, BlittableObject<long>>, IImplementation<long[], BlittableArray<long>>,
-        IImplementation<float, BlittableObject<float>>, IImplementation<float[], BlittableArray<float>>,
-        IImplementation<double, BlittableObject<double>>, IImplementation<double[], BlittableArray<double>>,
-        IImplementation<decimal, BlittableObject<decimal>>, IImplementation<decimal[], BlittableArray<decimal>>,
-        IImplementation<DateTime, BlittableObject<DateTime>>, IImplementation<DateTime[], BlittableArray<DateTime>>,
-        IImplementation<TimeSpan, BlittableObject<TimeSpan>>, IImplementation<TimeSpan[], BlittableArray<TimeSpan>>,
-        IImplementation<Guid, BlittableObject<Guid>>, IImplementation<Guid[], BlittableArray<Guid>>,
-        IImplementation<string, ConcreteString>, IImplementation<string[], ConcreteArray<string>>,
-        IImplementation<Delegate, ConcreteDelegate>, IImplementation<Delegate[], ConcreteArray<Delegate>>,
     #endregion
 
     #region System.Reflection
-        IImplementation<Assembly, AbstractAssembly>, IImplementation<Assembly[], ConcreteArray<AbstractAssembly>>,
-        IImplementation<Module, AbstractModule>, IImplementation<Module[], ConcreteArray<AbstractModule>>,
-        IImplementation<Type, AbstractType>, IImplementation<Type[], ConcreteArray<AbstractType>>,
-        IImplementation<MethodInfo, AbstractMethod>, IImplementation<MethodInfo[], ConcreteArray<AbstractMethod>>,
-        IImplementation<MemberInfo, AbstractMember>, IImplementation<MemberInfo[], ConcreteArray<AbstractMember>>,
+    [Implementation(typeof(Assembly), typeof(AbstractAssembly)), Implementation(typeof(Assembly[]), typeof(ConcreteArray<AbstractAssembly>))]
+    [Implementation(typeof(Module), typeof(AbstractModule)), Implementation(typeof(Module[]), typeof(ConcreteArray<AbstractModule>))]
+    [Implementation(typeof(Type), typeof(AbstractType)), Implementation(typeof(Type[]), typeof(ConcreteArray<AbstractType>))]
+    [Implementation(typeof(MethodInfo), typeof(AbstractMethod)), Implementation(typeof(MethodInfo[]), typeof(ConcreteArray<AbstractMethod>))]
+    [Implementation(typeof(MemberInfo), typeof(AbstractMember)), Implementation(typeof(MemberInfo[]), typeof(ConcreteArray<AbstractMember>))]
     #endregion
 
     #region Entia.Core
-        IImplementation<IBox, ConcreteBox>,
-        IImplementation<Unit, BlittableObject<Unit>>, IImplementation<Unit[], BlittableArray<Unit>>,
+    [Implementation(typeof(IBox), typeof(ConcreteBox))]
+    [Implementation(typeof(Unit), typeof(BlittableObject<Unit>)), Implementation(typeof(Unit[]), typeof(BlittableArray<Unit>))]
     #endregion
 
-        IImplementation<ISerializable, SerializableObject>,
-        IImplementation<object, Default>
+    [Implementation(typeof(ISerializable), typeof(SerializableObject))]
+    [Implementation(typeof(object), typeof(Default))]
+    public interface ISerializer : ITrait
     {
         bool Serialize(object instance, in SerializeContext context);
         bool Instantiate(out object instance, in DeserializeContext context);

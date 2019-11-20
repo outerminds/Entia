@@ -63,7 +63,7 @@ namespace Entia.Experiment
                 return $"{name} ->   Total: {total} Ratio: {ratio} Average: {average} Minimum: {minimum} Maximum: {maximum}";
             }
 
-            var runners = tests.Prepend(@base).ToArray();
+            var runners = tests.Prepend(@base);
             runners.Shuffle();
             var results = new (string name, Action test, long total, long minimum, long maximum)[runners.Length];
 

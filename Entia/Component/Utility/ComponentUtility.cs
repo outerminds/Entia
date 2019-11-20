@@ -169,7 +169,7 @@ namespace Entia.Modules.Component
         {
             var (concrete, @abstract) = types.Where(ComponentUtility.IsValid).Split(ComponentUtility.IsConcrete);
             var masks = @abstract.Select(type => ComponentUtility.GetConcreteMask(type));
-            if (concrete.Length > 0) masks = masks.Prepend(new BitMask(concrete.Select(component => ComponentUtility.GetMetadata(component).Index).ToArray()));
+            if (concrete.Length > 0) masks = masks.Prepend(new BitMask(concrete.Select(component => ComponentUtility.GetMetadata(component).Index)));
             return masks.ToArray();
         }
 
