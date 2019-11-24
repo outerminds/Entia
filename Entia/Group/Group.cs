@@ -248,7 +248,7 @@ namespace Entia.Modules.Group
             public Split<T> Current => new Split<T>(_segments, _current.segment, _current.index, _count);
             object IEnumerator.Current => Current;
 
-            Segment<T>[] _segments;
+            readonly Segment<T>[] _segments;
             int _size;
             int _count;
             (int segment, int index) _current;
@@ -303,7 +303,7 @@ namespace Entia.Modules.Group
             }
 
             /// <inheritdoc cref="IDisposable.Dispose"/>
-            public void Dispose() => _segments = default;
+            public void Dispose() => this = default;
         }
 
         /// <inheritdoc cref="IGroup.Count"/>

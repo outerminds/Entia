@@ -38,20 +38,6 @@ namespace Entia.Core
             return false;
         }
 
-        public static TResult[] Map<TSource, TResult>(this TSource[] array, Func<TSource, TResult> map)
-        {
-            var results = new TResult[array.Length];
-            for (int i = 0; i < array.Length; i++) results[i] = map(array[i]);
-            return results;
-        }
-
-        public static TResult[] Map<TSource, TResult, TState>(this TSource[] array, in TState state, Func<TSource, TState, TResult> map)
-        {
-            var results = new TResult[array.Length];
-            for (int i = 0; i < array.Length; i++) results[i] = map(array[i], state);
-            return results;
-        }
-
         public static (T[] left, T[] right) Split<T>(this T[] source, int index)
         {
             var left = new T[index];
@@ -230,27 +216,51 @@ namespace Entia.Core
 
         public static TResult[] Select<TSource, TResult>(this TSource[] source, Func<TSource, TResult> selector)
         {
-            var results = new TResult[source.Length];
-            for (int i = 0; i < source.Length; i++) results[i] = selector(source[i]);
-            return results;
+            var target = new TResult[source.Length];
+            for (int i = 0; i < source.Length; i++) target[i] = selector(source[i]);
+            return target;
         }
 
-        public static TSource[] Prepend<TSource>(this TSource[] source, params TSource[] values)
+        public static T[] Prepend<T>(this T[] source, params T[] values)
         {
-            var results = new TSource[source.Length + values.Length];
-            Array.Copy(values, 0, results, 0, values.Length);
-            Array.Copy(source, 0, results, values.Length, source.Length);
-            return results;
+            var target = new T[source.Length + values.Length];
+            Array.Copy(values, 0, target, 0, values.Length);
+            Array.Copy(source, 0, target, values.Length, source.Length);
+            return target;
         }
 
-        public static TSource[] Append<TSource>(this TSource[] source, params TSource[] values) => values.Prepend(source);
+        public static T[] Append<T>(this T[] source, params T[] values) => values.Prepend(source);
+
+        public static T[] Take<T>(this T[] source, int count)
+        {
+            if (count <= 0) return Array.Empty<T>();
+            else if (count >= source.Length) return source;
+            else
+            {
+                var target = new T[count];
+                Array.Copy(source, 0, target, 0, count);
+                return target;
+            }
+        }
+
+        public static T[] Skip<T>(this T[] source, int count)
+        {
+            if (count <= 0) return source;
+            else if (count >= source.Length) return Array.Empty<T>();
+            else
+            {
+                var target = new T[source.Length - count];
+                Array.Copy(source, count, target, 0, target.Length);
+                return target;
+            }
+        }
 
         public static (TSource1, TSource2)[] Zip<TSource1, TSource2>(this TSource1[] source1, TSource2[] source2)
         {
             var count = Math.Min(source1.Length, source2.Length);
-            var results = new (TSource1, TSource2)[count];
-            for (int i = 0; i < source1.Length; i++) results[i] = (source1[i], source2[i]);
-            return results;
+            var target = new (TSource1, TSource2)[count];
+            for (int i = 0; i < source1.Length; i++) target[i] = (source1[i], source2[i]);
+            return target;
         }
 
         public static (TSource1, TSource2)[] Zip<TSource1, TSource2>(this (TSource1[], TSource2[]) source) =>
@@ -258,13 +268,13 @@ namespace Entia.Core
 
         public static (TSource1[], TSource2[]) Unzip<TSource1, TSource2>(this (TSource1, TSource2)[] source)
         {
-            var results = (new TSource1[source.Length], new TSource2[source.Length]);
+            var target = (new TSource1[source.Length], new TSource2[source.Length]);
             for (int i = 0; i < source.Length; i++)
             {
-                results.Item1[i] = source[i].Item1;
-                results.Item2[i] = source[i].Item2;
+                target.Item1[i] = source[i].Item1;
+                target.Item2[i] = source[i].Item2;
             }
-            return results;
+            return target;
         }
     }
 }
