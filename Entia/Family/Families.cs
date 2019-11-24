@@ -20,7 +20,7 @@ namespace Entia.Modules
         struct Relationships
         {
             [Implementation]
-            static Serializer<Relationships> _serializer => Serializer.Map(
+            static readonly Serializer<Relationships> _serializer = Serializer.Map(
                 (in Relationships relationship) =>
                 {
                     var count = relationship.Children.count;
@@ -49,7 +49,7 @@ namespace Entia.Modules
         }
 
         [Implementation]
-        static Serializer<Families> _serializer => Serializer.Object(
+        static readonly Serializer<Families> _serializer = Serializer.Object(
             Serializer.Member.Field((in Families families) => ref families._entities),
             Serializer.Member.Field((in Families families) => ref families._onAdopt),
             Serializer.Member.Field((in Families families) => ref families._onReject),
@@ -80,8 +80,8 @@ namespace Entia.Modules
         public Entity Root(Entity entity)
         {
             ref var relationships = ref GetRelationships(entity, out var success);
-            if (success && relationships.Parent) return Root(relationships.Parent);
-            return entity;
+            if (success) return relationships.Parent ? Root(relationships.Parent) : entity;
+            return default;
         }
 
         [ThreadSafe]
@@ -108,23 +108,18 @@ namespace Entia.Modules
         [ThreadSafe]
         public IEnumerable<Entity> Ancestors(Entity child)
         {
-            var parent = child;
-            while (TryGetRelationships(parent, out var relationships) && relationships.Parent)
-                yield return parent = relationships.Parent;
+            var ancestor = child;
+            while (ancestor = Parent(ancestor)) yield return ancestor;
         }
 
         [ThreadSafe]
         public IEnumerable<Entity> Descendants(Entity parent, From from = From.Top)
         {
-            if (TryGetRelationships(parent, out var relationships))
+            foreach (var child in Children(parent))
             {
-                for (int i = 0; i < relationships.Children.count; i++)
-                {
-                    var child = relationships.Children.items[i];
-                    if (from == From.Top) yield return child;
-                    foreach (var grandchild in Descendants(child, from)) yield return grandchild;
-                    if (from == From.Bottom) yield return child;
-                }
+                if (from == From.Top) yield return child;
+                foreach (var descendant in Descendants(child, from)) yield return descendant;
+                if (from == From.Bottom) yield return child;
             }
         }
 
@@ -144,8 +139,11 @@ namespace Entia.Modules
         public IEnumerable<Entity> Family(Entity entity, From from = From.Top)
         {
             var root = Root(entity);
-            yield return root;
-            foreach (var descendant in Descendants(root, from)) yield return descendant;
+            if (root)
+            {
+                yield return root;
+                foreach (var descendant in Descendants(root, from)) yield return descendant;
+            }
         }
 
         [ThreadSafe]

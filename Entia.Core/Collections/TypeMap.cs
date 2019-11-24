@@ -20,7 +20,7 @@ namespace Entia.Core
             }
             object IEnumerator.Current => Current;
 
-            TypeMap<TBase, TValue> _map;
+            readonly TypeMap<TBase, TValue> _map;
             int _index;
 
             public Enumerator(TypeMap<TBase, TValue> map)
@@ -41,7 +41,7 @@ namespace Entia.Core
             /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
             /// <inheritdoc cref="IDisposable.Dispose"/>
-            public void Dispose() => _map = null;
+            public void Dispose() => this = default;
         }
 
         public struct KeyEnumerator : IEnumerator<Type>
@@ -54,7 +54,7 @@ namespace Entia.Core
             }
             object IEnumerator.Current => Current;
 
-            TypeMap<TBase, TValue> _map;
+            readonly TypeMap<TBase, TValue> _map;
             int _index;
 
             public KeyEnumerator(TypeMap<TBase, TValue> map)
@@ -75,7 +75,7 @@ namespace Entia.Core
             /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
             /// <inheritdoc cref="IDisposable.Dispose"/>
-            public void Dispose() => _map = null;
+            public void Dispose() => this = default;
         }
 
         public readonly struct KeyEnumerable : IEnumerable<KeyEnumerator, Type>
@@ -100,7 +100,7 @@ namespace Entia.Core
             TValue IEnumerator<TValue>.Current => Current;
             object IEnumerator.Current => Current;
 
-            TypeMap<TBase, TValue> _map;
+            readonly TypeMap<TBase, TValue> _map;
             int _index;
 
             public ValueEnumerator(TypeMap<TBase, TValue> map)
@@ -122,7 +122,7 @@ namespace Entia.Core
             /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
             /// <inheritdoc cref="IDisposable.Dispose"/>
-            public void Dispose() => _map = null;
+            public void Dispose() => this = default;
         }
 
         public readonly struct ValueEnumerable : IEnumerable<ValueEnumerator, TValue>

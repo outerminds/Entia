@@ -13,7 +13,7 @@ namespace Entia.Core
             T IEnumerator<T>.Current => _heap._items[_index];
             object IEnumerator.Current => Current;
 
-            Heap<T> _heap;
+            readonly Heap<T> _heap;
             int _index;
 
             public Enumerator(Heap<T> heap)
@@ -27,7 +27,7 @@ namespace Entia.Core
             /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
             /// <inheritdoc cref="IDisposable.Dispose"/>
-            public void Dispose() => _heap = null;
+            public void Dispose() => this = default;
         }
 
         public int Count { get; private set; }

@@ -15,7 +15,7 @@ namespace Entia.Core
             T IEnumerator<T>.Current => Current;
             object IEnumerator.Current => Current;
 
-            SwissList<T> _list;
+            readonly SwissList<T> _list;
             int _index;
 
             public Enumerator(SwissList<T> list)
@@ -37,7 +37,7 @@ namespace Entia.Core
             /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
             /// <inheritdoc cref="IDisposable.Dispose"/>
-            public void Dispose() => _list = null;
+            public void Dispose() => this = default;
         }
 
         public int Count => _items.count - _free.count;

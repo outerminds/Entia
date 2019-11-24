@@ -31,7 +31,7 @@ namespace Entia.Modules
             }
             object IEnumerator.Current => Current;
 
-            Entities _entities;
+            readonly Entities _entities;
             int _index;
 
             /// <summary>
@@ -56,7 +56,7 @@ namespace Entia.Modules
             /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
             /// <inheritdoc cref="IDisposable.Dispose"/>
-            public void Dispose() => _entities = null;
+            public void Dispose() => this = default;
         }
 
         struct Data

@@ -23,10 +23,10 @@ namespace Entia.Core
                 T IEnumerator<T>.Current => Current;
                 object IEnumerator.Current => Current;
 
-                Read _slice;
+                readonly Read _slice;
                 int _index;
 
-                public Enumerator(Read slice, int index = -1)
+                public Enumerator(in Read slice, int index = -1)
                 {
                     _slice = slice;
                     _index = index;
@@ -36,7 +36,7 @@ namespace Entia.Core
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public bool MoveNext() => ++_index < _slice.Count;
                 /// <inheritdoc cref="IDisposable.Dispose"/>
-                public void Dispose() => _slice = default;
+                public void Dispose() => this = default;
                 /// <inheritdoc cref="IEnumerator.Reset"/>
                 public void Reset() => _index = -1;
             }
@@ -86,10 +86,10 @@ namespace Entia.Core
             T IEnumerator<T>.Current => Current;
             object IEnumerator.Current => Current;
 
-            Slice<T> _slice;
+            readonly Slice<T> _slice;
             int _index;
 
-            public Enumerator(Slice<T> slice, int index = -1)
+            public Enumerator(in Slice<T> slice, int index = -1)
             {
                 _slice = slice;
                 _index = index;
@@ -99,7 +99,7 @@ namespace Entia.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext() => ++_index < _slice.Count;
             /// <inheritdoc cref="IDisposable.Dispose"/>
-            public void Dispose() => _slice = default;
+            public void Dispose() => this = default;
             /// <inheritdoc cref="IEnumerator.Reset"/>
             public void Reset() => _index = -1;
         }
