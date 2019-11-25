@@ -20,7 +20,7 @@ namespace Entia.Modules
         struct Relationships
         {
             [Implementation]
-            static readonly Serializer<Relationships> _serializer = Serializer.Map(
+            static Serializer<Relationships> _serializer => Serializer.Map(
                 (in Relationships relationship) =>
                 {
                     var count = relationship.Children.count;
@@ -49,7 +49,7 @@ namespace Entia.Modules
         }
 
         [Implementation]
-        static readonly Serializer<Families> _serializer = Serializer.Object(
+        static Serializer<Families> _serializer => Serializer.Object(
             Serializer.Member.Field((in Families families) => ref families._entities),
             Serializer.Member.Field((in Families families) => ref families._onAdopt),
             Serializer.Member.Field((in Families families) => ref families._onReject),

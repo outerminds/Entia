@@ -57,7 +57,7 @@ namespace Entia.Modules.Group
     /// Queries and caches all entities that satisfy the query of type <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T">The query type.</typeparam>
-    public sealed partial class Group<T> : IGroup, IEnumerable<Group<T>.Enumerator, T> where T : struct, IQueryable
+    public sealed class Group<T> : IGroup, IEnumerable<Group<T>.Enumerator, T> where T : struct, IQueryable
     {
         /// <summary>
         /// An enumerator that enumerates over the group items.
@@ -281,7 +281,6 @@ namespace Entia.Modules.Group
                     var minimum = Math.Min(_size - _count, remaining);
                     _count += minimum;
 
-                    // NOTE: '_clamped' must never go over '_count'
                     if (_count == _size)
                     {
                         _next.index += minimum;
