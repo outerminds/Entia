@@ -144,6 +144,20 @@ namespace Entia.Core
             return false;
         }
 
+        public static Array Cast(this Array array, Type type)
+        {
+            var target = Array.CreateInstance(type, array.Length);
+            Array.Copy(array, target, array.Length);
+            return target;
+        }
+
+        public static T[] Cast<T>(this Array array)
+        {
+            var target = new T[array.Length];
+            Array.Copy(array, target, array.Length);
+            return target;
+        }
+
         public static bool Contains<T>(this T[] array, in T item) => Array.IndexOf(array, item, 0, array.Length) >= 0;
         public static bool Contains<T>(in this (T[] items, int count) array, in T item) => array.IndexOf(item) >= 0;
         public static bool Contains<T>(in this (Array items, int count) array, in T item) => array.IndexOf(item) >= 0;

@@ -58,7 +58,7 @@ namespace Entia.Modules.Message
         public bool Clear() => _reaction != Concurrent.Mutate(ref _reaction, _empty);
 
         public IEnumerator<Delegate> GetEnumerator() =>
-            _reaction.GetInvocationList().Cast<Delegate>().GetEnumerator();
+            _reaction.GetInvocationList().AsEnumerable().GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         bool IReaction.Add(Delegate reaction) => reaction is InAction<T> action && Add(action);
         bool IReaction.Remove(Delegate reaction) => reaction is InAction<T> action && Remove(action);

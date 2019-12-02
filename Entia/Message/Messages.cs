@@ -189,7 +189,7 @@ namespace Entia.Modules
         }
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
-        public IEnumerator<IEmitter> GetEnumerator() => _emitters.Read(emitters => emitters.Values.ToArray()).Cast<IEmitter>().GetEnumerator();
+        public IEnumerator<IEmitter> GetEnumerator() => _emitters.Read(emitters => emitters.Values.ToArray()).AsEnumerable().GetEnumerator();
         IEnumerator<IEmitter> IEnumerable<IEmitter>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
