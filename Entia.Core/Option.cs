@@ -70,8 +70,8 @@ namespace Entia.Core
         public static implicit operator Option<T>(in None none) => new Option<T>(Option.Tags.None, default);
         public static implicit operator Option<Unit>(in Option<T> option) => new Option<Unit>(option.Tag, default);
         public static implicit operator bool(in Option<T> option) => option.Tag == Option.Tags.Some;
-        public static explicit operator Some<T>(in Option<T> option) => option.Tag == Option.Tags.Some ? Option.Some(option._value) : throw new InvalidCastException();
-        public static explicit operator None(in Option<T> option) => option.Tag == Option.Tags.None ? Option.None() : throw new InvalidCastException();
+        public static explicit operator Some<T>(in Option<T> option) => option.Tag == Option.Tags.Some ? new Some<T>(option._value) : throw new InvalidCastException();
+        public static explicit operator None(in Option<T> option) => option.Tag == Option.Tags.None ? new None() : throw new InvalidCastException();
         public static bool operator ==(in Option<T> left, in T right) => left.TryValue(out var value) && EqualityComparer<T>.Default.Equals(value, right);
         public static bool operator !=(in Option<T> left, in T right) => !(left == right);
         public static bool operator ==(in T left, in Option<T> right) => right == left;
@@ -91,9 +91,7 @@ namespace Entia.Core
 
         readonly T _value;
 
-        public Option<TTo> Cast<TTo>() => this.Bind(value =>
-            value is TTo casted ? Option.Some(casted).AsOption() :
-            Option.None());
+        public Option<TTo> Cast<TTo>() => this.Bind(value => value is TTo casted ? Option.From(casted) : Option.None());
 
         Option(Option.Tags tag, in T value)
         {
@@ -116,12 +114,10 @@ namespace Entia.Core
 
         public override string ToString()
         {
-            switch (Tag)
-            {
-                case Option.Tags.Some: return ((Some<T>)this).ToString();
-                case Option.Tags.None: return ((None)this).ToString();
-                default: return base.ToString();
-            }
+            return
+                this.TrySome(out var some) ? some.ToString() :
+                this.IsNone() ? Option.None().ToString() :
+                base.ToString();
         }
     }
 
@@ -129,11 +125,11 @@ namespace Entia.Core
     {
         public enum Tags : byte { None, Some }
 
-        public static Some<T> Some<T>(in T value) => new Some<T>(value);
+        public static Some<T> Some<T>(in T value) where T : struct => new Some<T>(value);
         public static Some<Unit> Some() => new Some<Unit>(default);
         public static None None() => new None();
         public static Option<T> From<T>(in T value) => value;
-        public static Option<T> From<T>(in T? value) where T : struct => value.HasValue ? Some(value.Value).AsOption() : None();
+        public static Option<T> From<T>(in T? value) where T : struct => value.HasValue ? From(value.Value) : None();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Try<T>(Func<T> @try)
@@ -433,7 +429,7 @@ namespace Entia.Core
             return option;
         }
 
-        public static Option<T> Cast<T>(object value) => Some(value).AsOption().Cast<T>();
-        public static Option<TOut> Cast<TIn, TOut>(in TIn value) => Some(value).AsOption().Cast<TOut>();
+        public static Option<T> Cast<T>(object value) => From(value).Cast<T>();
+        public static Option<TOut> Cast<TIn, TOut>(in TIn value) => From(value).Cast<TOut>();
     }
 }

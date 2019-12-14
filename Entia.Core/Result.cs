@@ -91,7 +91,7 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Result<T>(in Success<T> success) => new Result<T>(Result.Tags.Success, success.Value, null);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Option<T>(in Result<T> result) => result.TryValue(out var value) ? Option.Some(value).AsOption() : Option.None();
+        public static implicit operator Option<T>(in Result<T> result) => result.TryValue(out var value) ? Option.From(value) : Option.None();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Result<T>(in Option<T> option) => option.TryValue(out var value) ? Result.Success(value).AsResult() : Result.Failure();
 

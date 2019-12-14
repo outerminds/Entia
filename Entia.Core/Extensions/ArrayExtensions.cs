@@ -158,6 +158,21 @@ namespace Entia.Core
             return target;
         }
 
+        public static void Iterate<T>(this T[] array, Action<T> action)
+        {
+            for (int i = 0; i < array.Length; i++) action(array[i]);
+        }
+
+        public static void Iterate<T>(this T[] array, InAction<T> action)
+        {
+            for (int i = 0; i < array.Length; i++) action(array[i]);
+        }
+
+        public static void Iterate<T>(this T[] array, RefAction<T> action)
+        {
+            for (int i = 0; i < array.Length; i++) action(ref array[i]);
+        }
+
         public static bool Contains<T>(this T[] array, in T item) => Array.IndexOf(array, item, 0, array.Length) >= 0;
         public static bool Contains<T>(in this (T[] items, int count) array, in T item) => array.IndexOf(item) >= 0;
         public static bool Contains<T>(in this (Array items, int count) array, in T item) => array.IndexOf(item) >= 0;
