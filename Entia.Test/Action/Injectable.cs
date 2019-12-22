@@ -20,6 +20,8 @@ namespace Entia.Test
         public override Property Check(World value, Model model) =>
             _result.IsSuccess().Label("result.IsSuccess()")
             .And((_result.TryValue(out var current) && current.Some().SequenceEqual(current)).Label("result.TryValue()"));
+
+        public override string ToString() => $"{GetType().Format()}({string.Join(", ", _types.AsEnumerable())}, {_result})";
     }
 
     public sealed class Inject<T> : Action<World, Model> where T : IInjectable

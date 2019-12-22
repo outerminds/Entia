@@ -5,10 +5,6 @@ using System.Diagnostics;
 using Entia.Core;
 using Entia.Modules;
 using Entia.Modules.Family;
-using System.Reflection;
-using Entia.Experimental.Boba.Templates;
-using System.Runtime.Serialization;
-using Entia.Experimental.Instantiators;
 
 namespace Entia.Experimental.Boba
 {
@@ -165,8 +161,10 @@ namespace Entia.Experimental.Boba
 
     namespace Templates
     {
+        // - only terminal nodes should hold values?
         public interface ITemplate : IComponent { }
 
+        // - terminal node that holds a value
         public struct Primitive : ITemplate
         {
             [Implementation]
@@ -182,14 +180,20 @@ namespace Entia.Experimental.Boba
             public object Value;
         }
 
-        public struct Array : ITemplate
+        // - children represent the ordered items
+        public struct Array : ITemplate { }
+        // - children represent the members of the object
+        public struct Object : ITemplate { }
+        // - has 2 children, 1 for the key, 1 for the value
+        public struct Member : ITemplate { }
+        // - has 2 children, 1 for the type, 1 for the value
+        // - removes the need for other nodes to hold their type
+        // - type representation can have many forms (string, array of subtypes)
+        public struct Abstract : ITemplate { }
+        // - terminal node that holds a reference to another node
+        public struct Reference : ITemplate
         {
-            public Type Element;
-        }
-
-        public struct Object : ITemplate
-        {
-            public Type Type;
+            public Entity Value;
         }
     }
 

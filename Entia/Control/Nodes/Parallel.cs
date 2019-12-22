@@ -57,14 +57,14 @@ namespace Entia.Nodes
         sealed class Analyzer : Analyzer<Parallel>
         {
             Result<Unit> Unknown(Node node, IDependency[] dependencies) =>
-                dependencies.OfType<Unknown>().Select(_ => Result.Failure($"'{node}' has unknown dependencies.")).All();
+                dependencies.OfType<Unknown>().Select(_ => Result.Failure($"'{node}' has unknown dependencies.").AsResult()).All();
 
             Result<Unit> WriteWrite((Node node, IDependency[] dependencies) left, (Node node, IDependency[] dependencies) right)
             {
                 var writes = right.dependencies.Writes().ToArray();
                 return left.dependencies.Writes()
                     .Where(type => writes.Any(write => type.Is(write, true, true)))
-                    .Select(type => Result.Failure($"'{left.node}' and '{right.node}' both have a write dependency on type '{type.FullFormat()}'."))
+                    .Select(type => Result.Failure($"'{left.node}' and '{right.node}' both have a write dependency on type '{type.FullFormat()}'.").AsResult())
                     .All();
             }
 
@@ -73,7 +73,7 @@ namespace Entia.Nodes
                 var reads = right.dependencies.Reads().ToArray();
                 return left.dependencies.Writes()
                     .Where(type => reads.Any(read => type.Is(read, true, true)))
-                    .Select(type => Result.Failure($"'{left.node}' has a write dependency on type '{type.FullFormat()}' and '{right.node}' reads from it."))
+                    .Select(type => Result.Failure($"'{left.node}' has a write dependency on type '{type.FullFormat()}' and '{right.node}' reads from it.").AsResult())
                     .All();
             }
 

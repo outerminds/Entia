@@ -28,8 +28,7 @@ namespace Entia.Injection
 
         public Result<object> Inject(Type injectable, MemberInfo member = null) => World.Container.Get<IInjector>(injectable)
             .Select(With(member ?? injectable), (injector, state) => injector.Inject(state).As(injectable))
-            .Choose()
-            .FirstOrFailure();
+            .Any();
         public Context With(MemberInfo member = null) => new Context(member ?? Member, World);
     }
 

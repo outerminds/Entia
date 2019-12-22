@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using Entia.Core;
-using Entia.Modules.Serialization;
 using Entia.Experimental.Serialization;
 
 // TODO: writer serializers

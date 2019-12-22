@@ -61,7 +61,7 @@ namespace Entia.Modules
         readonly Emitter<OnReject> _onReject;
         Relationships[] _relationships;
 
-        public Families(Messages messages, Entities entities) : this(messages, entities, new Relationships[entities.Count])
+        public Families(Messages messages, Entities entities) : this(messages, entities, new Relationships[entities.Capacity])
         {
             foreach (var entity in entities) Initialize(entity);
         }

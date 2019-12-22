@@ -158,7 +158,11 @@ namespace Entia.Experiment
         }
 
         [Serializable]
-        public class Cyclic { public Cyclic A; }
+        public class Cyclic
+        {
+            public Cyclic This;
+            public Cyclic() { This = this; }
+        }
         public struct BlittableA { public int A, B; }
         public struct NonBlittableA { public int A; public string B; }
 
@@ -177,7 +181,7 @@ namespace Entia.Experiment
             success = world.Deserialize(bytes, out array);
 
             var cycle = new Cyclic();
-            cycle.A = cycle;
+            cycle.This = cycle;
             success = world.Serialize(cycle, out bytes);
             success = world.Deserialize(bytes, out cycle);
 
@@ -229,8 +233,8 @@ namespace Entia.Experiment
             value[new Position[size]] = new Velocity[size];
             value[new List<Mass>(new Mass[size])] = new List<Lifetime>(new Lifetime[size]);
             var cyclic = new Cyclic();
-            cyclic.A = new Cyclic { A = new Cyclic { A = cyclic } };
-            value[cyclic] = cyclic.A;
+            cyclic.This = new Cyclic { This = new Cyclic { This = cyclic } };
+            value[cyclic] = cyclic.This;
             value[new string[] { "Boba", "Fett", "Jango" }] = new byte[512];
 
             var values = new Dictionary<Position, Velocity>();
@@ -307,9 +311,34 @@ namespace Entia.Experiment
             var ancestors = families.Ancestors(child).ToArray();
         }
 
+        static void TestJson()
+        {
+            var json1 = File.ReadAllText(@"C:\Projects\Ululab\Numbers\Assets\Resources\Creative\Levels\ARCHIVE~11_KIDS_OEP_A.json");
+            var node1 = Json.Parse(json1).Or(Json.Node.Null);
+            var json2 = Json.Serialize(node1, Json.Format.Indented);
+            var node2 = Json.Parse(json2).Or(Json.Node.Null);
+            var json3 = Json.Serialize(node1, Json.Format.Compact);
+            var node3 = Json.Parse(json3).Or(Json.Node.Null);
+
+            var json4 = Json.Serialize(new Cyclic());
+            var node4 = Json.Parse(json4).Or(Json.Node.Null);
+            var value4 = Json.Deserialize<Cyclic>(node4);
+
+            var json5 = Json.Serialize<object>(new Dictionary<object, object>
+            {
+                { 1, "2" },
+                { "3", null },
+                { 4, "5" },
+                { DateTime.Now, TimeSpan.MaxValue }
+            });
+            var node5 = Json.Parse(json5).Or(Json.Node.Null);
+            var value5 = Json.Deserialize<Dictionary<object, object>>(node5);
+        }
+
         static void Main()
         {
-            TestFamilies();
+            TestJson();
+            // TestFamilies();
             // Serializer();
             // TypeMapTest.Benchmark();
             // CompareSerializers();

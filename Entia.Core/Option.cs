@@ -13,8 +13,6 @@ namespace Entia.Core
 
     public readonly struct Some<T> : IOption, IEquatable<Some<T>>
     {
-        public static readonly Some<T> Empty = new Some<T>(default);
-
         public static bool operator ==(in Some<T> left, in T right) => EqualityComparer<T>.Default.Equals(left.Value, right);
         public static bool operator !=(in Some<T> left, in T right) => !(left == right);
         public static bool operator ==(in T left, in Some<T> right) => right == left;
@@ -91,14 +89,13 @@ namespace Entia.Core
 
         readonly T _value;
 
-        public Option<TTo> Cast<TTo>() => this.Bind(value => value is TTo casted ? Option.From(casted) : Option.None());
-
         Option(Option.Tags tag, in T value)
         {
             Tag = tag;
             _value = value;
         }
 
+        public Option<TTo> Cast<TTo>() => this.Bind(value => value is TTo casted ? Option.From(casted) : Option.None());
         public bool Equals(Option<T> other) => this == other;
         public bool Equals(T other) => this == other;
         public bool Equals(Some<T> other) => this == other;
@@ -199,10 +196,7 @@ namespace Entia.Core
         public static Option<T> Filter<T>(in this Some<T> some, Func<T, bool> filter) => filter(some.Value) ? some.AsOption() : None();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Filter<T, TState>(in this Some<T> some, in TState state, Func<T, TState, bool> filter) => filter(some.Value, state) ? some.AsOption() : None();
-
-        public static Some<T> Flatten<T>(in this Some<Some<T>> some) => some.Value;
-        public static None Flatten(in this Some<None> some) => some.Value;
-        public static Option<T> Flatten<T>(in this Some<Option<T>> some) => some.Value;
+        public static T Flatten<T>(in this Some<T> some) where T : IOption => some.Value;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<TOut> Bind<TIn, TOut>(in this Some<TIn> some, Func<TIn, Option<TOut>> bind) => bind(some.Value);
@@ -228,58 +222,60 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Or<T, TState>(in this Option<T> option, in TState state, Func<TState, T> provide) =>
             option.TryValue(out var current) ? current : provide(state);
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T Or<T>(in this Option<T> option, Func<T> provide) => option.TryValue(out var current) ? current : provide();
+        public static T Or<T>(in this Option<T> option, Func<T> provide) =>
+            option.TryValue(out var current) ? current : provide();
 
         public static T Or<T>(in this Option<T> option, in T value) => option.TryValue(out var current) ? current : value;
+        public static Option<T> Or<T>(in this Option<T> option1, in Option<T> option2) => option1.TryValue(out var value1) ? value1 : option2;
+        public static Option<T> Or<T>(in this Option<T> option1, in Option<T> option2, in Option<T> option3) => option1.Or(option2).Or(option3);
+        public static Option<T> Or<T>(in this Option<T> option1, in Option<T> option2, in Option<T> option3, in Option<T> option4) => option1.Or(option2).Or(option3).Or(option4);
+        public static Option<T> Or<T>(in this Option<T> option1, in Option<T> option2, in Option<T> option3, in Option<T> option4, in Option<T> option5) => option1.Or(option2).Or(option3).Or(option4).Or(option5);
+
         public static T OrDefault<T>(in this Option<T> option) => option.Or(default(T));
-        public static Some<Unit> Ignore<T>(in this Some<T> some) => some;
-        public static Option<Unit> Ignore<T>(in this Option<T> option) => option;
+        public static Some<Unit> Ignore<T>(in this Some<T> some) => some.Map(_ => default(Unit));
         public static Option<object> Box<T>(this T option) where T : IOption => option.Cast<object>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<TOut> Map<TIn, TOut>(in this Option<TIn> option, Func<TIn, TOut> map)
         {
             if (option.TryValue(out var value)) return map(value);
-            else if (option.IsNone()) return None();
-            else return None();
+            return None();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<TOut> Map<TIn, TOut, TState>(in this Option<TIn> option, in TState state, Func<TIn, TState, TOut> map)
         {
             if (option.TryValue(out var value)) return map(value, state);
-            else if (option.IsNone()) return None();
-            else return None();
+            return None();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Filter<T>(in this Option<T> option, Func<T, bool> filter)
         {
             if (option.TryValue(out var value)) return filter(value) ? option : None();
-            else return None();
+            return None();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Filter<T, TState>(in this Option<T> option, in TState state, Func<T, TState, bool> filter)
         {
             if (option.TryValue(out var value)) return filter(value, state) ? option : None();
-            else return None();
+            return None();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TOut Fold<TIn, TOut>(in this Option<TIn> option, in TOut seed, Func<TOut, TIn, TOut> fold)
         {
             if (option.TryValue(out var value)) return fold(seed, value);
-            else return seed;
+            return seed;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TOut Fold<TIn, TOut, TState>(in this Option<TIn> option, in TOut seed, in TState state, Func<TOut, TIn, TState, TOut> fold)
         {
             if (option.TryValue(out var value)) return fold(seed, value, state);
-            else return seed;
+            return seed;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -287,25 +283,80 @@ namespace Entia.Core
             option.TryValue(out var value) ? some(value) : none();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T> Match<T>(in this Option<T> option, Action<T> some, Action none)
+        public static void Match<T>(in this Option<T> option, Action<T> some, Action none)
         {
             if (option.TryValue(out var value)) some(value);
             else none();
-            return option;
         }
 
-        public static Option<(T1 value1, T2 value2)> And<T1, T2>(in this Option<T1> left, in Option<T2> right) =>
-            All(left, right);
-        public static Option<(T1 value1, T2 value2, T3 value3)> And<T1, T2, T3>(in this Option<(T1 value1, T2 value2)> left, in Option<T3> right) =>
-            All(left, right).Map(pair => (pair.value1.value1, pair.value1.value2, pair.value2));
-        public static Option<(T1 value1, T2 value2, T3 value3, T4 value4)> And<T1, T2, T3, T4>(in this Option<(T1 value1, T2 value2, T3 value3)> left, in Option<T4> right) =>
-            All(left, right).Map(pair => (pair.value1.value1, pair.value1.value2, pair.value1.value3, pair.value2));
-        public static Option<(T1 value1, T2 value2, T3 value3, T4 value4, T5 value5)> And<T1, T2, T3, T4, T5>(in this Option<(T1 value1, T2 value2, T3 value3, T4 value4)> left, in Option<T5> right) =>
-            All(left, right).Map(pair => (pair.value1.value1, pair.value1.value2, pair.value1.value3, pair.value1.value4, pair.value2));
-        public static Option<T1> Left<T1, T2>(in this Option<T1> left, in Option<T2> right) =>
-            All(left, right).Map(pair => pair.value1);
-        public static Option<T2> Right<T1, T2>(in this Option<T1> left, in Option<T2> right) =>
-            All(left, right).Map(pair => pair.value2);
+        public static Option<(T1, T2)> And<T1, T2>(in this Option<T1> left, in T2 right)
+        {
+            if (left.TryValue(out var value1)) return (value1, right);
+            return None();
+        }
+
+        public static Option<(T1, T2)> And<T1, T2>(in this Option<T1> left, in Option<T2> right)
+        {
+            if (left.TryValue(out var value1) && right.TryValue(out var value2)) return (value1, value2);
+            return None();
+        }
+
+        public static Option<(T1, T2, T3)> And<T1, T2, T3>(in this Option<(T1, T2)> left, in T3 right)
+        {
+            if (left.TryValue(out var value1)) return (value1.Item1, value1.Item2, right);
+            return None();
+        }
+
+        public static Option<(T1, T2, T3)> And<T1, T2, T3>(in this Option<(T1, T2)> left, in Option<T3> right)
+        {
+            if (left.TryValue(out var value1) && right.TryValue(out var value2)) return (value1.Item1, value1.Item2, value2);
+            return None();
+        }
+
+        public static Option<(T1, T2, T3, T4)> And<T1, T2, T3, T4>(in this Option<(T1, T2, T3)> left, in T4 right)
+        {
+            if (left.TryValue(out var value1)) return (value1.Item1, value1.Item2, value1.Item3, right);
+            return None();
+        }
+
+        public static Option<(T1, T2, T3, T4)> And<T1, T2, T3, T4>(in this Option<(T1, T2, T3)> left, in Option<T4> right)
+        {
+            if (left.TryValue(out var value1) && right.TryValue(out var value2)) return (value1.Item1, value1.Item2, value1.Item3, value2);
+            return None();
+        }
+
+        public static Option<(T1, T2, T3, T4, T5)> And<T1, T2, T3, T4, T5>(in this Option<(T1, T2, T3, T4)> left, in T5 right)
+        {
+            if (left.TryValue(out var value1)) return (value1.Item1, value1.Item2, value1.Item3, value1.Item4, right);
+            return None();
+        }
+
+        public static Option<(T1, T2, T3, T4, T5)> And<T1, T2, T3, T4, T5>(in this Option<(T1, T2, T3, T4)> left, in Option<T5> right)
+        {
+            if (left.TryValue(out var value1) && right.TryValue(out var value2)) return (value1.Item1, value1.Item2, value1.Item3, value1.Item4, value2);
+            return None();
+        }
+
+        public static Option<(T1, T2, T3)> And<T1, T2, T3>(in this Option<T1> option1, in Option<T2> option2, in Option<T3> option3)
+        {
+            if (option1.TryValue(out var value1) && option2.TryValue(out var value2) && option3.TryValue(out var value3)) return (value1, value2, value3);
+            return None();
+        }
+
+        public static Option<(T1, T2, T3, T4)> And<T1, T2, T3, T4>(in this Option<T1> option1, in Option<T2> option2, in Option<T3> option3, in Option<T4> option4)
+        {
+            if (option1.TryValue(out var value1) && option2.TryValue(out var value2) && option3.TryValue(out var value3) && option4.TryValue(out var value4)) return (value1, value2, value3, value4);
+            return None();
+        }
+
+        public static Option<(T1, T2, T3, T4, T5)> And<T1, T2, T3, T4, T5>(in this Option<T1> option1, in Option<T2> option2, in Option<T3> option3, in Option<T4> option4, in Option<T5> option5)
+        {
+            if (option1.TryValue(out var value1) && option2.TryValue(out var value2) && option3.TryValue(out var value3) && option4.TryValue(out var value4) && option5.TryValue(out var value5)) return (value1, value2, value3, value4, value5);
+            return None();
+        }
+
+        public static Option<T1> Left<T1, T2>(in this Option<(T1, T2)> option) => option.Map(pair => pair.Item1);
+        public static Option<T2> Right<T1, T2>(in this Option<(T1, T2)> option) => option.Map(pair => pair.Item2);
 
         public static Option<TOut> Return<TIn, TOut>(in this Option<TIn> option, TOut value)
         {
@@ -342,30 +393,6 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Recover<T>(in this Option<T> option, Func<Option<T>> recover) => option.IsNone() ? recover() : option;
 
-        public static Option<(T1 value1, T2 value2)> All<T1, T2>(in Option<T1> option1, in Option<T2> option2)
-        {
-            if (option1.TryValue(out var value1) && option2.TryValue(out var value2)) return (value1, value2);
-            return None();
-        }
-
-        public static Option<(T1 value1, T2 value2, T3 value3)> All<T1, T2, T3>(in Option<T1> option1, in Option<T2> option2, in Option<T3> option3)
-        {
-            if (option1.TryValue(out var value1) && option2.TryValue(out var value2) && option3.TryValue(out var value3)) return (value1, value2, value3);
-            return None();
-        }
-
-        public static Option<(T1 value1, T2 value2, T3 value3, T4 value4)> All<T1, T2, T3, T4>(in Option<T1> option1, in Option<T2> option2, in Option<T3> option3, in Option<T4> option4)
-        {
-            if (option1.TryValue(out var value1) && option2.TryValue(out var value2) && option3.TryValue(out var value3) && option4.TryValue(out var value4)) return (value1, value2, value3, value4);
-            return None();
-        }
-
-        public static Option<(T1 value1, T2 value2, T3 value3, T4 value4, T5 value5)> All<T1, T2, T3, T4, T5>(in Option<T1> option1, in Option<T2> option2, in Option<T3> option3, in Option<T4> option4, in Option<T5> option5)
-        {
-            if (option1.TryValue(out var value1) && option2.TryValue(out var value2) && option3.TryValue(out var value3) && option4.TryValue(out var value4) && option5.TryValue(out var value5)) return (value1, value2, value3, value4, value5);
-            return None();
-        }
-
         public static Option<T[]> All<T>(params Option<T>[] options)
         {
             var values = new T[options.Length];
@@ -380,12 +407,11 @@ namespace Entia.Core
 
         public static Option<T[]> All<T>(this IEnumerable<Option<T>> options) => All(options.ToArray());
         public static Option<Unit> All(this IEnumerable<Option<Unit>> options) => options.All<Unit>().Return(default(Unit));
-        public static Option<Unit> All(this IEnumerable<None> nones) => nones.Select(none => none.AsOption()).All();
         public static Option<T> Any<T>(this Option<T>[] options) => options.AsEnumerable().Any();
 
         public static Option<T> Any<T>(this IEnumerable<Option<T>> options)
         {
-            foreach (var option in options) if (option.TrySome(out var some)) return some;
+            foreach (var option in options) if (option.TryValue(out var value)) return value;
             return None();
         }
 

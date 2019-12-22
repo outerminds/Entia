@@ -135,5 +135,32 @@ namespace Entia.Core
             for (int i = 0; i < array.count; i++) hash ^= comparer.GetHashCode(array.items[i]);
             return hash;
         }
+
+        public static T[] Concatenate<T>(T[] left, T[] right)
+        {
+            var count = left.Length + right.Length;
+            if (count == 0) return Array.Empty<T>();
+            var results = new T[count];
+            Array.Copy(left, 0, results, 0, left.Length);
+            Array.Copy(right, 0, results, left.Length, right.Length);
+            return results;
+        }
+
+        public static T[] Concatenate<T>(params T[][] arrays)
+        {
+            var count = 0;
+            for (int i = 0; i < arrays.Length; i++) count += arrays[i].Length;
+            if (count == 0) return Array.Empty<T>();
+
+            var results = new T[count];
+            var index = 0;
+            for (int i = 0; i < arrays.Length; i++)
+            {
+                var array = arrays[i];
+                Array.Copy(array, 0, results, index, array.Length);
+                index += array.Length;
+            }
+            return results;
+        }
     }
 }

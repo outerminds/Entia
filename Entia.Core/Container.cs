@@ -39,7 +39,7 @@ namespace Entia.Core
         }
     }
 
-    public sealed class Container
+    public sealed class Container : IEnumerable<(Type type, Type trait, ITrait implementation)>
     {
         public readonly struct Implementations<T> : IEnumerable<Implementations<T>.Enumerator, T> where T : ITrait
         {
@@ -300,15 +300,17 @@ namespace Entia.Core
             ArrayUtility.Add(ref GetImplementations<T, TTrait>(), implementation);
         public void Add<TTrait>(Type type, TTrait implementation) where TTrait : ITrait =>
             ArrayUtility.Add(ref GetImplementations<TTrait>(type), implementation);
-        public void Add(Type type, ITrait implementation) =>
-            ArrayUtility.Add(ref GetImplementations(type, implementation.GetType()), implementation);
+        public void Add(Type type, ITrait implementation) => Add(type, implementation.GetType(), implementation);
+        public void Add(Type type, Type trait, ITrait implementation) =>
+            ArrayUtility.Add(ref GetImplementations(type, trait), implementation);
 
         public bool Remove<T, TTrait>(TTrait implementation) where TTrait : ITrait =>
             ArrayUtility.Remove(ref GetImplementations<T, TTrait>(), implementation);
         public bool Remove<TTrait>(Type type, TTrait implementation) where TTrait : ITrait =>
             ArrayUtility.Remove(ref GetImplementations<TTrait>(type), implementation);
-        public bool Remove(Type type, ITrait implementation) =>
-            ArrayUtility.Remove(ref GetImplementations(type, implementation.GetType()), implementation);
+        public bool Remove(Type type, ITrait implementation) => Remove(type, implementation.GetType(), implementation);
+        public bool Remove(Type type, Type trait, ITrait implementation) =>
+            ArrayUtility.Remove(ref GetImplementations(type, trait), implementation);
 
         public bool Clear<T, TTrait>() where TTrait : ITrait
         {
@@ -375,5 +377,15 @@ namespace Entia.Core
             traits.Set(index, Array.Empty<ITrait>());
             return ref traits[index];
         }
+
+        public IEnumerator<(Type type, Type trait, ITrait implementation)> GetEnumerator()
+        {
+            foreach (var (type, map) in _implementations)
+                foreach (var (trait, implementations) in map)
+                    foreach (var implementation in implementations)
+                        yield return (type, trait, implementation);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

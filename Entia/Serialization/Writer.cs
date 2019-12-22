@@ -6,7 +6,7 @@ namespace Entia.Experimental.Serialization
 {
     public sealed unsafe class Writer : IDisposable
     {
-        public readonly ref struct Pointer<T> where T : unmanaged
+        public readonly struct Pointer<T> where T : unmanaged
         {
             public ref T Value => ref *(T*)(_writer._pointer + _position);
             public ref T this[int index] => ref ((T*)(_writer._pointer + _position))[index];

@@ -28,7 +28,7 @@ namespace Entia
                     var (instantiator, _) = pairs[i];
                     var result = instantiator.Instantiate(_instances);
                     if (result.TryValue(out var instance)) _instances[i] = instance;
-                    else return result;
+                    else return result.AsFailure();
                 }
 
                 return Result.Success();
@@ -68,8 +68,8 @@ namespace Entia
         {
             using (var template = Use())
             {
-                return Result.All(template.Instantiate(), template.Initialize(), template.Value)
-                    .Map(values => values.value3);
+                return Result.And(template.Instantiate(), template.Initialize(), template.Value)
+                    .Map(values => values.Item3);
             }
         }
 

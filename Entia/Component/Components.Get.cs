@@ -79,21 +79,9 @@ namespace Entia.Modules
         public bool TryGet<T>(Entity entity, out T component, States include = States.All) where T : IComponent
         {
             if (ComponentUtility.Abstract<T>.TryConcrete(out var metadata))
-            {
-                if (TryGet(entity, metadata, out var value, include) && value is T casted)
-                {
-                    component = casted;
-                    return true;
-                }
-            }
+                return TryGet(entity, metadata, out component, include);
             else if (ComponentUtility.TryGetConcreteTypes<T>(out var types))
-            {
-                if (TryGet(entity, types, out var value, include) && value is T casted)
-                {
-                    component = casted;
-                    return true;
-                }
-            }
+                return TryGet(entity, types, out component, include);
             component = default;
             return false;
         }
@@ -109,8 +97,10 @@ namespace Entia.Modules
         [ThreadSafe]
         public bool TryGet(Entity entity, Type type, out IComponent component, States include = States.All)
         {
-            if (ComponentUtility.TryGetMetadata(type, false, out var metadata)) return TryGet(entity, metadata, out component, include);
-            else if (ComponentUtility.TryGetConcreteTypes(type, out var types)) return TryGet(entity, types, out component, include);
+            if (ComponentUtility.TryGetMetadata(type, false, out var metadata))
+                return TryGet(entity, metadata, out component, include);
+            else if (ComponentUtility.TryGetConcreteTypes(type, out var types))
+                return TryGet(entity, types, out component, include);
             component = default;
             return false;
         }
@@ -140,7 +130,7 @@ namespace Entia.Modules
         public IEnumerable<IComponent> Get(Entity entity, States include = States.All)
         {
             ref var data = ref GetData(entity, out var success);
-            return success ? Get(data, include) : Array.Empty<IComponent>();
+            return success ? Get<IComponent>(data, include) : Array.Empty<IComponent>();
         }
 
         /// <summary>
@@ -149,11 +139,10 @@ namespace Entia.Modules
         /// <typeparam name="T">The concrete component type.</typeparam>
         /// <returns>The components.</returns>
         [ThreadSafe]
-        public IEnumerable<T> Get<T>(States include = States.All) where T : struct, IComponent
-        {
-            foreach (var data in _data.Slice())
-                if (data.IsValid && TryGetStore<T>(data, ComponentUtility.Concrete<T>.Data, include, out var store, out var index)) yield return store[index];
-        }
+        public IEnumerable<T> Get<T>(States include = States.All) where T : IComponent =>
+            ComponentUtility.Abstract<T>.TryConcrete(out var metadata) ? Get<T>(metadata, include) :
+            ComponentUtility.TryGetConcreteTypes<T>(out var types) ? Get<T>(types, include) :
+            Array.Empty<T>();
 
         /// <summary>
         /// Gets all components of provided <paramref name="type"/>.
@@ -163,8 +152,8 @@ namespace Entia.Modules
         /// <returns>The components.</returns>
         [ThreadSafe]
         public IEnumerable<IComponent> Get(Type type, States include = States.All) =>
-            ComponentUtility.TryGetMetadata(type, false, out var metadata) ? Get(metadata, include) :
-            ComponentUtility.TryGetConcreteTypes(type, out var types) ? Get(types, include) :
+            ComponentUtility.TryGetMetadata(type, false, out var metadata) ? Get<IComponent>(metadata, include) :
+            ComponentUtility.TryGetConcreteTypes(type, out var types) ? Get<IComponent>(types, include) :
             Array.Empty<IComponent>();
 
         /// <summary>
@@ -176,38 +165,42 @@ namespace Entia.Modules
         public IEnumerable<IComponent> Get(States include = States.All)
         {
             foreach (var data in _data.Slice())
-                if (data.IsValid) foreach (var component in Get(data, include)) yield return component;
+                if (data.IsValid)
+                    foreach (var component in Get<IComponent>(data, include))
+                        yield return component;
         }
 
         [ThreadSafe]
-        IEnumerable<IComponent> Get(Data data, States include)
+        IEnumerable<T> Get<T>(Data data, States include) where T : IComponent
         {
             var types = GetTargetTypes(data);
             foreach (var metadata in types)
             {
                 if (TryGetStore(data, metadata, include, out var store, out var index))
-                    yield return (IComponent)store.GetValue(index);
+                    yield return store is T[] casted ? casted[index] : (T)store.GetValue(index);
             }
         }
 
         [ThreadSafe]
-        IEnumerable<IComponent> Get(Metadata[] types, States include = States.All)
+        IEnumerable<T> Get<T>(Metadata[] types, States include = States.All) where T : IComponent
         {
-            foreach (var type in types) foreach (var component in Get(type, include)) yield return component;
+            foreach (var type in types)
+                foreach (var component in Get<T>(type, include))
+                    yield return component;
         }
 
         [ThreadSafe]
-        IEnumerable<IComponent> Get(Metadata metadata, States include = States.All)
+        IEnumerable<T> Get<T>(Metadata metadata, States include = States.All) where T : IComponent
         {
             foreach (var data in _data.Slice())
             {
                 if (data.IsValid && TryGetStore(data, metadata, include, out var store, out var index))
-                    yield return (IComponent)store.GetValue(index);
+                    yield return store is T[] casted ? casted[index] : (T)store.GetValue(index);
             }
         }
 
         [ThreadSafe]
-        bool TryGet(Entity entity, in Metadata metadata, out IComponent component, States include)
+        bool TryGet<T>(Entity entity, in Metadata metadata, out T component, States include) where T : IComponent
         {
             ref readonly var data = ref GetData(entity, out var success);
             if (success && TryGet(data, metadata, out component, include)) return true;
@@ -216,11 +209,11 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
-        bool TryGet(in Data data, in Metadata metadata, out IComponent component, States include)
+        bool TryGet<T>(in Data data, in Metadata metadata, out T component, States include) where T : IComponent
         {
             if (TryGetStore(data, metadata, include, out var store, out var index))
             {
-                component = (IComponent)store.GetValue(index);
+                component = store is T[] casted ? casted[index] : (T)store.GetValue(index);
                 return true;
             }
 
@@ -229,7 +222,7 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
-        bool TryGet(Entity entity, Metadata[] types, out IComponent component, States include)
+        bool TryGet<T>(Entity entity, Metadata[] types, out T component, States include) where T : IComponent
         {
             ref readonly var data = ref GetData(entity, out var success);
             if (success && TryGet(data, types, out component, include)) return true;
@@ -238,7 +231,7 @@ namespace Entia.Modules
         }
 
         [ThreadSafe]
-        bool TryGet(in Data data, Metadata[] types, out IComponent component, States include)
+        bool TryGet<T>(in Data data, Metadata[] types, out T component, States include) where T : IComponent
         {
             for (int i = 0; i < types.Length; i++) if (TryGet(data, types[i], out component, include)) return true;
             component = default;

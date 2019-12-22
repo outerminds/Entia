@@ -238,12 +238,32 @@ namespace Entia.Core
         public const BindingFlags Static = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
         public const BindingFlags All = Instance | Static;
 
-        public static IEnumerable<Assembly> AllAssemblies =>
-            AppDomain.CurrentDomain.GetAssemblies();
-        public static IEnumerable<Type> AllTypes =>
-            AllAssemblies.Select(assembly => Option.Try(() => assembly.GetTypes())).Choose().SelectMany(_ => _);
+        public static IEnumerable<Assembly> AllAssemblies => AppDomain.CurrentDomain.GetAssemblies();
+        public static IEnumerable<Type> AllTypes => AllAssemblies
+            .Select(assembly => Option.Try(assembly, state => state.GetTypes()))
+            .Choose()
+            .SelectMany(_ => _);
 
         static readonly ConcurrentDictionary<Type, TypeData> _typeToData = new ConcurrentDictionary<Type, TypeData>();
+        static readonly ConcurrentDictionary<Guid, Type> _guidToType = new ConcurrentDictionary<Guid, Type>();
+
+        static TypeUtility()
+        {
+            void Register(Assembly assembly)
+            {
+                try
+                {
+                    foreach (var type in assembly.GetTypes())
+                    {
+                        if (type.IsDefined(typeof(GuidAttribute)))
+                            _guidToType[type.GUID] = type;
+                    }
+                }
+                catch { }
+            }
+            AppDomain.CurrentDomain.AssemblyLoad += (_, arguments) => Register(arguments.LoadedAssembly);
+            AllAssemblies.Iterate(Register);
+        }
 
         public static TypeData GetData<T>() => Cache<T>.Data;
 
@@ -252,6 +272,13 @@ namespace Entia.Core
             if (_typeToData.TryGetValue(type, out var data)) return data;
             _typeToData.TryAdd(type, data = new TypeData(type));
             return data;
+        }
+
+        public static bool TryGetType(Guid guid, out Type type) => _guidToType.TryGetValue(guid, out type);
+        public static bool TryGetGuid(Type type, out Guid guid)
+        {
+            guid = type.GUID;
+            return _guidToType.ContainsKey(guid);
         }
 
         public static string Trimmed(this Type type) => type.Name.Split('`').First();

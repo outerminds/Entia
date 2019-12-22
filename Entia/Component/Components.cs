@@ -52,7 +52,7 @@ namespace Entia.Modules
         (Data[] items, int count) _data;
         Segment[] _segments;
         Delegates[] _delegates;
-        (Slot[] items, int count) _slots = (new Slot[16], 0);
+        (Slot[] items, int count) _slots = (new Slot[4], 0);
         Array[][] _chunks = new Array[2][];
 
         /// <summary>

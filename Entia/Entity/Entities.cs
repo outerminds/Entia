@@ -109,9 +109,9 @@ namespace Entia.Modules
         readonly Emitter<OnCreate> _onCreate;
         readonly Emitter<OnPreDestroy> _onPreDestroy;
         readonly Emitter<OnPostDestroy> _onPostDestroy;
-        (Data[] items, int count) _data = (new Data[64], 0);
-        (int[] items, int count) _free = (new int[8], 0);
-        (int[] items, int count) _frozen = (new int[8], 0);
+        (Data[] items, int count) _data = (new Data[16], 0);
+        (int[] items, int count) _free = (new int[4], 0);
+        (int[] items, int count) _frozen = (new int[4], 0);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Entities"/> class.
