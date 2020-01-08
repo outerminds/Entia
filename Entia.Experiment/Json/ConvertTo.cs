@@ -13,6 +13,7 @@ namespace Entia.Experiment.Json
         Reference = 1 << 0,
         Abstract = 1 << 1,
     }
+
     public static class OptionsExtensions
     {
         public static bool HasAll(this ConvertOptions options, ConvertOptions others) => (options & others) == others;
