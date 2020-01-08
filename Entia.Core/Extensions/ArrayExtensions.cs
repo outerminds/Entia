@@ -86,6 +86,11 @@ namespace Entia.Core
             return target;
         }
 
+        public static bool Any<T>(this T[] array) => array.Length > 0;
+        public static bool Any(this Array array) => array.Length > 0;
+        public static bool None<T>(this T[] array) => !array.Any();
+        public static bool None(this Array array) => !array.Any();
+
         public static T[] Cast<T>(this Array array)
         {
             var target = new T[array.Length];

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Entia.Core.Documentation;
 
 namespace Entia.Core
@@ -13,11 +12,7 @@ namespace Entia.Core
         public struct Enumerator : IEnumerator<(Type type, TValue value)>
         {
             /// <inheritdoc cref="IEnumerator{T}.Current"/>
-            public (Type type, TValue value) Current
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => (_entries[_index].Type, _map._values[_index].value);
-            }
+            public (Type type, TValue value) Current => (_entries[_index].Type, _map._values[_index].value);
             object IEnumerator.Current => Current;
 
             readonly TypeMap<TBase, TValue> _map;
@@ -30,7 +25,6 @@ namespace Entia.Core
             }
 
             /// <inheritdoc cref="IEnumerator.MoveNext"/>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
                 while (++_index < _map._values.Length)
@@ -47,11 +41,7 @@ namespace Entia.Core
         public struct KeyEnumerator : IEnumerator<Type>
         {
             /// <inheritdoc cref="IEnumerator{T}.Current"/>
-            public Type Current
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _entries[_index].Type;
-            }
+            public Type Current => _entries[_index].Type;
             object IEnumerator.Current => Current;
 
             readonly TypeMap<TBase, TValue> _map;
@@ -64,7 +54,6 @@ namespace Entia.Core
             }
 
             /// <inheritdoc cref="IEnumerator.MoveNext"/>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
                 while (++_index < _map._values.Length)
@@ -92,11 +81,7 @@ namespace Entia.Core
         public struct ValueEnumerator : IEnumerator<TValue>
         {
             /// <inheritdoc cref="IEnumerator{T}.Current"/>
-            public ref TValue Current
-            {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => ref _map._values[_index].value;
-            }
+            public ref TValue Current => ref _map._values[_index].value;
             TValue IEnumerator<TValue>.Current => Current;
             object IEnumerator.Current => Current;
 
@@ -110,7 +95,6 @@ namespace Entia.Core
             }
 
             /// <inheritdoc cref="IEnumerator.MoveNext"/>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
                 while (++_index < _map._values.Length)
@@ -208,7 +192,6 @@ namespace Entia.Core
         [ThreadSafe]
         public ref TValue this[int index]
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (Has(index)) return ref _values[index].value;
@@ -218,9 +201,7 @@ namespace Entia.Core
         public TValue this[Type type]
         {
             [ThreadSafe]
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => TryGet(type, out var value) ? value : throw new IndexOutOfRangeException();
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => Set(type, value);
         }
         public int Count => _count;
@@ -347,13 +328,11 @@ namespace Entia.Core
         IEnumerator<(Type type, TValue value)> IEnumerable<(Type type, TValue value)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool TryGet(Entry entry, out TValue value, bool super, bool sub) =>
             TryGet(entry, out value) ||
             (super && TryGet(entry.Super, out value)) ||
             (sub && TryGet(entry.Sub, out value));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool TryGet(Entry entry, out TValue value)
         {
             if (entry.Index < _values.Length)
@@ -366,7 +345,6 @@ namespace Entia.Core
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool TryGet(Entry[] entries, out TValue value)
         {
             for (int i = 0; i < entries.Length; i++) if (TryGet(entries[i], out value)) return true;
@@ -374,7 +352,6 @@ namespace Entia.Core
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         ref TValue Get(Entry entry, out bool success, bool super, bool sub)
         {
             ref var value = ref Get(entry, out success);
@@ -394,7 +371,6 @@ namespace Entia.Core
             return ref Dummy<TValue>.Value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         ref TValue Get(Entry entry, out bool success)
         {
             if (entry.Index < _values.Length)
@@ -407,7 +383,6 @@ namespace Entia.Core
             return ref Dummy<TValue>.Value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         ref TValue Get(Entry[] entries, out bool success)
         {
             for (int i = 0; i < entries.Length; i++)
@@ -420,21 +395,17 @@ namespace Entia.Core
             return ref Dummy<TValue>.Value;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool Has(Entry entry, bool super, bool sub) =>
             Has(entry) || (super && Has(entry.Super) || (sub && Has(entry.Sub)));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool Has(Entry entry) => entry.Index < _values.Length && _values[entry.Index].allocated;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool Has(Entry[] entries)
         {
             for (int i = 0; i < entries.Length; i++) if (Has(entries[i])) return true;
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool Set(Entry entry, in TValue value)
         {
             ArrayUtility.Ensure(ref _values, entry.Index + 1);
@@ -448,11 +419,9 @@ namespace Entia.Core
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool Remove(Entry entry, bool super, bool sub) =>
             Remove(entry) | (super && Remove(entry.Super)) | (sub && Remove(entry.Sub));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool Remove(Entry entry)
         {
             if (Has(entry.Index))
@@ -464,7 +433,6 @@ namespace Entia.Core
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool Remove(Entry[] entries)
         {
             var removed = false;

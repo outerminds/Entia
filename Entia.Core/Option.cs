@@ -19,10 +19,7 @@ namespace Entia.Core
         public static bool operator !=(in T left, in Some<T> right) => !(left == right);
         public static bool operator ==(in Some<T> left, in Some<T> right) => right == left.Value;
         public static bool operator !=(in Some<T> left, in Some<T> right) => !(left == right);
-
         public static implicit operator Some<T>(in T value) => new Some<T>(value);
-        public static implicit operator Some<Unit>(in Some<T> _) => new Some<Unit>(default);
-        public static implicit operator Option<Unit>(in Some<T> _) => default(Unit);
 
         Option.Tags IOption.Tag => Option.Tags.Some;
 
@@ -64,9 +61,7 @@ namespace Entia.Core
         public static implicit operator Option<T>(in T value) => _isNull(value) ?
             new Option<T>(Option.Tags.None, value) :
             new Option<T>(Option.Tags.Some, value);
-
         public static implicit operator Option<T>(in None none) => new Option<T>(Option.Tags.None, default);
-        public static implicit operator Option<Unit>(in Option<T> option) => new Option<Unit>(option.Tag, default);
         public static implicit operator bool(in Option<T> option) => option.Tag == Option.Tags.Some;
         public static explicit operator Some<T>(in Option<T> option) => option.Tag == Option.Tags.Some ? new Some<T>(option._value) : throw new InvalidCastException();
         public static explicit operator None(in Option<T> option) => option.Tag == Option.Tags.None ? new None() : throw new InvalidCastException();
@@ -234,7 +229,9 @@ namespace Entia.Core
 
         public static T OrDefault<T>(in this Option<T> option) => option.Or(default(T));
         public static Some<Unit> Ignore<T>(in this Some<T> some) => some.Map(_ => default(Unit));
-        public static Option<object> Box<T>(this T option) where T : IOption => option.Cast<object>();
+        public static Option<Unit> Ignore<T>(in this Option<T> option) => option.Map(_ => default(Unit));
+        public static Some<object> Box<T>(in this Some<T> some) where T : IOption => some.Value;
+        public static Option<object> Box<T>(in this Option<T> option) where T : IOption => option.Map(value => (object)value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<TOut> Map<TIn, TOut>(in this Option<TIn> option, Func<TIn, TOut> map)

@@ -15,7 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="*" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
+    <Reference Include="Newtonsoft.Json"> <HintPath>C:\Projects\Ululab\Numbers\Assets\Plugins\Newtonsoft.Json\Newtonsoft.Json.dll</HintPath></Reference>
   </ItemGroup>
 
 </Project>

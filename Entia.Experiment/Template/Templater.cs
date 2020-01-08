@@ -30,7 +30,7 @@ namespace Entia.Templaters
             switch (context.Value)
             {
                 case System.Array array:
-                    var elementType = TypeUtility.GetData(dynamicType.Element);
+                    var elementType = dynamicType.Element;
                     if (elementType.IsPlain) return (new Clone(array), new Identity());
 
                     var items = new List<(int index, int reference)>(array.Length);

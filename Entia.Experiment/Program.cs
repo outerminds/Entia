@@ -11,6 +11,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using Entia.Experiment.Json;
+using Newtonsoft.Json;
+using System.Collections.Concurrent;
 
 namespace Entia.Experiment
 {
@@ -311,28 +314,115 @@ namespace Entia.Experiment
             var ancestors = families.Ancestors(child).ToArray();
         }
 
+        struct Wrapper<T> { public T Value; }
         static void TestJson()
         {
+            var container = new Container();
+            void Test<T>(in T value, out string json, out Node node, out T instance, ConvertOptions options = ConvertOptions.All)
+            {
+                json = Json.Serialization.Serialize(value, options, container: container);
+                node = Json.Serialization.Parse(json).Or(Node.Null);
+                instance = Json.Serialization.Instantiate<T>(node, container: container);
+            }
+
             var json1 = File.ReadAllText(@"C:\Projects\Ululab\Numbers\Assets\Resources\Creative\Levels\ARCHIVE~11_KIDS_OEP_A.json");
-            var node1 = Json.Parse(json1).Or(Json.Node.Null);
-            var json2 = Json.Serialize(node1, Json.Format.Indented);
-            var node2 = Json.Parse(json2).Or(Json.Node.Null);
-            var json3 = Json.Serialize(node1, Json.Format.Compact);
-            var node3 = Json.Parse(json3).Or(Json.Node.Null);
+            var node1 = Json.Serialization.Parse(json1).Or(Node.Null);
+            var json2 = Json.Serialization.Generate(node1, Json.Serialization.Format.Indented);
+            var node2 = Json.Serialization.Parse(json2).Or(Node.Null);
+            var json3 = Json.Serialization.Generate(node1, Json.Serialization.Format.Compact);
+            var node3 = Json.Serialization.Parse(json3);
 
-            var json4 = Json.Serialize(new Cyclic());
-            var node4 = Json.Parse(json4).Or(Json.Node.Null);
-            var value4 = Json.Deserialize<Cyclic>(node4);
-
-            var json5 = Json.Serialize<object>(new Dictionary<object, object>
+            Test(new Cyclic(), out var json4, out var node4, out var value4);
+            Test<object>(new Dictionary<object, object>
             {
                 { 1, "2" },
                 { "3", null },
                 { 4, "5" },
                 { DateTime.Now, TimeSpan.MaxValue }
-            });
-            var node5 = Json.Parse(json5).Or(Json.Node.Null);
-            var value5 = Json.Deserialize<Dictionary<object, object>>(node5);
+            }, out var json5, out var node5, out var value5, ConvertOptions.Abstract);
+            Test(new Dictionary<int, int> { { 1, -1 }, { 2, -2 } }, out var json6, out var node6, out var value6);
+            Test<object>(1, out var json7, out var node7, out var value7);
+
+            var dictionary = new Dictionary<object, object>();
+            dictionary[1] = dictionary;
+            Test(dictionary, out var json8, out var node8, out var value8);
+
+            Test(new Stack<int>(new int[] { 1, 2, 3 }), out var json9, out var node9, out var value9);
+            Test(new Queue<int>(new int[] { 1, 2, 3 }), out var json10, out var node10, out var value10);
+            Test(new List<int>(new int[] { 1, 2, 3 }), out var json11, out var node11, out var value11);
+            Test(new int[] { 1, 2, 3 }, out var json12, out var node12, out var value12);
+            Test(new Queue(new object[] { 1, "2", 3L }), out var json13, out var node13, out var value13);
+            Test(new SortedDictionary<int, int> { { 1, 2 }, { 3, 4 } }, out var json14, out var node14, out var value14);
+            Test(new ConcurrentDictionary<int, int>(new[] { new KeyValuePair<int, int>(1, 2), new KeyValuePair<int, int>(3, 4) }), out var json15, out var node15, out var value15);
+
+            var settings = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                TypeNameHandling = TypeNameHandling.Auto,
+                PreserveReferencesHandling = PreserveReferencesHandling.Objects,
+                Formatting = Formatting.None,
+                ObjectCreationHandling = ObjectCreationHandling.Replace
+            };
+
+            void SerializeA<T>(T value)
+            {
+                var json = Json.Serialization.Serialize(value, container: container);
+                Json.Serialization.Deserialize<T>(json, container: container).TryValue(out value);
+            }
+
+            void SerializeB<T>(T value)
+            {
+                var json = JsonConvert.SerializeObject(value, settings);
+                value = JsonConvert.DeserializeObject<T>(json, settings);
+            }
+
+            void IntNumberA() => SerializeA(1);
+            void ObjectNumberA() => SerializeA<object>(1);
+            void CyclicA() => SerializeA(new Cyclic());
+            void ObjectCyclicA() => SerializeA<object>(new Cyclic());
+            void IntDictionaryA() => SerializeA(new Dictionary<int, int> { { 1, -1 }, { 2, -2 }, { 3, -3 } });
+            void IntObjectDictionaryA() => SerializeA(new Dictionary<int, object> { { 1, -1 }, { 2, -2 }, { 3, -3 } });
+            void ObjectIntDictionaryA() => SerializeA(new Dictionary<object, int> { { 1, -1 }, { 2, -2 }, { 3, -3 } });
+            void ObjectDictionaryA() => SerializeA(new Dictionary<object, object> { { 1, -1 }, { 2, -2 }, { 3, -3 } });
+            void LargeArrayA() => SerializeA(new ulong[256]);
+
+            void IntNumberB() => SerializeB(1);
+            void ObjectNumberB() => SerializeB(1);
+            void CyclicB() => SerializeB(new Cyclic());
+            void ObjectCyclicB() => SerializeB(new Cyclic());
+            void IntDictionaryB() => SerializeB(new Dictionary<int, int> { { 1, -1 }, { 2, -2 }, { 3, -3 } });
+            void IntObjectDictionaryB() => SerializeB(new Dictionary<int, object> { { 1, TimeSpan.MaxValue }, { 2, TimeSpan.MaxValue }, { 3, TimeSpan.MaxValue } });
+            void ObjectIntDictionaryB() => SerializeB(new Dictionary<object, int> { { 1, -1 }, { 2, -2 }, { 3, -3 } });
+            void ObjectDictionaryB() => SerializeB(new Dictionary<object, object> { { DateTime.Now, TimeSpan.MaxValue }, { DateTime.Now, TimeSpan.MaxValue }, { DateTime.Now, TimeSpan.MaxValue } });
+            void LargeArrayB() => SerializeB(new ulong[256]);
+
+            // for (int i = 0; i < 100; i++)
+            while (true)
+            {
+                Experiment.Test.Measure(IntNumberA, new Action[]
+                {
+                    ObjectNumberA,
+                    CyclicA,
+                    ObjectCyclicA,
+                    IntDictionaryA,
+                    IntObjectDictionaryA,
+                    ObjectIntDictionaryA,
+                    ObjectDictionaryA,
+                    LargeArrayA,
+
+                    IntNumberB,
+                    ObjectNumberB,
+                    CyclicB,
+                    ObjectCyclicB,
+                    IntDictionaryB,
+                    IntObjectDictionaryB,
+                    ObjectIntDictionaryB,
+                    ObjectDictionaryB,
+                    LargeArrayB,
+
+                }, 1000);
+                Console.WriteLine();
+            }
         }
 
         static void Main()

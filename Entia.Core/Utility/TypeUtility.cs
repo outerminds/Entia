@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 namespace Entia.Core
 {
@@ -13,9 +15,12 @@ namespace Entia.Core
         public static implicit operator Type(TypeData type) => type.Type;
 
         public readonly Type Type;
+        public TypeData ArrayType => _arrayType.Value;
+        public TypeData PointerType => _pointerType.Value;
+        public Guid? Guid => _guid.Value;
         public TypeCode Code => _code.Value;
-        public Type Element => _element.Value;
-        public Type Definition => _definition.Value;
+        public TypeData Element => _element.Value;
+        public TypeData Definition => _definition.Value;
         public Dictionary<int, MemberInfo> Members => _members.Value;
         public Dictionary<string, FieldInfo> Fields => _fields.Value;
         public Dictionary<string, PropertyInfo> Properties => _properties.Value;
@@ -27,6 +32,9 @@ namespace Entia.Core
         public PropertyInfo[] InstanceProperties => _instanceProperties.Value;
         public MethodInfo[] InstanceMethods => _instanceMethods.Value;
         public ConstructorInfo[] InstanceConstructors => _instanceConstructors.Value;
+        public ConstructorInfo DefaultConstructor => _defaultConstructor.Value;
+        public ConstructorInfo SerializationConstructor => _serializationConstructor.Value;
+        public (ConstructorInfo constructor, ParameterInfo parameter) EnumerableConstructor => _enumerableConstructor.Value;
         public Type[] Interfaces => _interfaces.Value;
         public Type[] Declaring => _declaring.Value;
         public Type[] Arguments => _arguments.Value;
@@ -38,9 +46,12 @@ namespace Entia.Core
         public object Default => _default.Value;
         public int? Size => _size.Value;
 
+        readonly Lazy<TypeData> _arrayType;
+        readonly Lazy<TypeData> _pointerType;
+        readonly Lazy<Guid?> _guid;
         readonly Lazy<TypeCode> _code;
-        readonly Lazy<Type> _element;
-        readonly Lazy<Type> _definition;
+        readonly Lazy<TypeData> _element;
+        readonly Lazy<TypeData> _definition;
         readonly Lazy<Dictionary<int, MemberInfo>> _members;
         readonly Lazy<Dictionary<string, FieldInfo>> _fields;
         readonly Lazy<Dictionary<string, PropertyInfo>> _properties;
@@ -52,6 +63,9 @@ namespace Entia.Core
         readonly Lazy<PropertyInfo[]> _instanceProperties;
         readonly Lazy<MethodInfo[]> _instanceMethods;
         readonly Lazy<ConstructorInfo[]> _instanceConstructors;
+        readonly Lazy<ConstructorInfo> _defaultConstructor;
+        readonly Lazy<ConstructorInfo> _serializationConstructor;
+        readonly Lazy<(ConstructorInfo, ParameterInfo)> _enumerableConstructor;
         readonly Lazy<Type[]> _interfaces;
         readonly Lazy<Type[]> _declaring;
         readonly Lazy<Type[]> _arguments;
@@ -169,6 +183,31 @@ namespace Entia.Core
                 else return true;
             }
 
+            ConstructorInfo GetSerializationConstructor(ConstructorInfo[] constructors)
+            {
+                foreach (var constructor in constructors)
+                {
+                    var parameters = constructor.GetParameters();
+                    if (parameters.Length == 2 &&
+                        parameters[0].ParameterType == typeof(SerializationInfo) &&
+                        parameters[1].ParameterType == typeof(StreamingContext))
+                        return constructor;
+                }
+                return default;
+            }
+
+            (ConstructorInfo, ParameterInfo) GetEnumerableConstructor(ConstructorInfo[] constructors)
+            {
+                foreach (var constructor in constructors)
+                {
+                    var parameters = constructor.GetParameters();
+                    if (parameters.Length == 1 &&
+                        parameters[0].ParameterType.Is<IEnumerable>())
+                        return (constructor, parameters[0]);
+                }
+                return default;
+            }
+
             unsafe int? GetSize(Type current)
             {
                 switch (Type.GetTypeCode(type))
@@ -196,11 +235,14 @@ namespace Entia.Core
             }
 
             Type = type;
+            _arrayType = new Lazy<TypeData>(() => Option.Try(Type.MakeArrayType).OrDefault());
+            _pointerType = new Lazy<TypeData>(() => Option.Try(Type.MakePointerType).OrDefault());
+            _guid = new Lazy<Guid?>(() => Type.HasGuid() ? Type.GUID : (Guid?)null);
             _code = new Lazy<TypeCode>(() => Type.GetTypeCode(type));
             _interfaces = new Lazy<Type[]>(() => Type.GetInterfaces());
             _bases = new Lazy<Type[]>(() => GetBases(Type).ToArray());
-            _element = new Lazy<Type>(() => GetElement(Type, Interfaces));
-            _definition = new Lazy<Type>(() => Type.IsGenericType ? Type.GetGenericTypeDefinition() : default);
+            _element = new Lazy<TypeData>(() => GetElement(Type, Interfaces));
+            _definition = new Lazy<TypeData>(() => Type.IsGenericType ? Type.GetGenericTypeDefinition() : default);
             _members = new Lazy<Dictionary<int, MemberInfo>>(() => Type.GetMembers(TypeUtility.All).ToDictionary(member => member.MetadataToken));
             _fields = new Lazy<Dictionary<string, FieldInfo>>(() => Members.Values.OfType<FieldInfo>().ToDictionary(member => member.Name));
             _properties = new Lazy<Dictionary<string, PropertyInfo>>(() => Members.Values.OfType<PropertyInfo>().ToDictionary(member => member.Name));
@@ -211,7 +253,10 @@ namespace Entia.Core
             _instanceFields = new Lazy<FieldInfo[]>(() => InstanceMembers.OfType<FieldInfo>().ToArray());
             _instanceProperties = new Lazy<PropertyInfo[]>(() => InstanceMembers.OfType<PropertyInfo>().ToArray());
             _instanceMethods = new Lazy<MethodInfo[]>(() => InstanceMembers.OfType<MethodInfo>().ToArray());
-            _instanceConstructors = new Lazy<ConstructorInfo[]>(() => InstanceMembers.OfType<ConstructorInfo>().ToArray());
+            _instanceConstructors = new Lazy<ConstructorInfo[]>(() => Type.GetConstructors(TypeUtility.Instance));
+            _defaultConstructor = new Lazy<ConstructorInfo>(() => InstanceConstructors.FirstOrDefault(constructor => constructor.GetParameters().None()));
+            _serializationConstructor = new Lazy<ConstructorInfo>(() => GetSerializationConstructor(InstanceConstructors));
+            _enumerableConstructor = new Lazy<(ConstructorInfo, ParameterInfo)>(() => GetEnumerableConstructor(InstanceConstructors));
             _declaring = new Lazy<Type[]>(() => GetDeclaring(Type).ToArray());
             _arguments = new Lazy<Type[]>(() => Type.GetGenericArguments());
             _isShallow = new Lazy<bool>(() => GetIsShallow(Type, InstanceFields));
@@ -238,12 +283,11 @@ namespace Entia.Core
         public const BindingFlags Static = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
         public const BindingFlags All = Instance | Static;
 
-        public static IEnumerable<Assembly> AllAssemblies => AppDomain.CurrentDomain.GetAssemblies();
-        public static IEnumerable<Type> AllTypes => AllAssemblies
-            .Select(assembly => Option.Try(assembly, state => state.GetTypes()))
-            .Choose()
-            .SelectMany(_ => _);
+        public static ICollection<Assembly> AllAssemblies => _assemblies.Values;
+        public static ICollection<Type> AllTypes => _types.Values;
 
+        static readonly ConcurrentDictionary<string, Assembly> _assemblies = new ConcurrentDictionary<string, Assembly>();
+        static readonly ConcurrentDictionary<string, Type> _types = new ConcurrentDictionary<string, Type>();
         static readonly ConcurrentDictionary<Type, TypeData> _typeToData = new ConcurrentDictionary<Type, TypeData>();
         static readonly ConcurrentDictionary<Guid, Type> _guidToType = new ConcurrentDictionary<Guid, Type>();
 
@@ -253,16 +297,21 @@ namespace Entia.Core
             {
                 try
                 {
+                    var name = assembly.GetName();
+                    _assemblies[name.Name] = assembly;
+                    _assemblies[name.FullName] = assembly;
+
                     foreach (var type in assembly.GetTypes())
                     {
-                        if (type.IsDefined(typeof(GuidAttribute)))
-                            _guidToType[type.GUID] = type;
+                        _types[type.Name] = type;
+                        _types[type.FullName] = type;
+                        if (type.HasGuid()) _guidToType[type.GUID] = type;
                     }
                 }
                 catch { }
             }
             AppDomain.CurrentDomain.AssemblyLoad += (_, arguments) => Register(arguments.LoadedAssembly);
-            AllAssemblies.Iterate(Register);
+            AppDomain.CurrentDomain.GetAssemblies().Iterate(Register);
         }
 
         public static TypeData GetData<T>() => Cache<T>.Data;
@@ -274,12 +323,23 @@ namespace Entia.Core
             return data;
         }
 
+        public static bool TryGetAssembly(string name, out Assembly assembly) => _assemblies.TryGetValue(name, out assembly);
+        public static bool TryGetType(string name, out Type type) => _types.TryGetValue(name, out type);
         public static bool TryGetType(Guid guid, out Type type) => _guidToType.TryGetValue(guid, out type);
         public static bool TryGetGuid(Type type, out Guid guid)
         {
-            guid = type.GUID;
-            return _guidToType.ContainsKey(guid);
+            var data = GetData(type);
+            if (data.Guid is Guid value)
+            {
+                guid = value;
+                return true;
+            }
+
+            guid = default;
+            return false;
         }
+
+        public static bool HasGuid(this Type type) => type.IsDefined(typeof(GuidAttribute));
 
         public static string Trimmed(this Type type) => type.Name.Split('`').First();
 
@@ -365,6 +425,8 @@ namespace Entia.Core
             foreach (var @interface in data.Interfaces) yield return @interface;
         }
 
+        public static TypeData ArrayType(this Type type) => GetData(type).ArrayType;
+        public static TypeData PointerType(this Type type) => GetData(type).PointerType;
         public static bool IsBlittable(this Type type) => GetData(type).IsBlittable;
         public static bool IsBlittable(object value) => value is null || IsBlittable(value.GetType());
         public static bool IsPlain(this Type type) => GetData(type).IsPlain;
