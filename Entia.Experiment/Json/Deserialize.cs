@@ -80,8 +80,8 @@ namespace Entia.Experiment.Json
                                 if (index < count && (pointer[index] == 'e' || pointer[index] == 'E'))
                                 {
                                     index++;
-                                    if (index < count && (pointer[index] == '-' || pointer[index] == '+' || char.IsDigit(pointer[index])))
-                                        while (index < count && char.IsDigit(pointer[index])) index++;
+                                    if (index < count && (pointer[index] == '-' || pointer[index] == '+')) index++;
+                                    while (index < count && char.IsDigit(pointer[index])) index++;
                                 }
 
                                 nodes.Push(new Node(Node.Kinds.Number, new string(pointer, start, index - start)));
