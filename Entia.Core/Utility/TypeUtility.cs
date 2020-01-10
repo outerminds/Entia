@@ -305,6 +305,7 @@ namespace Entia.Core
                     {
                         _types[type.Name] = type;
                         _types[type.FullName] = type;
+                        _types[type.AssemblyQualifiedName] = type;
                         if (type.HasGuid()) _guidToType[type.GUID] = type;
                     }
                 }

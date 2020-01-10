@@ -424,7 +424,7 @@ namespace Entia.Core
 
         bool Remove(Entry entry)
         {
-            if (Has(entry.Index))
+            if (Has(entry))
             {
                 _values[entry.Index] = default;
                 _count--;
