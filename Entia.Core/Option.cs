@@ -390,7 +390,7 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Recover<T>(in this Option<T> option, Func<Option<T>> recover) => option.IsNone() ? recover() : option;
 
-        public static Option<T[]> All<T>(params Option<T>[] options)
+        public static Option<T[]> All<T>(this Option<T>[] options)
         {
             var values = new T[options.Length];
             for (var i = 0; i < options.Length; i++)
@@ -403,8 +403,24 @@ namespace Entia.Core
         }
 
         public static Option<T[]> All<T>(this IEnumerable<Option<T>> options) => All(options.ToArray());
-        public static Option<Unit> All(this IEnumerable<Option<Unit>> options) => options.All<Unit>().Return(default(Unit));
-        public static Option<T> Any<T>(this Option<T>[] options) => options.AsEnumerable().Any();
+
+        public static Option<Unit> All(this Option<Unit>[] options)
+        {
+            foreach (var option in options) if (option.IsNone()) return None();
+            return Some();
+        }
+
+        public static Option<Unit> All(this IEnumerable<Option<Unit>> options)
+        {
+            foreach (var option in options) if (option.IsNone()) return None();
+            return Some();
+        }
+
+        public static Option<T> Any<T>(this Option<T>[] options)
+        {
+            foreach (var option in options) if (option.TryValue(out var value)) return value;
+            return None();
+        }
 
         public static Option<T> Any<T>(this IEnumerable<Option<T>> options)
         {
@@ -414,7 +430,7 @@ namespace Entia.Core
 
         public static Option<Unit> Any(this IEnumerable<Option<Unit>> options) => options.Any<Unit>().Return(default(Unit));
 
-        public static IEnumerable<T> Choose<T>(params Option<T>[] options)
+        public static IEnumerable<T> Choose<T>(this Option<T>[] options)
         {
             foreach (var option in options) if (option.TryValue(out var value)) yield return value;
         }
@@ -422,6 +438,16 @@ namespace Entia.Core
         public static IEnumerable<T> Choose<T>(this IEnumerable<Option<T>> options)
         {
             foreach (var option in options) if (option.TryValue(out var value)) yield return value;
+        }
+
+        public static IEnumerable<TResult> Choose<TSource, TResult>(this TSource[] source, Func<TSource, Option<TResult>> map)
+        {
+            foreach (var item in source) if (map(item).TryValue(out var value)) yield return value;
+        }
+
+        public static IEnumerable<TResult> Choose<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, Option<TResult>> map)
+        {
+            foreach (var item in source) if (map(item).TryValue(out var value)) yield return value;
         }
 
         public static Option<T> FirstOrNone<T>(this IEnumerable<T> source)

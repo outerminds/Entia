@@ -429,7 +429,7 @@ namespace Entia.Core
         public static Result<T> Recover<T>(in this Result<T> result, Func<string[], Result<T>> recover) =>
             result.TryMessages(out var messages) ? recover(messages) : result;
 
-        public static Result<T[]> All<T>(params Result<T>[] results)
+        public static Result<T[]> All<T>(this Result<T>[] results)
         {
             var values = new T[results.Length];
             var messages = new List<string>(results.Length);
@@ -437,23 +437,36 @@ namespace Entia.Core
             for (var i = 0; i < results.Length; i++)
             {
                 var result = results[i];
-                if (result.TryValue(out var value)) values[i] = value;
-                else if (results[i].TryMessages(out var current))
-                {
-                    success = false;
-                    messages.AddRange(current);
-                }
+                if (result.TryValue(out values[i])) continue;
+
+                success = false;
+                messages.AddRange(result.Messages());
             }
             return success ? Success(values).AsResult() : Failure(messages.ToArray());
         }
 
-        public static Result<T[]> All<T>(this IEnumerable<Result<T>> results) => All(results.ToArray());
-        public static Result<Unit> All(this IEnumerable<Result<Unit>> results) => results.All<Unit>().Return(default(Unit));
-        public static Result<T> Any<T>(this Result<T>[] results) => results.AsEnumerable().Any();
+        public static Result<T[]> All<T>(this IEnumerable<Result<T>> results) => results.ToArray().All();
 
-        public static Result<T> Any<T>(this IEnumerable<Result<T>> results)
+        public static Result<Unit> All(this Result<Unit>[] results)
         {
-            var messages = new List<string>();
+            var messages = new List<string>(results.Length);
+            var success = true;
+            for (var i = 0; i < results.Length; i++)
+            {
+                var result = results[i];
+                if (result.IsSuccess()) continue;
+
+                success = false;
+                messages.AddRange(result.Messages());
+            }
+            return success ? Success().AsResult() : Failure(messages.ToArray());
+        }
+
+        public static Result<Unit> All(this IEnumerable<Result<Unit>> results) => results.ToArray().All();
+
+        public static Result<T> Any<T>(this Result<T>[] results)
+        {
+            var messages = new List<string>(results.Length);
             foreach (var result in results)
             {
                 if (result.TryValue(out var value)) return value;
@@ -462,9 +475,11 @@ namespace Entia.Core
             return Failure(messages.ToArray());
         }
 
-        public static Result<Unit> Any(this IEnumerable<Result<Unit>> results) => results.Any<Unit>().Return(default(Unit));
+        public static Result<T> Any<T>(this IEnumerable<Result<T>> results) => results.ToArray().Any();
+        public static Result<Unit> Any(this Result<Unit>[] results) => results.Any<Unit>().Return(default(Unit));
+        public static Result<Unit> Any(this IEnumerable<Result<Unit>> results) => results.ToArray().Any();
 
-        public static IEnumerable<T> Choose<T>(params Result<T>[] results)
+        public static IEnumerable<T> Choose<T>(this Result<T>[] results)
         {
             foreach (var result in results) if (result.TryValue(out var value)) yield return value;
         }

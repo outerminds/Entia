@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Entia.Core;
-using Entia.Experiment.Json.Converters;
+using Entia.Json.Converters;
 
-namespace Entia.Experiment.Json
+namespace Entia.Json
 {
     [Flags]
     public enum ConvertOptions
@@ -71,20 +71,20 @@ namespace Entia.Experiment.Json
         {
             switch (type.Code)
             {
-                case TypeCode.Char: node = Node.Number((char)instance); return true;
-                case TypeCode.Byte: node = Node.Number((byte)instance); return true;
-                case TypeCode.SByte: node = Node.Number((sbyte)instance); return true;
-                case TypeCode.Int16: node = Node.Number((short)instance); return true;
-                case TypeCode.Int32: node = Node.Number((int)instance); return true;
-                case TypeCode.Int64: node = Node.Number((long)instance); return true;
-                case TypeCode.UInt16: node = Node.Number((ushort)instance); return true;
-                case TypeCode.UInt32: node = Node.Number((uint)instance); return true;
-                case TypeCode.UInt64: node = Node.Number((ulong)instance); return true;
-                case TypeCode.Single: node = Node.Number((float)instance); return true;
-                case TypeCode.Double: node = Node.Number((double)instance); return true;
-                case TypeCode.Decimal: node = Node.Number((decimal)instance); return true;
-                case TypeCode.Boolean: node = Node.Boolean((bool)instance); return true;
-                case TypeCode.String: node = Node.String((string)instance); return true;
+                case TypeCode.Byte: node = (byte)instance; return true;
+                case TypeCode.SByte: node = (sbyte)instance; return true;
+                case TypeCode.Int16: node = (short)instance; return true;
+                case TypeCode.Int32: node = (int)instance; return true;
+                case TypeCode.Int64: node = (long)instance; return true;
+                case TypeCode.UInt16: node = (ushort)instance; return true;
+                case TypeCode.UInt32: node = (uint)instance; return true;
+                case TypeCode.UInt64: node = (ulong)instance; return true;
+                case TypeCode.Single: node = (float)instance; return true;
+                case TypeCode.Double: node = (double)instance; return true;
+                case TypeCode.Decimal: node = (decimal)instance; return true;
+                case TypeCode.Boolean: node = (bool)instance; return true;
+                case TypeCode.Char: node = (char)instance; return true;
+                case TypeCode.String: node = (string)instance; return true;
                 default: node = default; return false;
             }
         }
@@ -149,7 +149,6 @@ namespace Entia.Experiment.Json
         {
             var fields = type.InstanceFields;
             var members = new Node[fields.Length];
-            var context = this;
             for (int i = 0; i < fields.Length; i++)
             {
                 var field = fields[i];

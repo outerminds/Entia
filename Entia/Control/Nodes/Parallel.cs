@@ -89,7 +89,7 @@ namespace Entia.Nodes
                     var writeWrite2 = combinations.Select(combination => WriteWrite(combination[1], combination[0])).All();
                     var writeRead = combinations.Select(combination => WriteRead(combination[0], combination[1])).All();
                     var readWrite = combinations.Select(combination => WriteRead(combination[1], combination[0])).All();
-                    return Result.All(unknown, writeWrite1, writeWrite2, writeRead, readWrite)
+                    return Result.All(new[] { unknown, writeWrite1, writeWrite2, writeRead, readWrite })
                         .Map(_ => pairs.SelectMany(pair => pair.dependencies)
                         .ToArray());
                 });

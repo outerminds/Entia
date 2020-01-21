@@ -319,6 +319,7 @@ namespace Entia.Core
 
         public static TypeData GetData(Type type)
         {
+            if (type == null) return null;
             if (_typeToData.TryGetValue(type, out var data)) return data;
             _typeToData.TryAdd(type, data = new TypeData(type));
             return data;

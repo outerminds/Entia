@@ -11,9 +11,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using Entia.Experiment.Json;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
+using Entia.Json;
 
 namespace Entia.Experiment
 {
@@ -314,7 +314,6 @@ namespace Entia.Experiment
             var ancestors = families.Ancestors(child).ToArray();
         }
 
-        struct Wrapper<T> { public T Value; }
         static void TestJson()
         {
             var container = new Container();
@@ -327,9 +326,9 @@ namespace Entia.Experiment
 
             var json1 = File.ReadAllText(@"C:\Projects\Ululab\Numbers\Assets\Resources\Creative\Levels\ARCHIVE~11_KIDS_OEP_A.json");
             var node1 = Json.Serialization.Parse(json1).Or(Node.Null);
-            var json2 = Json.Serialization.Generate(node1, Json.Serialization.Format.Indented);
+            var json2 = Json.Serialization.Generate(node1, GenerateFormat.Indented);
             var node2 = Json.Serialization.Parse(json2).Or(Node.Null);
-            var json3 = Json.Serialization.Generate(node1, Json.Serialization.Format.Compact);
+            var json3 = Json.Serialization.Generate(node1, GenerateFormat.Compact);
             var node3 = Json.Serialization.Parse(json3);
 
             Test(new Cyclic(), out var json4, out var node4, out var value4);

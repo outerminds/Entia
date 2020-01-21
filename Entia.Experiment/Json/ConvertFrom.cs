@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.Serialization;
 using Entia.Core;
-using Entia.Experiment.Json.Converters;
+using Entia.Json.Converters;
 
-namespace Entia.Experiment.Json
+namespace Entia.Json
 {
     public readonly struct ConvertFromContext
     {
@@ -49,14 +50,14 @@ namespace Entia.Experiment.Json
 
         bool TrySpecial(Node node, out object instance)
         {
-            if (node.Kind == Node.Kinds.Null)
+            if (node.IsNull())
             {
                 instance = null;
                 return true;
             }
             else if (node.TryReference(out var reference))
             {
-                instance = References[int.Parse(reference.Value)];
+                instance = References[reference];
                 return true;
             }
             else if (node.TryAbstract(out var type, out var value))
@@ -73,20 +74,20 @@ namespace Entia.Experiment.Json
         {
             switch (type.Code)
             {
-                case TypeCode.Char: instance = char.Parse(node.Value); return true;
-                case TypeCode.Byte: instance = byte.Parse(node.Value); return true;
-                case TypeCode.SByte: instance = sbyte.Parse(node.Value); return true;
-                case TypeCode.Int16: instance = short.Parse(node.Value); return true;
-                case TypeCode.Int32: instance = int.Parse(node.Value); return true;
-                case TypeCode.Int64: instance = long.Parse(node.Value); return true;
-                case TypeCode.UInt16: instance = ushort.Parse(node.Value); return true;
-                case TypeCode.UInt32: instance = uint.Parse(node.Value); return true;
-                case TypeCode.UInt64: instance = ulong.Parse(node.Value); return true;
-                case TypeCode.Single: instance = float.Parse(node.Value); return true;
-                case TypeCode.Double: instance = double.Parse(node.Value); return true;
-                case TypeCode.Decimal: instance = decimal.Parse(node.Value); return true;
-                case TypeCode.Boolean: instance = bool.Parse(node.Value); return true;
-                case TypeCode.String: instance = node.Value; return true;
+                case TypeCode.Byte: instance = node.AsByte(); return true;
+                case TypeCode.SByte: instance = node.AsSByte(); return true;
+                case TypeCode.Int16: instance = node.AsShort(); return true;
+                case TypeCode.Int32: instance = node.AsInt(); return true;
+                case TypeCode.Int64: instance = node.AsLong(); return true;
+                case TypeCode.UInt16: instance = node.AsUShort(); return true;
+                case TypeCode.UInt32: instance = node.AsUInt(); return true;
+                case TypeCode.UInt64: instance = node.AsULong(); return true;
+                case TypeCode.Single: instance = node.AsFloat(); return true;
+                case TypeCode.Double: instance = node.AsDouble(); return true;
+                case TypeCode.Decimal: instance = node.AsDecimal(); return true;
+                case TypeCode.Boolean: instance = node.AsBool(); return true;
+                case TypeCode.Char: instance = node.AsChar(); return true;
+                case TypeCode.String: instance = node.AsString(); return true;
                 default: instance = default; return false;
             }
         }
@@ -133,15 +134,21 @@ namespace Entia.Experiment.Json
 
         object Default(Node node, TypeData type)
         {
-            var @object = FormatterServices.GetUninitializedObject(type);
-            References.Add(@object);
+            var instance =
+                type.DefaultConstructor is ConstructorInfo constructor ? constructor.Invoke(Array.Empty<object>()) :
+                FormatterServices.GetUninitializedObject(type);
+            References.Add(instance);
             foreach (var child in node.Children)
             {
-                if (child.TryMember(out var key, out var value) &&
-                    type.Fields.TryGetValue(key.Value, out var field))
-                    field.SetValue(@object, Convert(value, field.FieldType));
+                if (child.TryMember(out var key, out var value))
+                {
+                    if (type.Fields.TryGetValue(key, out var field))
+                        field.SetValue(instance, Convert(value, field.FieldType));
+                    else if (type.Properties.TryGetValue(key, out var property) && property.CanWrite)
+                        property.SetValue(instance, Convert(value, property.PropertyType));
+                }
             }
-            return @object;
+            return instance;
         }
     }
 

@@ -2,24 +2,24 @@ using System;
 using System.Text;
 using Entia.Core;
 
-namespace Entia.Experiment.Json
+namespace Entia.Json
 {
+    public enum GenerateFormat { Compact, Indented }
+
     public static partial class Serialization
     {
-        public enum Format { Compact, Indented }
-
-        public static string Serialize<T>(in T instance, ConvertOptions options = ConvertOptions.All, Format format = Format.Compact, Container container = null, params object[] references) =>
+        public static string Serialize<T>(in T instance, ConvertOptions options = ConvertOptions.All, GenerateFormat format = GenerateFormat.Compact, Container container = null, params object[] references) =>
             Generate(Convert(instance, options, container, references), format);
-        public static string Serialize(object instance, Type type, ConvertOptions options = ConvertOptions.All, Format format = Format.Compact, Container container = null, params object[] references) =>
+        public static string Serialize(object instance, Type type, ConvertOptions options = ConvertOptions.All, GenerateFormat format = GenerateFormat.Compact, Container container = null, params object[] references) =>
             Generate(Convert(instance, type, options, container, references), format);
 
-        public static string Generate(Node node, Format format = Format.Compact)
+        public static string Generate(Node node, GenerateFormat format = GenerateFormat.Compact)
         {
             var builder = new StringBuilder(64);
             switch (format)
             {
-                case Format.Compact: GenerateCompact(node, builder); break;
-                case Format.Indented: GenerateIndented(node, builder, 0); break;
+                case GenerateFormat.Compact: GenerateCompact(node, builder); break;
+                case GenerateFormat.Indented: GenerateIndented(node, builder, 0); break;
             }
             return builder.ToString();
         }
@@ -79,40 +79,46 @@ namespace Entia.Experiment.Json
                     break;
                 case Node.Kinds.Array:
                     builder.Append('[');
-                    builder.AppendLine();
-                    indent++;
-                    for (int i = 0; i < node.Children.Length; i++)
+                    if (node.Children.Length > 0)
                     {
-                        if (i > 0)
+                        builder.AppendLine();
+                        indent++;
+                        for (int i = 0; i < node.Children.Length; i++)
                         {
-                            builder.Append(',');
-                            builder.AppendLine();
+                            if (i > 0)
+                            {
+                                builder.Append(',');
+                                builder.AppendLine();
+                            }
+                            Indent(indent, builder);
+                            GenerateIndented(node.Children[i], builder, indent);
                         }
+                        indent--;
+                        builder.AppendLine();
                         Indent(indent, builder);
-                        GenerateIndented(node.Children[i], builder, indent);
                     }
-                    indent--;
-                    builder.AppendLine();
-                    Indent(indent, builder);
                     builder.Append(']');
                     break;
                 case Node.Kinds.Object:
                     builder.Append('{');
-                    builder.AppendLine();
-                    indent++;
-                    for (int i = 0; i < node.Children.Length; i++)
+                    if (node.Children.Length > 0)
                     {
-                        if (i > 0)
+                        builder.AppendLine();
+                        indent++;
+                        for (int i = 0; i < node.Children.Length; i++)
                         {
-                            builder.Append(',');
-                            builder.AppendLine();
+                            if (i > 0)
+                            {
+                                builder.Append(',');
+                                builder.AppendLine();
+                            }
+                            Indent(indent, builder);
+                            GenerateIndented(node.Children[i], builder, indent);
                         }
+                        indent--;
+                        builder.AppendLine();
                         Indent(indent, builder);
-                        GenerateIndented(node.Children[i], builder, indent);
                     }
-                    indent--;
-                    builder.AppendLine();
-                    Indent(indent, builder);
                     builder.Append('}');
                     break;
                 case Node.Kinds.Member:

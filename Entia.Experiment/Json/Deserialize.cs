@@ -1,8 +1,9 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using Entia.Core;
 
-namespace Entia.Experiment.Json
+namespace Entia.Json
 {
     public static partial class Serialization
     {
@@ -23,11 +24,9 @@ namespace Entia.Experiment.Json
         public static unsafe Result<Node> Parse(string text)
         {
             var count = text.Length;
-            if (count == 0) return Node.Null;
-
             var index = 0;
-            var nodes = new Stack<Node>(32);
-            var counts = new Stack<int>(8);
+            var nodes = (items: new Node[32], count: 0);
+            var counts = (items: new int[8], count: 0);
             fixed (char* pointer = text)
             {
                 while (index < count)
@@ -35,22 +34,22 @@ namespace Entia.Experiment.Json
                     switch (pointer[index++])
                     {
                         case 'n':
-                            if (index + 3 < count && pointer[index++] == 'u' && pointer[index++] == 'l' && pointer[index++] == 'l')
+                            if (index + 3 <= count && pointer[index++] == 'u' && pointer[index++] == 'l' && pointer[index++] == 'l')
                                 nodes.Push(Node.Null);
                             else
-                                return Result.Failure($"Expected 'null' at index '{index}'.");
+                                return Result.Failure($"Expected 'null' at index '{index - 1}'.");
                             break;
                         case 't':
-                            if (index + 3 < count && pointer[index++] == 'r' && pointer[index++] == 'u' && pointer[index++] == 'e')
+                            if (index + 3 <= count && pointer[index++] == 'r' && pointer[index++] == 'u' && pointer[index++] == 'e')
                                 nodes.Push(Node.True);
                             else
-                                return Result.Failure($"Expected 'true' at index '{index}'.");
+                                return Result.Failure($"Expected 'true' at index '{index - 1}'.");
                             break;
                         case 'f':
-                            if (index + 4 < count && pointer[index++] == 'a' && pointer[index++] == 'l' && pointer[index++] == 's' && pointer[index++] == 'e')
+                            if (index + 4 <= count && pointer[index++] == 'a' && pointer[index++] == 'l' && pointer[index++] == 's' && pointer[index++] == 'e')
                                 nodes.Push(Node.False);
                             else
-                                return Result.Failure($"Expected 'false' at index '{index}'.");
+                                return Result.Failure($"Expected 'false' at index '{index - 1}'.");
                             break;
                         case '-':
                         case '+':
@@ -101,28 +100,45 @@ namespace Entia.Experiment.Json
                                 break;
                             }
                         case '{':
-                        case '[': counts.Push(nodes.Count); break;
+                        case '[': counts.Push(nodes.count); break;
                         case '}':
-                            var members = new Node[(nodes.Count - counts.Pop()) / 2];
+                            var members = new Node[(nodes.count - counts.Pop()) / 2];
                             for (var i = members.Length - 1; i >= 0; i--)
                             {
                                 var value = nodes.Pop();
                                 var key = nodes.Pop();
-                                if (key.Kind == Node.Kinds.String) members[i] = Node.Member(key, value);
+                                if (key.IsString()) members[i] = Node.Member(key, value);
                                 else return Result.Failure("Expected key to be of type string.");
                             }
                             nodes.Push(Node.Object(members));
                             break;
                         case ']':
-                            var items = new Node[nodes.Count - counts.Pop()];
+                            var items = new Node[nodes.count - counts.Pop()];
                             for (var i = items.Length - 1; i >= 0; i--) items[i] = nodes.Pop();
                             nodes.Push(Node.Array(items));
                             break;
+                        case ' ':
+                        case '\t':
+                        case '\n':
+                        case '\r':
+                        case ',':
+                        case ':': break;
+                        default: return Result.Failure($"Expected character {pointer[index - 1]} at index {index - 1} to be valid.");
                     }
                 }
             }
 
+            if (nodes.count == 0) return Result.Failure("Failed to parse json.");
             return nodes.Pop();
         }
+
+        static void Push<T>(ref this (T[] items, int count) array, T item)
+        {
+            var index = array.count++;
+            ArrayUtility.Ensure(ref array.items, array.count);
+            array.items[index] = item;
+        }
+
+        static T Pop<T>(ref this (T[] items, int count) array) => array.items[--array.count];
     }
 }
