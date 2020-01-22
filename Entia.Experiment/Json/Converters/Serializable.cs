@@ -15,11 +15,14 @@ namespace Entia.Json.Converters
         {
             var info = new SerializationInfo(context.Type, _converter);
             instance.GetObjectData(info, _context);
-            var members = new Node[info.MemberCount];
+            var children = new Node[info.MemberCount * 2];
             var index = 0;
             foreach (var pair in info)
-                members[index++] = Node.Member(pair.Name, context.Convert(pair.Value));
-            return Node.Object(members);
+            {
+                children[index++] = pair.Name;
+                children[index++] = context.Convert(pair.Value);
+            }
+            return new Node(Node.Kinds.Object, children);
         }
 
         public override ISerializable Instantiate(in ConvertFromContext context) =>
@@ -28,10 +31,11 @@ namespace Entia.Json.Converters
         public override void Initialize(ref ISerializable instance, in ConvertFromContext context)
         {
             var info = new SerializationInfo(context.Type, _converter);
-            foreach (var member in context.Node.Children)
+            var children = context.Node.Children;
+            for (int i = 1; i < children.Length; i += 2)
             {
-                if (member.TryMember(out var key, out var value))
-                    info.AddValue(key, context.Convert<object>(value));
+                if (children[i - 1].TryString(out var key))
+                    info.AddValue(key, context.Convert<object>(children[i]));
             }
             context.Type.SerializationConstructor.Invoke(instance, new object[] { info, _context });
             if (instance is IDeserializationCallback callback) callback.OnDeserialization(this);

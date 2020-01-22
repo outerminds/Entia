@@ -148,13 +148,14 @@ namespace Entia.Json
         Node Default(object instance, TypeData type)
         {
             var fields = type.InstanceFields;
-            var members = new Node[fields.Length];
+            var members = new Node[fields.Length * 2];
             for (int i = 0; i < fields.Length; i++)
             {
                 var field = fields[i];
-                members[i] = Node.Member(field.Name, Convert(field.GetValue(instance), field.FieldType));
+                members[i * 2] = field.Name;
+                members[i * 2 + 1] = Convert(field.GetValue(instance), field.FieldType);
             }
-            return Node.Object(members);
+            return new Node(Node.Kinds.Object, members);
         }
     }
 

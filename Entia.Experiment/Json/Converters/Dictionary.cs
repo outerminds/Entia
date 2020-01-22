@@ -32,11 +32,14 @@ namespace Entia.Json.Converters
     {
         public override Node Convert(in Dictionary<TKey, TValue> instance, in ConvertToContext context)
         {
-            var members = new Node[instance.Count];
+            var items = new Node[instance.Count * 2];
             var index = 0;
             foreach (var pair in instance)
-                members[index++] = Node.Array(context.Convert(pair.Key), context.Convert(pair.Value));
-            return Node.Array(members);
+            {
+                items[index++] = context.Convert(pair.Key);
+                items[index++] = context.Convert(pair.Value);
+            }
+            return Node.Array(items);
         }
 
         public override Dictionary<TKey, TValue> Instantiate(in ConvertFromContext context) =>
@@ -44,22 +47,9 @@ namespace Entia.Json.Converters
 
         public override void Initialize(ref Dictionary<TKey, TValue> instance, in ConvertFromContext context)
         {
-            if (context.Node.IsArray())
-            {
-                foreach (var child in context.Node.Children)
-                {
-                    if (child.TryItem(0, out var key) && child.TryItem(1, out var value))
-                        instance.Add(context.Convert<TKey>(key), context.Convert<TValue>(value));
-                }
-            }
-            else if (context.Node.IsObject())
-            {
-                foreach (var child in context.Node.Children)
-                {
-                    if (child.TryMember(out var key, out var value))
-                        instance.Add(context.Convert<TKey>(key), context.Convert<TValue>(value));
-                }
-            }
+            var children = context.Node.Children;
+            for (int i = 1; i < children.Length; i += 2)
+                instance.Add(context.Convert<TKey>(children[i - 1]), context.Convert<TValue>(children[i]));
         }
     }
 
@@ -69,11 +59,14 @@ namespace Entia.Json.Converters
 
         public override Node Convert(in IDictionary<TKey, TValue> instance, in ConvertToContext context)
         {
-            var members = new Node[instance.Count];
+            var items = new Node[instance.Count * 2];
             var index = 0;
             foreach (var pair in instance)
-                members[index++] = Node.Array(context.Convert(pair.Key), context.Convert(pair.Value));
-            return Node.Array(members);
+            {
+                items[index++] = context.Convert(pair.Key);
+                items[index++] = context.Convert(pair.Value);
+            }
+            return Node.Array(items);
         }
 
         public override IDictionary<TKey, TValue> Instantiate(in ConvertFromContext context) =>
@@ -81,22 +74,9 @@ namespace Entia.Json.Converters
 
         public override void Initialize(ref IDictionary<TKey, TValue> instance, in ConvertFromContext context)
         {
-            if (context.Node.IsArray())
-            {
-                foreach (var child in context.Node.Children)
-                {
-                    if (child.TryItem(0, out var key) && child.TryItem(1, out var value))
-                        instance.Add(context.Convert<TKey>(key), context.Convert<TValue>(value));
-                }
-            }
-            else if (context.Node.IsObject())
-            {
-                foreach (var child in context.Node.Children)
-                {
-                    if (child.TryMember(out var key, out var value))
-                        instance.Add(context.Convert<TKey>(key), context.Convert<TValue>(value));
-                }
-            }
+            var children = context.Node.Children;
+            for (int i = 1; i < children.Length; i += 2)
+                instance.Add(context.Convert<TKey>(children[i - 1]), context.Convert<TValue>(children[i]));
         }
     }
 
@@ -116,11 +96,14 @@ namespace Entia.Json.Converters
 
         public override Node Convert(in IDictionary instance, in ConvertToContext context)
         {
-            var members = new Node[instance.Count];
+            var items = new Node[instance.Count * 2];
             var index = 0;
             foreach (var key in instance.Keys)
-                members[index++] = Node.Array(context.Convert(key, _key), context.Convert(instance[key], _value));
-            return Node.Array(members);
+            {
+                items[index++] = context.Convert(key, _key);
+                items[index++] = context.Convert(instance[key], _value);
+            }
+            return Node.Array(items);
         }
 
         public override IDictionary Instantiate(in ConvertFromContext context) =>
@@ -128,22 +111,9 @@ namespace Entia.Json.Converters
 
         public override void Initialize(ref IDictionary instance, in ConvertFromContext context)
         {
-            if (context.Node.IsArray())
-            {
-                foreach (var child in context.Node.Children)
-                {
-                    if (child.TryItem(0, out var key) && child.TryItem(1, out var value))
-                        instance.Add(context.Convert(key, _key), context.Convert(value, _value));
-                }
-            }
-            else if (context.Node.IsObject())
-            {
-                foreach (var child in context.Node.Children)
-                {
-                    if (child.TryMember(out var key, out var value))
-                        instance.Add(context.Convert(key, _key), context.Convert(value, _value));
-                }
-            }
+            var children = context.Node.Children;
+            for (int i = 1; i < children.Length; i += 2)
+                instance.Add(context.Convert(children[i - 1], _key), context.Convert(children[i], _value));
         }
     }
 }

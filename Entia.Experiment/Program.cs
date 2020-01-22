@@ -14,6 +14,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
 using Entia.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Entia.Experiment
 {
@@ -314,6 +315,8 @@ namespace Entia.Experiment
             var ancestors = families.Ancestors(child).ToArray();
         }
 
+        struct Wrapper<T> { public T Value; }
+
         static void TestJson()
         {
             var container = new Container();
@@ -324,6 +327,7 @@ namespace Entia.Experiment
                 instance = Json.Serialization.Instantiate<T>(node, container: container);
             }
 
+            var twitter = File.ReadAllText(@"C:\Users\strat\Desktop\twitter.json");
             var json1 = File.ReadAllText(@"C:\Projects\Ululab\Numbers\Assets\Resources\Creative\Levels\ARCHIVE~11_KIDS_OEP_A.json");
             var node1 = Json.Serialization.Parse(json1).Or(Node.Null);
             var json2 = Json.Serialization.Generate(node1, GenerateFormat.Indented);
@@ -365,16 +369,28 @@ namespace Entia.Experiment
 
             void SerializeA<T>(T value)
             {
-                var json = Json.Serialization.Serialize(value, container: container);
-                Json.Serialization.Deserialize<T>(json, container: container).TryValue(out value);
+                var json = Json.Serialization.Serialize(new Wrapper<T> { Value = value }, container: container);
+                value = Json.Serialization.Deserialize<Wrapper<T>>(json, container: container).OrDefault().Value;
             }
 
             void SerializeB<T>(T value)
             {
-                var json = JsonConvert.SerializeObject(value, settings);
-                value = JsonConvert.DeserializeObject<T>(json, settings);
+                var json = JsonConvert.SerializeObject(new Wrapper<T> { Value = value }, settings);
+                value = JsonConvert.DeserializeObject<Wrapper<T>>(json, settings).Value;
             }
 
+            void ParseA()
+            {
+                var node = Json.Serialization.Parse(twitter).Or(Node.Null);
+                var json = Json.Serialization.Generate(node);
+                var equals = twitter == json;
+            }
+            void ParseB()
+            {
+                var node = JsonConvert.DeserializeObject<JObject>(twitter, settings);
+                var json = JsonConvert.SerializeObject(node, settings);
+                var equals = twitter == json;
+            }
             void IntNumberA() => SerializeA(1);
             void ObjectNumberA() => SerializeA<object>(1);
             void CyclicA() => SerializeA(new Cyclic());
@@ -395,9 +411,10 @@ namespace Entia.Experiment
             void ObjectDictionaryB() => SerializeB(new Dictionary<object, object> { { DateTime.Now, TimeSpan.MaxValue }, { DateTime.Now, TimeSpan.MaxValue }, { DateTime.Now, TimeSpan.MaxValue } });
             void LargeArrayB() => SerializeB(new ulong[256]);
 
-            // for (int i = 0; i < 100; i++)
-            while (true)
+            for (int i = 0; i < 100; i++)
+            // while (true)
             {
+                Experiment.Test.Measure(ParseA, new Action[] { ParseB }, 100, 1);
                 Experiment.Test.Measure(IntNumberA, new Action[]
                 {
                     ObjectNumberA,

@@ -138,15 +138,12 @@ namespace Entia.Json
                 type.DefaultConstructor is ConstructorInfo constructor ? constructor.Invoke(Array.Empty<object>()) :
                 FormatterServices.GetUninitializedObject(type);
             References.Add(instance);
-            foreach (var child in node.Children)
+            foreach (var (key, value) in node.Members())
             {
-                if (child.TryMember(out var key, out var value))
-                {
-                    if (type.Fields.TryGetValue(key, out var field))
-                        field.SetValue(instance, Convert(value, field.FieldType));
-                    else if (type.Properties.TryGetValue(key, out var property) && property.CanWrite)
-                        property.SetValue(instance, Convert(value, property.PropertyType));
-                }
+                if (type.Fields.TryGetValue(key, out var field))
+                    field.SetValue(instance, Convert(value, field.FieldType));
+                else if (type.Properties.TryGetValue(key, out var property) && property.CanWrite)
+                    property.SetValue(instance, Convert(value, property.PropertyType));
             }
             return instance;
         }

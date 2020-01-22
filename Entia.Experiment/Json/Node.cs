@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Entia.Core;
@@ -7,7 +8,7 @@ namespace Entia.Json
 {
     public sealed class Node
     {
-        public enum Kinds { Null, Boolean, Number, String, Object, Member, Array }
+        public enum Kinds { Null, Boolean, Number, String, Object, Array }
 
         public static implicit operator Node(bool value) => Boolean(value);
         public static implicit operator Node(byte value) => Number(value);
@@ -29,6 +30,8 @@ namespace Entia.Json
         public static readonly Node False = new Node(Kinds.Boolean, bool.FalseString.ToLower());
         public static readonly Node Zero = new Node(Kinds.Number, "0");
 
+        static readonly Node[] _empty = { };
+
         public static Node Boolean(bool value) => value ? True : False;
         public static Node Number(byte value) => new Node(Kinds.Number, value.ToString());
         public static Node Number(sbyte value) => new Node(Kinds.Number, value.ToString());
@@ -43,11 +46,17 @@ namespace Entia.Json
         public static Node Number(decimal value) => new Node(Kinds.Number, value.ToString());
         public static Node String(char value) => new Node(Kinds.String, value.ToString());
         public static Node String(string value) => value is null ? Null : new Node(Kinds.String, value);
-        public static Node Member(Node key, Node value) => new Node(Kinds.Member, key, value);
         public static Node Array(params Node[] items) => new Node(Kinds.Array, items);
         public static Node Object(params Node[] members) => new Node(Kinds.Object, members);
-        public static Node Abstract(Node type, Node value) => Object(Member("$t", type), Member("$v", value));
-        public static Node Reference(int reference) => Object(Member("$r", reference));
+        public static Node Object(params (string key, Node value)[] members)
+        {
+            var children = new Node[members.Length * 2];
+            for (int i = 0; i < members.Length; i++)
+                (children[i * 2], children[i * 2 + 1]) = members[i];
+            return Object(children);
+        }
+        public static Node Abstract(Node type, Node value) => Object("$t", type, "$v", value);
+        public static Node Reference(int reference) => Object(("$r", reference));
 
         public readonly Kinds Kind;
         public readonly string Value;
@@ -64,30 +73,70 @@ namespace Entia.Json
         {
             Kind = kind;
             Value = value;
-            Children = System.Array.Empty<Node>();
+            Children = _empty;
         }
 
-        public override string ToString() =>
-            this.TryMember(out var key, out var value) ? $"{key}: {value}" :
-            string.IsNullOrEmpty(Value) ? $"{Kind}({Children.Length})" : $"{Kind}({Value})";
+        public override string ToString() => Serialization.Generate(this);
     }
 
     public static class NodeExtensions
     {
+        public readonly struct MemberEnumerable : IEnumerable<MemberEnumerator, (string key, Node value)>
+        {
+            readonly Node _node;
+            public MemberEnumerable(Node node) { _node = node; }
+            public MemberEnumerator GetEnumerator() => new MemberEnumerator(_node);
+            IEnumerator<(string key, Node value)> IEnumerable<(string key, Node value)>.GetEnumerator() => GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        public struct MemberEnumerator : IEnumerator<(string key, Node value)>
+        {
+            public (string key, Node value) Current { get; private set; }
+            object IEnumerator.Current => Current;
+
+            readonly Node[] _nodes;
+            int _index;
+
+            public MemberEnumerator(Node node)
+            {
+                Current = default;
+                if (node.IsObject())
+                {
+                    _nodes = node.Children;
+                    _index = 0;
+                }
+                else
+                {
+                    _nodes = Array.Empty<Node>();
+                    _index = 0;
+                }
+            }
+
+            public bool MoveNext()
+            {
+                if (_index < _nodes.Length && _nodes[_index].TryString(out var key))
+                {
+                    Current = (key, _nodes[_index + 1]);
+                    _index += 2;
+                    return true;
+                }
+                return false;
+            }
+
+            public void Reset() => _index = 0;
+            public void Dispose() => this = default;
+        }
+
         public static Node With(this Node node, params Node[] children) => new Node(node.Kind, children);
         public static Node With(this Node node, string value) => new Node(node.Kind, value);
-        public static Node WithMember(this Node node, string key, Node value) => node.WithMember(Node.Member(key, value));
-        public static Node WithMember(this Node node, Node member)
+        public static Node WithMember(this Node node, string key, Node value)
         {
-            if (node.IsObject() && member.TryMember(out var key, out var value))
+            if (node.IsObject())
             {
-                for (int i = 0; i < node.Children.Length; i++)
-                {
-                    if (node.Children[i].TryMember(key, out _))
-                        return node.WithReplacement(i, member);
-                }
-
-                return node.With(node.Children.Append(member));
+                foreach (var pair in node.Members())
+                    if (pair.key == key) return node.WithReplacement(pair.value, value);
+                return node.With(node.Children.Append(key, value));
             }
             return node;
         }
@@ -114,22 +163,19 @@ namespace Entia.Json
         public static bool IsBoolean(this Node node) => node.Is(Node.Kinds.Boolean);
         public static bool IsNumber(this Node node) => node.Is(Node.Kinds.Number);
         public static bool IsArray(this Node node) => node.Is(Node.Kinds.Array);
-        public static bool IsObject(this Node node) => node.Is(Node.Kinds.Object);
-        public static bool IsMember(this Node node) => node.Is(Node.Kinds.Member);
+        public static bool IsObject(this Node node) => node.Is(Node.Kinds.Object) && node.Children.Length % 2 == 0;
         public static bool IsNull(this Node node, string key) => node.Is(key, Node.Kinds.Null);
         public static bool IsString(this Node node, string key) => node.Is(key, Node.Kinds.String);
         public static bool IsBoolean(this Node node, string key) => node.Is(key, Node.Kinds.Boolean);
         public static bool IsNumber(this Node node, string key) => node.Is(key, Node.Kinds.Number);
         public static bool IsArray(this Node node, string key) => node.Is(key, Node.Kinds.Array);
         public static bool IsObject(this Node node, string key) => node.Is(key, Node.Kinds.Object);
-        public static bool IsMember(this Node node, string key) => node.Is(key, Node.Kinds.Member);
         public static bool IsNull(this Node node, int index) => node.Is(index, Node.Kinds.Null);
         public static bool IsString(this Node node, int index) => node.Is(index, Node.Kinds.String);
         public static bool IsBoolean(this Node node, int index) => node.Is(index, Node.Kinds.Boolean);
         public static bool IsNumber(this Node node, int index) => node.Is(index, Node.Kinds.Number);
         public static bool IsArray(this Node node, int index) => node.Is(index, Node.Kinds.Array);
         public static bool IsObject(this Node node, int index) => node.Is(index, Node.Kinds.Object);
-        public static bool IsMember(this Node node, int index) => node.Is(index, Node.Kinds.Member);
 
         public static bool TryString(this Node node, out string value)
         {
@@ -476,39 +522,17 @@ namespace Entia.Json
         public static double AsDouble(this Node node, int index) => node.TryDouble(index, out var value) ? value : default;
         public static decimal AsDecimal(this Node node, int index) => node.TryDecimal(index, out var value) ? value : default;
 
-        public static IEnumerable<(Node member, Node key, Node value)> Members(this Node node)
-        {
-            if (node.IsObject())
-            {
-                foreach (var child in node.Children)
-                    if (child.TryMember(out var key, out var value))
-                        yield return (child, key, value);
-            }
-        }
-
+        public static MemberEnumerable Members(this Node node) => new MemberEnumerable(node);
         public static bool TryMember(this Node node, string key, out Node value)
         {
-            if (node.IsObject())
+            foreach (var pair in node.Members())
             {
-                foreach (var child in node.Children)
-                    if (child.TryMember(key, out value)) return true;
-
-                value = default;
-                return false;
+                if (pair.key == key)
+                {
+                    value = pair.value;
+                    return true;
+                }
             }
-
-            return node.TryMember(out var other, out value) && other == key;
-        }
-
-        public static bool TryMember(this Node node, out string key, out Node value)
-        {
-            if (node.IsMember() && node.Children.Length == 2 && node.Children[0].TryString(out key))
-            {
-                value = node.Children[1];
-                return true;
-            }
-
-            key = default;
             value = default;
             return false;
         }

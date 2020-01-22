@@ -47,20 +47,14 @@ namespace Entia.Json
                     break;
                 case Node.Kinds.Object:
                     builder.Append('{');
-                    for (int i = 0; i < node.Children.Length; i++)
+                    for (int i = 0; i < node.Children.Length; i += 2)
                     {
                         if (i > 0) builder.Append(',');
                         GenerateCompact(node.Children[i], builder);
+                        builder.Append(':');
+                        GenerateCompact(node.Children[i + 1], builder);
                     }
                     builder.Append('}');
-                    break;
-                case Node.Kinds.Member:
-                    if (node.TryMember(out var key, out var value))
-                    {
-                        GenerateCompact(key, builder);
-                        builder.Append(':');
-                        GenerateCompact(value, builder);
-                    }
                     break;
             }
         }
@@ -105,7 +99,7 @@ namespace Entia.Json
                     {
                         builder.AppendLine();
                         indent++;
-                        for (int i = 0; i < node.Children.Length; i++)
+                        for (int i = 0; i < node.Children.Length; i += 2)
                         {
                             if (i > 0)
                             {
@@ -114,20 +108,14 @@ namespace Entia.Json
                             }
                             Indent(indent, builder);
                             GenerateIndented(node.Children[i], builder, indent);
+                            builder.Append(": ");
+                            GenerateIndented(node.Children[i + 1], builder, indent);
                         }
                         indent--;
                         builder.AppendLine();
                         Indent(indent, builder);
                     }
                     builder.Append('}');
-                    break;
-                case Node.Kinds.Member:
-                    if (node.TryMember(out var key, out var value))
-                    {
-                        GenerateIndented(key, builder, indent);
-                        builder.Append(": ");
-                        GenerateIndented(value, builder, indent);
-                    }
                     break;
             }
         }
