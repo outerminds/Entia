@@ -209,6 +209,26 @@ namespace Entia.Json
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void Push<T>(ref this (T[] items, int count) array, T[] items)
+        {
+            var index = array.count;
+            array.count += items.Length;
+            ArrayUtility.Ensure(ref array.items, array.count);
+            Array.Copy(items, 0, array.items, index, items.Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static unsafe void Push(ref this (char[] items, int count) array, string item)
+        {
+            var index = array.count;
+            array.count += item.Length;
+            ArrayUtility.Ensure(ref array.items, array.count);
+            var size = item.Length * sizeof(char);
+            fixed (char* source = item, target = array.items)
+                Buffer.MemoryCopy((void*)source, (void*)target, size, size);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static T Pop<T>(ref this (T[] items, int count) array) => array.items[--array.count];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -15,7 +15,7 @@ namespace Entia.Json
 
         public static string Generate(Node node, GenerateFormat format = GenerateFormat.Compact)
         {
-            var builder = new StringBuilder(64);
+            var builder = new StringBuilder(1024);
             switch (format)
             {
                 case GenerateFormat.Compact: GenerateCompact(node, builder); break;
@@ -81,7 +81,7 @@ namespace Entia.Json
                         {
                             if (i > 0)
                             {
-                                builder.Append(',');
+                                builder.Append(", ");
                                 builder.AppendLine();
                             }
                             Indent(indent, builder);
@@ -103,7 +103,7 @@ namespace Entia.Json
                         {
                             if (i > 0)
                             {
-                                builder.Append(',');
+                                builder.Append(", ");
                                 builder.AppendLine();
                             }
                             Indent(indent, builder);
