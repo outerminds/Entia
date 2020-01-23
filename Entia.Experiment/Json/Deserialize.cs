@@ -33,8 +33,7 @@ namespace Entia.Json
             var index = 0;
             var count = text.Length;
             var nodes = (items: new Node[64], count: 0);
-            var counts = (items: new int[8], count: 0);
-            // var builder = (items: new char[64], count: 0);
+            var brackets = (items: new int[8], count: 0);
             fixed (char* pointer = text)
             {
                 while (index < count)
@@ -101,80 +100,100 @@ namespace Entia.Json
                                 {
                                     var current = pointer[index++];
                                     if (current == _slash) index++;
-                                    // TODO: unescape characters?
-                                    // {
-                                    //     // TODO: handle "\u0000"
-                                    //     builder.Push(pointer[index++]);
-                                    // }
                                     else if (current == _quote)
                                     {
                                         nodes.Push(new Node(Node.Kinds.String, new string(pointer, start, index - 1 - start)));
-                                        // nodes.Push(new Node(Node.Kinds.String, new string(builder.items, 0, builder.count)));
-                                        // builder.count = 0;
                                         break;
                                     }
-                                    // else builder.Push(current);
                                 }
                                 break;
                             }
                         case _openCurly:
-                        case _openSquare: counts.Push(nodes.count); break;
+                        case _openSquare: brackets.Push(nodes.count); break;
                         case _closeCurly:
-                            if (counts.TryPop(out var memberCount))
+                            if (brackets.TryPop(out var memberCount))
                             {
                                 var members = new Node[nodes.count - memberCount];
                                 for (var i = members.Length - 1; i >= 0; i--) members[i] = nodes.Pop();
                                 nodes.Push(Node.Object(members));
                                 break;
                             }
-                            return Result.Failure($"Expected balanced curly bracket at index '{index - 1}'.");
+                            else
+                                return Result.Failure($"Expected balanced curly bracket at index '{index - 1}'.");
                         case _closeSquare:
-                            if (counts.TryPop(out var itemCount))
+                            if (brackets.TryPop(out var itemCount))
                             {
                                 var items = new Node[nodes.count - itemCount];
                                 for (var i = items.Length - 1; i >= 0; i--) items[i] = nodes.Pop();
                                 nodes.Push(Node.Array(items));
                                 break;
                             }
-                            return Result.Failure($"Expected balanced square bracket at index '{index - 1}'.");
+                            else
+                                return Result.Failure($"Expected balanced square bracket at index '{index - 1}'.");
                         case _space: case _tab: case _line: case _return: case _comma: case _colon: break;
                         default: return Result.Failure($"Expected character '{pointer[index - 1]}' at index '{index - 1}' to be valid.");
                     }
                 }
             }
 
-            if (nodes.count == 0) return Result.Failure("Failed to parse json.");
+            if (nodes.count == 0) return Result.Failure("Expected valid json.");
             return nodes.Pop();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static byte ToHex(char character)
+        static bool TryHex(char character, out int value)
         {
             switch (character)
             {
-                case _0:
-                case _1:
-                case _2:
-                case _3:
-                case _4:
-                case _5:
-                case _6:
-                case _7:
-                case _8:
-                case _9: return (byte)(character - _0);
-                case _a:
-                case _b:
-                case _c:
-                case _d:
-                case _e:
-                case _f: return (byte)(character - _a + 10);
-                case _A:
-                case _B:
-                case _C:
-                case _D:
-                case _E:
-                case _F: return (byte)(character - _A + 10);
-                default: return 0;
+                case _0: value = 0; return true;
+                case _1: value = 1; return true;
+                case _2: value = 2; return true;
+                case _3: value = 3; return true;
+                case _4: value = 4; return true;
+                case _5: value = 5; return true;
+                case _6: value = 6; return true;
+                case _7: value = 7; return true;
+                case _8: value = 8; return true;
+                case _9: value = 9; return true;
+                case _A: case _a: value = 10; return true;
+                case _B: case _b: value = 11; return true;
+                case _C: case _c: value = 12; return true;
+                case _D: case _d: value = 13; return true;
+                case _E: case _e: value = 14; return true;
+                case _F: case _f: value = 15; return true;
+                default: value = default; return false;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static bool TryHex(char partA, char partB, char partC, char partD, out int value)
+        {
+            if (TryHex(partA, out var valueA) && TryHex(partB, out var valueB) &&
+                TryHex(partC, out var valueC) && TryHex(partD, out var valueD))
+            {
+                value = valueA | (valueB << 8) | (valueC << 16) | (valueD << 24);
+                return true;
+            }
+            value = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static bool TryDigit(char character, out double digit)
+        {
+            switch (character)
+            {
+                case _0: digit = 0d; return true;
+                case _1: digit = 1d; return true;
+                case _2: digit = 2d; return true;
+                case _3: digit = 3d; return true;
+                case _4: digit = 4d; return true;
+                case _5: digit = 5d; return true;
+                case _6: digit = 6d; return true;
+                case _7: digit = 7d; return true;
+                case _8: digit = 8d; return true;
+                case _9: digit = 9d; return true;
+                default: digit = default; return false;
             }
         }
 

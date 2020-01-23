@@ -8,6 +8,6 @@ namespace Entia.Json.Converters
             Node.Array(instance.Ticks, (int)instance.Kind);
         public override DateTime Instantiate(in ConvertFromContext context) =>
             context.Node.IsArray() ? new DateTime(context.Node.AsLong(0), (DateTimeKind)context.Node.AsInt(1)) :
-            DateTime.Parse(context.Node.Value);
+            DateTime.Parse(context.Node.AsString());
     }
 }

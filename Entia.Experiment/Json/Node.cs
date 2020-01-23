@@ -56,7 +56,7 @@ namespace Entia.Json
             return Object(children);
         }
         public static Node Abstract(Node type, Node value) => Object("$t", type, "$v", value);
-        public static Node Reference(int reference) => Object(("$r", reference));
+        public static Node Reference(int reference) => Object("$r", reference);
 
         public readonly Kinds Kind;
         public readonly string Value;
