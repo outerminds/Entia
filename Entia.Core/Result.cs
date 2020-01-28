@@ -170,7 +170,10 @@ namespace Entia.Core
             option.TryValue(out var value) ? Success(value).AsResult() : Failure(messages);
         public static Option<T> AsOption<T>(in this Result<T> result) => result;
         public static Failure AsFailure<T>(in this Result<T> result) => result.TryFailure(out var failure) ? failure : Failure();
-
+        public static T? AsNullable<T>(in this Result<T> result) where T : struct => result.TryValue(out var value) ? (T?)value : null;
+        public static T? AsNullable<T>(in this Success<T> success) where T : struct => success.Value;
+        public static T? AsNullable<T>(in this Failure failure) where T : struct => null;
+        
         public static bool TrySuccess<T>(in this Result<T> result, out Success<T> success)
         {
             if (result.IsSuccess())
