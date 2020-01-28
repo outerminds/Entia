@@ -67,7 +67,7 @@ namespace Entia.Core
 
         public static implicit operator Result<T>(in Success<T> success) => new Result<T>(Result.Tags.Success, success.Value);
         public static implicit operator Result<T>(in T value) => new Result<T>(Result.Tags.Success, value);
-        public static implicit operator Result<T>(in Failure failure) => new Result<T>(Result.Tags.Failure, default, failure.Messages);
+        public static implicit operator Result<T>(Failure failure) => new Result<T>(Result.Tags.Failure, default, failure.Messages);
         public static implicit operator bool(in Result<T> result) => result.Tag == Result.Tags.Success;
         public static explicit operator Success<T>(in Result<T> result) => result.Tag == Result.Tags.Success ? new Success<T>(result._value) : throw new InvalidCastException();
         public static explicit operator Failure(in Result<T> result) => result.Tag == Result.Tags.Failure ? new Failure(result._messages) : throw new InvalidCastException();
