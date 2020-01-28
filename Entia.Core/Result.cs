@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -45,8 +45,8 @@ namespace Entia.Core
     {
         public static bool operator ==(Failure left, Failure right) => true;
         public static bool operator !=(Failure left, Failure right) => !(left == right);
-        public static implicit operator None(in Failure failure) => Option.None();
-        public static implicit operator Failure(in None none) => Result.Failure();
+        public static implicit operator None(Failure failure) => Option.None();
+        public static implicit operator Failure(None none) => Result.Failure();
 
         public readonly string[] Messages;
         public Failure(params string[] messages) { Messages = messages; }
@@ -162,8 +162,8 @@ namespace Entia.Core
         public static bool IsSuccess<T>(in this Result<T> result) => result.Is(Tags.Success);
         public static bool IsFailure<T>(in this Result<T> result) => result.Is(Tags.Failure);
         public static Result<T> AsResult<T>(in this Success<T> success) => success;
-        public static Result<T> AsResult<T>(in this Failure failure) => failure;
-        public static Result<Unit> AsResult(in this Failure failure) => failure;
+        public static Result<T> AsResult<T>(this Failure failure) => failure;
+        public static Result<Unit> AsResult(this Failure failure) => failure;
         public static Success<T> AsResult<T>(in this Some<T> some) => some.Value;
         public static Failure AsResult(in this None none, params string[] messages) => new Failure(messages);
         public static Result<T> AsResult<T>(in this Option<T> option, params string[] messages) =>
@@ -172,8 +172,8 @@ namespace Entia.Core
         public static Failure AsFailure<T>(in this Result<T> result) => result.TryFailure(out var failure) ? failure : Failure();
         public static T? AsNullable<T>(in this Result<T> result) where T : struct => result.TryValue(out var value) ? (T?)value : null;
         public static T? AsNullable<T>(in this Success<T> success) where T : struct => success.Value;
-        public static T? AsNullable<T>(in this Failure failure) where T : struct => null;
-        
+        public static T? AsNullable<T>(this Failure failure) where T : struct => null;
+
         public static bool TrySuccess<T>(in this Result<T> result, out Success<T> success)
         {
             if (result.IsSuccess())
