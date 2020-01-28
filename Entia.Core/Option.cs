@@ -158,7 +158,10 @@ namespace Entia.Core
         public static Option<T> AsOption<T>(in this Some<T> some) => some;
         public static Option<T> AsOption<T>(in this None none) => none;
         public static Option<Unit> AsOption(in this None none) => none;
-
+        public static T? AsNullable<T>(in this Option<T> option) where T : struct => option.TryValue(out var value) ? (T?)value : null;
+        public static T? AsNullable<T>(in this Some<T> some) where T : struct => some.Value;
+        public static T? AsNullable<T>(in this None none) where T : struct => null;
+        
         public static bool TrySome<T>(in this Option<T> option, out Some<T> some)
         {
             if (option.IsSome())
