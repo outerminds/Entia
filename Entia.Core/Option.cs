@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -61,7 +61,7 @@ namespace Entia.Core
         public static implicit operator Option<T>(in T value) => _isNull(value) ?
             new Option<T>(Option.Tags.None, value) :
             new Option<T>(Option.Tags.Some, value);
-        public static implicit operator Option<T>(in None none) => new Option<T>(Option.Tags.None, default);
+        public static implicit operator Option<T>(None none) => new Option<T>(Option.Tags.None, default);
         public static implicit operator bool(in Option<T> option) => option.Tag == Option.Tags.Some;
         public static explicit operator Some<T>(in Option<T> option) => option.Tag == Option.Tags.Some ? new Some<T>(option._value) : throw new InvalidCastException();
         public static explicit operator None(in Option<T> option) => option.Tag == Option.Tags.None ? new None() : throw new InvalidCastException();
@@ -156,8 +156,11 @@ namespace Entia.Core
         public static bool IsNone<T>(in this Option<T> option) => option.Is(Tags.None);
         public static Option<T> AsOption<T>(in this T? value) where T : struct => From(value);
         public static Option<T> AsOption<T>(in this Some<T> some) => some;
-        public static Option<T> AsOption<T>(in this None none) => none;
-        public static Option<Unit> AsOption(in this None none) => none;
+        public static Option<T> AsOption<T>(this None none) => none;
+        public static Option<Unit> AsOption(this None none) => none;
+        public static T? AsNullable<T>(in this Option<T> option) where T : struct => option.TryValue(out var value) ? (T?)value : null;
+        public static T? AsNullable<T>(in this Some<T> some) where T : struct => some.Value;
+        public static T? AsNullable<T>(this None none) where T : struct => null;
 
         public static bool TrySome<T>(in this Option<T> option, out Some<T> some)
         {
