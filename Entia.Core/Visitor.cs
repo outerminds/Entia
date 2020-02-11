@@ -11,15 +11,15 @@ namespace Entia.Core
     {
         readonly TypeMap<TIn, Visit<TIn, TState, TOut>> _visits = new TypeMap<TIn, Visit<TIn, TState, TOut>>();
 
-        public Result<TOut> Visit(TIn value, TState state) => Visit(value, value.GetType(), state);
+        public Result<TOut> Visit(TIn value, in TState state) => Visit(value, value.GetType(), state);
 
-        public Result<TOut> Visit(TIn value, Type type, TState state)
+        public Result<TOut> Visit(TIn value, Type type, in TState state)
         {
-            if (TryGet(value.GetType(), out var visit)) return visit(value, state);
+            if (TryGet(type, out var visit)) return visit(value, state);
             return Result.Failure($"Expected to find a visit for type '{type}'.");
         }
 
-        public Result<TOut> Visit<T>(T value, TState state) where T : TIn
+        public Result<TOut> Visit<T>(in T value, in TState state) where T : TIn
         {
             if (TryGet<T>(out var visit)) return visit(value, state);
             return Result.Failure($"Expected to find a visit for type '{typeof(T)}'.");

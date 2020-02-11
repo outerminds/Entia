@@ -155,7 +155,7 @@ namespace Entia.Json
                 members[i * 2] = field.Name;
                 members[i * 2 + 1] = Convert(field.GetValue(instance), field.FieldType);
             }
-            return new Node(Node.Kinds.Object, members);
+            return Node.Object(members);
         }
     }
 

@@ -50,9 +50,9 @@ namespace Entia.Core
                     (T)_defaults[_index - _implementations.Length];
                 object IEnumerator.Current => Current;
 
-                ITrait[] _implementations;
-                ITrait[] _defaults;
-                int _count;
+                readonly ITrait[] _implementations;
+                readonly ITrait[] _defaults;
+                readonly int _count;
                 int _index;
 
                 public Enumerator(ITrait[] implementations, ITrait[] defaults)
@@ -65,7 +65,7 @@ namespace Entia.Core
 
                 public bool MoveNext() => ++_index < _count;
                 public void Reset() => _index = -1;
-                public void Dispose() { _implementations = default; _defaults = default; }
+                public void Dispose() => this = default;
             }
 
             public int Count => _implementations.Length + _defaults.Length;
@@ -168,7 +168,7 @@ namespace Entia.Core
                         yield return GetInstance(Concrete(typeData, attribute), attribute.Arguments);
                 }
 
-                foreach (var member in typeData.StaticMembers)
+                foreach (var member in typeData.StaticMembers.Values)
                 {
                     foreach (var attribute in member.GetCustomAttributes<ImplementationAttribute>(true))
                     {

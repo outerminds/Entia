@@ -55,7 +55,7 @@ namespace Entia.Core
         static Func<T> CreateProvider<T>()
         {
             var data = TypeUtility.GetData<T>();
-            foreach (var member in data.StaticMembers)
+            foreach (var member in data.StaticMembers.Values)
             {
                 try
                 {
@@ -82,7 +82,7 @@ namespace Entia.Core
         static Func<object> CreateProvider(Type type)
         {
             var data = TypeUtility.GetData(type);
-            foreach (var member in data.StaticMembers)
+            foreach (var member in data.StaticMembers.Values)
             {
                 try
                 {

@@ -487,7 +487,8 @@ namespace Entia.Experiment.Serialization
                         var type = TypeUtility.GetData(context.Type);
                         foreach (var pair in @object.Members)
                         {
-                            if (type.Fields.TryGetValue(pair.Key, out var field) &&
+                            if (type.InstanceMembers.TryGetValue(pair.Key, out var member) &&
+                                member is FieldInfo field &&
                                 context.Instantiate(pair.Value, field.FieldType, out var value))
                                 field.SetValue(instance, value);
                         }

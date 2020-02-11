@@ -22,12 +22,9 @@ namespace Entia.Core
         public TypeData Element => _element.Value;
         public TypeData Definition => _definition.Value;
         public Dictionary<int, MemberInfo> Members => _members.Value;
-        public Dictionary<string, FieldInfo> Fields => _fields.Value;
-        public Dictionary<string, PropertyInfo> Properties => _properties.Value;
-        public Dictionary<string, MethodInfo> Methods => _methods.Value;
-        public MemberInfo[] StaticMembers => _staticMembers.Value;
+        public Dictionary<string, MemberInfo> StaticMembers => _staticMembers.Value;
         public MethodInfo[] StaticMethods => _staticMethods.Value;
-        public MemberInfo[] InstanceMembers => _instanceMembers.Value;
+        public Dictionary<string, MemberInfo> InstanceMembers => _instanceMembers.Value;
         public FieldInfo[] InstanceFields => _instanceFields.Value;
         public PropertyInfo[] InstanceProperties => _instanceProperties.Value;
         public MethodInfo[] InstanceMethods => _instanceMethods.Value;
@@ -53,12 +50,9 @@ namespace Entia.Core
         readonly Lazy<TypeData> _element;
         readonly Lazy<TypeData> _definition;
         readonly Lazy<Dictionary<int, MemberInfo>> _members;
-        readonly Lazy<Dictionary<string, FieldInfo>> _fields;
-        readonly Lazy<Dictionary<string, PropertyInfo>> _properties;
-        readonly Lazy<Dictionary<string, MethodInfo>> _methods;
-        readonly Lazy<MemberInfo[]> _staticMembers;
+        readonly Lazy<Dictionary<string, MemberInfo>> _staticMembers;
         readonly Lazy<MethodInfo[]> _staticMethods;
-        readonly Lazy<MemberInfo[]> _instanceMembers;
+        readonly Lazy<Dictionary<string, MemberInfo>> _instanceMembers;
         readonly Lazy<FieldInfo[]> _instanceFields;
         readonly Lazy<PropertyInfo[]> _instanceProperties;
         readonly Lazy<MethodInfo[]> _instanceMethods;
@@ -79,14 +73,17 @@ namespace Entia.Core
 
         public TypeData(Type type)
         {
-            MemberInfo[] GetMembers(Type current, Type[] bases) => bases.Prepend(current)
-                .SelectMany(@base => @base.GetMembers(TypeUtility.Instance))
-                .Distinct()
+            MemberInfo[] GetMembers(Type current, Type[] bases, BindingFlags flags) => bases.Prepend(current)
+                .SelectMany(@base => @base.GetMembers(flags))
+                .DistinctBy(member => member.MetadataToken)
                 .ToArray();
+            Dictionary<string, MemberInfo> GetMembersByName(Type current, Type[] bases, BindingFlags flags) => GetMembers(current, bases, flags)
+                .DistinctBy(member => member.Name)
+                .ToDictionary(member => member.Name);
 
             Type GetElement(Type current, Type[] interfaces)
             {
-                if (current.IsArray) return type.GetElementType();
+                if (current.IsArray || current.IsPointer) return type.GetElementType();
                 return interfaces
                     .Where(child => child.IsGenericType && child.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                     .SelectMany(child => child.GetGenericArguments())
@@ -243,16 +240,14 @@ namespace Entia.Core
             _bases = new Lazy<Type[]>(() => GetBases(Type).ToArray());
             _element = new Lazy<TypeData>(() => GetElement(Type, Interfaces));
             _definition = new Lazy<TypeData>(() => Type.IsGenericType ? Type.GetGenericTypeDefinition() : default);
-            _members = new Lazy<Dictionary<int, MemberInfo>>(() => Type.GetMembers(TypeUtility.All).ToDictionary(member => member.MetadataToken));
-            _fields = new Lazy<Dictionary<string, FieldInfo>>(() => Members.Values.OfType<FieldInfo>().ToDictionary(member => member.Name));
-            _properties = new Lazy<Dictionary<string, PropertyInfo>>(() => Members.Values.OfType<PropertyInfo>().ToDictionary(member => member.Name));
-            _methods = new Lazy<Dictionary<string, MethodInfo>>(() => Members.Values.OfType<MethodInfo>().ToDictionary(member => member.Name));
-            _staticMembers = new Lazy<MemberInfo[]>(() => Type.GetMembers(TypeUtility.Static));
-            _staticMethods = new Lazy<MethodInfo[]>(() => StaticMembers.OfType<MethodInfo>().ToArray());
-            _instanceMembers = new Lazy<MemberInfo[]>(() => GetMembers(Type, Bases));
-            _instanceFields = new Lazy<FieldInfo[]>(() => InstanceMembers.OfType<FieldInfo>().ToArray());
-            _instanceProperties = new Lazy<PropertyInfo[]>(() => InstanceMembers.OfType<PropertyInfo>().ToArray());
-            _instanceMethods = new Lazy<MethodInfo[]>(() => InstanceMembers.OfType<MethodInfo>().ToArray());
+            _members = new Lazy<Dictionary<int, MemberInfo>>(() => GetMembers(Type, Bases, TypeUtility.All).ToDictionary(member => member.MetadataToken));
+            _staticMembers = new Lazy<Dictionary<string, MemberInfo>>(() => GetMembersByName(Type, Bases, TypeUtility.Static));
+            _staticMethods = new Lazy<MethodInfo[]>(() => StaticMembers.Values.OfType<MethodInfo>().ToArray());
+            _instanceMembers = new Lazy<Dictionary<string, MemberInfo>>(() => GetMembersByName(Type, Bases, TypeUtility.Instance));
+            _instanceFields = new Lazy<FieldInfo[]>(() => InstanceMembers.Values.OfType<FieldInfo>().ToArray());
+            _instanceProperties = new Lazy<PropertyInfo[]>(() => InstanceMembers.Values.OfType<PropertyInfo>().ToArray());
+            _instanceMethods = new Lazy<MethodInfo[]>(() => InstanceMembers.Values.OfType<MethodInfo>().ToArray());
+            // NOTE: do not use 'InstanceMembers' such that base class constructors are not included
             _instanceConstructors = new Lazy<ConstructorInfo[]>(() => Type.GetConstructors(TypeUtility.Instance));
             _defaultConstructor = new Lazy<ConstructorInfo>(() => InstanceConstructors.FirstOrDefault(constructor => constructor.GetParameters().None()));
             _serializationConstructor = new Lazy<ConstructorInfo>(() => GetSerializationConstructor(InstanceConstructors));
@@ -378,10 +373,14 @@ namespace Entia.Core
             return element != null;
         }
 
-        public static bool Is(this Type type, Type other, bool hierarchy = false, bool definition = false) =>
-            type == other ||
-            (hierarchy ? type.Hierarchy().Any(child => child.Is(other, false, definition)) : other.IsAssignableFrom(type)) ||
-            (definition && type.IsGenericType && other.IsGenericTypeDefinition && type.GetGenericTypeDefinition() == other);
+        public static bool Is(this Type type, Type other, bool hierarchy = false, bool definition = false)
+        {
+            if (type == other) return true;
+            else if (hierarchy) return type.Hierarchy().Any(child => child.Is(other, false, definition));
+            else if (other.IsAssignableFrom(type)) return true;
+            else if (definition) return type.IsGenericType && other.IsGenericTypeDefinition && type.GetGenericTypeDefinition() == other;
+            else return false;
+        }
 
         public static bool Is<T>(this Type type) => typeof(T).IsAssignableFrom(type);
 
@@ -442,9 +441,7 @@ namespace Entia.Core
         public static PropertyInfo Property(this Type type, int token) => type.Member(token) as PropertyInfo;
         public static MethodInfo Method(this Type type, int token) => type.Member(token) as MethodInfo;
         public static ConstructorInfo Constructor(this Type type, int token) => type.Member(token) as ConstructorInfo;
-        public static MemberInfo[] StaticMembers(this Type type) => GetData(type).StaticMembers;
         public static MethodInfo[] StaticMethods(this Type type) => GetData(type).StaticMethods;
-        public static MemberInfo[] InstanceMembers(this Type type) => GetData(type).InstanceMembers;
         public static FieldInfo[] InstanceFields(this Type type) => GetData(type).InstanceFields;
         public static PropertyInfo[] InstanceProperties(this Type type) => GetData(type).InstanceProperties;
         public static MethodInfo[] InstanceMethods(this Type type) => GetData(type).InstanceMethods;

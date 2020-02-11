@@ -137,13 +137,17 @@ namespace Entia.Json
             var instance =
                 type.DefaultConstructor is ConstructorInfo constructor ? constructor.Invoke(Array.Empty<object>()) :
                 FormatterServices.GetUninitializedObject(type);
+            var members = type.InstanceMembers;
             References.Add(instance);
             foreach (var (key, value) in node.Members())
             {
-                if (type.Fields.TryGetValue(key, out var field))
-                    field.SetValue(instance, Convert(value, field.FieldType));
-                else if (type.Properties.TryGetValue(key, out var property) && property.CanWrite)
-                    property.SetValue(instance, Convert(value, property.PropertyType));
+                if (members.TryGetValue(key, out var member))
+                {
+                    if (member is FieldInfo field)
+                        field.SetValue(instance, Convert(value, field.FieldType));
+                    else if (member is PropertyInfo property && property.CanWrite)
+                        property.SetValue(instance, Convert(value, property.PropertyType));
+                }
             }
             return instance;
         }

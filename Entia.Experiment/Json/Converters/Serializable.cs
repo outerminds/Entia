@@ -22,7 +22,7 @@ namespace Entia.Json.Converters
                 children[index++] = pair.Name;
                 children[index++] = context.Convert(pair.Value);
             }
-            return new Node(Node.Kinds.Object, children);
+            return Node.Object(children);
         }
 
         public override ISerializable Instantiate(in ConvertFromContext context) =>

@@ -6,6 +6,7 @@ using Entia.Core;
 using Entia.Modules;
 using Entia.Modules.Family;
 using System.Runtime.Serialization;
+using System.Reflection;
 
 namespace Entia.Experimental.Boba
 {
@@ -593,7 +594,8 @@ namespace Entia.Experimental.Boba
                 {
                     if (members[i].TryMember(out var keyNode, out var valueNode) &&
                         context.Convert<string>(keyNode, out var key) &&
-                        context.Type.Fields.TryGetValue(key, out var field) &&
+                        context.Type.InstanceMembers.TryGetValue(key, out var member) &&
+                        member is FieldInfo field &&
                         context.Convert(valueNode, field.FieldType, out var value))
                         field.SetValue(instance, value);
                 }
