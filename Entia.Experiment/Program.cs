@@ -412,14 +412,14 @@ namespace Entia.Experiment
             for (int i = 0; i < 25; i++)
             // while (true)
             {
-                // Experiment.Test.Measure(ParseA, new Action[]
-                // {
-                //     ParseB,
-                //     GenerateA,
-                //     GenerateB
-                // }, 100, 1);
+                Experiment.Test.Measure(ParseA, new Action[]
+                {
+                    ParseB,
+                    GenerateA,
+                    GenerateB
+                }, 100, 1);
 
-                // Console.WriteLine();
+                Console.WriteLine();
                 Experiment.Test.Measure(IntNumberA, new Action[]
                 {
                     ObjectNumberA,
