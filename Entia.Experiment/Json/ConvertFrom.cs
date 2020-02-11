@@ -60,9 +60,9 @@ namespace Entia.Json
                 instance = References[reference];
                 return true;
             }
-            else if (node.TryAbstract(out var type, out var value))
+            else if (node.TryAbstract(out var type, out var value) && Convert<Type>(type) is Type concrete)
             {
-                instance = Convert(value, Convert<Type>(type));
+                instance = Convert(value, concrete);
                 return true;
             }
 
