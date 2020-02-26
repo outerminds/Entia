@@ -52,7 +52,7 @@ namespace Entia.Modules.Message
             }
             object IEnumerator.Current => Current;
 
-            int _count;
+            readonly int _count;
             readonly Receiver<T> _receiver;
             int _index;
             T _current;

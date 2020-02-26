@@ -4,6 +4,7 @@ using Entia.Core.Documentation;
 using Entia.Nodes;
 using Entia.Phases;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -27,7 +28,7 @@ namespace Entia
         readonly Dictionary<Node, IRunner> _nodeToRunner;
         readonly Dictionary<IRunner, int> _runnerToIndex;
         readonly States[] _states;
-        readonly Concurrent<TypeMap<IPhase, Delegate>> _phaseToRun = new TypeMap<IPhase, Delegate>();
+        readonly ConcurrentDictionary<Type, Delegate> _phaseToRun = new ConcurrentDictionary<Type, Delegate>();
 
         public Controller((Node node, IRunner runner) root, World world, Dictionary<Node, IRunner> nodes, Dictionary<IRunner, int> runners, States[] states)
         {
@@ -63,9 +64,9 @@ namespace Entia
         }
 
         [ThreadSafe]
-        public bool Has<T>() where T : struct, IPhase => _phaseToRun.Read(map => map.Has<T>());
+        public bool Has<T>() where T : struct, IPhase => Has(typeof(T));
         [ThreadSafe]
-        public bool Has(Type phase) => _phaseToRun.Read(phase, (map, state) => map.Has(state));
+        public bool Has(Type phase) => _phaseToRun.ContainsKey(phase);
 
         [ThreadSafe]
         public bool TryState(Node node, out States state) => TryIndex(node, out var index) & TryState(index, out state);
@@ -102,20 +103,11 @@ namespace Entia
         [ThreadSafe]
         Run<T> GetRun<T>() where T : struct, IPhase
         {
-            using (var read = _phaseToRun.Read(true))
-            {
-                if (read.Value.TryGet<T>(out var run) && run is Run<T> casted1) return casted1;
-                else
-                {
-                    casted1 = Root.runner.Specialize<T>(this).Or(Cache<T>.Empty);
-                    using (var write = _phaseToRun.Write())
-                    {
-                        if (write.Value.TryGet<T>(out run) && run is Run<T> casted2) return casted2;
-                        write.Value.Set<T>(casted1);
-                        return casted1;
-                    }
-                }
-            }
+            if (_phaseToRun.TryGetValue(typeof(T), out var run) && run is Run<T> casted) return casted;
+            return CreateRun<T>();
         }
+
+        Run<T> CreateRun<T>() where T : struct, IPhase =>
+            (Run<T>)_phaseToRun.GetOrAdd(typeof(T), _ => Root.runner.Specialize<T>(this).Or(Cache<T>.Empty));
     }
 }

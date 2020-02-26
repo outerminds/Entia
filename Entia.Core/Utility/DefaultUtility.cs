@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Reflection;
 using Entia.Core.Documentation;
 
@@ -13,40 +14,20 @@ namespace Entia.Core
             public static readonly Func<T> Provide = Provider<T>();
         }
 
-        static readonly Concurrent<TypeMap<object, (Delegate generic, Delegate reflection)>> _providers = new TypeMap<object, (Delegate, Delegate)>();
+        static readonly ConcurrentDictionary<Type, (Delegate generic, Func<object> reflection)> _providers = new ConcurrentDictionary<Type, (Delegate generic, Func<object> reflection)>();
 
         public static T Default<T>() => Cache<T>.Provide();
         public static object Default(Type type) => Provider(type)();
 
         public static Func<T> Provider<T>()
         {
-            using (var read = _providers.Read(true))
-            {
-                if (read.Value.TryGet<T>(out var provider, false, false) && provider.generic is Func<T> casted1) return casted1;
-                using (var write = _providers.Write())
-                {
-                    var (generic, reflection) = CreateProviders<T>();
-                    write.Value.Set<T>((generic, reflection));
-                    return generic;
-                }
-            }
+            if (_providers.TryGetValue(typeof(T), out var pair) && pair.generic is Func<T> provider) return provider;
+            return (Func<T>)_providers.AddOrUpdate(typeof(T), _ => CreateProviders<T>(), (_, __) => CreateProviders<T>()).generic;
         }
 
-        public static Func<object> Provider(Type type)
-        {
-            using (var read = _providers.Read(true))
-            {
-                if (read.Value.TryGet(type, out var provider) && provider.reflection is Func<object> casted1) return casted1;
-                using (var write = _providers.Write())
-                {
-                    var reflection = CreateProvider(type);
-                    write.Value.Set(type, (default, reflection));
-                    return reflection;
-                }
-            }
-        }
+        public static Func<object> Provider(Type type) => _providers.GetOrAdd(type, key => (default, CreateProvider(key))).reflection;
 
-        static (Func<T>, Func<object>) CreateProviders<T>()
+        static (Delegate generic, Func<object> reflection) CreateProviders<T>()
         {
             var provider = CreateProvider<T>();
             return (provider, () => provider());
