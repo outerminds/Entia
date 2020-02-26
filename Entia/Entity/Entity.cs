@@ -29,12 +29,12 @@ namespace Entia
                 get
                 {
                     var worlds = World.Instances(_entity, (world, state) => world.Entities().Has(state));
-                    switch (worlds.Length)
+                    return worlds.Length switch
                     {
-                        case 0: return null;
-                        case 1: return new EntityView(_entity, worlds[0]);
-                        default: return worlds.Select(world => new EntityView(_entity, world)).ToArray();
-                    }
+                        0 => null,
+                        1 => new EntityView(_entity, worlds[0]),
+                        _ => worlds.Select(world => new EntityView(_entity, world)).ToArray(),
+                    };
                 }
             }
 

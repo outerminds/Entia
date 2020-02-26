@@ -43,13 +43,11 @@ namespace Entia
         [ThreadSafe]
         public static World[] Instances<TState>(in TState state, Func<World, TState, bool> predicate)
         {
-            using (var write = _state.Write())
-            {
-                var worlds = new List<World>(write.Value.Worlds.Count);
-                foreach (var reference in write.Value.Worlds.Values)
-                    if (reference.TryGetTarget(out var world) && predicate(world, state)) worlds.Add(world);
-                return worlds.ToArray();
-            }
+            using var write = _state.Write();
+            var worlds = new List<World>(write.Value.Worlds.Count);
+            foreach (var reference in write.Value.Worlds.Values)
+                if (reference.TryGetTarget(out var world) && predicate(world, state)) worlds.Add(world);
+            return worlds.ToArray();
         }
 
         [ThreadSafe]
@@ -59,14 +57,12 @@ namespace Entia
         [ThreadSafe]
         public static bool TryInstance<TState>(in TState state, Func<World, TState, bool> predicate, out World world)
         {
-            using (var write = _state.Write())
-            {
-                foreach (var reference in write.Value.Worlds.Values)
-                    if (reference.TryGetTarget(out world) && predicate(world, state)) return true;
+            using var write = _state.Write();
+            foreach (var reference in write.Value.Worlds.Values)
+                if (reference.TryGetTarget(out world) && predicate(world, state)) return true;
 
-                world = default;
-                return false;
-            }
+            world = default;
+            return false;
         }
 
         public readonly Container Container = new Container();
@@ -88,7 +84,8 @@ namespace Entia
 
         ~World()
         {
-            using (var write = _state.Write()) write.Value.Worlds.Remove(_identifier);
+            using var write = _state.Write();
+            write.Value.Worlds.Remove(_identifier);
         }
 
         public bool TryGet<T>(out T module) where T : IModule
