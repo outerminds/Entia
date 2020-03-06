@@ -19,9 +19,9 @@ namespace Entia.Injectables
     public sealed class Group<T> : IInjectable, IEnumerable<Modules.Group.Group<T>.Enumerator, T> where T : struct, IQueryable
     {
         [Implementation]
-        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Group<T>(context.World.Groups().Get<T>(context.Member)));
+        static Injector<object> _injector => Injector.From<object>(context => new Group<T>(context.World.Groups().Get<T>(context.Member)));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<T>(new Dependencies.Read(typeof(Entity)));
+        static IDepender _depender => Depender.From<T>(new Dependencies.Read(typeof(Entity)));
 
         /// <inheritdoc cref="Modules.Group.Group{T}.Count"/>
         public int Count => _group.Count;
@@ -58,9 +58,9 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2>>.Enumerator, All<T1, T2>> where T1 : struct, IQueryable where T2 : struct, IQueryable
     {
         [Implementation]
-        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Group<T1, T2>(context.World.Groups().Get<All<T1, T2>>(context.Member)));
+        static Injector<object> _injector => Injector.From<object>(context => new Group<T1, T2>(context.World.Groups().Get<All<T1, T2>>(context.Member)));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<All<T1, T2>>(new Dependencies.Read(typeof(Entity)));
+        static IDepender _depender => Depender.From<All<T1, T2>>(new Dependencies.Read(typeof(Entity)));
 
         /// <inheritdoc cref="Modules.Group.Group{T}.Count"/>
         public int Count => _group.Count;
@@ -97,9 +97,9 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2, T3> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3>>.Enumerator, All<T1, T2, T3>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable
     {
         [Implementation]
-        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Group<T1, T2, T3>(context.World.Groups().Get<All<T1, T2, T3>>(context.Member)));
+        static Injector<object> _injector => Injector.From<object>(context => new Group<T1, T2, T3>(context.World.Groups().Get<All<T1, T2, T3>>(context.Member)));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<All<T1, T2, T3>>(new Dependencies.Read(typeof(Entity)));
+        static IDepender _depender => Depender.From<All<T1, T2, T3>>(new Dependencies.Read(typeof(Entity)));
 
         /// <inheritdoc cref="Modules.Group.Group{T}.Count"/>
         public int Count => _group.Count;
@@ -136,9 +136,9 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2, T3, T4> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4>>.Enumerator, All<T1, T2, T3, T4>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable
     {
         [Implementation]
-        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Group<T1, T2, T3, T4>(context.World.Groups().Get<All<T1, T2, T3, T4>>(context.Member)));
+        static Injector<object> _injector => Injector.From<object>(context => new Group<T1, T2, T3, T4>(context.World.Groups().Get<All<T1, T2, T3, T4>>(context.Member)));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<All<T1, T2, T3, T4>>(new Dependencies.Read(typeof(Entity)));
+        static IDepender _depender => Depender.From<All<T1, T2, T3, T4>>(new Dependencies.Read(typeof(Entity)));
 
         /// <inheritdoc cref="Modules.Group.Group{T}.Count"/>
         public int Count => _group.Count;
@@ -175,9 +175,9 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2, T3, T4, T5> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4, T5>>.Enumerator, All<T1, T2, T3, T4, T5>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable
     {
         [Implementation]
-        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Group<T1, T2, T3, T4, T5>(context.World.Groups().Get<All<T1, T2, T3, T4, T5>>(context.Member)));
+        static Injector<object> _injector => Injector.From<object>(context => new Group<T1, T2, T3, T4, T5>(context.World.Groups().Get<All<T1, T2, T3, T4, T5>>(context.Member)));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<All<T1, T2, T3, T4, T5>>(new Dependencies.Read(typeof(Entity)));
+        static IDepender _depender => Depender.From<All<T1, T2, T3, T4, T5>>(new Dependencies.Read(typeof(Entity)));
 
         /// <inheritdoc cref="Modules.Group.Group{T}.Count"/>
         public int Count => _group.Count;
@@ -214,9 +214,9 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2, T3, T4, T5, T6> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4, T5, T6>>.Enumerator, All<T1, T2, T3, T4, T5, T6>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable
     {
         [Implementation]
-        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Group<T1, T2, T3, T4, T5, T6>(context.World.Groups().Get<All<T1, T2, T3, T4, T5, T6>>(context.Member)));
+        static Injector<object> _injector => Injector.From<object>(context => new Group<T1, T2, T3, T4, T5, T6>(context.World.Groups().Get<All<T1, T2, T3, T4, T5, T6>>(context.Member)));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<All<T1, T2, T3, T4, T5, T6>>(new Dependencies.Read(typeof(Entity)));
+        static IDepender _depender => Depender.From<All<T1, T2, T3, T4, T5, T6>>(new Dependencies.Read(typeof(Entity)));
 
         /// <inheritdoc cref="Modules.Group.Group{T}.Count"/>
         public int Count => _group.Count;
@@ -253,9 +253,9 @@ namespace Entia.Injectables
     public sealed class Group<T1, T2, T3, T4, T5, T6, T7> : IInjectable, IEnumerable<Modules.Group.Group<All<T1, T2, T3, T4, T5, T6, T7>>.Enumerator, All<T1, T2, T3, T4, T5, T6, T7>> where T1 : struct, IQueryable where T2 : struct, IQueryable where T3 : struct, IQueryable where T4 : struct, IQueryable where T5 : struct, IQueryable where T6 : struct, IQueryable where T7 : struct, IQueryable
     {
         [Implementation]
-        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Group<T1, T2, T3, T4, T5, T6, T7>(context.World.Groups().Get<All<T1, T2, T3, T4, T5, T6, T7>>(context.Member)));
+        static Injector<object> _injector => Injector.From<object>(context => new Group<T1, T2, T3, T4, T5, T6, T7>(context.World.Groups().Get<All<T1, T2, T3, T4, T5, T6, T7>>(context.Member)));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<All<T1, T2, T3, T4, T5, T6, T7>>(new Dependencies.Read(typeof(Entity)));
+        static IDepender _depender => Depender.From<All<T1, T2, T3, T4, T5, T6, T7>>(new Dependencies.Read(typeof(Entity)));
 
         /// <inheritdoc cref="Modules.Group.Group{T}.Count"/>
         public int Count => _group.Count;

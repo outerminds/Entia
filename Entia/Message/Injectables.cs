@@ -12,9 +12,9 @@ namespace Entia.Injectables
     public readonly struct AllEmitters : IInjectable
     {
         [Implementation]
-        static Injector<AllEmitters> Injector => Injectors.Injector.From(context => new AllEmitters(context.World.Messages()));
+        static Injector<AllEmitters> _injector => Injector.From(context => new AllEmitters(context.World.Messages()));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From(new Emit(typeof(IMessage)), new Write(typeof(IMessage)));
+        static IDepender _depender => Depender.From(new Emit(typeof(IMessage)), new Write(typeof(IMessage)));
 
         readonly Modules.Messages _messages;
         public AllEmitters(Modules.Messages messages) { _messages = messages; }
@@ -32,9 +32,9 @@ namespace Entia.Injectables
     public readonly struct Emitter<T> : IInjectable where T : struct, IMessage
     {
         [Implementation]
-        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Emitter<T>(context.World.Messages().Emitter<T>()));
+        static Injector<object> _injector => Injector.From<object>(context => new Emitter<T>(context.World.Messages().Emitter<T>()));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<T>(new Emit(typeof(T)), new Write(typeof(T)));
+        static IDepender _depender => Depender.From<T>(new Emit(typeof(T)), new Write(typeof(T)));
 
         readonly Modules.Message.Emitter<T> _emitter;
         public Emitter(Modules.Message.Emitter<T> emitter) { _emitter = emitter; }
@@ -48,9 +48,9 @@ namespace Entia.Injectables
     public readonly struct Receiver<T> : IInjectable where T : struct, IMessage
     {
         [Implementation]
-        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Receiver<T>(context.World.Messages().Receiver<T>()));
+        static Injector<object> _injector => Injector.From<object>(context => new Receiver<T>(context.World.Messages().Receiver<T>()));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<T>(new Read(typeof(T)));
+        static IDepender _depender => Depender.From<T>(new Read(typeof(T)));
 
         public int Count => _receiver.Count;
         public int Capacity { get => _receiver.Capacity; set => _receiver.Capacity = value; }
@@ -62,7 +62,7 @@ namespace Entia.Injectables
         [Obsolete("Use " + nameof(Messages) + " instead.")]
         public Modules.Message.Receiver<T>.Enumerable Pop(int count = int.MaxValue) => Messages(count);
         public bool TryMessage(out T message) => _receiver.TryMessage(out message);
-        public Modules.Message.Receiver<T>.Enumerable Messages(int count = int.MaxValue) => _receiver.Messages();
+        public Modules.Message.Receiver<T>.Enumerable Messages(int count = int.MaxValue) => _receiver.Messages(count);
         public bool Clear() => _receiver.Clear();
     }
 
@@ -70,9 +70,9 @@ namespace Entia.Injectables
     public readonly struct Reaction<T> : IInjectable where T : struct, IMessage
     {
         [Implementation]
-        static Injector<object> Injector => Injectors.Injector.From<object>(context => new Reaction<T>(context.World.Messages().Reaction<T>()));
+        static Injector<object> _injector => Injector.From<object>(context => new Reaction<T>(context.World.Messages().Reaction<T>()));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<T>(new React(typeof(T)));
+        static IDepender _depender => Depender.From<T>(new React(typeof(T)));
 
         readonly Modules.Message.Reaction<T> _reaction;
         public Reaction(Modules.Message.Reaction<T> reaction) { _reaction = reaction; }

@@ -14,9 +14,9 @@ namespace Entia.Injectables
         public readonly struct Read : IInjectable
         {
             [Implementation]
-            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Families()));
+            static Injector<Read> _injector => Injector.From(context => new Read(context.World.Families()));
             [Implementation]
-            static IDepender Depender => Dependers.Depender.From(new Dependencies.Read(typeof(Entity)));
+            static IDepender _depender => Depender.From(new Dependencies.Read(typeof(Entity)));
 
             readonly Families _families;
             public Read(Families families) { _families = families; }
@@ -33,9 +33,9 @@ namespace Entia.Injectables
         }
 
         [Implementation]
-        static Injector<AllFamilies> Injector => Injectors.Injector.From(context => new AllFamilies(context.World.Families()));
+        static Injector<AllFamilies> _injector => Injector.From(context => new AllFamilies(context.World.Families()));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From(new Dependencies.Write(typeof(Entity)));
+        static IDepender _depender => Depender.From(new Dependencies.Write(typeof(Entity)));
 
         readonly Families _families;
         public AllFamilies(Families families) { _families = families; }

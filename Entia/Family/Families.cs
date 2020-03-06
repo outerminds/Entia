@@ -250,7 +250,7 @@ namespace Entia.Modules
             ArrayUtility.Ensure(ref _relationships, entity.Index + 1);
             ref var relationships = ref _relationships[entity.Index];
             relationships.Entity = entity;
-            relationships.Children.items = relationships.Children.items ?? Array.Empty<Entity>();
+            relationships.Children.items ??= Array.Empty<Entity>();
         }
 
         void Dispose(Entity entity)
