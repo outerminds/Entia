@@ -11,33 +11,33 @@ namespace Entia.Modules.Query
     {
         public readonly struct Data
         {
-            public static readonly Data Empty = new Data(Array.Empty<Component.Segment>(), Array.Empty<int?>());
+            public static readonly Data Empty = new Data(Array.Empty<Segment>(), Array.Empty<int?>());
 
-            public readonly Component.Segment[] Segments;
+            public readonly Segment[] Segments;
             public readonly int?[] Indices;
 
-            public Data(Component.Segment[] segments, int?[] indices)
+            public Data(Segment[] segments, int?[] indices)
             {
                 Segments = segments;
                 Indices = indices;
             }
 
-            public bool Has(Component.Segment segment) =>
+            public bool Has(Segment segment) =>
                 segment.Index < Indices.Length && Indices[segment.Index] is int index && Segments[index] == segment;
 
-            public Data With(Component.Segment[] segments = null, int?[] indices = null) =>
+            public Data With(Segment[] segments = null, int?[] indices = null) =>
                 new Data(segments ?? Segments, indices ?? Indices);
         }
 
-        public static bool TryMatch(BitMask mask, Type type, World world, States include, out Metadata metadata)
+        public static bool TryMatch(BitMask mask, Type type, in Context context, out Metadata metadata)
         {
-            var components = world.Components();
+            var components = context.World.Components();
             if (ComponentUtility.TryGetConcreteTypes(type, out var types))
             {
                 for (int i = 0; i < types.Length; i++)
                 {
                     metadata = types[i];
-                    if (components.Has(mask, metadata, include)) return true;
+                    if (components.Has(mask, metadata, context.Include)) return true;
                 }
             }
 

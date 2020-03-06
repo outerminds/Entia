@@ -26,7 +26,8 @@ namespace Entia.Queryables
             Include = include;
             Queryable = queryable;
         }
-        public bool TryQuery(in Context context, out Query query) => context.World.Queriers().TryQuery(Queryable, context, out query, Include);
+        public bool TryQuery(in Context context, out Query query) =>
+            context.World.Queriers().TryQuery(Queryable, context.With(Include), out query);
     }
 
     [ThreadSafe]
@@ -45,12 +46,12 @@ namespace Entia.Queryables
 
         public bool TryQuery(in Context context, out Query query)
         {
-            var include = Include ?? context.Include;
+            var current = context.With(Include);
             var all = new Metadata[Components.Length];
             query = Query.Empty;
             for (int i = 0; i < Components.Length; i++)
             {
-                if (QueryUtility.TryMatch(context.Segment.Mask, Components[i], context.World, include, out var metadata))
+                if (QueryUtility.TryMatch(current.Segment.Mask, Components[i], current, out var metadata))
                     all[i] = metadata;
                 else
                     return false;
@@ -77,11 +78,11 @@ namespace Entia.Queryables
 
         public bool TryQuery(in Context context, out Query query)
         {
-            var include = Include ?? context.Include;
+            var current = context.With(Include);
             query = Query.Empty;
             for (int i = 0; i < Components.Length; i++)
             {
-                if (QueryUtility.TryMatch(context.Segment.Mask, Components[i], context.World, include, out var metadata))
+                if (QueryUtility.TryMatch(current.Segment.Mask, Components[i], current, out var metadata))
                 {
                     query = new Query(query.Fill, metadata);
                     return true;
@@ -107,11 +108,11 @@ namespace Entia.Queryables
 
         public bool TryQuery(in Context context, out Query query)
         {
-            var include = Include ?? context.Include;
+            var current = context.With(Include);
             query = Query.Empty;
             for (int i = 0; i < Components.Length; i++)
             {
-                if (QueryUtility.TryMatch(context.Segment.Mask, Components[i], context.World, include, out var metadata))
+                if (QueryUtility.TryMatch(current.Segment.Mask, Components[i], current, out var metadata))
                     return false;
             }
             return true;
