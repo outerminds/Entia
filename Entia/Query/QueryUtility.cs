@@ -64,7 +64,7 @@ namespace Entia.Modules.Query
             boxes.Set(member, Data.Empty, out box);
 
             var querier = world.Queriers().Get<T>(member);
-            void TryAdd(Component.Segment segment)
+            void TryAdd(Segment segment)
             {
                 if (querier.TryQuery(new Context(segment, world), out _)) box.Value.TryAdd(segment);
             }
@@ -74,7 +74,7 @@ namespace Entia.Modules.Query
             return box;
         }
 
-        static bool TryAdd(ref this Data data, Component.Segment segment)
+        static bool TryAdd(ref this Data data, Segment segment)
         {
             if (data.Has(segment)) return false;
 

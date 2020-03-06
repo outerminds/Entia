@@ -131,6 +131,9 @@ namespace Entia.Queriers
             public override bool TryQuery(in Context context, out Query<T> query) => _try(context, out query);
         }
 
+        public static readonly IQuerier True = new True();
+        public static readonly IQuerier False = new False();
+
         public static Querier<T> From<T>(Func<Context, Query<T>> provider) where T : struct, Queryables.IQueryable => new Provider<T>(provider);
 
         public static IQuerier From(ICustomAttributeProvider provider) => All(provider.GetCustomAttributes(true).OfType<IQuerier>().ToArray());
@@ -142,7 +145,7 @@ namespace Entia.Queriers
         {
             queriers = queriers.Except(queriers.OfType<True>()).ToArray();
             return
-                queriers.Length == 0 ? new True() :
+                queriers.Length == 0 ? True :
                 queriers.Length == 1 ? queriers[0] :
                 new Try((in Context context, out Query query) =>
                 {

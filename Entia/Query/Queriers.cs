@@ -27,14 +27,6 @@ namespace Entia.Modules
         public bool TryQuery(IQuerier querier, Segment segment, out Query.Query query, States include = States.All) =>
             querier.TryQuery(new Context(segment, _world, include), out query);
 
-        public Querier<T> Default<T>() where T : struct, Queryables.IQueryable =>
-            _world.Container.TryGet(typeof(T), typeof(Querier<T>), out var querier) && querier is Querier<T> casted ?
-            casted : new Default<T>();
-        public IQuerier Default(Type queryable) =>
-            queryable.TryAsPointer(out var pointer) ? Default(pointer) :
-            _world.Container.TryGet<IQuerier>(queryable, out var querier) ? querier :
-            (IQuerier)Activator.CreateInstance(typeof(Default<>).MakeGenericType(queryable));
-
         public Querier<T> Get<T>() where T : struct, Queryables.IQueryable => Get<T>(typeof(T));
         public Querier<T> Get<T>(MemberInfo member) where T : struct, Queryables.IQueryable
         {
@@ -60,10 +52,20 @@ namespace Entia.Modules
                 (member as PropertyInfo)?.PropertyType ??
                 (member as MethodInfo)?.ReturnType;
             return _queriers[member] =
-                queryable == null ? new False() :
+                queryable == null ? Querier.False :
                 queryable == member ?
                 Default(queryable).All(member).Include(member) :
                 Default(queryable).All(queryable, member).Include(member, queryable);
         }
+
+        Querier<T> Default<T>() where T : struct, Queryables.IQueryable =>
+            // NOTE: use 'typeof(Querier<T>)' to reduce generic nesting
+            _world.Container.TryGet(typeof(T), typeof(Querier<T>), out var querier) && querier is Querier<T> casted ?
+            casted : new Default<T>();
+        IQuerier Default(Type queryable) =>
+            queryable.TryAsPointer(out var pointer) ? Default(pointer) :
+            _world.Container.TryGet<IQuerier>(queryable, out var querier) ? querier :
+            queryable.Is<IQueryable>() ? (IQuerier)Activator.CreateInstance(typeof(Default<>).MakeGenericType(queryable)) :
+            Querier.True;
     }
 }

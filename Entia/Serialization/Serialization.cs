@@ -102,7 +102,7 @@ namespace Entia.Experimental.Serialization
             var context = With(type);
             Writer.Write(reference);
             if (serializer is ISerializer) return serializer.Serialize(instance, context);
-            return World.Container.TryGet<ISerializer>(type, out serializer) && serializer.Serialize(instance, context);
+            return World.Container.TryGet(type, out serializer) && serializer.Serialize(instance, context);
         }
     }
 
