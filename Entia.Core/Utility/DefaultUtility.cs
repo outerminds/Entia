@@ -47,9 +47,9 @@ namespace Entia.Core
                             case FieldInfo field when field.FieldType.Is<T>():
                                 var value = (T)field.GetValue(null);
                                 return () => value;
-                            case PropertyInfo property when property.PropertyType.Is<T>() && property.GetMethod is MethodInfo getter:
+                            case PropertyInfo property when property.PropertyType == typeof(T) && property.GetMethod is MethodInfo getter:
                                 return (Func<T>)Delegate.CreateDelegate(typeof(Func<T>), getter);
-                            case MethodInfo method when method.ReturnType.Is<T>() && method.GetParameters().None():
+                            case MethodInfo method when method.ReturnType == typeof(T) && method.GetParameters().None():
                                 return (Func<T>)Delegate.CreateDelegate(typeof(Func<T>), method);
                         }
                     }

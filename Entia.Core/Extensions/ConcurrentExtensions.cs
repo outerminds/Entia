@@ -20,17 +20,15 @@ namespace Entia.Core
 
         public static bool TryReadAt<T>(this Concurrent<List<T>> concurrent, int index, out T value)
         {
-            using (var read = concurrent.Read())
+            using var read = concurrent.Read();
+            if (index < read.Value.Count)
             {
-                if (index < read.Value.Count)
-                {
-                    value = read.Value[index];
-                    return true;
-                }
-
-                value = default;
-                return false;
+                value = read.Value[index];
+                return true;
             }
+
+            value = default;
+            return false;
         }
 
         public static T[] ReadToArray<T>(this Concurrent<List<T>> concurrent)
@@ -45,17 +43,15 @@ namespace Entia.Core
 
         public static bool TryReadAt<T>(this Concurrent<T[]> concurrent, int index, out T value)
         {
-            using (var read = concurrent.Read())
+            using var read = concurrent.Read();
+            if (index < read.Value.Length)
             {
-                if (index < read.Value.Length)
-                {
-                    value = read.Value[index];
-                    return true;
-                }
-
-                value = default;
-                return false;
+                value = read.Value[index];
+                return true;
             }
+
+            value = default;
+            return false;
         }
 
         public static int ReadCount<T>(this Concurrent<(T[] items, int count)> concurrent)
@@ -75,17 +71,15 @@ namespace Entia.Core
 
         public static bool TryReadAt<T>(this Concurrent<(T[] items, int count)> concurrent, int index, out T value)
         {
-            using (var read = concurrent.Read())
+            using var read = concurrent.Read();
+            if (index < read.Value.count)
             {
-                if (index < read.Value.count)
-                {
-                    value = read.Value.items[index];
-                    return true;
-                }
-
-                value = default;
-                return false;
+                value = read.Value.items[index];
+                return true;
             }
+
+            value = default;
+            return false;
         }
 
         public static TValue ReadValue<TKey, TValue>(this Concurrent<Dictionary<TKey, TValue>> concurrent, TKey key)
@@ -100,16 +94,12 @@ namespace Entia.Core
 
         public static TValue ReadValueOrWrite<TKey, TValue, TState>(this Concurrent<Dictionary<TKey, TValue>> concurrent, TKey key, TState state, Func<TState, (TKey key, TValue value)> provide)
         {
-            using (var read = concurrent.Read(true))
-            {
-                if (read.Value.TryGetValue(key, out var types)) return types;
-                using (var write = concurrent.Write())
-                {
-                    if (write.Value.TryGetValue(key, out types)) return types;
-                    var pair = provide(state);
-                    return write.Value[pair.key] = pair.value;
-                }
-            }
+            using var read = concurrent.Read(true);
+            if (read.Value.TryGetValue(key, out var types)) return types;
+            using var write = concurrent.Write();
+            if (write.Value.TryGetValue(key, out types)) return types;
+            var pair = provide(state);
+            return write.Value[pair.key] = pair.value;
         }
 
         public static TValue ReadValueOrWrite<TBase, TValue, TState>(this Concurrent<TypeMap<TBase, TValue>> concurrent, int index, TState state, Func<TState, TValue> provide, Action<TState> onWrite = null)
@@ -118,12 +108,10 @@ namespace Entia.Core
             using (var read = concurrent.Read(true))
             {
                 if (read.Value.TryGet(index, out value)) return value;
-                using (var write = concurrent.Write())
-                {
-                    if (write.Value.TryGet(index, out value)) return value;
-                    value = provide(state);
-                    write.Value.Set(index, value);
-                }
+                using var write = concurrent.Write();
+                if (write.Value.TryGet(index, out value)) return value;
+                value = provide(state);
+                write.Value.Set(index, value);
             }
 
             onWrite?.Invoke(state);
@@ -136,12 +124,10 @@ namespace Entia.Core
             using (var read = concurrent.Read(true))
             {
                 if (read.Value.TryGet(type, out value, super, sub)) return value;
-                using (var write = concurrent.Write())
-                {
-                    if (write.Value.TryGet(type, out value, super, sub)) return value;
-                    value = provide(state);
-                    write.Value.Set(type, value);
-                }
+                using var write = concurrent.Write();
+                if (write.Value.TryGet(type, out value, super, sub)) return value;
+                value = provide(state);
+                write.Value.Set(type, value);
             }
 
             onWrite?.Invoke(state);

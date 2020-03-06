@@ -1,6 +1,6 @@
 IEnumerable<(string system, string scheduler, string depender)> Generate(int depth)
 {
-    IEnumerable<string> GenericParameters(int count)
+    static IEnumerable<string> GenericParameters(int count)
     {
         if (count == 1) yield return "T";
         else for (var i = 1; i <= count; i++) yield return $"T{i}";

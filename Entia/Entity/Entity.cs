@@ -18,7 +18,7 @@ namespace Entia
     /// </summary>
     /// <seealso cref="Queryables.IQueryable" />
     [ThreadSafe]
-    [DebuggerTypeProxy(typeof(Entity.View))]
+    [DebuggerTypeProxy(typeof(View))]
     public readonly struct Entity : IEquatable<Entity>, IComparable<Entity>, Queryables.IQueryable
     {
         sealed class View
@@ -62,7 +62,7 @@ namespace Entia
                 World = world;
             }
 
-            public override string ToString() => $"{{ World: {World}, Name: {Entity.Name(World)} }}";
+            public override string ToString() => $"{{ World: {World}, Name: {Name} }}";
         }
 
         sealed class ComponentView
@@ -103,12 +103,12 @@ namespace Entia
         /// Implements the operator ==.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(Entity a, Entity b) => a.Equals(b);
+        public static bool operator ==(Entity left, Entity right) => left.Equals(right);
         /// <summary>
         /// Implements the operator !=.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(Entity a, Entity b) => !a.Equals(b);
+        public static bool operator !=(Entity left, Entity right) => !left.Equals(right);
         /// <summary>
         /// Implements and implicit <c>bool</c> operator.
         /// </summary>
@@ -164,6 +164,7 @@ namespace Entia
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() => Index ^ (int)Generation;
         /// <inheritdoc cref="ValueType.ToString()"/>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString() => $"{{ Index: {Index}, Generation: {Generation} }}";
     }
 }

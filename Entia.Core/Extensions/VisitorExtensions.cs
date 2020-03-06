@@ -13,14 +13,14 @@ namespace Entia.Core
         public static Visitor<TIn, TState, TOut> Memoize<TIn, TState, TOut>(this Visitor<TIn, TState, TOut> visitor, IEqualityComparer<(TIn value, TState state)> comparer = null)
         {
             var memoized = new Visitor<TIn, TState, TOut>();
-            foreach (var pair in visitor) memoized.Add(pair.type, pair.value.Memoize(comparer));
+            foreach (var (type, value) in visitor) memoized.Add(type, value.Memoize(comparer));
             return memoized;
         }
 
         public static Visitor<TIn, Unit, TOut> Memoize<TIn, TOut>(this Visitor<TIn, Unit, TOut> visitor, IEqualityComparer<TIn> comparer = null)
         {
             var memoized = new Visitor<TIn, Unit, TOut>();
-            foreach (var pair in visitor) memoized.Add(pair.type, pair.value.Memoize(comparer));
+            foreach (var (type, value) in visitor) memoized.Add(type, value.Memoize(comparer));
             return memoized;
         }
 

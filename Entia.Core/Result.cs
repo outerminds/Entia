@@ -108,7 +108,7 @@ namespace Entia.Core
 
         public override int GetHashCode() =>
             this.TryValue(out var value) ? EqualityComparer<T>.Default.GetHashCode(value) :
-            this.TryMessages(out var messages) ? ArrayUtility.GetHashCode(_messages) :
+            this.TryMessages(out var messages) ? ArrayUtility.GetHashCode(messages) :
             0;
 
         public override string ToString()

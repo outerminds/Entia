@@ -53,8 +53,8 @@ namespace Entia.Modules.Component
 
         readonly int _minimum;
         readonly int _maximum;
-        Array[] _stores;
-        (GCHandle handle, IntPtr address)[] _handles;
+        readonly Array[] _stores;
+        readonly (GCHandle handle, IntPtr address)[] _handles;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Segment"/> class.

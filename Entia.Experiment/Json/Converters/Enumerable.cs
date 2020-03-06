@@ -28,7 +28,7 @@ namespace Entia.Json.Converters
     {
         public override bool CanConvert(TypeData type) =>
             type.EnumerableConstructor.constructor is ConstructorInfo &&
-            type.Element.ArrayType.Type.Is(type.EnumerableConstructor.parameter.ParameterType);
+            type.Element.Array.Type.Is(type.EnumerableConstructor.parameter.ParameterType);
 
         public override Node Convert(in IEnumerable<T> instance, in ConvertToContext context)
         {
@@ -55,7 +55,7 @@ namespace Entia.Json.Converters
 
         public override bool CanConvert(TypeData type) =>
             type.EnumerableConstructor.constructor is ConstructorInfo &&
-            (type.Element?.ArrayType.Type ?? _default.ArrayType.Type).Is(type.EnumerableConstructor.parameter.ParameterType);
+            (type.Element?.Array.Type ?? _default.Array.Type).Is(type.EnumerableConstructor.parameter.ParameterType);
 
         public override Node Convert(in IEnumerable instance, in ConvertToContext context)
         {

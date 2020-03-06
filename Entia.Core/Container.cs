@@ -137,9 +137,9 @@ namespace Entia.Core
 
         static ITrait[] CreateDefaults(Type type, Type trait)
         {
-            bool Is(Type current, Type other) => current.Is<IProvider>() || current.Is(other, true, true);
+            static bool Is(Type current, Type other) => current.Is<IProvider>() || current.Is(other, true, true);
 
-            Type Concrete(TypeData data, ImplementationAttribute attribute)
+            static Type Concrete(TypeData data, ImplementationAttribute attribute)
             {
                 var implementation = attribute.Implementation;
                 if (implementation.Type.IsGenericTypeDefinition)

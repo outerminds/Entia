@@ -18,9 +18,9 @@ namespace Entia.Injectables
         public readonly struct Write : IInjectable, IEnumerable<IComponent>
         {
             [Implementation]
-            static Injector<Write> Injector => Injectors.Injector.From(context => new Write(context.World.Components()));
+            static Injector<Write> _injector => Injector.From(context => new Write(context.World.Components()));
             [Implementation]
-            static IDepender Depender => Dependers.Depender.From(
+            static IDepender _depender => Depender.From(
                 new Dependencies.Read(typeof(Entity)),
                 new Dependencies.Write(typeof(IComponent)));
 
@@ -87,9 +87,9 @@ namespace Entia.Injectables
         public readonly struct Read : IInjectable, IEnumerable<IComponent>
         {
             [Implementation]
-            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Components()));
+            static Injector<Read> _injector => Injector.From(context => new Read(context.World.Components()));
             [Implementation]
-            static IDepender Depender => Dependers.Depender.From(
+            static IDepender _depender => Depender.From(
                 new Dependencies.Read(typeof(Entity)),
                 new Dependencies.Read(typeof(IComponent)));
 
@@ -153,9 +153,9 @@ namespace Entia.Injectables
         }
 
         [Implementation]
-        static Injector<AllComponents> Injector => Injectors.Injector.From(context => new AllComponents(context.World.Components()));
+        static Injector<AllComponents> _injector => Injector.From(context => new AllComponents(context.World.Components()));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From(
+        static IDepender _depender => Depender.From(
             new Dependencies.Read(typeof(Entity)),
             new Dependencies.Write(typeof(IComponent)),
             new Dependencies.Emit(typeof(Messages.OnAdd)),
@@ -302,9 +302,9 @@ namespace Entia.Injectables
         public readonly struct Write : IInjectable, IEnumerable<T>
         {
             [Implementation]
-            static Injector<Write> Injector => Injectors.Injector.From(context => new Write(context.World.Components()));
+            static Injector<Write> _injector => Injector.From(context => new Write(context.World.Components()));
             [Implementation]
-            static IDepender Depender => Dependers.Depender.From<T>(
+            static IDepender _depender => Depender.From<T>(
                 new Dependencies.Read(typeof(Entity)),
                 new Dependencies.Write(typeof(T)));
 
@@ -344,9 +344,9 @@ namespace Entia.Injectables
         public readonly struct Read : IInjectable, IEnumerable<T>
         {
             [Implementation]
-            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Components()));
+            static Injector<Read> _injector => Injector.From(context => new Read(context.World.Components()));
             [Implementation]
-            static IDepender Depender => Dependers.Depender.From<T>(
+            static IDepender _depender => Depender.From<T>(
                 new Dependencies.Read(typeof(Entity)),
                 new Dependencies.Read(typeof(T)));
 
@@ -382,9 +382,9 @@ namespace Entia.Injectables
         }
 
         [Implementation]
-        static Injector<Components<T>> Injector => Injectors.Injector.From(context => new Components<T>(context.World.Components()));
+        static Injector<Components<T>> _injector => Injector.From(context => new Components<T>(context.World.Components()));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<T>(
+        static IDepender _depender => Depender.From<T>(
             new Dependencies.Read(typeof(Entity)),
             new Dependencies.Write(typeof(T)),
             new Dependencies.Emit(typeof(Messages.OnAdd)),

@@ -15,10 +15,10 @@ namespace Entia.Core
         public static implicit operator Type(TypeData type) => type.Type;
 
         public readonly Type Type;
-        public TypeData ArrayType => _arrayType.Value;
-        public TypeData PointerType => _pointerType.Value;
-        public Guid? Guid => _guid.Value;
         public TypeCode Code => _code.Value;
+        public Guid? Guid => _guid.Value;
+        public TypeData Array => _array.Value;
+        public TypeData Pointer => _pointer.Value;
         public TypeData Element => _element.Value;
         public TypeData Definition => _definition.Value;
         public Dictionary<int, MemberInfo> Members => _members.Value;
@@ -43,10 +43,10 @@ namespace Entia.Core
         public object Default => _default.Value;
         public int? Size => _size.Value;
 
-        readonly Lazy<TypeData> _arrayType;
-        readonly Lazy<TypeData> _pointerType;
-        readonly Lazy<Guid?> _guid;
         readonly Lazy<TypeCode> _code;
+        readonly Lazy<Guid?> _guid;
+        readonly Lazy<TypeData> _array;
+        readonly Lazy<TypeData> _pointer;
         readonly Lazy<TypeData> _element;
         readonly Lazy<TypeData> _definition;
         readonly Lazy<Dictionary<int, MemberInfo>> _members;
@@ -73,30 +73,31 @@ namespace Entia.Core
 
         public TypeData(Type type)
         {
-            MemberInfo[] GetMembers(Type current, Type[] bases, BindingFlags flags) => bases.Prepend(current)
+            static MemberInfo[] GetMembers(Type current, Type[] bases, BindingFlags flags) => bases.Prepend(current)
                 .SelectMany(@base => @base.GetMembers(flags))
                 .DistinctBy(member => member.MetadataToken)
                 .ToArray();
-            Dictionary<string, MemberInfo> GetMembersByName(Type current, Type[] bases, BindingFlags flags) => GetMembers(current, bases, flags)
+
+            static Dictionary<string, MemberInfo> GetMembersByName(Type current, Type[] bases, BindingFlags flags) => GetMembers(current, bases, flags)
                 .DistinctBy(member => member.Name)
                 .ToDictionary(member => member.Name);
 
-            Type GetElement(Type current, Type[] interfaces)
+            static Type GetElement(Type current, Type[] interfaces)
             {
-                if (current.IsArray || current.IsPointer) return type.GetElementType();
+                if (current.IsArray || current.IsPointer) return current.GetElementType();
                 return interfaces
                     .Where(child => child.IsGenericType && child.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                     .SelectMany(child => child.GetGenericArguments())
                     .FirstOrDefault();
             }
 
-            object GetDefault(Type current)
+            static object GetDefault(Type current)
             {
-                try { return Array.CreateInstance(current, 1).GetValue(0); }
+                try { return System.Array.CreateInstance(current, 1).GetValue(0); }
                 catch { return null; }
             }
 
-            IEnumerable<Type> GetBases(Type current)
+            static IEnumerable<Type> GetBases(Type current)
             {
                 current = current.BaseType;
                 while (current != null)
@@ -106,7 +107,7 @@ namespace Entia.Core
                 }
             }
 
-            IEnumerable<Type> GetDeclaring(Type current)
+            static IEnumerable<Type> GetDeclaring(Type current)
             {
                 current = current.DeclaringType;
                 while (current != null)
@@ -116,7 +117,7 @@ namespace Entia.Core
                 }
             }
 
-            bool GetIsShallow(Type current, FieldInfo[] fields)
+            static bool GetIsShallow(Type current, FieldInfo[] fields)
             {
                 if (current.IsArray && current.GetElementType() is Type element)
                     return GetIsPlain(element, element.InstanceFields());
@@ -130,7 +131,7 @@ namespace Entia.Core
                 return true;
             }
 
-            bool GetIsPlain(Type current, FieldInfo[] fields)
+            static bool GetIsPlain(Type current, FieldInfo[] fields)
             {
                 if (current.IsPrimitive || current.IsPointer || current.IsEnum) return true;
                 if (current.IsValueType)
@@ -145,7 +146,7 @@ namespace Entia.Core
                 return false;
             }
 
-            bool GetIsBlittable(Type current, FieldInfo[] fields)
+            static bool GetIsBlittable(Type current, FieldInfo[] fields)
             {
                 if (current.IsPrimitive || current.IsPointer || current.IsEnum)
                     return current != typeof(bool) && current != typeof(char) && current != typeof(decimal);
@@ -162,7 +163,7 @@ namespace Entia.Core
                 else return false;
             }
 
-            bool GetIsCyclic(Type current, FieldInfo[] fields, HashSet<Type> types)
+            static bool GetIsCyclic(Type current, FieldInfo[] fields, HashSet<Type> types)
             {
                 if (current.IsPrimitive || current.IsEnum) return false;
                 else if (types.Add(current))
@@ -180,7 +181,7 @@ namespace Entia.Core
                 else return true;
             }
 
-            ConstructorInfo GetSerializationConstructor(ConstructorInfo[] constructors)
+            static ConstructorInfo GetSerializationConstructor(ConstructorInfo[] constructors)
             {
                 foreach (var constructor in constructors)
                 {
@@ -193,7 +194,7 @@ namespace Entia.Core
                 return default;
             }
 
-            (ConstructorInfo, ParameterInfo) GetEnumerableConstructor(ConstructorInfo[] constructors)
+            static (ConstructorInfo, ParameterInfo) GetEnumerableConstructor(ConstructorInfo[] constructors)
             {
                 foreach (var constructor in constructors)
                 {
@@ -205,9 +206,9 @@ namespace Entia.Core
                 return default;
             }
 
-            unsafe int? GetSize(Type current)
+            static unsafe int? GetSize(Type current, TypeCode code, bool blittable)
             {
-                switch (Type.GetTypeCode(type))
+                switch (code)
                 {
                     case TypeCode.Boolean: return sizeof(bool);
                     case TypeCode.Byte: return sizeof(byte);
@@ -226,14 +227,14 @@ namespace Entia.Core
                     default:
                         // NOTE: do not 'try-catch' 'Marshal.SizeOf' because it may cause inconsistencies between
                         // serialization and deserialization if they occur on different platforms
-                        if (IsBlittable) return Marshal.SizeOf(current);
+                        if (blittable) return Marshal.SizeOf(current);
                         return null;
                 }
             }
 
             Type = type;
-            _arrayType = new Lazy<TypeData>(() => Option.Try(Type.MakeArrayType).OrDefault());
-            _pointerType = new Lazy<TypeData>(() => Option.Try(Type.MakePointerType).OrDefault());
+            _array = new Lazy<TypeData>(() => Option.Try(Type.MakeArrayType).OrDefault());
+            _pointer = new Lazy<TypeData>(() => Option.Try(Type.MakePointerType).OrDefault());
             _guid = new Lazy<Guid?>(() => Type.HasGuid() ? Type.GUID : (Guid?)null);
             _code = new Lazy<TypeCode>(() => Type.GetTypeCode(type));
             _interfaces = new Lazy<Type[]>(() => Type.GetInterfaces());
@@ -259,7 +260,7 @@ namespace Entia.Core
             _isBlittable = new Lazy<bool>(() => GetIsBlittable(Type.IsArray ? Type.GetElementType() : Type, InstanceFields));
             _isCyclic = new Lazy<bool>(() => GetIsCyclic(Type, InstanceFields, new HashSet<Type>()));
             _default = new Lazy<object>(() => GetDefault(Type));
-            _size = new Lazy<int?>(() => GetSize(Type));
+            _size = new Lazy<int?>(() => GetSize(Type, Code, IsBlittable));
         }
 
         public override string ToString() => Type.FullFormat();
@@ -288,7 +289,7 @@ namespace Entia.Core
 
         static TypeUtility()
         {
-            void Register(Assembly assembly)
+            static void Register(Assembly assembly)
             {
                 try
                 {
@@ -384,24 +385,18 @@ namespace Entia.Core
 
         public static bool Is<T>(this Type type) => typeof(T).IsAssignableFrom(type);
 
-        public static bool Is(object value, Type type, bool hierarchy = false, bool definition = false)
+        public static bool Is(object value, Type type, bool hierarchy = false, bool definition = false) => value switch
         {
-            switch (value)
-            {
-                case null: return type.IsClass;
-                case Type current: return current.Is(type, hierarchy, definition);
-                default: return value.GetType().Is(type, hierarchy, definition);
-            }
-        }
+            null => type.IsClass,
+            Type current => current.Is(type, hierarchy, definition),
+            _ => value.GetType().Is(type, hierarchy, definition),
+        };
 
-        public static bool Is<T>(object value)
+        public static bool Is<T>(object value) => value switch
         {
-            switch (value)
-            {
-                case Type type: return type.Is<T>();
-                default: return value is T;
-            }
-        }
+            Type type => type.Is<T>(),
+            _ => value is T,
+        };
 
         public static IEnumerable<string> Path(this Type type)
         {
@@ -426,8 +421,8 @@ namespace Entia.Core
             foreach (var @interface in data.Interfaces) yield return @interface;
         }
 
-        public static TypeData ArrayType(this Type type) => GetData(type).ArrayType;
-        public static TypeData PointerType(this Type type) => GetData(type).PointerType;
+        public static TypeData ArrayType(this Type type) => GetData(type).Array;
+        public static TypeData PointerType(this Type type) => GetData(type).Pointer;
         public static bool IsBlittable(this Type type) => GetData(type).IsBlittable;
         public static bool IsBlittable(object value) => value is null || IsBlittable(value.GetType());
         public static bool IsPlain(this Type type) => GetData(type).IsPlain;

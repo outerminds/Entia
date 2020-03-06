@@ -290,7 +290,7 @@ namespace Entia.Core
 
         public static void Iterate<T>(this IEnumerable<T> source)
         {
-            foreach (var item in source) { }
+            foreach (var _ in source) { }
         }
 
         public static bool None<T>(this IEnumerable<T> source) => !source.Any();
@@ -333,21 +333,19 @@ namespace Entia.Core
 
         public static bool Same<T>(this IEnumerable<T> source, Func<T, T, bool> equals)
         {
-            using (var enumerator = source.GetEnumerator())
+            using var enumerator = source.GetEnumerator();
+            if (enumerator.MoveNext())
             {
-                if (enumerator.MoveNext())
+                var previous = enumerator.Current;
+                while (enumerator.MoveNext())
                 {
-                    var previous = enumerator.Current;
-                    while (enumerator.MoveNext())
-                    {
-                        var current = enumerator.Current;
-                        if (equals(previous, current)) previous = current;
-                        else return false;
-                    }
+                    var current = enumerator.Current;
+                    if (equals(previous, current)) previous = current;
+                    else return false;
                 }
-
-                return true;
             }
+
+            return true;
         }
 
         public static bool Same<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer = null) =>

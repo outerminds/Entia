@@ -114,8 +114,8 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T[] ToArray<T>(IntPtr pointer, int size)
         {
-            var sizes = (source: size, target: Size<T>());
-            var count = sizes.source % sizes.target == 0 ? sizes.source / sizes.target : sizes.source / sizes.target + 1;
+            var (source, target) = (size, Size<T>());
+            var count = source % target == 0 ? source / target : source / target + 1;
             var targets = new T[count];
             Copy(pointer, AsPointer(ref targets[0]), size);
             return targets;

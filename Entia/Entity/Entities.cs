@@ -15,9 +15,6 @@ namespace Entia.Modules
     /// </summary>
     public sealed class Entities : IModule, IClearable, IResolvable, IEnumerable<Entities.Enumerator, Entity>
     {
-        [Flags]
-        enum States : byte { None = 0, All = byte.MaxValue, Allocated = 1 << 0, Alive = 1 << 1 }
-
         /// <summary>
         /// An enumerator that enumerates over all existing entities.
         /// </summary>
@@ -62,18 +59,8 @@ namespace Entia.Modules
         struct Data
         {
             public uint Generation;
-            public States State;
-
-            public bool Allocated
-            {
-                get => (State & States.Allocated) != 0;
-                set { if (value) State |= States.Allocated; else State &= ~States.Allocated; }
-            }
-            public bool Alive
-            {
-                get => (State & States.Alive) != 0;
-                set { if (value) State |= States.Alive; else State &= ~States.Alive; }
-            }
+            public bool Allocated;
+            public bool Alive;
         }
 
         [Implementation]
@@ -109,9 +96,9 @@ namespace Entia.Modules
         readonly Emitter<OnCreate> _onCreate;
         readonly Emitter<OnPreDestroy> _onPreDestroy;
         readonly Emitter<OnPostDestroy> _onPostDestroy;
-        (Data[] items, int count) _data = (new Data[16], 0);
-        (int[] items, int count) _free = (new int[4], 0);
-        (int[] items, int count) _frozen = (new int[4], 0);
+        (Data[] items, int count) _data = (new Data[32], 0);
+        (int[] items, int count) _free = (new int[8], 0);
+        (int[] items, int count) _frozen = (new int[8], 0);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Entities"/> class.
@@ -172,13 +159,10 @@ namespace Entia.Modules
             for (var i = 0; i < _data.count; i++)
             {
                 ref var data = ref _data.items[i];
-                if (data.Allocated)
-                {
-                    cleared = true;
-                    Destroy(new Entity(i, data.Generation), ref data);
-                }
+                if (data.Allocated) cleared |= Destroy(new Entity(i, data.Generation), ref data);
             }
-            // NOTE: do not clear '_data', '_free' and '_frozen' such that the generation counters are not lost; this prevents collisions if a reference to an old entity was kept
+            // NOTE: do not clear '_data', '_free' and '_frozen' such that the generation counters are not lost
+            // this prevents collisions if a reference to an old entity was kept
             return cleared;
         }
 
@@ -212,9 +196,8 @@ namespace Entia.Modules
         bool Destroy(Entity entity, ref Data data)
         {
             // NOTE: this guard is necessary in case a reaction to 'OnPreDestroy' calls 'Destroy'
-            if (data.Alive)
+            if (data.Alive.Change(false))
             {
-                data.Alive = false;
                 _onPreDestroy.Emit(new OnPreDestroy { Entity = entity });
                 data.Allocated = false;
                 _frozen.Push(entity.Index);
@@ -228,9 +211,13 @@ namespace Entia.Modules
         int ReserveIndex()
         {
             // NOTE: prioritizing the increase of the maximum index until it hits the capacity makes sure that all available indices are used
-            var index = _data.count < _data.items.Length || _free.count == 0 ? _data.count++ : _free.Pop();
-            _data.Ensure();
-            return index;
+            if (_data.count < _data.items.Length || _free.count == 0)
+            {
+                var index = _data.count++;
+                _data.Ensure();
+                return index;
+            }
+            else return _free.Pop();
         }
     }
 }

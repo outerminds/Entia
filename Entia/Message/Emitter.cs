@@ -83,6 +83,8 @@ namespace Entia.Modules.Message
 
         public Disposable Receive(int capacity = -1) => new Disposable(this, capacity);
 
+        public bool Has(Receiver<T> receiver) => _receivers.ContainsKey(receiver);
+
         public bool Add(Receiver<T> receiver)
         {
             if (_receivers.TryAdd(receiver, default))
@@ -92,8 +94,6 @@ namespace Entia.Modules.Message
             }
             return false;
         }
-
-        public bool Has(Receiver<T> receiver) => _receivers.ContainsKey(receiver);
 
         public bool Remove(Receiver<T> receiver)
         {
@@ -126,8 +126,8 @@ namespace Entia.Modules.Message
         public IEnumerator<Receiver<T>> GetEnumerator() => _receivers.Keys.GetEnumerator();
         IEnumerator<IReceiver> IEnumerable<IReceiver>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        bool IEmitter.Add(IReceiver receiver) => receiver is Receiver<T> casted && Add(casted);
         bool IEmitter.Has(IReceiver receiver) => receiver is Receiver<T> casted && Has(casted);
+        bool IEmitter.Add(IReceiver receiver) => receiver is Receiver<T> casted && Add(casted);
         bool IEmitter.Remove(IReceiver receiver) => receiver is Receiver<T> casted && Remove(casted);
 
     }

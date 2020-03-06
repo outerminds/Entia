@@ -213,7 +213,7 @@ namespace Entia.Core
 
         public TypeMap(params (Type type, TValue value)[] pairs) : this()
         {
-            foreach (var pair in pairs) Set(pair.type, pair.value);
+            foreach (var (type, value) in pairs) Set(type, value);
         }
 
         [ThreadSafe]
