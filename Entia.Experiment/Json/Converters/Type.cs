@@ -113,17 +113,26 @@ namespace Entia.Json.Converters
                             return TypeUtility.TryGetType(node.Children[1].AsString(), out var value) ? value : default;
                         case Kinds.Array:
                             var rank = node.Children[1].AsInt();
-                            var element = context.Convert<Type>(node.Children[2]);
-                            return rank > 1 ? element.MakeArrayType(rank) : element.MakeArrayType();
+                            if (context.Convert<Type>(node.Children[2]) is Type element)
+                                return rank > 1 ? element.MakeArrayType(rank) : element.MakeArrayType();
+                            else return default;
                         case Kinds.Pointer:
-                            var pointer = context.Convert<Type>(node.Children[1]);
-                            return pointer.MakePointerType();
+                            if (context.Convert<Type>(node.Children[1]) is Type pointer)
+                                return pointer.MakePointerType();
+                            else return default;
                         case Kinds.Generic:
-                            var definition = context.Convert<Type>(node.Children[1]);
-                            var arguments = new Type[node.Children.Length - 2];
-                            for (int i = 0; i < arguments.Length; i++)
-                                arguments[i] = context.Convert<Type>(node.Children[i + 2]);
-                            return definition.MakeGenericType(arguments);
+                            if (context.Convert<Type>(node.Children[1]) is Type definition)
+                            {
+                                var arguments = new Type[node.Children.Length - 2];
+                                for (int i = 0; i < arguments.Length; i++)
+                                {
+                                    if (context.Convert<Type>(node.Children[i + 2]) is Type argument)
+                                        arguments[i] = argument;
+                                    else return default;
+                                }
+                                return definition.MakeGenericType(arguments);
+                            }
+                            else return default;
                     }
                     break;
             }
