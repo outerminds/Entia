@@ -9,6 +9,13 @@ namespace Entia.Modules
 {
     public sealed partial class Components
     {
+        static class Getter<T> where T : IComponent
+        {
+            public static readonly Func<Array, int, T> Get = typeof(T).IsValueType ?
+                new Func<Array, int, T>((array, index) => ((T[])array)[index]) :
+                new Func<Array, int, T>((array, index) => (T)array.GetValue(index));
+        }
+
         static Exception MissingComponent(Entity entity, Type type) =>
             new InvalidOperationException($"Missing component of type '{type.Format()}' on entity '{entity}'. Returning a dummy reference instead.");
 
@@ -177,7 +184,7 @@ namespace Entia.Modules
             foreach (var metadata in types)
             {
                 if (TryGetStore(data, metadata, include, out var store, out var index))
-                    yield return store is T[] casted ? casted[index] : (T)store.GetValue(index);
+                    yield return Getter<T>.Get(store, index);
             }
         }
 
@@ -195,7 +202,7 @@ namespace Entia.Modules
             foreach (var data in _data.Slice())
             {
                 if (data.IsValid && TryGetStore(data, metadata, include, out var store, out var index))
-                    yield return store is T[] casted ? casted[index] : (T)store.GetValue(index);
+                    yield return Getter<T>.Get(store, index);
             }
         }
 
@@ -213,7 +220,7 @@ namespace Entia.Modules
         {
             if (TryGetStore(data, metadata, include, out var store, out var index))
             {
-                component = store is T[] casted ? casted[index] : (T)store.GetValue(index);
+                component = Getter<T>.Get(store, index);
                 return true;
             }
 

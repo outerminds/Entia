@@ -56,7 +56,7 @@ namespace Entia.Modules
         {
             var dataIndex = _data.Index<T>();
             ref var data = ref _data.Get(dataIndex, out var success);
-            if (success && data.Resolvables is T[] resolvables)
+            if (success && data.Resolvables is T[])
             {
                 var index = data.Count++;
                 ArrayUtility.EnsureSet(ref data.Resolvables, resolvable, index);
