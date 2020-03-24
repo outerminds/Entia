@@ -31,21 +31,34 @@ namespace Entia.Json
         public object Convert(Node node, Type type) =>
             TrySpecial(node, out var special) ? special : Concrete(node, type);
 
+        public T Instantiate<T>() => Instantiate<T>(TypeUtility.GetData<T>());
+
+        public object Instantiate(TypeData type)
+        {
+            if (type.Type.IsAbstract) return type.Default;
+            return
+                CloneUtility.Shallow(type.Default) ??
+                type.DefaultConstructor?.Invoke(Array.Empty<object>()) ??
+                FormatterServices.GetUninitializedObject(type);
+        }
+
+        public object Instantiate(Type type) => Instantiate(TypeUtility.GetData(type));
+
         public ConvertFromContext With(Node node, TypeData type) => new ConvertFromContext(node, type, References, Container);
 
         T Concrete<T>(Node node)
         {
-            var data = TypeUtility.GetData<T>();
-            if (TryPrimitive(node, data, out var primitive)) return (T)primitive;
-            if (TryConverter<T>(node, data, out var instance)) return (T)instance;
-            return (T)Default(node, data);
+            var type = TypeUtility.GetData<T>();
+            if (TryPrimitive(node, type, out var primitive)) return (T)primitive;
+            if (TryConverter<T>(node, type, out var instance)) return (T)instance;
+            return (T)Initialize(Instantiate<T>(type), node, type);
         }
 
         object Concrete(Node node, TypeData type)
         {
             if (TryPrimitive(node, type, out var primitive)) return primitive;
             if (TryConverter(node, type, out var instance)) return instance;
-            return Default(node, type);
+            return Initialize(Instantiate(type), node, type);
         }
 
         bool TrySpecial(Node node, out object instance)
@@ -132,13 +145,16 @@ namespace Entia.Json
             return false;
         }
 
-        object Default(Node node, TypeData type)
+        T Instantiate<T>(TypeData type)
         {
-            if (type.Type.IsAbstract) return type.Default;
+            if (typeof(T).IsValueType) return default;
+            return (T)Instantiate(type);
+        }
 
-            var instance =
-                type.DefaultConstructor is ConstructorInfo constructor ? constructor.Invoke(Array.Empty<object>()) :
-                FormatterServices.GetUninitializedObject(type);
+        object Initialize(object instance, Node node, TypeData type)
+        {
+            if (instance == null) return instance;
+
             var members = type.InstanceMembers;
             References.Add(instance);
             foreach (var (key, value) in node.Members())
@@ -151,6 +167,7 @@ namespace Entia.Json
                         property.SetValue(instance, Convert(value, property.PropertyType));
                 }
             }
+
             return instance;
         }
     }
