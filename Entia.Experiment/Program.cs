@@ -17,6 +17,18 @@ using Entia.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 using System.Globalization;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using Entia.Core.Documentation;
+
+//[TypeDiagnostic("Poulah '{type}'", WithAnyFilters = Filters.Types, HaveNoneFilters = Filters.Class)]
+[TypeDiagnostic("Type '{type}' must implement 'ISwanson'", WithAnyFilters = Filters.Class, HaveAllImplementations = new[] { typeof(ISwanson) })]
+[TypeDiagnostic("Type '{type}' must have attribute 'Attribz'", WithAnyFilters = Filters.Class, HaveAllAttributes = new[] { typeof(Attribz) })]
+[TypeDiagnostic("Type '{type}' must be public.", WithAnyFilters = Filters.Class, HaveAllFilters = Filters.Public)]
+interface IKarl { }
+interface ISwanson { }
+class Attribz : Attribute { }
+ class Karl : IKarl { }
 
 namespace Entia.Experiment
 {
@@ -446,9 +458,57 @@ namespace Entia.Experiment
             }
         }
 
+        delegate void Poulah<T1, T2>(Entity entity, ref T1 a, in T2 b);
+        delegate void Poulah(IntPtr a, IntPtr b, IntPtr c);
+        static void VeryUnsafe()
+        {
+            static void Method(Entity entity, ref Position position, in Velocity velocity)
+            {
+                Console.WriteLine("$Auiaofiu");
+            }
+
+            var entity = new Entity(1, 2);
+            var positions = new Position[8];
+            var velocities = new Velocity[8];
+
+            var pointerA = UnsafeUtility.As<Entity, IntPtr>(ref entity);
+            var pointerB = UnsafeUtility.AsPointer(ref positions[0]);
+            var pointerC = UnsafeUtility.AsPointer(ref velocities[0]);
+
+            var pointer = new Poulah<Position, Velocity>(Method);//.Method.MethodHandle.GetFunctionPointer();
+            var function = UnsafeUtility.As<Poulah<Position, Velocity>, Poulah>(ref pointer);//Marshal.GetDelegateForFunctionPointer<Poulah>(pointer);
+            function(pointerA, pointerB, pointerC);
+
+            /*
+            public static System Motion(World world)
+            {
+                world.Systems().Run((ref Time time) =>
+                {
+
+                });
+                return world.Systems().RunEach((ref Position position, in Velocity velocity) =>
+                {
+                    position.X += velocity.X;
+                    position.Y += velocity.Y;
+                });
+                return world.Systems().RunEach((ref Position position, ref Velocity velocity) =>
+                {
+                    position.X += velocity.X;
+                    position.Y += velocity.Y;
+                });
+                return world.Systems().RunEach((Write<Position> position, Read<Velocity> velocity) =>
+                {
+                    position.Value.X += velocity.Value.X;
+                    position.Value.Y += velocity.Value.Y;
+                });
+            }
+            */
+        }
+
         static void Main()
         {
-            TestJson();
+            VeryUnsafe();
+            // TestJson();
             // TestFamilies();
             // Serializer();
             // TypeMapTest.Benchmark();

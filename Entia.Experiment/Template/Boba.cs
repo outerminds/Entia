@@ -8,7 +8,7 @@ using Entia.Modules.Family;
 using System.Runtime.Serialization;
 using System.Reflection;
 
-namespace Entia.Experimental.Boba
+namespace Entia.Experimentalz.Boba
 {
     [DebuggerTypeProxy(typeof(Node<>.View))]
     public readonly struct Node<T> where T : IComponent

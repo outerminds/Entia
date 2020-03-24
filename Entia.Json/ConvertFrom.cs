@@ -134,6 +134,8 @@ namespace Entia.Json
 
         object Default(Node node, TypeData type)
         {
+            if (type.Type.IsAbstract) return type.Default;
+
             var instance =
                 type.DefaultConstructor is ConstructorInfo constructor ? constructor.Invoke(Array.Empty<object>()) :
                 FormatterServices.GetUninitializedObject(type);
