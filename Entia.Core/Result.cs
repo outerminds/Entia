@@ -505,6 +505,19 @@ namespace Entia.Core
             return Failure();
         }
 
+        public static Result<T> FirstOrFailure<T>(this T[] source)
+        {
+            if (source.Length > 0) return source[0];
+            return Failure();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T> FirstOrFailure<T>(this T[] source, Func<T, bool> predicate)
+        {
+            foreach (var item in source) if (predicate(item)) return item;
+            return Failure();
+        }
+
         public static Result<T> LastOrFailure<T>(this IEnumerable<T> source)
         {
             var result = Failure().AsResult<T>();
@@ -520,6 +533,23 @@ namespace Entia.Core
             return result;
         }
 
+        public static Result<T> LastOrFailure<T>(this T[] source)
+        {
+            if (source.Length > 0) return source[source.Length - 1];
+            return Failure();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<T> LastOrFailure<T>(this T[] source, Func<T, bool> predicate)
+        {
+            for (int i = source.Length - 1; i >= 0; i--)
+            {
+                var item = source[i];
+                if (predicate(item)) return item;
+            }
+            return Failure();
+        }
+
         public static Result<T> Cast<T>(object value) => Success(value).AsResult().Cast<T>();
         public static Result<TOut> Cast<TIn, TOut>(in TIn value) => Success(value).AsResult().Cast<TOut>();
 
@@ -529,6 +559,6 @@ namespace Entia.Core
 
         public static Result<T> As<T>(in T value, Type type, bool hierarchy = false, bool definition = false) =>
             TypeUtility.Is(value, type, hierarchy, definition) ? Result.Success(value).AsResult() :
-            Result.Failure($"Expected value '{value?.ToString() ?? "null"}' to be of type '{type.FullFormat()}'.");
+            Failure($"Expected value '{value?.ToString() ?? "null"}' to be of type '{type.FullFormat()}'.");
     }
 }
