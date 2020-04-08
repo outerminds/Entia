@@ -17,17 +17,15 @@ namespace Entia.Queryables
         {
             public override bool TryQuery(in Context context, out Query<Write<T>> query)
             {
-                if (ComponentUtility.Abstract<T>.TryConcrete(out var metadata))
+                var metadata = ComponentUtility.Concrete<T>.Data;
+                var segment = context.Segment;
+                var state = context.World.Components().State(segment.Mask, metadata);
+                if (context.Include.HasAny(state))
                 {
-                    var segment = context.Segment;
-                    var state = context.World.Components().State(segment.Mask, metadata);
-                    if (context.Include.HasAny(state))
-                    {
-                        query = metadata.Kind == Metadata.Kinds.Tag ?
-                            new Query<Write<T>>(_ => new Write<T>(0, Dummy<T>.Array.One, state)) :
-                            new Query<Write<T>>(index => new Write<T>(index, segment.Store(metadata) as T[], state), metadata);
-                        return true;
-                    }
+                    query = metadata.Kind == Metadata.Kinds.Tag ?
+                        new Query<Write<T>>(_ => new Write<T>(0, Dummy<T>.Array.One, state)) :
+                        new Query<Write<T>>(index => new Write<T>(index, segment.Store(metadata) as T[], state), metadata);
+                    return true;
                 }
 
                 query = default;

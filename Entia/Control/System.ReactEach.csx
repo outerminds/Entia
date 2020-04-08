@@ -36,7 +36,7 @@ $@"    public sealed class ReactEach{parameters} : Scheduler<IReactEach{paramete
 
         public override Type[] Phases => React.Phases<{message}>();
 
-        public override Phase[] Schedule(in IReactEach{parameters} instance, in Schedule.Context context)
+        public override Phase[] Schedule(IReactEach{parameters} instance, in Schedule.Context context)
         {{
             var world = context.World;
             var react = new Run(instance.React);

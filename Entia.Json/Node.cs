@@ -538,7 +538,7 @@ namespace Entia.Json
         }
 
         public static string AsString(this Node node) => node.TryString(out var value) ? value : "";
-        public static bool AsBool(this Node node) => node.TryBool(out var value) ? value : default;
+        public static bool AsBool(this Node node) => node.TryBool(out var value) && value;
         public static char AsChar(this Node node) => node.TryChar(out var value) ? value : default;
         public static sbyte AsSByte(this Node node) => node.TrySByte(out var value) ? value : default;
         public static byte AsByte(this Node node) => node.TryByte(out var value) ? value : default;
@@ -552,7 +552,7 @@ namespace Entia.Json
         public static double AsDouble(this Node node) => node.TryDouble(out var value) ? value : default;
         public static decimal AsDecimal(this Node node) => node.TryDecimal(out var value) ? value : default;
         public static string AsString(this Node node, string key) => node.TryString(key, out var value) ? value : default;
-        public static bool AsBool(this Node node, string key) => node.TryBool(key, out var value) ? value : default;
+        public static bool AsBool(this Node node, string key) => node.TryBool(key, out var value) && value;
         public static char AsChar(this Node node, string key) => node.TryChar(key, out var value) ? value : default;
         public static sbyte AsSByte(this Node node, string key) => node.TrySByte(key, out var value) ? value : default;
         public static byte AsByte(this Node node, string key) => node.TryByte(key, out var value) ? value : default;
@@ -566,7 +566,7 @@ namespace Entia.Json
         public static double AsDouble(this Node node, string key) => node.TryDouble(key, out var value) ? value : default;
         public static decimal AsDecimal(this Node node, string key) => node.TryDecimal(key, out var value) ? value : default;
         public static string AsString(this Node node, int index) => node.TryString(index, out var value) ? value : default;
-        public static bool AsBool(this Node node, int index) => node.TryBool(index, out var value) ? value : default;
+        public static bool AsBool(this Node node, int index) => node.TryBool(index, out var value) && value;
         public static char AsChar(this Node node, int index) => node.TryChar(index, out var value) ? value : default;
         public static sbyte AsSByte(this Node node, int index) => node.TrySByte(index, out var value) ? value : default;
         public static byte AsByte(this Node node, int index) => node.TryByte(index, out var value) ? value : default;

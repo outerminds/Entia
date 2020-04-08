@@ -138,6 +138,9 @@ namespace Entia.Core
 
         public static T[] Concatenate<T>(T[] left, T[] right)
         {
+            if (left.Length == 0) return right;
+            if (right.Length == 0) return left;
+
             var count = left.Length + right.Length;
             if (count == 0) return Array.Empty<T>();
             var results = new T[count];
@@ -148,6 +151,10 @@ namespace Entia.Core
 
         public static T[] Concatenate<T>(params T[][] arrays)
         {
+            if (arrays.Length == 0) return Array.Empty<T>();
+            if (arrays.Length == 1) return arrays[0];
+            if (arrays.Length == 2) return Concatenate(arrays[0], arrays[1]);
+
             var count = 0;
             for (int i = 0; i < arrays.Length; i++) count += arrays[i].Length;
             if (count == 0) return Array.Empty<T>();

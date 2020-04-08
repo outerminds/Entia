@@ -56,8 +56,7 @@ namespace Entia.Core
                 }
                 catch { }
             }
-
-            return () => default;
+            return CreateDefaultProvider<T>(data);
         }
 
         static Func<object> CreateProvider(Type type)
@@ -83,9 +82,14 @@ namespace Entia.Core
                 }
                 catch { }
             }
+            return CreateDefaultProvider<object>(data);
+        }
 
-            if (data.Default is null) return () => null;
-            return () => CloneUtility.Shallow(data.Default);
+        static Func<T> CreateDefaultProvider<T>(TypeData data)
+        {
+            if (typeof(T).IsValueType) return () => default;
+            else if (data.Default == null) return () => (T)data.DefaultConstructor?.Invoke(Array.Empty<object>());
+            else return () => (T)CloneUtility.Shallow(data.Default);
         }
     }
 }

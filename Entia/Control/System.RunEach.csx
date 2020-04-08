@@ -33,7 +33,7 @@ $@"    public sealed class RunEach{parameters} : Scheduler<IRunEach{parameters}>
 
         public override Type[] Phases {{ get; }} = new[] {{ typeof(Phases.Run) }};
 
-        public override Phase[] Schedule(in IRunEach{parameters} instance, in Schedule.Context context)
+        public override Phase[] Schedule(IRunEach{parameters} instance, in Schedule.Context context)
         {{
             var world = context.World;
             var run = new Run(instance.Run);

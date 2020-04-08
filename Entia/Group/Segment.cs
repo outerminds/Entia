@@ -34,7 +34,7 @@ namespace Entia.Modules.Group
         /// <value>
         /// The types.
         /// </value>
-        public Component.Metadata[] Types
+        public Metadata[] Types
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _segment.Types;
@@ -50,26 +50,26 @@ namespace Entia.Modules.Group
         /// </summary>
         public readonly T[] Items;
 
-        readonly Component.Segment _segment;
+        readonly Segment _segment;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Segment{T}"/> struct.
         /// </summary>
         /// <param name="segment">The segment.</param>
         /// <param name="items">The items.</param>
-        public Segment(Component.Segment segment, T[] items)
+        public Segment(Segment segment, T[] items)
         {
             _segment = segment;
             Items = items;
         }
 
-        /// <inheritdoc cref="Component.Segment.Store(in Metadata)"/>
+        /// <inheritdoc cref="Segment.Store(in Metadata)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TComponent[] Store<TComponent>() where TComponent : struct, IComponent =>
             ComponentUtility.Abstract<TComponent>.TryConcrete(out var metadata) ?
             _segment.Store(metadata) as TComponent[] : default;
 
-        /// <inheritdoc cref="Component.Segment.TryStore(in Metadata, out Array)"/>
+        /// <inheritdoc cref="Segment.TryStore(in Metadata, out Array)"/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryStore<TComponent>(out TComponent[] store) where TComponent : struct, IComponent
         {

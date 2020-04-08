@@ -68,12 +68,14 @@ namespace Entia.Modules.Component
 
         public static bool TryGetConcreteMask<T>(out BitMask mask) where T : IComponent
         {
-            using (var read = _state.Read()) return read.Value.AbstractToMask.TryGet<T>(out mask);
+            using var read = _state.Read();
+            return read.Value.AbstractToMask.TryGet<T>(out mask);
         }
 
         public static bool TryGetConcreteTypes<T>(out Metadata[] types) where T : IComponent
         {
-            using (var read = _state.Read()) return read.Value.AbstractToMetadata.TryGet<T>(out types);
+            using var read = _state.Read();
+            return read.Value.AbstractToMetadata.TryGet<T>(out types);
         }
 
         public static bool TryGetConcrete<T>(out BitMask mask, out Metadata[] types) where T : IComponent
@@ -84,12 +86,14 @@ namespace Entia.Modules.Component
 
         public static bool TryGetConcreteMask(Type type, out BitMask mask)
         {
-            using (var read = _state.Read()) return read.Value.AbstractToMask.TryGet(type, out mask);
+            using var read = _state.Read();
+            return read.Value.AbstractToMask.TryGet(type, out mask);
         }
 
         public static bool TryGetConcreteTypes(Type type, out Metadata[] types)
         {
-            using (var read = _state.Read()) return read.Value.AbstractToMetadata.TryGet(type, out types);
+            using var read = _state.Read();
+            return read.Value.AbstractToMetadata.TryGet(type, out types);
         }
 
         public static bool TryGetConcrete(Type type, out BitMask mask, out Metadata[] types)
@@ -120,7 +124,8 @@ namespace Entia.Modules.Component
 
         public static bool TryGetMetadata(int index, out Metadata data)
         {
-            using (var read = _state.Read()) return read.Value.Concretes.TryGet(index, out data) && data.IsValid;
+            using var read = _state.Read();
+            return read.Value.Concretes.TryGet(index, out data) && data.IsValid;
         }
 
         public static BitMask GetConcreteMask(Type type)

@@ -29,12 +29,13 @@ namespace Entia.Injection
         public Result<object> Inject(Type injectable, MemberInfo member = null) => World.Container.Get<IInjector>(injectable)
             .Select(With(member ?? injectable), (injector, state) => injector.Inject(state).As(injectable))
             .Any();
+
         public Context With(MemberInfo member = null) => new Context(member ?? Member, World);
     }
 
     public static class Extensions
     {
-        public static Result<T> Inject<T>(this World world, MemberInfo member) where T : IInjectable =>
+        public static Result<T> Inject<T>(this World world, MemberInfo member = null) where T : IInjectable =>
             new Context(world).Inject<T>(member);
         public static Result<object> Inject(this World world, MemberInfo member) =>
             new Context(world).Inject(member);

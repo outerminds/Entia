@@ -15,10 +15,6 @@ using Newtonsoft.Json;
 using System.Collections.Concurrent;
 using Entia.Json;
 using Newtonsoft.Json.Linq;
-using System.Threading.Tasks;
-using System.Globalization;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using Entia.Core.Documentation;
 
 //[TypeDiagnostic("Poulah '{type}'", WithAnyFilters = Filters.Types, HaveNoneFilters = Filters.Class)]
@@ -28,7 +24,7 @@ using Entia.Core.Documentation;
 interface IKarl { }
 interface ISwanson { }
 class Attribz : Attribute { }
- class Karl : IKarl { }
+class Karl : IKarl { }
 
 namespace Entia.Experiment
 {

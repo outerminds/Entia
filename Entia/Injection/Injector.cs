@@ -2,6 +2,8 @@
 using Entia.Injectables;
 using Entia.Injection;
 using System;
+using System.Linq;
+using System.Reflection;
 
 namespace Entia.Injectors
 {
@@ -18,8 +20,19 @@ namespace Entia.Injectors
 
     public sealed class Default : IInjector
     {
-        public Result<object> Inject(in Context context) =>
-            Result.Failure($"No injector implementation was found for member '{context.Member}'.");
+        public Result<object> Inject(in Context context) => context.Member switch
+        {
+            Type type => Result.Cast<object>(DefaultUtility.Default(type))
+                .Bind(context, (instance, state) => Result.And(
+                    type.InstanceFields().Select(field => state.Inject(field).Do(value => field.SetValue(instance, value))).All(),
+                    type.InstanceProperties()
+                        .Where(property => property.CanWrite)
+                        .Select(property => state.Inject(property).Do(value => property.SetValue(instance, value))).All())
+                    .Return(instance)),
+            FieldInfo field => context.Inject(field.FieldType),
+            PropertyInfo property => context.Inject(property.PropertyType),
+            _ => Result.Failure($"No injector implementation was found for member '{context.Member}'."),
+        };
     }
 
     public sealed class Provider<T> : Injector<T>

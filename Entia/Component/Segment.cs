@@ -139,14 +139,15 @@ namespace Entia.Modules.Component
         [ThreadSafe]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Array Store(in Metadata type) => _stores[GetStoreIndex(type)];
+        [ThreadSafe]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T[] Store<T>() where T : struct, IComponent => _stores[GetStoreIndex(ComponentUtility.Concrete<T>.Data)] as T[];
+
         /// <summary>
         /// Ensures that all component stores are at least of the same size as the <see cref="Entities"/> array.
         /// If a component store not large enough, it is resized.
         /// </summary>
         /// <returns>Returns <c>true</c> if a component store was resized; otherwise, <c>false</c>.</returns>
-        [ThreadSafe]
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T[] Store<T>() where T : struct, IComponent => _stores[GetStoreIndex(ComponentUtility.Concrete<T>.Data)] as T[];
         public bool Ensure()
         {
             var resized = false;
@@ -179,8 +180,8 @@ namespace Entia.Modules.Component
             return (store, pair.address);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [ThreadSafe]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         int GetStoreIndex(in Metadata metadata) => metadata.Index - _minimum;
     }
 }

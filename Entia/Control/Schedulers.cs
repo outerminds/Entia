@@ -10,21 +10,21 @@ namespace Entia.Schedulers
     public sealed class Initialize : Scheduler<IInitialize>
     {
         public override Type[] Phases => new[] { typeof(Phases.Initialize) };
-        public override Phase[] Schedule(in IInitialize instance, in Context context) =>
+        public override Phase[] Schedule(IInitialize instance, in Context context) =>
             new[] { Phase.From<Phases.Initialize>(instance.Initialize) };
     }
 
     public sealed class Dispose : Scheduler<IDispose>
     {
         public override Type[] Phases => new[] { typeof(Phases.Dispose) };
-        public override Phase[] Schedule(in IDispose instance, in Context context) =>
+        public override Phase[] Schedule(IDispose instance, in Context context) =>
             new[] { Phase.From<Phases.Dispose>(instance.Dispose) };
     }
 
     public sealed class Run : Scheduler<IRun>
     {
         public override Type[] Phases => new[] { typeof(Phases.Run) };
-        public override Phase[] Schedule(in IRun instance, in Context context) =>
+        public override Phase[] Schedule(IRun instance, in Context context) =>
             new[] { Phase.From<Phases.Run>(instance.Run) };
     }
 
@@ -32,7 +32,7 @@ namespace Entia.Schedulers
     {
         public override Type[] Phases => React.Phases<T>();
 
-        public override Phase[] Schedule(in IReact<T> instance, in Context context)
+        public override Phase[] Schedule(IReact<T> instance, in Context context)
         {
             var run = new InAction<T>(instance.React);
             return React.Schedule<T>(
@@ -48,7 +48,7 @@ namespace Entia.Schedulers
 
         delegate void Run(Entity entity, ref T component);
 
-        public override Phase[] Schedule(in IOnAdd<T> instance, in Context context)
+        public override Phase[] Schedule(IOnAdd<T> instance, in Context context)
         {
             var components = context.Controller.World.Components();
             var run = new Run(instance.OnAdd);
@@ -66,7 +66,7 @@ namespace Entia.Schedulers
 
         delegate void Run(Entity entity, ref T component);
 
-        public override Phase[] Schedule(in IOnRemove<T> instance, in Context context)
+        public override Phase[] Schedule(IOnRemove<T> instance, in Context context)
         {
             var components = context.Controller.World.Components();
             var run = new Run(instance.OnRemove);
@@ -84,7 +84,7 @@ namespace Entia.Schedulers
 
         delegate void Run(Entity entity, ref T component);
 
-        public override Phase[] Schedule(in IOnEnable<T> instance, in Context context)
+        public override Phase[] Schedule(IOnEnable<T> instance, in Context context)
         {
             var components = context.Controller.World.Components();
             var run = new Run(instance.OnEnable);
@@ -102,7 +102,7 @@ namespace Entia.Schedulers
 
         delegate void Run(Entity entity, ref T component);
 
-        public override Phase[] Schedule(in IOnDisable<T> instance, in Context context)
+        public override Phase[] Schedule(IOnDisable<T> instance, in Context context)
         {
             var components = context.Controller.World.Components();
             var run = new Run(instance.OnDisable);

@@ -14,7 +14,7 @@ namespace Entia.Schedulers
     public abstract class Scheduler<T> : IScheduler
     {
         public abstract Type[] Phases { get; }
-        public abstract Phase[] Schedule(in T instance, in Context context);
+        public abstract Phase[] Schedule(T instance, in Context context);
         Phase[] IScheduler.Schedule(in Context context) =>
             context.Instance is T casted ? Schedule(casted, context) : Array.Empty<Phase>();
     }

@@ -31,8 +31,8 @@ namespace Entia.Modules
                 (ref Boxes boxes, in (Type[], Data[]) pair) =>
                 {
                     var (keys, values) = pair;
-                    using (var write = boxes._boxes.Write())
-                        for (int i = 0; i < keys.Length; i++) write.Value.Set(keys[i], values[i]);
+                    using var write = boxes._boxes.Write();
+                    for (int i = 0; i < keys.Length; i++) write.Value.Set(keys[i], values[i]);
                 })
         );
 
@@ -41,171 +41,171 @@ namespace Entia.Modules
         public bool TryGet<T>(out Box<T> box) => TryGet<T>(null, out box);
         public bool TryGet<T>(object key, out Box<T> box)
         {
-            using (var read = _boxes.Read())
+            using var read = _boxes.Read();
+            ref var data = ref read.Value.Get<T>(out var success);
+            if (success)
             {
-                ref var data = ref read.Value.Get<T>(out var success);
-                if (success)
-                {
-                    if (key is null) return data.Box.TryAs<T>(out box);
-                    return data.Map.TryGetValue(key, out var value) & value.TryAs<T>(out box);
-                }
-
-                box = default;
-                return false;
+                if (key is null) return data.Box.TryAs<T>(out box);
+                return data.Map.TryGetValue(key, out var value) & value.TryAs<T>(out box);
             }
+
+            box = default;
+            return false;
         }
         public bool TryGet(Type type, out Box box) => TryGet(type, null, out box);
         public bool TryGet(Type type, object key, out Box box)
         {
-            using (var read = _boxes.Read())
+            using var read = _boxes.Read();
+            ref var data = ref read.Value.Get(type, out var success);
+            if (success)
             {
-                ref var data = ref read.Value.Get(type, out var success);
-                if (success)
-                {
-                    if (key is null) return (box = data.Box).IsValid;
-                    return data.Map.TryGetValue(key, out box);
-                }
-
-                box = default;
-                return false;
+                if (key is null) return (box = data.Box).IsValid;
+                return data.Map.TryGetValue(key, out box);
             }
+
+            box = default;
+            return false;
         }
 
         public IEnumerable<Box> Get(object key)
         {
-            using (var read = _boxes.Read())
-                foreach (var data in read.Value.Values)
-                    if (data.Map.TryGetValue(key, out var box)) yield return box;
+            using var read = _boxes.Read();
+            foreach (var data in read.Value.Values)
+                if (data.Map.TryGetValue(key, out var box)) yield return box;
         }
 
         public bool Has<T>() => Has<T>(null);
         public bool Has<T>(object key)
         {
-            using (var read = _boxes.Read())
-            {
-                ref var data = ref read.Value.Get<T>(out var success);
-                return success && Has(data, key);
-            }
+            using var read = _boxes.Read();
+            ref var data = ref read.Value.Get<T>(out var success);
+            return success && Has(data, key);
         }
         public bool Has(Type type) => Has(type, null);
         public bool Has(Type type, object key)
         {
-            using (var read = _boxes.Read())
-            {
-                ref var data = ref read.Value.Get(type, out var success);
-                return success && Has(data, key);
-            }
+            using var read = _boxes.Read();
+            ref var data = ref read.Value.Get(type, out var success);
+            return success && Has(data, key);
         }
 
-        public bool Set<T>(in T value, out Box<T> box) => Set(null, value, out box);
-        public bool Set<T>(in T value) => Set(null, value, out _);
-        public bool Set<T>(object key, in T value) => Set(key, value, out _);
-        public bool Set<T>(object key, in T value, out Box<T> box)
+        public bool Set<T>(in T value, out Box<T> box, bool overwrite = true) => Set(null, value, out box, overwrite);
+        public bool Set<T>(in T value, bool overwrite = true) => Set(null, value, out _, overwrite);
+        public bool Set<T>(object key, in T value, bool overwrite = true) => Set(key, value, out _, overwrite);
+        public bool Set<T>(object key, in T value, out Box<T> box, bool overwrite = true)
         {
-            using (var write = _boxes.Write())
+            using var write = _boxes.Write();
+            ref var data = ref write.Value.Get<T>(out var success);
+            if (success)
             {
-                ref var data = ref write.Value.Get<T>(out var success);
-                if (success)
+                if (key is null)
                 {
-                    if (key is null)
+                    if (data.Box.TryAs<T>(out box))
                     {
-                        if (data.Box.TryAs<T>(out box))
-                        {
-                            box.Value = value;
-                            return false;
-                        }
-                        else
-                        {
-                            data.Box = box = new Box<T>(value);
-                            return true;
-                        }
-                    }
-                    else if (data.Map.TryGetValue(key, out var current) && current.TryAs<T>(out box))
-                    {
-                        box.Value = value;
+                        if (overwrite) box.Value = value;
                         return false;
                     }
                     else
                     {
-                        data.Map[key] = box = new Box<T>(value);
+                        data.Box = box = new Box<T>(value);
                         return true;
                     }
                 }
-
-                write.Value.Set<T>(key is null ?
-                    new Data { Box = new Box<T>(value), Map = new Dictionary<object, Box>() } :
-                    new Data { Map = new Dictionary<object, Box> { { key, box = new Box<T>(value) } } });
-                return true;
-            }
-        }
-        public bool Set(Type type, object value, out Box box) => Set(type, null, value, out box);
-        public bool Set(Type type, object value) => Set(type, null, value, out _);
-        public bool Set(Type type, object key, object value) => Set(type, key, value, out _);
-        public bool Set(Type type, object key, object value, out Box box)
-        {
-            using (var write = _boxes.Write())
-            {
-                ref var data = ref write.Value.Get(type, out var success);
-                if (success)
+                else if (data.Map.TryGetValue(key, out var current) && current.TryAs<T>(out box))
                 {
-                    if (key is null)
+                    if (overwrite) box.Value = value;
+                    return false;
+                }
+                else
+                {
+                    data.Map[key] = box = new Box<T>(value);
+                    return true;
+                }
+            }
+
+            write.Value.Set<T>(key is null ?
+                new Data { Box = new Box<T>(value), Map = new Dictionary<object, Box>() } :
+                new Data { Map = new Dictionary<object, Box> { { key, box = new Box<T>(value) } } });
+            return true;
+        }
+        public bool Set(Type type, object value, out Box box, bool overwrite = true) => Set(type, null, value, out box, overwrite);
+        public bool Set(Type type, object value, bool overwrite = true) => Set(type, null, value, out _, overwrite);
+        public bool Set(Type type, object key, object value, bool overwrite = true) => Set(type, key, value, out _, overwrite);
+        public bool Set(Type type, object key, object value, out Box box, bool overwrite = true)
+        {
+            using var write = _boxes.Write();
+            ref var data = ref write.Value.Get(type, out var success);
+            if (success)
+            {
+                if (key is null)
+                {
+                    if (data.Box.IsValid)
                     {
-                        if (data.Box.IsValid)
-                        {
-                            box = data.Box;
-                            box.Value = value;
-                            return false;
-                        }
-                        else
-                        {
-                            data.Box = box = new Box(value, type);
-                            return true;
-                        }
-                    }
-                    else if (data.Map.TryGetValue(key, out box))
-                    {
-                        box.Value = value;
+                        box = data.Box;
+                        if (overwrite) box.Value = value;
                         return false;
                     }
                     else
                     {
-                        data.Map[key] = box = new Box(value, type);
+                        data.Box = box = new Box(value, type);
                         return true;
                     }
                 }
+                else if (data.Map.TryGetValue(key, out box))
+                {
+                    if (overwrite) box.Value = value;
+                    return false;
+                }
+                else
+                {
+                    data.Map[key] = box = new Box(value, type);
+                    return true;
+                }
+            }
 
-                write.Value.Set(type, key is null ?
-                    new Data { Box = new Box(value, type), Map = new Dictionary<object, Box>() } :
-                    new Data { Map = new Dictionary<object, Box> { { key, box = new Box(value, type) } } });
+            write.Value.Set(type, key is null ?
+                new Data { Box = new Box(value, type), Map = new Dictionary<object, Box>() } :
+                new Data { Map = new Dictionary<object, Box> { { key, box = new Box(value, type) } } });
+            return true;
+        }
+
+        public bool Remove<T>() => Remove<T>(null, out _);
+        public bool Remove<T>(out T value) => Remove(null, out value);
+        public bool Remove<T>(object key) => Remove<T>(key, out _);
+        public bool Remove<T>(object key, out T value)
+        {
+            using var write = _boxes.Write();
+            ref var data = ref write.Value.Get<T>(out var success);
+            if (success && Remove(ref data, key, out var box) && box.TryAs<T>(out var casted))
+            {
+                value = casted.Value;
                 return true;
             }
+            value = default;
+            return false;
         }
-
-        public bool Remove<T>() => Remove<T>(null);
-        public bool Remove<T>(object key)
+        public bool Remove(Type type) => Remove(type, null, out _);
+        public bool Remove(Type type, out object value) => Remove(type, null, out value);
+        public bool Remove(Type type, object key) => Remove(type, key, out _);
+        public bool Remove(Type type, object key, out object value)
         {
-            using (var write = _boxes.Write())
+            using var write = _boxes.Write();
+            ref var data = ref write.Value.Get(type, out var success);
+            if (success && Remove(ref data, key, out var box))
             {
-                ref var data = ref write.Value.Get<T>(out var success);
-                return success && Remove(ref data, key);
+                value = box.Value;
+                return true;
             }
-        }
-        public bool Remove(Type type) => Remove(type, null);
-        public bool Remove(Type type, object key)
-        {
-            using (var write = _boxes.Write())
-            {
-                ref var data = ref write.Value.Get(type, out var success);
-                return success && Remove(ref data, key);
-            }
+            value = default;
+            return false;
         }
 
         public bool Clear(object key)
         {
             var cleared = false;
-            using (var write = _boxes.Write())
-                foreach (var data in write.Value.Values)
-                    cleared |= data.Map.Remove(key);
+            using var write = _boxes.Write();
+            foreach (var data in write.Value.Values)
+                cleared |= data.Map.Remove(key);
             return cleared;
         }
 
@@ -217,10 +217,11 @@ namespace Entia.Modules
             return data.Map.ContainsKey(key);
         }
 
-        bool Remove(ref Data data, object key)
+        bool Remove(ref Data data, object key, out Box box)
         {
             if (key is null)
             {
+                box = data.Box;
                 if (data.Box.IsValid)
                 {
                     data.Box = default;
@@ -228,7 +229,8 @@ namespace Entia.Modules
                 }
                 return false;
             }
-            return data.Map.Remove(key);
+            else
+                return data.Map.TryGetValue(key, out box) && box.IsValid && data.Map.Remove(key);
         }
 
         public IEnumerator<(Type type, object key, object value)> GetEnumerator() =>

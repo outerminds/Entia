@@ -462,7 +462,7 @@ namespace Entia.Modules.Group
                     var count = items.Length;
                     if (ArrayUtility.Ensure(ref items, segment.Count))
                     {
-                        // NOTE: update all items since existing items are pointing to an old stores
+                        // NOTE: update all items since existing items are pointing to old stores
                         for (var i = 0; i < segment.Count; i++) items[i] = query.Get(i);
                         segment = new Segment<T>(target.segment, items);
                     }

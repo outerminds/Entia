@@ -1,10 +1,7 @@
 using System;
 using System.Linq;
-using System.Reflection;
 using Entia.Core;
-using Entia.Injectables;
 using Entia.Modules;
-using Entia.Modules.Component;
 using Entia.Queriers;
 using Entia.Queryables;
 using FsCheck;
