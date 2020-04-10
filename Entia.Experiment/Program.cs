@@ -501,9 +501,27 @@ namespace Entia.Experiment
             */
         }
 
+        delegate void Do(IntPtr pointer);
+        static void SuperDuperUnsafe()
+        {
+            var action = new InAction<TimeSpan>((in TimeSpan value) => Console.WriteLine(value));
+            var @do = new Do(_ => throw null);
+            UnsafeUtility.Copy(action, @do);
+            @do += @do;
+            @do += @do;
+            @do += @do;
+            @do += @do;
+
+            var date = TimeSpan.FromHours(2);
+            var pointer = UnsafeUtility.AsPointer(ref date);
+            @do(pointer);
+            Console.ReadKey();
+        }
+
         static void Main()
         {
-            VeryUnsafe();
+            SuperDuperUnsafe();
+            // VeryUnsafe();
             // TestJson();
             // TestFamilies();
             // Serializer();

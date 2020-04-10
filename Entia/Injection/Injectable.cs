@@ -1,4 +1,6 @@
-﻿namespace Entia.Injectables
+﻿using Entia.Core;
+
+namespace Entia.Injectables
 {
-    public interface IInjectable { }
+    public interface IInjectable : IImplementation<Dependers.Fields> { }
 }

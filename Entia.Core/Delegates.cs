@@ -13,6 +13,7 @@
     public delegate TOut RefInFunc<TIn1, TIn2, TOut>(ref TIn1 input1, in TIn2 input2);
     public delegate void InAction<T>(in T input);
     public delegate void InAction<T1, T2>(in T1 input1, in T2 input2);
+    public delegate void InAction<T1, T2, T3>(in T1 input1, in T2 input2, in T3 input3);
     public delegate void RefAction<T>(ref T input);
     public delegate void RefAction<T1, T2>(ref T1 input1, ref T2 input2);
     public delegate void RefAction<T1, T2, T3>(ref T1 input1, ref T2 input2, ref T3 input3);

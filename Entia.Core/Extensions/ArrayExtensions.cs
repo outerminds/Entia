@@ -91,6 +91,8 @@ namespace Entia.Core
         public static bool None<T>(this T[] array) => !array.Any();
         public static bool None(this Array array) => !array.Any();
 
+        public static T[] Flatten<T>(this T[][] array) => ArrayUtility.Concatenate(array);
+
         public static T[] Cast<T>(this Array array)
         {
             var target = new T[array.Length];

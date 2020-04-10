@@ -76,31 +76,5 @@ namespace Entia.Experimental
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages()));
         });
-        public static Runner With<T1, T2, T3, T4, T5, T6>(Func<T1, T2, T3, T4, T5, T6, Runner> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable where T6 : IInjectable => new Runner(world =>
-        {
-            var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>(); var result6 = world.Inject<T6>();
-            if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5) && result6.TryValue(out var value6))
-            {
-                var dependencies = ArrayUtility.Concatenate(world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>(), world.Dependencies<T6>());
-                return provide(value1, value2, value3, value4, value5, value6)
-                    .Schedule(world)
-                    .Map(phases => phases.Select(phase => phase.With(phase.Dependencies.Prepend(dependencies))));
-            }
-            else
-                return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages(), result6.Messages()));
-        });
-        public static Runner With<T1, T2, T3, T4, T5, T6, T7>(Func<T1, T2, T3, T4, T5, T6, T7, Runner> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable where T6 : IInjectable where T7 : IInjectable => new Runner(world =>
-        {
-            var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>(); var result6 = world.Inject<T6>(); var result7 = world.Inject<T7>();
-            if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5) && result6.TryValue(out var value6) && result7.TryValue(out var value7))
-            {
-                var dependencies = ArrayUtility.Concatenate(world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>(), world.Dependencies<T6>(), world.Dependencies<T7>());
-                return provide(value1, value2, value3, value4, value5, value6, value7)
-                    .Schedule(world)
-                    .Map(phases => phases.Select(phase => phase.With(phase.Dependencies.Prepend(dependencies))));
-            }
-            else
-                return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages(), result6.Messages(), result7.Messages()));
-        });
     }
 }

@@ -50,7 +50,7 @@ namespace Entia.Experimental
     public readonly partial struct Runner
     {{
         public static Runner With(Func<Runner> provide) => new Runner(world => provide().Schedule(world));
-{string.Join(Environment.NewLine, Generate(7))}
+{string.Join(Environment.NewLine, Generate(5))}
     }}
 }}";
 
