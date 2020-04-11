@@ -41,7 +41,7 @@ namespace Entia.Modules.Message
             public bool TryMessage(out T message) => _receiver.TryMessage(out message);
             public Receiver<T>.Enumerable Messages() => _receiver.Messages();
 
-            public Disposable(Emitter<T> emitter, int capacity = -1)
+            public Disposable(Emitter<T> emitter, int? capacity = null)
             {
                 _emitter = emitter;
                 _receiver = new Receiver<T>(capacity);
@@ -81,7 +81,7 @@ namespace Entia.Modules.Message
             _receive(message);
         }
 
-        public Disposable Receive(int capacity = -1) => new Disposable(this, capacity);
+        public Disposable Receive(int? capacity = null) => new Disposable(this, capacity);
 
         public bool Has(Receiver<T> receiver) => _receivers.ContainsKey(receiver);
 

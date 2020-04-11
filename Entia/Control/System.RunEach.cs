@@ -54,7 +54,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach instance, in Schedule.Context context)
+        public override Phase[] Schedule(IRunEach instance, in Scheduling.Context context)
         {
             var world = context.World;
             var run = new Run(instance.Run);
@@ -68,7 +68,7 @@ namespace Entia.Schedulers
                     {
                         var segment = segments[i];
                         var (entities, count) = segment.Entities;
-                        
+
                         for (int j = 0; j < count; j++) run(entities[j]);
                     }
                 })
@@ -81,7 +81,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IRunEach<T> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var run = new Run(instance.Run);
@@ -108,7 +108,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IRunEach<T1, T2> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var run = new Run(instance.Run);
@@ -135,7 +135,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2, T3> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IRunEach<T1, T2, T3> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var run = new Run(instance.Run);
@@ -162,7 +162,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var run = new Run(instance.Run);
@@ -189,7 +189,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4, T5> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4, T5> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var run = new Run(instance.Run);
@@ -216,7 +216,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4, T5, T6> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4, T5, T6> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var run = new Run(instance.Run);
@@ -243,7 +243,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases { get; } = new[] { typeof(Phases.Run) };
 
-        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4, T5, T6, T7> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IRunEach<T1, T2, T3, T4, T5, T6, T7> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var run = new Run(instance.Run);

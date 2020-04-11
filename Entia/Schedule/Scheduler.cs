@@ -1,7 +1,7 @@
 ﻿using System;
 using Entia.Core;
 using Entia.Modules.Schedule;
-using Entia.Schedule;
+using Entia.Scheduling;
 
 namespace Entia.Schedulers
 {

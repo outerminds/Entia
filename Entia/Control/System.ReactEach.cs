@@ -50,7 +50,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases => React.Phases<TMessage>();
 
-        public override Phase[] Schedule(IReactEach<TMessage> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IReactEach<TMessage> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var react = new Run(instance.React);
@@ -74,7 +74,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases => React.Phases<TMessage>();
 
-        public override Phase[] Schedule(IReactEach<TMessage, T> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IReactEach<TMessage, T> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var react = new Run(instance.React);
@@ -98,7 +98,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases => React.Phases<TMessage>();
 
-        public override Phase[] Schedule(IReactEach<TMessage, T1, T2> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IReactEach<TMessage, T1, T2> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var react = new Run(instance.React);
@@ -122,7 +122,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases => React.Phases<TMessage>();
 
-        public override Phase[] Schedule(IReactEach<TMessage, T1, T2, T3> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IReactEach<TMessage, T1, T2, T3> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var react = new Run(instance.React);
@@ -146,7 +146,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases => React.Phases<TMessage>();
 
-        public override Phase[] Schedule(IReactEach<TMessage, T1, T2, T3, T4> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IReactEach<TMessage, T1, T2, T3, T4> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var react = new Run(instance.React);
@@ -170,7 +170,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases => React.Phases<TMessage>();
 
-        public override Phase[] Schedule(IReactEach<TMessage, T1, T2, T3, T4, T5> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IReactEach<TMessage, T1, T2, T3, T4, T5> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var react = new Run(instance.React);
@@ -194,7 +194,7 @@ namespace Entia.Schedulers
 
         public override Type[] Phases => React.Phases<TMessage>();
 
-        public override Phase[] Schedule(IReactEach<TMessage, T1, T2, T3, T4, T5, T6> instance, in Schedule.Context context)
+        public override Phase[] Schedule(IReactEach<TMessage, T1, T2, T3, T4, T5, T6> instance, in Scheduling.Context context)
         {
             var world = context.World;
             var react = new Run(instance.React);

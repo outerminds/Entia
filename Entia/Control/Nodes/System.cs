@@ -35,7 +35,7 @@ namespace Entia.Nodes
             public IEnumerable<Phase> Schedule(Controller controller) =>
                 _phases.TryGetValue(controller, out var phases) ? phases :
                 // NOTE: do not filter phases here to allow parent nodes to receive all phases
-                _phases[controller] = new Schedule.Context(controller, controller.World).Schedule(System).ToArray();
+                _phases[controller] = new Scheduling.Context(controller, controller.World).Schedule(System).ToArray();
             public Option<Run<T>> Specialize<T>(Controller controller) where T : struct, IPhase
             {
                 var run = default(Run<T>);

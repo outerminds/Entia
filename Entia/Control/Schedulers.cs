@@ -3,7 +3,7 @@ using Entia.Core;
 using Entia.Modules;
 using Entia.Modules.Schedule;
 using Entia.Systems;
-using Entia.Schedule;
+using Entia.Scheduling;
 
 namespace Entia.Schedulers
 {

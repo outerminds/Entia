@@ -53,7 +53,7 @@ namespace Entia.Injectables
         static IDepender _depender => Depender.From<T>(new Read(typeof(T)));
 
         public int Count => _receiver.Count;
-        public int Capacity { get => _receiver.Capacity; set => _receiver.Capacity = value; }
+        public int? Capacity { get => _receiver.Capacity; set => _receiver.Capacity = value; }
 
         readonly Modules.Message.Receiver<T> _receiver;
         public Receiver(Modules.Message.Receiver<T> receiver) { _receiver = receiver; }

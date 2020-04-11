@@ -14,10 +14,10 @@ namespace Entia.Modules.Message
     {
         Type Type { get; }
         int Count { get; }
-        int Capacity { get; set; }
+        int? Capacity { get; set; }
 
         bool TryMessage(out IMessage message);
-        IEnumerable<IMessage> Messages(int count = int.MaxValue);
+        IEnumerable<IMessage> Messages(int? count = null);
         bool Receive(IMessage message);
         bool Clear();
     }
@@ -81,33 +81,32 @@ namespace Entia.Modules.Message
         );
 
         public int Count => _messages.Count;
-        public int Capacity
+        public int? Capacity
         {
             get => _capacity;
-            set => Trim(_capacity = value);
+            set { _capacity = value; Trim(); }
         }
 
         Type IReceiver.Type => typeof(T);
 
         readonly ConcurrentQueue<T> _messages = new ConcurrentQueue<T>();
-        int _capacity;
+        int? _capacity;
 
-        public Receiver(int capacity = -1) { _capacity = capacity; }
+        public Receiver(int? capacity = null) { _capacity = capacity; }
 
         [Obsolete("Use " + nameof(TryMessage) + " instead.")]
         public bool TryPop(out T message) => TryMessage(out message);
         [Obsolete("Use " + nameof(Messages) + " instead.")]
-        public Enumerable Pop(int count = int.MaxValue) => Messages();
+        public Enumerable Pop(int count = int.MaxValue) => Messages(count);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryMessage(out T message) => _messages.TryDequeue(out message);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Enumerable Messages(int count = int.MaxValue) => new Enumerable(this, count);
+        public Enumerable Messages(int? count = null) => new Enumerable(this, count ?? int.MaxValue);
 
         public bool Receive(in T message)
         {
-            if (_capacity == 0) return false;
             _messages.Enqueue(message);
-            Trim(_capacity);
+            Trim();
             return true;
         }
 
@@ -118,11 +117,13 @@ namespace Entia.Modules.Message
             return cleared;
         }
 
-        void Trim(int count)
+        void Trim()
         {
-            if (count < 0 || _messages.Count <= count) return;
-            // NOTE: a lock is needed in case multiple threads pass the while condition even though only 1 item remains to be dequeued
-            lock (_messages) { while (_messages.Count > count) _messages.TryDequeue(out _); }
+            if (_capacity is int capacity && _messages.Count > capacity)
+            {
+                // NOTE: a lock is needed in case multiple threads pass the while condition even though only 1 item remains to be dequeued
+                lock (_messages) { while (_messages.Count > capacity) _messages.TryDequeue(out _); }
+            }
         }
 
         bool IReceiver.TryMessage(out IMessage message)
@@ -137,7 +138,7 @@ namespace Entia.Modules.Message
             return false;
         }
 
-        IEnumerable<IMessage> IReceiver.Messages(int count) => Messages(count).Cast<IMessage>();
+        IEnumerable<IMessage> IReceiver.Messages(int? count) => Messages(count).Cast<IMessage>();
         bool IReceiver.Receive(IMessage message) => message is T casted && Receive(casted);
     }
 }

@@ -4,7 +4,7 @@ using Entia.Core;
 using Entia.Modules.Schedule;
 using Entia.Schedulers;
 
-namespace Entia.Schedule
+namespace Entia.Scheduling
 {
     public readonly struct Context
     {
