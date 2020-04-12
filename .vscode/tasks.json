@@ -7,7 +7,8 @@
 			"type": "process",
 			"group": "build",
 			"args": ["build", "${workspaceFolder}/Entia.sln", "--configuration", "Debug"],
-			"problemMatcher": "$msCompile"
+			"problemMatcher": "$msCompile",
+			"presentation": { "reveal": "silent" }
 		},
 		{
 			"label": "build release",
@@ -15,7 +16,8 @@
 			"type": "process",
 			"group": "build",
 			"args": ["build", "${workspaceFolder}/Entia.sln", "--configuration", "Release"],
-			"problemMatcher": "$msCompile"
+			"problemMatcher": "$msCompile",
+			"presentation": { "reveal": "silent" }
 		},
 		{
 			"label": "publish debug",
@@ -23,7 +25,8 @@
 			"type": "process",
 			"group": "build",
 			"args": ["publish", "${workspaceFolder}/Entia.sln", "--configuration", "Debug"],
-			"problemMatcher": "$msCompile"
+			"problemMatcher": "$msCompile",
+			"presentation": { "reveal": "silent" }
 		},
 		{
 			"label": "publish release",
@@ -31,7 +34,8 @@
 			"type": "process",
 			"group": "build",
 			"args": ["publish", "${workspaceFolder}/Entia.sln", "/p:Version=1.4.0", "--configuration", "Release"],
-			"problemMatcher": "$msCompile"
+			"problemMatcher": "$msCompile",
+			"presentation": { "reveal": "silent" }
 		},
 		{
 			"label": "test",

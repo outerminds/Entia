@@ -361,12 +361,6 @@ namespace Entia.Core
             foreach (var item in source) foreach (var sub in selector(item, state)) yield return sub;
         }
 
-        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source, int seed)
-        {
-            var random = new Random(seed);
-            return source.OrderBy(_ => random.Next(-100, 100));
-        }
-
         public static IEnumerable<T> Some<T>(this IEnumerable<T> source) where T : class => source.Where(value => value != null);
         public static IEnumerable<T> Some<T>(this IEnumerable<T?> source) where T : struct => source.Where(value => value.HasValue).Select(value => value.Value);
         public static IEnumerable<TSource> SomeBy<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector) where TResult : class =>

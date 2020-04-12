@@ -28,11 +28,9 @@ namespace Entia.Test
         {
             var families = value.Families();
             var messages = value.Messages();
-            using (var onAdopt = messages.Receive<OnAdopt>())
-            {
-                _success = families.Adopt(_parent, _child);
-                _onAdopt = onAdopt.Messages().ToArray();
-            }
+            using var onAdopt = messages.Receive<OnAdopt>();
+            _success = families.Adopt(_parent, _child);
+            _onAdopt = onAdopt.Messages().ToArray();
         }
         public override Property Check(World value, Model model)
         {
@@ -92,11 +90,9 @@ namespace Entia.Test
         {
             var families = value.Families();
             var messages = value.Messages();
-            using (var onReject = messages.Receive<OnReject>())
-            {
-                _success = families.Reject(_child);
-                _onReject = onReject.Messages().ToArray();
-            }
+            using var onReject = messages.Receive<OnReject>();
+            _success = families.Reject(_child);
+            _onReject = onReject.Messages().ToArray();
         }
         public override Property Check(World value, Model model)
         {

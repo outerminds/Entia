@@ -1,45 +1,45 @@
 using System;
+using System.Linq;
 using Entia.Core;
 using Entia.Dependencies;
 using Entia.Modules;
+using Entia.Modules.Message;
 
 namespace Entia.Experimental.Scheduling
 {
-    public delegate void Run(IntPtr message);
-    public delegate bool React(in Runner runner, World world);
-
     public readonly struct Runner
     {
+        public delegate void Loop(int start, int count, Action<int> body);
+
         static class Cache<T> where T : struct, IMessage
         {
-            public static readonly React React = (in Runner runner, World world) =>
+            public static readonly Func<World, IReaction> Reaction = world => world.Messages().Reaction<T>();
+            public static readonly Func<Runner[], Loop, Delegate> Invoke = (runners, loop) =>
             {
-                if (runner.Type == typeof(InAction<T>))
+                var runs = runners.Select(runner => runner.Run).OfType<InAction<T>>().ToArray();
+                return new InAction<T>((in T message) =>
                 {
-                    var run = new InAction<T>((in T _) => throw null);
-                    UnsafeUtility.Copy(runner.Run, run);
-                    world.Messages().React(run);
-                    return true;
-                }
-                return false;
+                    var copy = message;
+                    loop(0, runs.Length, index => runs[index](copy));
+                });
             };
         }
 
-        static readonly TypeMap<Delegate, React> _reacts = new TypeMap<Delegate, React>();
+        static readonly TypeMap<Delegate, Func<World, IReaction>> _reactions = new TypeMap<Delegate, Func<World, IReaction>>();
+        static readonly TypeMap<Delegate, Func<Runner[], Loop, Delegate>> _invokes = new TypeMap<Delegate, Func<Runner[], Loop, Delegate>>();
 
         public static Runner From<T>(InAction<T> run, params IDependency[] dependencies) where T : struct, IMessage
         {
             // NOTE: weird hack to ensure that 'Emitter<T>/Receiver<T>/Reaction<T>' are all properly AOT compiled
-            _reacts.Set<InAction<T>>(Cache<T>.React);
-            var target = new Run(_ => throw null);
-            UnsafeUtility.Copy(run, target);
-            return new Runner(typeof(InAction<T>), target, dependencies);
+            _reactions.Set<InAction<T>>(Cache<T>.Reaction);
+            _invokes.Set<InAction<T>>(Cache<T>.Invoke);
+            return new Runner(typeof(InAction<T>), run, dependencies);
         }
 
         public static Option<Runner> Combine(in Runner left, in Runner right)
         {
             if (left.Type == right.Type)
-                return new Runner(left.Type, left.Run + right.Run, left.Dependencies.Append(right.Dependencies));
+                return new Runner(left.Type, Delegate.Combine(left.Run, right.Run), left.Dependencies.Append(right.Dependencies));
             return Option.None();
         }
 
@@ -56,28 +56,25 @@ namespace Entia.Experimental.Scheduling
             return runner;
         }
 
-        public static Option<Runner> Combine(Func<Run[], Run> combine, params Runner[] runners)
+        public static Option<Runner> Combine(Loop loop, params Runner[] runners)
         {
-            if (runners.Length == 0) return Option.None();
+            if (runners.Length < 2) return Combine(runners);
 
-            var first = runners[0];
-            var runs = new Run[runners.Length];
-            for (int i = 0; i < runners.Length; i++)
-            {
-                var runner = runners[i];
-                if (first.Type == runner.Type) runs[i] = runner.Run;
-                else return Option.None();
-            }
-            return new Runner(first.Type, combine(runs), runners.Select(runner => runner.Dependencies).Flatten());
+            var runner = runners[0];
+            if (_invokes.TryGet(runner.Type, out var invoke) && invoke(runners, loop) is var run)
+                return new Runner(runner.Type, run, runners.Select(runner => runner.Dependencies).Flatten());
+            else
+                return Option.None();
         }
 
-        public static bool TryReact(in Runner runner, World world) => _reacts.TryGet(runner.Type, out var react) && react(runner, world);
+        public static Option<IReaction> Reaction(in Runner runner, World world) =>
+            _reactions.TryGet(runner.Type, out var get) ? Option.From(get(world)) : Option.None();
 
         public readonly Type Type;
-        public readonly Run Run;
+        public readonly Delegate Run;
         public readonly IDependency[] Dependencies;
 
-        Runner(Type type, Run run, params IDependency[] dependencies)
+        Runner(Type type, Delegate run, params IDependency[] dependencies)
         {
             Type = type;
             Run = run;

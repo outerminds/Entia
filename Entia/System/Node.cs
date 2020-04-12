@@ -44,8 +44,7 @@ namespace Entia.Experimental
         {
             public static Node Run(InAction<TReact, TReceive> run, int? capacity = null) => Node.Schedule(world =>
             {
-                var messages = world.Messages();
-                var receiver = messages.Receiver<TReceive>(capacity);
+                var receiver = world.Messages().Receiver<TReceive>(capacity);
                 return Schedule((in TReact react) => { while (receiver.TryMessage(out var receive)) run(react, receive); });
             });
             public static Node Run(InAction<TReceive> run, int? capacity = null) => Run((in TReact _, in TReceive receive) => run(receive), capacity);
@@ -55,8 +54,7 @@ namespace Entia.Experimental
             static Node RunEach(Func<Segment, InAction<TReact, TReceive>> provide, Filter filter, int? capacity = null, params IDependency[] dependencies) => Node.Schedule(world =>
             {
                 var components = world.Components();
-                var messages = world.Messages();
-                var receiver = messages.Receiver<TReceive>(capacity);
+                var receiver = world.Messages().Receiver<TReceive>(capacity);
                 var run = new InAction<TReact, TReceive>((in TReact _, in TReceive __) => { });
                 var index = 0;
                 return Schedule((in TReact react) =>
@@ -78,7 +76,9 @@ namespace Entia.Experimental
         public static Node From(INode data, params Node[] children) => new Node(data, children);
         public static Node With(Func<Node> provide) => Lazy(_ => provide());
         public static Node Sequence(params Node[] children) => From(new Sequence(), children);
+        public static Node Sequence(params Func<Node>[] children) => Sequence(children.Select(With));
         public static Node Parallel(params Node[] children) => From(new Parallel(), children);
+        public static Node Parallel(params Func<Node>[] children) => Parallel(children.Select(With));
         public static Node Schedule(Func<World, Result<Runner>> schedule) => From(new Schedule(schedule));
         public static Node Lazy(Func<World, Result<Node>> provide) => From(new Lazy(provide));
 

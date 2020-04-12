@@ -146,6 +146,18 @@ namespace Entia.Core
             }
         }
 
+        public static void Shuffle<T>(this T[] array, Random random = null)
+        {
+            random ??= new Random();
+            for (int i = 0; i < array.Length; i++)
+            {
+                var index = random.Next(array.Length);
+                var item = array[i];
+                array[i] = array[index];
+                array[index] = item;
+            }
+        }
+
         public static T[] Skip<T>(this T[] source, int count)
         {
             if (count <= 0) return source;

@@ -131,36 +131,99 @@ namespace Entia.Core
         public static Failure Exception(Exception exception) => Failure(exception.ToString());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> Try<T>(Func<T> @try)
+        public static Result<T> Try<T>(Func<T> @try, Action @finally = null)
         {
             try { return @try(); }
             catch (Exception exception) { return Exception(exception); }
+            finally { @finally?.Invoke(); }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> Try<TState, T>(in TState state, Func<TState, T> @try)
+        public static Result<T> Try<TState, T>(in TState state, Func<TState, T> @try, Action<TState> @finally = null)
         {
             try { return @try(state); }
             catch (Exception exception) { return Exception(exception); }
+            finally { @finally?.Invoke(state); }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<Unit> Try(Action @try)
+        public static Result<Unit> Try(Action @try, Action @finally = null)
         {
             try { @try(); return default(Unit); }
             catch (Exception exception) { return Exception(exception); }
+            finally { @finally?.Invoke(); }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<Unit> Try<TState>(in TState input, Action<TState> @try)
+        public static Result<Unit> Try<TState>(in TState state, Action<TState> @try, Action<TState> @finally = null)
         {
-            try { @try(input); return default(Unit); }
+            try { @try(state); return default(Unit); }
             catch (Exception exception) { return Exception(exception); }
+            finally { @finally?.Invoke(state); }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<TOut> Use<TIn, TOut, TState>(in this Result<TIn> result, in TState state, Func<TIn, TState, TOut> use) where TIn : IDisposable
+        {
+            if (result.TryValue(out var value)) using (value) return use(value, state);
+            return result.AsFailure();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<TOut> Use<TIn, TOut, TState>(in this Result<TIn> result, in TState state, Func<TState, TOut> use) where TIn : IDisposable
+        {
+            if (result.TryValue(out var value)) using (value) return use(state);
+            return result.AsFailure();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<TOut> Use<TIn, TOut>(in this Result<TIn> result, Func<TIn, TOut> use) where TIn : IDisposable
+        {
+            if (result.TryValue(out var value)) using (value) return use(value);
+            return result.AsFailure();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<TOut> Use<TIn, TOut>(in this Result<TIn> result, Func<TOut> use) where TIn : IDisposable
+        {
+            if (result.TryValue(out var value)) using (value) return use();
+            return result.AsFailure();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<Unit> Use<T, TState>(in this Result<T> result, in TState state, Action<T, TState> use) where T : IDisposable
+        {
+            if (result.TryValue(out var value)) using (value) use(value, state);
+            return result.Ignore();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<Unit> Use<T, TState>(in this Result<T> result, in TState state, Action<TState> use) where T : IDisposable
+        {
+            if (result.TryValue(out var value)) using (value) use(state);
+            return result.Ignore();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<Unit> Use<T>(in this Result<T> result, Action<T> use) where T : IDisposable
+        {
+            if (result.TryValue(out var value)) using (value) use(value);
+            return result.Ignore();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Result<Unit> Use<T>(in this Result<T> result, Action use) where T : IDisposable
+        {
+            if (result.TryValue(out var value)) using (value) use();
+            return result.Ignore();
         }
 
         public static bool Is<T>(in this Result<T> result, Tags tag) => result.Tag == tag;
         public static bool IsSuccess<T>(in this Result<T> result) => result.Is(Tags.Success);
         public static bool IsFailure<T>(in this Result<T> result) => result.Is(Tags.Failure);
+        public static Result<T> AsResult<T>(in this T? value) where T : struct =>
+            value is T casted ? Success(casted).AsResult() :
+            Failure($"Expected value of type '{typeof(T).FullFormat()}?' to not be 'null'.");
         public static Result<T> AsResult<T>(in this Success<T> success) => success;
         public static Result<T> AsResult<T>(this Failure failure) => failure;
         public static Result<Unit> AsResult(this Failure failure) => failure;

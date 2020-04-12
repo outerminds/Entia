@@ -100,7 +100,7 @@ namespace Entia.Modules
             {
                 if (key is null)
                 {
-                    if (data.Box.TryAs<T>(out box))
+                    if (data.Box.TryAs(out box))
                     {
                         if (overwrite) box.Value = value;
                         return false;
@@ -111,7 +111,7 @@ namespace Entia.Modules
                         return true;
                     }
                 }
-                else if (data.Map.TryGetValue(key, out var current) && current.TryAs<T>(out box))
+                else if (data.Map.TryGetValue(key, out var current) && current.TryAs(out box))
                 {
                     if (overwrite) box.Value = value;
                     return false;

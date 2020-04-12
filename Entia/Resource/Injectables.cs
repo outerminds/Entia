@@ -16,9 +16,9 @@ namespace Entia.Injectables
         public readonly struct Read : IInjectable
         {
             [Implementation]
-            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Resources()));
+            static Injector<Read> _injector => Injector.From(context => new Read(context.World.Resources()));
             [Implementation]
-            static IDepender Depender => Dependers.Depender.From(new Dependencies.Read(typeof(IResource)));
+            static IDepender _depender => Depender.From(new Dependencies.Read(typeof(IResource)));
 
             readonly Modules.Resources _resources;
             public Read(Modules.Resources resources) { _resources = resources; }
@@ -38,9 +38,9 @@ namespace Entia.Injectables
         }
 
         [Implementation]
-        static Injector<AllResources> Injector => Injectors.Injector.From(context => new AllResources(context.World.Resources()));
+        static Injector<AllResources> _injector => Injector.From(context => new AllResources(context.World.Resources()));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From(new Dependencies.Write(typeof(IResource)));
+        static IDepender _depender => Depender.From(new Dependencies.Write(typeof(IResource)));
 
         readonly Modules.Resources _resources;
         public AllResources(Modules.Resources resources) { _resources = resources; }
@@ -76,9 +76,9 @@ namespace Entia.Injectables
         public readonly struct Read : IInjectable
         {
             [Implementation]
-            static Injector<Read> Injector => Injectors.Injector.From(context => new Read(context.World.Resources().Box<T>()));
+            static Injector<Read> _injector => Injector.From(context => new Read(context.World.Resources().Box<T>()));
             [Implementation]
-            static IDepender Depender => Dependers.Depender.From<T>(new Dependencies.Read(typeof(T)));
+            static IDepender _depender => Depender.From<T>(new Dependencies.Read(typeof(T)));
 
             public ref readonly T Value => ref _box.Value;
 
@@ -88,9 +88,9 @@ namespace Entia.Injectables
         }
 
         [Implementation]
-        static Injector<Resource<T>> Injector => Injectors.Injector.From(context => new Resource<T>(context.World.Resources().Box<T>()));
+        static Injector<Resource<T>> _injector => Injector.From(context => new Resource<T>(context.World.Resources().Box<T>()));
         [Implementation]
-        static IDepender Depender => Dependers.Depender.From<T>(new Dependencies.Write(typeof(T)));
+        static IDepender _depender => Depender.From<T>(new Dependencies.Write(typeof(T)));
 
         public ref T Value => ref _box.Value;
 

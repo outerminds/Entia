@@ -302,7 +302,7 @@ namespace Entia.Core
         public bool Has(int index, bool super, bool sub) => Has(_entries[index], super, sub);
 
         public bool Set<T>(in TValue value) where T : TBase => Set(Cache<T>.Entry, value);
-        public bool Set(Type type, in TValue value) => Set(GetEntry(type), value);
+        public bool Set(Type type, in TValue value) => TryGetEntry(type, out var entry) && Set(entry, value);
         public bool Set(int index, in TValue value) => Set(_entries[index], value);
 
         public bool Remove<T>() where T : TBase => Remove(Cache<T>.Entry);

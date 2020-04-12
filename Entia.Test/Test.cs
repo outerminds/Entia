@@ -62,7 +62,7 @@ namespace Entia.Test
             public static MessageB Default() => new MessageB { A = 12, B = 26 };
             public ulong A, B;
         }
-        public struct MessageC : IMessage { public string[] Values; }
+        public struct MessageC<T> : IMessage { public T[] Values; }
         public struct ResourceA : IResource { }
         public struct ResourceB : IResource
         {
@@ -111,11 +111,8 @@ namespace Entia.Test
             public ComponentB* P8;
         }
 
-        public struct Injectable : IDispose
+        public struct Injectable : IInjectable
         {
-            [Default]
-            public static Injectable Default => new Injectable { _values = new List<int>() };
-
             public readonly World World;
             public readonly AllEntities Entities;
             public readonly AllEntities.Read EntitiesRead;
@@ -128,7 +125,7 @@ namespace Entia.Test
             public readonly AllEmitters Emitters;
             public readonly Emitter<MessageA> EmitterA;
             public readonly Reaction<MessageB> ReactionB;
-            public readonly Receiver<MessageC> ReceiverC;
+            public readonly Receiver<MessageC<string>> ReceiverC;
             public readonly Defer Defer;
             public readonly Defer.Components DeferComponents;
             public readonly Defer.Entities DeferEntities;
@@ -141,10 +138,6 @@ namespace Entia.Test
             public readonly Group<QueryC> GroupC;
             public readonly Resource<ResourceA> ResourceA;
             public readonly Resource<ResourceB>.Read ResourceB;
-
-            List<int> _values;
-
-            public void Dispose() { _values.Clear(); }
         }
 
         public static void Run(int count = 8192, int size = 512, int? seed = null)
@@ -245,7 +238,7 @@ namespace Entia.Test
             #region Messages
                 (1, Gen.Fresh(() => new EmitMessage<MessageA>().ToAction())),
                 (1, Gen.Fresh(() => new EmitMessage<MessageB>().ToAction())),
-                (1, Gen.Fresh(() => new EmitMessage<MessageC>().ToAction())),
+                (1, Gen.Fresh(() => new EmitMessage<MessageC<string>>().ToAction())),
             #endregion
 
             #region Injectables
@@ -255,11 +248,17 @@ namespace Entia.Test
                 (1, Gen.Fresh(() => new Inject<Components<ComponentC<int>>.Write>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Emitter<MessageA>>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Reaction<MessageB>>().ToAction())),
-                (1, Gen.Fresh(() => new Inject<Receiver<MessageC>>().ToAction())),
+                (1, Gen.Fresh(() => new Inject<Receiver<MessageC<string>>>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Group<Entity>>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Resource<ResourceA>>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Resource<ResourceB>.Read>().ToAction())),
                 (1, Gen.Fresh(() => new Inject<Injectable>().ToAction())),
+            #endregion
+
+            #region Systems
+                (5, Gen.Fresh(() => new RunSystem<MessageA, MessageB>().ToAction())),
+                (5, Gen.Fresh(() => new RunSystem<MessageB, MessageC<Unit>>().ToAction())),
+                (5, Gen.Fresh(() => new RunSystem<MessageC<int>, MessageC<uint>>().ToAction())),
             #endregion
 
             #region Queryables

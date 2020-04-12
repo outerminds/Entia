@@ -1,7 +1,6 @@
 ﻿using Entia.Core;
 using Entia.Messages;
 using Entia.Modules;
-using Entia.Modules.Message;
 using FsCheck;
 using System;
 using System.Collections.Generic;
@@ -18,13 +17,11 @@ namespace Entia.Test
         {
             var entities = value.Entities();
             var messages = value.Messages();
-            using (var onCreate = messages.Receive<OnCreate>())
-            {
-                _entity = entities.Create();
-                model.Entities.Add(_entity);
-                model.Components.Add(_entity, new ComponentModel());
-                _onCreate = onCreate.Messages().ToArray();
-            }
+            using var onCreate = messages.Receive<OnCreate>();
+            _entity = entities.Create();
+            model.Entities.Add(_entity);
+            model.Components.Add(_entity, new ComponentModel());
+            _onCreate = onCreate.Messages().ToArray();
         }
         public override Property Check(World value, Model model)
         {
@@ -73,19 +70,16 @@ namespace Entia.Test
         public override void Do(World value, Model model)
         {
             var messages = value.Messages();
-            var families = value.Families();
-            using (var onPreDestroy = messages.Receive<OnPreDestroy>())
-            using (var onPostDestroy = messages.Receive<OnPostDestroy>())
+            using var onPreDestroy = messages.Receive<OnPreDestroy>();
+            using var onPostDestroy = messages.Receive<OnPostDestroy>();
+            value.Entities().Destroy(_entity);
+            foreach (var entity in _entities)
             {
-                value.Entities().Destroy(_entity);
-                foreach (var entity in _entities)
-                {
-                    model.Entities.Remove(entity);
-                    model.Components.Remove(entity);
-                }
-                _onPreDestroy = onPreDestroy.Messages().ToArray();
-                _onPostDestroy = onPostDestroy.Messages().ToArray();
+                model.Entities.Remove(entity);
+                model.Components.Remove(entity);
             }
+            _onPreDestroy = onPreDestroy.Messages().ToArray();
+            _onPostDestroy = onPostDestroy.Messages().ToArray();
         }
         public override Property Check(World value, Model model)
         {
@@ -101,8 +95,8 @@ namespace Entia.Test
                 yield return (_onPreDestroy.First().Entity == _entity, "OnPreDestroy.First() == entity");
                 yield return (_onPreDestroy.Select(message => message.Entity).Except(_entities).None(), "OnPostDestroy.Except(entities).None()");
                 yield return (_onPostDestroy.Length == _entities.Length, "OnPostDestroy.Length");
+                yield return (_onPostDestroy.First().Entity == _entity, "OnPostDestroy.First() == entity");
                 yield return (_onPostDestroy.Select(message => message.Entity).Except(_entities).None(), "OnPostDestroy.Except(entities).None()");
-                yield return (_onPostDestroy.Last().Entity == _entity, "OnPostDestroy.Last() == entity");
             }
         }
         public override string ToString() => $"{GetType().Format()}({_entity})";
@@ -122,15 +116,13 @@ namespace Entia.Test
         public override void Do(World value, Model model)
         {
             var messages = value.Messages();
-            using (var onPreDestroy = messages.Receive<OnPreDestroy>())
-            using (var onPostDestroy = messages.Receive<OnPostDestroy>())
-            {
-                value.Entities().Clear();
-                model.Entities.Clear();
-                model.Components.Clear();
-                _onPreDestroy = onPreDestroy.Messages().ToArray();
-                _onPostDestroy = onPostDestroy.Messages().ToArray();
-            }
+            using var onPreDestroy = messages.Receive<OnPreDestroy>();
+            using var onPostDestroy = messages.Receive<OnPostDestroy>();
+            value.Entities().Clear();
+            model.Entities.Clear();
+            model.Components.Clear();
+            _onPreDestroy = onPreDestroy.Messages().ToArray();
+            _onPostDestroy = onPostDestroy.Messages().ToArray();
         }
         public override Property Check(World value, Model model) =>
             value.Entities().None().Label("Entities.None()")

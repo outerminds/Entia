@@ -57,6 +57,9 @@ namespace Entia.Json
         public static Node Abstract(Node type, Node value) => Object("$t", type, "$v", value);
         public static Node Reference(int reference) => Object("$r", reference);
 
+        public Node this[string key] => this.TryMember(key, out var value) ? value : throw new ArgumentException(nameof(key));
+        public Node this[int index] => this.TryItem(index, out var item) ? item : throw new ArgumentException(nameof(index));
+
         public readonly Kinds Kind;
         public readonly Tags Tag;
         public readonly object Value;

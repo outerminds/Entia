@@ -1,6 +1,9 @@
 using System;
 using System.Diagnostics;
+using Entia.Core;
+using Entia.Experimental.Scheduling;
 using Entia.Injectables;
+using Entia.Modules;
 using static Entia.Experimental.Node;
 
 namespace Entia.Experimental
@@ -22,16 +25,16 @@ namespace Entia.Experimental
         public struct Physics : IComponent { public float Drag, Mass, Gravity; }
         public struct Input : IComponent { public float Direction; public bool Jump; }
 
-        public static readonly Node Motionz = Sequence(Move, Melt, UpdateTime, UpdateVelocity, UpdateInput);
+        public static readonly Node Node = Sequence(Move, Melt, UpdateTime, UpdateVelocity, UpdateInput);
 
-        public static readonly Node Move =
+        public static Node Move() =>
             When<OnUpdate>.RunEach((ref Position position, ref Velocity velocity) =>
             {
                 position.X += velocity.X;
                 position.Y += velocity.Y;
             }, Filter.None<IsFrozen>());
 
-        public static readonly Node Melt =
+        public static Node Melt() =>
             With((Resource<Time> time, Components<IsFrozen> areFrozen) =>
             When<OnUpdate>.RunEach((Entity entity, ref IsFrozen isFrozen) =>
             {
@@ -39,7 +42,7 @@ namespace Entia.Experimental
                 if (isFrozen.Duration <= TimeSpan.Zero) areFrozen.Remove(entity);
             }));
 
-        public static readonly Node UpdateTime = With(() =>
+        public static Node UpdateTime()
         {
             var watch = new Stopwatch();
             return Sequence(
@@ -50,9 +53,9 @@ namespace Entia.Experimental
                     time.Delta = watch.Elapsed - time.Current;
                     time.Current = watch.Elapsed;
                 }));
-        });
+        }
 
-        public static readonly Node UpdateVelocity =
+        public static Node UpdateVelocity() =>
             With((Resource<Time> time) =>
             When<OnUpdate>.RunEach((ref Velocity velocity, ref Motion motion, ref Physics physics, ref Input input) =>
             {
@@ -74,7 +77,7 @@ namespace Entia.Experimental
                     velocity.X = motion.Speed;
             }));
 
-        public static readonly Node UpdateInput = With(() =>
+        public static Node UpdateInput()
         {
             var horizontal = 0f;
             var jump = false;
@@ -83,6 +86,6 @@ namespace Entia.Experimental
                 When<OnUpdate>.RunEach((ref Input input) => (input.Jump, input.Direction) = (jump, horizontal)),
                 When<OnUpdate>.Run(() => { horizontal--; jump = !jump; })
             );
-        });
+        }
     }
 }

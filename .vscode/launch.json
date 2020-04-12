@@ -23,7 +23,7 @@
 			"cwd": "${workspaceFolder}/Entia.Experiment/",
 			"console": "externalTerminal",
 			"stopAtEntry": false,
-			"internalConsoleOptions": "openOnSessionStart"
+			"internalConsoleOptions": "neverOpen"
 		},
 		{
 			"name": "Entia.Test",
@@ -35,7 +35,7 @@
 			"cwd": "${workspaceFolder}/Entia.Test/",
 			"console": "externalTerminal",
 			"stopAtEntry": false,
-			"internalConsoleOptions": "openOnSessionStart"
+			"internalConsoleOptions": "neverOpen"
 		}
 	]
 }

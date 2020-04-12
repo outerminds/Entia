@@ -61,7 +61,9 @@ namespace Entia.Experimental.Nodes
         static Scheduler<Parallel> _scheduler => Scheduler.From((in Parallel _, in Context context) =>
             context.Schedule(context.Node.Children).Map(runners => runners
                 .GroupBy(runner => runner.Type)
-                .Select(group => Runner.Combine(runs => message => global::System.Threading.Tasks.Parallel.ForEach(runs, run => run(message)), group.ToArray()))
+                .Select(group => Runner.Combine(
+                    (start, count, body) => System.Threading.Tasks.Parallel.For(start, count, body),
+                    group.ToArray()))
                 .Choose()
                 .ToArray()));
     }

@@ -26,6 +26,15 @@ namespace Entia.Experimental.Scheduling
 
     public static class Extensions
     {
-        public static Result<Runner[]> Schedule(this World world, in Node node) => new Context(world).Schedule(node);
+        public static Result<Disposable> Schedule(this World world, in Node node) => new Context(world).Schedule(node)
+            .Bind(runners => runners
+                .Select(runner => Runner.Reaction(runner, world).And(runner)
+                    .AsResult($"Expected to find reaction for runner of type '{runner.Type.FullFormat()}'."))
+                .All()
+                .Map(pairs =>
+                {
+                    foreach (var (reaction, runner) in pairs) reaction.Add(runner.Run);
+                    return new Disposable(() => { foreach (var (reaction, runner) in pairs) reaction.Remove(runner.Run); });
+                }));
     }
 }

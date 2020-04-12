@@ -124,31 +124,91 @@ namespace Entia.Core
         public static Option<T> From<T>(in T? value) where T : struct => value.HasValue ? From(value.Value) : None();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T> Try<T>(Func<T> @try)
+        public static Option<T> Try<T>(Func<T> @try, Action @finally = null)
         {
             try { return @try(); }
             catch { return None(); }
+            finally { @finally?.Invoke(); }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T> Try<TState, T>(in TState state, Func<TState, T> @try)
+        public static Option<T> Try<TState, T>(in TState state, Func<TState, T> @try, Action<TState> @finally = null)
         {
             try { return @try(state); }
             catch { return None(); }
+            finally { @finally?.Invoke(state); }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<Unit> Try(Action @try)
+        public static Option<Unit> Try(Action @try, Action @finally = null)
         {
             try { @try(); return default(Unit); }
             catch { return None(); }
+            finally { @finally?.Invoke(); }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<Unit> Try<TState>(in TState input, Action<TState> @try)
+        public static Option<Unit> Try<TState>(in TState state, Action<TState> @try, Action<TState> @finally = null)
         {
-            try { @try(input); return default(Unit); }
+            try { @try(state); return default(Unit); }
             catch { return None(); }
+            finally { @finally?.Invoke(state); }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<TOut> Use<TIn, TOut, TState>(in this Option<TIn> option, in TState state, Func<TIn, TState, TOut> use) where TIn : IDisposable
+        {
+            if (option.TryValue(out var value)) using (value) return use(value, state);
+            return None();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<TOut> Use<TIn, TOut, TState>(in this Option<TIn> option, in TState state, Func<TState, TOut> use) where TIn : IDisposable
+        {
+            if (option.TryValue(out var value)) using (value) return use(state);
+            return None();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<TOut> Use<TIn, TOut>(in this Option<TIn> option, Func<TIn, TOut> use) where TIn : IDisposable
+        {
+            if (option.TryValue(out var value)) using (value) return use(value);
+            return None();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<TOut> Use<TIn, TOut>(in this Option<TIn> option, Func<TOut> use) where TIn : IDisposable
+        {
+            if (option.TryValue(out var value)) using (value) return use();
+            return None();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<Unit> Use<T, TState>(in this Option<T> option, in TState state, Action<T, TState> use) where T : IDisposable
+        {
+            if (option.TryValue(out var value)) using (value) use(value, state);
+            return option.Ignore();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<Unit> Use<T, TState>(in this Option<T> option, in TState state, Action<TState> use) where T : IDisposable
+        {
+            if (option.TryValue(out var value)) using (value) use(state);
+            return option.Ignore();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<Unit> Use<T>(in this Option<T> option, Action<T> use) where T : IDisposable
+        {
+            if (option.TryValue(out var value)) using (value) use(value);
+            return option.Ignore();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<Unit> Use<T>(in this Option<T> option, Action use) where T : IDisposable
+        {
+            if (option.TryValue(out var value)) using (value) use();
+            return option.Ignore();
         }
 
         public static bool Is<T>(in this Option<T> option, Tags tag) => option.Tag == tag;

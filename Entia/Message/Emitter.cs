@@ -77,8 +77,8 @@ namespace Entia.Modules.Message
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Emit(in T message)
         {
-            Reaction.React(message);
             _receive(message);
+            Reaction.React(message);
         }
 
         public Disposable Receive(int? capacity = null) => new Disposable(this, capacity);
