@@ -61,17 +61,17 @@ namespace Entia.Test
 
             var nodes3 = new[]
             {
-                When<T1, T1>.Run(() => _counter3++),
-                When<T2, T2>.Run((in T2 _, in T2 __) => _counter3++),
-                When<T1, T2>.Run(() => _counter3++),
-                When<T1, T2>.Run((in T2 _) => _counter3++),
-                When<T1, T2>.Run((in T1 _, in T2 __) => _counter3++),
-                When<T1, T2>.Run((ref Test.ResourceB _) => _counter3++),
-                When<T1, T2>.Run((in T1 _, in T2 __, ref Test.ResourceC<string> ___) => _counter3++)
+                When<T1, T1>.Run(() => Interlocked.Increment(ref _counter3)),
+                When<T2, T2>.Run((in T2 _, in T2 __) => Interlocked.Increment(ref _counter3)),
+                When<T1, T2>.Run(() => Interlocked.Increment(ref _counter3)),
+                When<T1, T2>.Run((in T2 _) => Interlocked.Increment(ref _counter3)),
+                When<T1, T2>.Run((in T1 _, in T2 __) => Interlocked.Increment(ref _counter3)),
+                When<T1, T2>.Run((ref Test.ResourceB _) => Interlocked.Increment(ref _counter3)),
+                When<T1, T2>.Run((in T1 _, in T2 __, ref Test.ResourceC<string> ___) => Interlocked.Increment(ref _counter3))
             };
             nodes3.Shuffle(model.Random);
 
-            var node = Sequence(Sequence(nodes1), Parallel(nodes2), Sequence(nodes3));
+            var node = Sequence(Sequence(nodes1), Parallel(nodes2), Parallel(nodes3));
             var messages = value.Messages();
             _result = value.Schedule(node).Use(() =>
             {
