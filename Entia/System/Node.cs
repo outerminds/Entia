@@ -37,7 +37,7 @@ namespace Entia.Experimental
             });
 
             static Result<Runner> Schedule(InAction<TReact> run, params IDependency[] dependencies) =>
-                Runner.From(run, dependencies.Prepend(new Dependencies.React(typeof(TReact))));
+                Runner.From(run, dependencies.Prepend(new React(typeof(TReact))));
         }
 
         public static partial class When<TReact, TReceive> where TReact : struct, IMessage where TReceive : struct, IMessage
@@ -70,7 +70,7 @@ namespace Entia.Experimental
             });
 
             static Result<Runner> Schedule(InAction<TReact> run, params IDependency[] dependencies) =>
-                Runner.From(run, dependencies.Prepend(new Dependencies.React(typeof(TReact)), new Read(typeof(TReceive))));
+                Runner.From(run, dependencies.Prepend(new React(typeof(TReact)), new Read(typeof(TReceive))));
         }
 
         public static Node From(INode data, params Node[] children) => new Node(data, children);
