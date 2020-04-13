@@ -77,7 +77,7 @@ namespace Entia.Nodes
                     .All();
             }
 
-            public override Result<IDependency[]> Analyze(in Nodes.Parallel data, in Analysis.Context context) => context.Node.Children
+            public override Result<IDependency[]> Analyze(in Parallel data, in Analysis.Context context) => context.Node.Children
                 .Select(context, (child, state) => state.Analyze(child)
                     .Map(dependencies => (child, dependencies)))
                 .All()

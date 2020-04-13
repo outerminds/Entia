@@ -39,7 +39,7 @@ namespace Entia.Experimental
         public delegate void RunEachMME<TMessage1, TMessage2, T1, T2, T3, T4, T5>(in TMessage1 message1, in TMessage2 message2, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where TMessage1 : struct, IMessage where TMessage2 : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
     }
 
-    public readonly partial struct Node
+    public sealed partial class Node
     {
         public static partial class When<TReact>
         {

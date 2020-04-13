@@ -42,7 +42,7 @@ using Entia.Dependency;
 
 namespace Entia.Experimental
 {{
-    public readonly partial struct Node
+    public sealed partial class Node
     {{
 {string.Join(Environment.NewLine, Generate(5))}
     }}

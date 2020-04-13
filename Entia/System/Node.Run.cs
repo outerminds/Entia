@@ -24,7 +24,7 @@ namespace Entia.Experimental
         public delegate void RunMM<TMessage1, TMessage2, T1, T2, T3, T4, T5>(in TMessage1 message1, in TMessage2 message2, ref T1 resource1, ref T2 resource2, ref T3 resource3, ref T4 resource4, ref T5 resource5) where TMessage1 : struct, IMessage where TMessage2 : struct, IMessage where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource where T5 : struct, IResource;
     }
 
-    public readonly partial struct Node
+    public sealed partial class Node
     {
         public static partial class When<TReact>
         {

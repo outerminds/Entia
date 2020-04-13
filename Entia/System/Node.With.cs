@@ -8,7 +8,7 @@ using Entia.Dependency;
 
 namespace Entia.Experimental
 {
-    public readonly partial struct Node
+    public sealed partial class Node
     {
         public static Node With<T>(Func<T, Node> provide) where T : IInjectable => Lazy(world =>
         {

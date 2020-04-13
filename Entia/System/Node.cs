@@ -12,7 +12,7 @@ namespace Entia.Experimental
 {
     // Could add 'When<TReact>.Parallel.RunEach' and 'When<TReact, TReceive>.Parallel.RunEach'
 
-    public readonly partial struct Node
+    public sealed partial class Node
     {
         public static partial class When<TReact> where TReact : struct, IMessage
         {

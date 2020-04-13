@@ -134,6 +134,26 @@ namespace Entia.Core
 
         public static T[] Append<T>(this T[] source, params T[] values) => values.Prepend(source);
 
+        public static Array RemoveAt(this Array source, Type element, int index)
+        {
+            var target = Array.CreateInstance(element, source.Length - 1);
+            if (index > 0) Array.Copy(source, 0, target, 0, index);
+            if (index < source.Length - 1) Array.Copy(source, index + 1, target, index, source.Length - index - 1);
+            return target;
+        }
+
+        public static Array Prepend(this Array source, Type element, Array values)
+        {
+            var target = Array.CreateInstance(element, source.Length + values.Length);
+            Array.Copy(values, 0, target, 0, values.Length);
+            Array.Copy(source, 0, target, values.Length, source.Length);
+            return target;
+        }
+
+        public static Array Prepend(this Array source, Type element, params object[] values) => Prepend(source, element, (Array)values);
+        public static Array Append(this Array source, Type element, params object[] values) => Prepend((Array)values, element, source);
+        public static Array Append(this Array source, Type element, Array values) => Prepend(values, element, source);
+
         public static T[] Take<T>(this T[] source, int count)
         {
             if (count <= 0) return Array.Empty<T>();

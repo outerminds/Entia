@@ -136,7 +136,7 @@ namespace Entia.Experimental
 {string.Join(Environment.NewLine, results.Select(result => result.declaration).Where(value => !string.IsNullOrEmpty(value)))}
     }}
 
-    public readonly partial struct Node
+    public sealed partial class Node
     {{
         public static partial class When<{react}>
         {{
