@@ -256,9 +256,12 @@ namespace Entia.Test
             #endregion
 
             #region Systems
-                (5, Gen.Fresh(() => new RunSystem<MessageA, MessageB>().ToAction())),
-                (5, Gen.Fresh(() => new RunSystem<MessageB, MessageC<Unit>>().ToAction())),
-                (5, Gen.Fresh(() => new RunSystem<MessageC<int>, MessageC<uint>>().ToAction())),
+                (2, Gen.Fresh(() => new RunSystem<MessageA, MessageB>().ToAction())),
+                (2, Gen.Fresh(() => new RunSystem<MessageB, MessageC<Unit>>().ToAction())),
+                (2, Gen.Fresh(() => new RunSystem<MessageC<int>, MessageC<uint>>().ToAction())),
+                (2, Gen.Fresh(() => new RunEachSystem<MessageA, MessageB, ComponentA, ComponentB>().ToAction())),
+                (2, Gen.Fresh(() => new RunEachSystem<MessageB, MessageC<Unit>, ComponentB, ComponentC<Unit>>().ToAction())),
+                (2, Gen.Fresh(() => new RunEachSystem<MessageC<int>, MessageC<uint>, ComponentC<Unit>, ComponentC<int>>().ToAction())),
             #endregion
 
             #region Queryables

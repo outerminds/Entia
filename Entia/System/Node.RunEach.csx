@@ -13,8 +13,12 @@ IEnumerable<(string declaration, string run1, string run2)> Generate(int depth)
         else for (var i = 1; i <= count; i++) yield return $"T{i}";
     }
 
-    static string Declaration(string suffix, IEnumerable<string> generics, IEnumerable<string> parameters, IEnumerable<string> constraints) =>
-        $"public delegate void RunEach{suffix}<{string.Join(", ", generics)}>({string.Join(", ", parameters)}) {string.Join(" ", constraints)};";
+    static string Declaration(string suffix, IEnumerable<string> generics, IEnumerable<string> parameters, IEnumerable<string> constraints)
+    {
+        var runGenerics = generics.ToArray();
+        var runEach = $"RunEach{suffix}{(runGenerics.Length == 0 ? "" : $"<{string.Join(", ", runGenerics)}>")}";
+        return $"public delegate void {runEach}({string.Join(", ", parameters)}) {string.Join(" ", constraints)};";
+    }
 
     static string Body1(string suffix, bool hasEntity, bool hasMessage, IEnumerable<string> generics, IEnumerable<string> constraints)
     {
@@ -24,24 +28,26 @@ IEnumerable<(string declaration, string run1, string run2)> Generate(int depth)
             if (hasEntity) yield return "entities[i]";
         }
 
-        var runGenerics = hasMessage ? generics.Prepend(react) : generics;
-        var runEach = $"RunEach{suffix}<{string.Join(", ", runGenerics)}>";
+        var parameters = generics.Any() ? $"<{string.Join(", ", generics)}>" : "";
+        var runGenerics = generics;
+        if (hasMessage) runGenerics = runGenerics.Prepend(react);
+        var runParameters = runGenerics.Any() ? $"<{string.Join(", ", runGenerics)}>" : "";
         var storeVars = generics.Select((generic, index) => $"var store{index + 1} = segment.Store<{generic}>();");
         var storeRefs = generics.Select((generic, index) => $"ref store{index + 1}[i]");
-        var dependencies = generics.Select(generic => $"new Write(typeof({generic}))");
+        var dependencies = generics.Any() ? string.Join(", ", generics.Select(generic => $"new Write(typeof({generic}))")) : "Array.Empty<IDependency>()";
         var arguments = Arguments().Concat(storeRefs);
         var forRun = $"for (int i = 0; i < count; i++) run({string.Join(", ", arguments)});";
+        var has = generics.Select(generic => $"Has<{generic}>()").Append("filter ?? True");
 
         return
-$@"public static Node RunEach<{string.Join(", ", generics)}>({runEach} run, Filter? filter = null) {string.Join(" ", constraints)} => RunEach(
+$@"public static Node RunEach{parameters}(RunEach{suffix}{runParameters} run, Filter? filter = null) {string.Join(" ", constraints)} => RunEach(
     segment => (in {react} message) =>
     {{
         var (entities, count) = segment.Entities;
         {string.Join(" ", storeVars)}
         {forRun}
     }},
-    Filter.All<{string.Join(", ", generics)}>(filter ?? Filter.True),
-    {string.Join(", ", dependencies)});";
+    All({string.Join(", ", has)}), {dependencies});";
     }
 
     static string Body2(string suffix, bool hasEntity, bool hasReceive, bool hasReact, IEnumerable<string> generics, IEnumerable<string> constraints)
@@ -53,28 +59,30 @@ $@"public static Node RunEach<{string.Join(", ", generics)}>({runEach} run, Filt
             if (hasEntity) yield return "entities[i]";
         }
 
+        var parameters = generics.Any() ? $"<{string.Join(", ", generics)}>" : "";
         var runGenerics = generics;
         if (hasReceive) runGenerics = runGenerics.Prepend(receive);
         if (hasReact) runGenerics = runGenerics.Prepend(react);
-        var runEach = $"RunEach{suffix}<{string.Join(", ", runGenerics)}>";
+        var runParameters = runGenerics.Any() ? $"<{string.Join(", ", runGenerics)}>" : "";
         var storeVars = generics.Select((generic, index) => $"var store{index + 1} = segment.Store<{generic}>();");
         var storeRefs = generics.Select((generic, index) => $"ref store{index + 1}[i]");
-        var dependencies = generics.Select(generic => $"new Write(typeof({generic}))");
+        var dependencies = generics.Any() ? string.Join(", ", generics.Select(generic => $"new Write(typeof({generic}))")) : "Array.Empty<IDependency>()";
         var arguments = Arguments().Concat(storeRefs);
         var forRun = $"for (int i = 0; i < count; i++) run({string.Join(", ", arguments)});";
+        var has = generics.Select(generic => $"Has<{generic}>()").Append("filter ?? True");
 
         return
-$@"public static Node RunEach<{string.Join(", ", generics)}>({runEach} run, Filter? filter = null, int? capacity = null) {string.Join(" ", constraints)} => RunEach(
+$@"public static Node RunEach{parameters}(RunEach{suffix}{runParameters} run, Filter? filter = null, int? capacity = null) {string.Join(" ", constraints)} => RunEach(
     segment => (in {react} react, in {receive} receive) =>
     {{
         var (entities, count) = segment.Entities;
         {string.Join(" ", storeVars)}
         {forRun}
     }},
-    Filter.All<{string.Join(", ", generics)}>(filter ?? Filter.True), capacity, {string.Join(", ", dependencies)});";
+    All({string.Join(", ", has)}), capacity, {dependencies});";
     }
 
-    for (int i = 1; i <= depth; i++)
+    for (int i = 0; i <= depth; i++)
     {
         var generics = GenericParameters(i).ToArray();
         var parameters = generics.Select((generic, index) => $"ref {generic} component{index + 1}");
@@ -126,8 +134,10 @@ var results = Generate(5).ToArray();
 var code =
 $@"/* DO NOT MODIFY: The content of this file has been generated by the script '{file}.csx'. */
 
+using System;
 using Entia.Dependencies;
 using Entia.Experimental.Systems;
+using static Entia.Experimental.Filter;
 
 namespace Entia.Experimental
 {{

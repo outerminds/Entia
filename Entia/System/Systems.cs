@@ -29,7 +29,7 @@ namespace Entia.Experimental
             {
                 position.X += velocity.X;
                 position.Y += velocity.Y;
-            }, Filter.None<IsFrozen>());
+            }, Filter.Not(Filter.Has<IsFrozen>()));
 
         public static Node Melt() =>
             With((Resource<Time> time, Components<IsFrozen> areFrozen) =>

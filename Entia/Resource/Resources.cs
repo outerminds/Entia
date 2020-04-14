@@ -47,18 +47,18 @@ namespace Entia.Modules
         public bool Remove<T>() where T : struct, IResource => _boxes.Remove<T>(this);
         public bool Remove(Type type) => _boxes.Remove(type, this);
         public bool TryBox(Type type, out Box box) => _boxes.TryGet(type, this, out box);
-        public bool TryBox<T>(out Box<T> box) where T : struct, IResource => _boxes.TryGet<T>(this, out box);
+        public bool TryBox<T>(out Box<T> box) where T : struct, IResource => _boxes.TryGet(this, out box);
 
         public Box Box(Type type)
         {
-            if (_boxes.TryGet(type, this, out var box)) return box;
+            if (TryBox(type, out var box)) return box;
             _boxes.Set(type, this, DefaultUtility.Default(type), out box);
             return box;
         }
 
         public Box<T> Box<T>() where T : struct, IResource
         {
-            if (_boxes.TryGet<T>(this, out var box)) return box;
+            if (TryBox<T>(out var box)) return box;
             _boxes.Set(this, DefaultUtility.Default<T>(), out box);
             return box;
         }
