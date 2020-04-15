@@ -16,6 +16,39 @@ namespace Entia.Experimental
     {
         public static partial class When<TReact> where TReact : struct, IMessage
         {
+            public static partial class Receive<TReceive> where TReceive : struct, IMessage
+            {
+                public static Node Run(InAction<TReact, TReceive> run, int? capacity = null) => Node.Schedule(world =>
+                {
+                    var receiver = world.Messages().Receiver<TReceive>(capacity);
+                    return Schedule((in TReact react) => { while (receiver.TryMessage(out var receive)) run(react, receive); });
+                });
+                public static Node Run(InAction<TReceive> run, int? capacity = null) => Run((in TReact _, in TReceive receive) => run(receive), capacity);
+                public static Node Run(Action run, int? capacity = null) => Run((in TReact _, in TReceive __) => run(), capacity);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                static Node RunEach(Func<Segment, InAction<TReact, TReceive>> provide, Filter filter, int? capacity = null, params IDependency[] dependencies) => Node.Schedule(world =>
+                {
+                    var components = world.Components();
+                    var receiver = world.Messages().Receiver<TReceive>(capacity);
+                    var run = new InAction<TReact, TReceive>((in TReact _, in TReceive __) => { });
+                    var index = 0;
+                    return Schedule((in TReact react) =>
+                    {
+                        while (index < components.Segments.Length)
+                        {
+                            var segment = components.Segments[index++];
+                            if (filter.Matches(segment)) run += provide(segment);
+                        }
+
+                        while (receiver.TryMessage(out var receive)) run(react, receive);
+                    }, dependencies.Prepend(new Read(typeof(Entity))));
+                });
+
+                static Result<Runner> Schedule(InAction<TReact> run, params IDependency[] dependencies) =>
+                    Runner.From(run, dependencies.Prepend(new React(typeof(TReact)), new Read(typeof(TReceive))));
+            }
+
             public static Node Run(InAction<TReact> run) => Node.Schedule(_ => Schedule(run));
             public static Node Run(Action run) => Run((in TReact _) => run());
 
@@ -38,39 +71,6 @@ namespace Entia.Experimental
 
             static Result<Runner> Schedule(InAction<TReact> run, params IDependency[] dependencies) =>
                 Runner.From(run, dependencies.Prepend(new React(typeof(TReact))));
-        }
-
-        public static partial class When<TReact, TReceive> where TReact : struct, IMessage where TReceive : struct, IMessage
-        {
-            public static Node Run(InAction<TReact, TReceive> run, int? capacity = null) => Node.Schedule(world =>
-            {
-                var receiver = world.Messages().Receiver<TReceive>(capacity);
-                return Schedule((in TReact react) => { while (receiver.TryMessage(out var receive)) run(react, receive); });
-            });
-            public static Node Run(InAction<TReceive> run, int? capacity = null) => Run((in TReact _, in TReceive receive) => run(receive), capacity);
-            public static Node Run(Action run, int? capacity = null) => Run((in TReact _, in TReceive __) => run(), capacity);
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static Node RunEach(Func<Segment, InAction<TReact, TReceive>> provide, Filter filter, int? capacity = null, params IDependency[] dependencies) => Node.Schedule(world =>
-            {
-                var components = world.Components();
-                var receiver = world.Messages().Receiver<TReceive>(capacity);
-                var run = new InAction<TReact, TReceive>((in TReact _, in TReceive __) => { });
-                var index = 0;
-                return Schedule((in TReact react) =>
-                {
-                    while (index < components.Segments.Length)
-                    {
-                        var segment = components.Segments[index++];
-                        if (filter.Matches(segment)) run += provide(segment);
-                    }
-
-                    while (receiver.TryMessage(out var receive)) run(react, receive);
-                }, dependencies.Prepend(new Read(typeof(Entity))));
-            });
-
-            static Result<Runner> Schedule(InAction<TReact> run, params IDependency[] dependencies) =>
-                Runner.From(run, dependencies.Prepend(new React(typeof(TReact)), new Read(typeof(TReceive))));
         }
 
         public static Node From(INode data, params Node[] children) => new Node(data, children);

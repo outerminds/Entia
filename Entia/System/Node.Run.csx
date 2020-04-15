@@ -102,13 +102,14 @@ namespace Entia.Experimental
     {{
         public static partial class When<{react}>
         {{
+            public static partial class Receive<{receive}>
+            {{
+{string.Join(Environment.NewLine, results.Select(result => result.run2).Where(value => !string.IsNullOrEmpty(value)))}
+            }}
+
 {string.Join(Environment.NewLine, results.Select(result => result.run1).Where(value => !string.IsNullOrEmpty(value)))}
         }}
 
-        public static partial class When<{react}, {receive}>
-        {{
-{string.Join(Environment.NewLine, results.Select(result => result.run2).Where(value => !string.IsNullOrEmpty(value)))}
-        }}
     }}
 }}";
 

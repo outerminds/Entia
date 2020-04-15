@@ -63,13 +63,13 @@ namespace Entia.Test
 
             var nodes3 = new[]
             {
-                When<T1, T1>.Run(() => Interlocked.Increment(ref _counter3)),
-                When<T2, T2>.Run((in T2 _, in T2 __) => Interlocked.Increment(ref _counter3)),
-                When<T1, T2>.Run(() => Interlocked.Increment(ref _counter3)),
-                When<T1, T2>.Run((in T2 _) => Interlocked.Increment(ref _counter3)),
-                When<T1, T2>.Run((in T1 _, in T2 __) => Interlocked.Increment(ref _counter3)),
-                When<T1, T2>.Run((ref Test.ResourceB _) => Interlocked.Increment(ref _counter3)),
-                When<T1, T2>.Run((in T1 _, in T2 __, ref Test.ResourceC<string> ___) => Interlocked.Increment(ref _counter3))
+                When<T1>.Receive<T1>.Run(() => Interlocked.Increment(ref _counter3)),
+                When<T2>.Receive<T2>.Run((in T2 _, in T2 __) => Interlocked.Increment(ref _counter3)),
+                When<T1>.Receive<T2>.Run(() => Interlocked.Increment(ref _counter3)),
+                When<T1>.Receive<T2>.Run((in T2 _) => Interlocked.Increment(ref _counter3)),
+                When<T1>.Receive<T2>.Run((in T1 _, in T2 __) => Interlocked.Increment(ref _counter3)),
+                When<T1>.Receive<T2>.Run((ref Test.ResourceB _) => Interlocked.Increment(ref _counter3)),
+                When<T1>.Receive<T2>.Run((in T1 _, in T2 __, ref Test.ResourceC<string> ___) => Interlocked.Increment(ref _counter3))
             };
             nodes3.Shuffle(model.Random);
 
@@ -139,22 +139,22 @@ namespace Entia.Test
             var nodes = new[]
             {
                 When<TMessage1>.RunEach((ref TComponent1 _) => _counter1++),
-                When<TMessage1, TMessage2>.RunEach((ref TComponent1 _) => _counter1++),
+                When<TMessage1>.Receive<TMessage2>.RunEach((ref TComponent1 _) => _counter1++),
 
                 When<TMessage1>.RunEach((in TMessage1 _, ref TComponent2 __) => _counter2++),
-                When<TMessage1, TMessage2>.RunEach((in TMessage1 _, in TMessage2 __, ref TComponent2 ___) => _counter2++),
+                When<TMessage1>.Receive<TMessage2>.RunEach((in TMessage1 _, in TMessage2 __, ref TComponent2 ___) => _counter2++),
 
                 When<TMessage1>.RunEach((ref TComponent1 _, ref TComponent2 __) => _counter3++),
-                When<TMessage1, TMessage2>.RunEach((ref TComponent1 _, ref TComponent2 __) => _counter3++),
+                When<TMessage1>.Receive<TMessage2>.RunEach((ref TComponent1 _, ref TComponent2 __) => _counter3++),
 
                 When<TMessage1>.RunEach((ref TComponent1 _) => _counter4++, None(Has<TComponent2>())),
-                When<TMessage1, TMessage2>.RunEach((in TMessage2 _, ref TComponent1 __) => _counter4++, None(Has<TComponent2>())),
+                When<TMessage1>.Receive<TMessage2>.RunEach((in TMessage2 _, ref TComponent1 __) => _counter4++, None(Has<TComponent2>())),
 
                 When<TMessage1>.RunEach((in TMessage1 _) => _counter5++, Any(Has<TComponent1>(), Has<TComponent2>())),
-                When<TMessage1, TMessage2>.RunEach(_ => _counter5++, Any(Has<TComponent1>(), Has<TComponent2>())),
+                When<TMessage1>.Receive<TMessage2>.RunEach(_ => _counter5++, Any(Has<TComponent1>(), Has<TComponent2>())),
 
                 When<TMessage1>.RunEach(() => _counter6++, None(Has<TComponent1>(), Has<TComponent2>())),
-                When<TMessage1, TMessage2>.RunEach((in TMessage1 _, in TMessage2 __) => _counter6++, None(Has<TComponent1>(), Has<TComponent2>()))
+                When<TMessage1>.Receive<TMessage2>.RunEach((in TMessage1 _, in TMessage2 __) => _counter6++, None(Has<TComponent1>(), Has<TComponent2>()))
             };
             nodes.Shuffle(model.Random);
 

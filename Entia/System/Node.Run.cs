@@ -28,6 +28,40 @@ namespace Entia.Experimental
     {
         public static partial class When<TReact>
         {
+            public static partial class Receive<TReceive>
+            {
+                public static Node Run<T>(Run<T> run) where T : struct, IResource =>
+                    With((Resource<T> resource1) => Run((in TReact react, in TReceive receive) => run(ref resource1.Value)));
+                public static Node Run<T>(RunM<TReceive, T> run) where T : struct, IResource =>
+                    With((Resource<T> resource1) => Run((in TReact react, in TReceive receive) => run(receive, ref resource1.Value)));
+                public static Node Run<T>(RunMM<TReact, TReceive, T> run) where T : struct, IResource =>
+                    With((Resource<T> resource1) => Run((in TReact react, in TReceive receive) => run(react, receive, ref resource1.Value)));
+                public static Node Run<T1, T2>(Run<T1, T2> run) where T1 : struct, IResource where T2 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2) => Run((in TReact react, in TReceive receive) => run(ref resource1.Value, ref resource2.Value)));
+                public static Node Run<T1, T2>(RunM<TReceive, T1, T2> run) where T1 : struct, IResource where T2 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2) => Run((in TReact react, in TReceive receive) => run(receive, ref resource1.Value, ref resource2.Value)));
+                public static Node Run<T1, T2>(RunMM<TReact, TReceive, T1, T2> run) where T1 : struct, IResource where T2 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2) => Run((in TReact react, in TReceive receive) => run(react, receive, ref resource1.Value, ref resource2.Value)));
+                public static Node Run<T1, T2, T3>(Run<T1, T2, T3> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3) => Run((in TReact react, in TReceive receive) => run(ref resource1.Value, ref resource2.Value, ref resource3.Value)));
+                public static Node Run<T1, T2, T3>(RunM<TReceive, T1, T2, T3> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3) => Run((in TReact react, in TReceive receive) => run(receive, ref resource1.Value, ref resource2.Value, ref resource3.Value)));
+                public static Node Run<T1, T2, T3>(RunMM<TReact, TReceive, T1, T2, T3> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3) => Run((in TReact react, in TReceive receive) => run(react, receive, ref resource1.Value, ref resource2.Value, ref resource3.Value)));
+                public static Node Run<T1, T2, T3, T4>(Run<T1, T2, T3, T4> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4) => Run((in TReact react, in TReceive receive) => run(ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value)));
+                public static Node Run<T1, T2, T3, T4>(RunM<TReceive, T1, T2, T3, T4> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4) => Run((in TReact react, in TReceive receive) => run(receive, ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value)));
+                public static Node Run<T1, T2, T3, T4>(RunMM<TReact, TReceive, T1, T2, T3, T4> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4) => Run((in TReact react, in TReceive receive) => run(react, receive, ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value)));
+                public static Node Run<T1, T2, T3, T4, T5>(Run<T1, T2, T3, T4, T5> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource where T5 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4, Resource<T5> resource5) => Run((in TReact react, in TReceive receive) => run(ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value, ref resource5.Value)));
+                public static Node Run<T1, T2, T3, T4, T5>(RunM<TReceive, T1, T2, T3, T4, T5> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource where T5 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4, Resource<T5> resource5) => Run((in TReact react, in TReceive receive) => run(receive, ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value, ref resource5.Value)));
+                public static Node Run<T1, T2, T3, T4, T5>(RunMM<TReact, TReceive, T1, T2, T3, T4, T5> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource where T5 : struct, IResource =>
+                    With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4, Resource<T5> resource5) => Run((in TReact react, in TReceive receive) => run(react, receive, ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value, ref resource5.Value)));
+            }
+
             public static Node Run<T>(Run<T> run) where T : struct, IResource =>
                 With((Resource<T> resource1) => Run((in TReact message) => run(ref resource1.Value)));
             public static Node Run<T>(RunM<TReact, T> run) where T : struct, IResource =>
@@ -50,38 +84,5 @@ namespace Entia.Experimental
                 With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4, Resource<T5> resource5) => Run((in TReact message) => run(message, ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value, ref resource5.Value)));
         }
 
-        public static partial class When<TReact, TReceive>
-        {
-            public static Node Run<T>(Run<T> run) where T : struct, IResource =>
-                With((Resource<T> resource1) => Run((in TReact react, in TReceive receive) => run(ref resource1.Value)));
-            public static Node Run<T>(RunM<TReceive, T> run) where T : struct, IResource =>
-                With((Resource<T> resource1) => Run((in TReact react, in TReceive receive) => run(receive, ref resource1.Value)));
-            public static Node Run<T>(RunMM<TReact, TReceive, T> run) where T : struct, IResource =>
-                With((Resource<T> resource1) => Run((in TReact react, in TReceive receive) => run(react, receive, ref resource1.Value)));
-            public static Node Run<T1, T2>(Run<T1, T2> run) where T1 : struct, IResource where T2 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2) => Run((in TReact react, in TReceive receive) => run(ref resource1.Value, ref resource2.Value)));
-            public static Node Run<T1, T2>(RunM<TReceive, T1, T2> run) where T1 : struct, IResource where T2 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2) => Run((in TReact react, in TReceive receive) => run(receive, ref resource1.Value, ref resource2.Value)));
-            public static Node Run<T1, T2>(RunMM<TReact, TReceive, T1, T2> run) where T1 : struct, IResource where T2 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2) => Run((in TReact react, in TReceive receive) => run(react, receive, ref resource1.Value, ref resource2.Value)));
-            public static Node Run<T1, T2, T3>(Run<T1, T2, T3> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3) => Run((in TReact react, in TReceive receive) => run(ref resource1.Value, ref resource2.Value, ref resource3.Value)));
-            public static Node Run<T1, T2, T3>(RunM<TReceive, T1, T2, T3> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3) => Run((in TReact react, in TReceive receive) => run(receive, ref resource1.Value, ref resource2.Value, ref resource3.Value)));
-            public static Node Run<T1, T2, T3>(RunMM<TReact, TReceive, T1, T2, T3> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3) => Run((in TReact react, in TReceive receive) => run(react, receive, ref resource1.Value, ref resource2.Value, ref resource3.Value)));
-            public static Node Run<T1, T2, T3, T4>(Run<T1, T2, T3, T4> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4) => Run((in TReact react, in TReceive receive) => run(ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value)));
-            public static Node Run<T1, T2, T3, T4>(RunM<TReceive, T1, T2, T3, T4> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4) => Run((in TReact react, in TReceive receive) => run(receive, ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value)));
-            public static Node Run<T1, T2, T3, T4>(RunMM<TReact, TReceive, T1, T2, T3, T4> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4) => Run((in TReact react, in TReceive receive) => run(react, receive, ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value)));
-            public static Node Run<T1, T2, T3, T4, T5>(Run<T1, T2, T3, T4, T5> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource where T5 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4, Resource<T5> resource5) => Run((in TReact react, in TReceive receive) => run(ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value, ref resource5.Value)));
-            public static Node Run<T1, T2, T3, T4, T5>(RunM<TReceive, T1, T2, T3, T4, T5> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource where T5 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4, Resource<T5> resource5) => Run((in TReact react, in TReceive receive) => run(receive, ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value, ref resource5.Value)));
-            public static Node Run<T1, T2, T3, T4, T5>(RunMM<TReact, TReceive, T1, T2, T3, T4, T5> run) where T1 : struct, IResource where T2 : struct, IResource where T3 : struct, IResource where T4 : struct, IResource where T5 : struct, IResource =>
-                With((Resource<T1> resource1, Resource<T2> resource2, Resource<T3> resource3, Resource<T4> resource4, Resource<T5> resource5) => Run((in TReact react, in TReceive receive) => run(react, receive, ref resource1.Value, ref resource2.Value, ref resource3.Value, ref resource4.Value, ref resource5.Value)));
-        }
     }
 }
