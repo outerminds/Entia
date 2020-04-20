@@ -8,7 +8,7 @@ using Entia.Experimental.Scheduling;
 namespace Entia.Experimental.Nodes
 {
     public interface INode { }
-    public interface IWrapper : INode { }
+    public interface IWrapper : IBranch { }
     public interface ILeaf : INode { }
     public interface IBranch : INode { }
     public interface IAtomic : INode { }
@@ -23,7 +23,7 @@ namespace Entia.Experimental.Nodes
         public Lazy(Func<World, Result<Node>> provide) { Provide = provide; }
     }
 
-    public readonly struct Schedule : ILeaf
+    public readonly struct Schedule : ILeaf, IAtomic
     {
         [Implementation]
         static Scheduler<Schedule> _scheduler => Scheduler.From((in Schedule data, in Context context) =>
@@ -33,7 +33,7 @@ namespace Entia.Experimental.Nodes
         public Schedule(Func<World, Result<Runner>> provide) { Provide = provide; }
     }
 
-    public readonly struct Depend : IWrapper, IBranch
+    public readonly struct Depend : IWrapper
     {
         [Implementation]
         static Scheduler<Depend> _scheduler => Scheduler.From((in Depend data, in Context context) =>
@@ -42,6 +42,14 @@ namespace Entia.Experimental.Nodes
 
         public readonly IDependency[] Dependencies;
         public Depend(params IDependency[] dependencies) { Dependencies = dependencies; }
+    }
+
+    public readonly struct Resolve : IWrapper
+    {
+        [Implementation]
+        static Scheduler<Resolve> _scheduler => Scheduler.From((in Resolve data, in Context context) =>
+            context.Schedule(context.Node.Children).Map(context.World, (runners, world) =>
+                runners.Select(runner => Runner.Wrap(runner, () => world.Resolve(), () => world.Resolve())).Choose().ToArray()));
     }
 
     public readonly struct Sequence : IBranch

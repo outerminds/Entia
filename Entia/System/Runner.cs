@@ -14,25 +14,34 @@ namespace Entia.Experimental.Scheduling
         static class Cache<T> where T : struct, IMessage
         {
             public static readonly Func<World, IReaction> Reaction = world => world.Messages().Reaction<T>();
-            public static readonly Func<Runner[], Loop, Delegate> Invoke = (runners, loop) =>
+            public static readonly Func<Runner[], Loop, Runner> Loop = (runners, loop) =>
             {
-                var runs = runners.Select(runner => runner.Run).OfType<InAction<T>>().ToArray();
-                return new InAction<T>((in T message) =>
+                var runs = runners.Select(runner => runner.Run).Cast<InAction<T>>();
+                return From((in T message) =>
                 {
                     var copy = message;
                     loop(0, runs.Length, index => runs[index](copy));
-                });
+                }, runners.Select(runner => runner.Dependencies).Flatten());
+            };
+            public static readonly Func<Runner, Action, Action, Runner> Wrap = (runner, before, after) =>
+            {
+                before ??= () => { };
+                after ??= () => { };
+                var run = (InAction<T>)runner.Run;
+                return From((in T message) => { before(); run(message); after(); }, runner.Dependencies);
             };
         }
 
         static readonly TypeMap<Delegate, Func<World, IReaction>> _reactions = new TypeMap<Delegate, Func<World, IReaction>>();
-        static readonly TypeMap<Delegate, Func<Runner[], Loop, Delegate>> _invokes = new TypeMap<Delegate, Func<Runner[], Loop, Delegate>>();
+        static readonly TypeMap<Delegate, Func<Runner[], Loop, Runner>> _loops = new TypeMap<Delegate, Func<Runner[], Loop, Runner>>();
+        static readonly TypeMap<Delegate, Func<Runner, Action, Action, Runner>> _wraps = new TypeMap<Delegate, Func<Runner, Action, Action, Runner>>();
 
         public static Runner From<T>(InAction<T> run, params IDependency[] dependencies) where T : struct, IMessage
         {
             // NOTE: weird hack to ensure that 'Emitter<T>/Receiver<T>/Reaction<T>' are all properly AOT compiled
             _reactions.Set<InAction<T>>(Cache<T>.Reaction);
-            _invokes.Set<InAction<T>>(Cache<T>.Invoke);
+            _loops.Set<InAction<T>>(Cache<T>.Loop);
+            _wraps.Set<InAction<T>>(Cache<T>.Wrap);
             return new Runner(typeof(InAction<T>), run, dependencies);
         }
 
@@ -59,12 +68,14 @@ namespace Entia.Experimental.Scheduling
         public static Option<Runner> Combine(Loop loop, params Runner[] runners)
         {
             if (runners.Length < 2) return Combine(runners);
+            if (_loops.TryGet(runners[0].Type, out var invoke)) return invoke(runners, loop);
+            else return Option.None();
+        }
 
-            var runner = runners[0];
-            if (_invokes.TryGet(runner.Type, out var invoke) && invoke(runners, loop) is var run)
-                return new Runner(runner.Type, run, runners.Select(runner => runner.Dependencies).Flatten());
-            else
-                return Option.None();
+        public static Option<Runner> Wrap(in Runner runner, Action before = null, Action after = null)
+        {
+            if (_wraps.TryGet(runner.Type, out var wrap)) return wrap(runner, before, after);
+            else return Option.None();
         }
 
         public static Option<IReaction> Reaction(in Runner runner, World world) =>

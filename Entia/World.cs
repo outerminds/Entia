@@ -9,17 +9,17 @@ using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
+using System.Collections.Concurrent;
 
 namespace Entia
 {
     public sealed class World : IClearable, IInjectable, IEnumerable<TypeMap<IModule, IModule>.ValueEnumerator, IModule>
     {
-        struct State
-        {
-            public Dictionary<ulong, WeakReference<World>> Worlds;
-            public ulong Count;
-        }
-
+        [Implementation]
+        static Injector<World> _injector => Injector.From(context => context.World);
+        [Implementation]
+        static IDepender _depender => Depender.From(new Dependencies.Unknown());
         [Implementation]
         static Serializer<World> _serializer => Serializer.Object(
             () => new World(),
@@ -27,39 +27,25 @@ namespace Entia
                 (in World world) => world._modules.Values.ToArray(),
                 (ref World world, in IModule[] modules) => { for (int i = 0; i < modules.Length; i++) world.Set(modules[i]); })
         );
-        [Implementation]
-        static Injector<World> _injector => Injector.From(context => context.World);
-        [Implementation]
-        static IDepender _depender => Depender.From(new Dependencies.Unknown());
 
-        static readonly Concurrent<State> _state = new State { Worlds = new Dictionary<ulong, WeakReference<World>>() };
+        static readonly Func<bool> _empty = () => true;
+        static readonly ConcurrentDictionary<long, WeakReference<World>> _worlds = new ConcurrentDictionary<long, WeakReference<World>>();
+        static long _count;
 
         [ThreadSafe]
-        public static World[] Instances() => Instances(_ => true);
-
-        [ThreadSafe]
-        public static World[] Instances(Func<World, bool> predicate) => Instances(predicate, (world, state) => state(world));
-
-        [ThreadSafe]
-        public static World[] Instances<TState>(in TState state, Func<World, TState, bool> predicate)
+        public static IEnumerable<World> Instances()
         {
-            using var write = _state.Write();
-            var worlds = new List<World>(write.Value.Worlds.Count);
-            foreach (var reference in write.Value.Worlds.Values)
-                if (reference.TryGetTarget(out var world) && predicate(world, state)) worlds.Add(world);
-            return worlds.ToArray();
+            foreach (var pair in _worlds)
+                if (pair.Value.TryGetTarget(out var world))
+                    yield return world;
         }
 
         [ThreadSafe]
-        public static bool TryInstance(Func<World, bool> predicate, out World world) =>
-            TryInstance(predicate, (instance, state) => state(instance), out world);
-
-        [ThreadSafe]
-        public static bool TryInstance<TState>(in TState state, Func<World, TState, bool> predicate, out World world)
+        public static bool TryInstance(Func<World, bool> predicate, out World world)
         {
-            using var write = _state.Write();
-            foreach (var reference in write.Value.Worlds.Values)
-                if (reference.TryGetTarget(out world) && predicate(world, state)) return true;
+            foreach (var pair in _worlds)
+                if (pair.Value.TryGetTarget(out world) && predicate(world))
+                    return true;
 
             world = default;
             return false;
@@ -67,26 +53,18 @@ namespace Entia
 
         public readonly Container Container = new Container();
 
-        readonly ulong _identifier;
+        readonly long _identifier;
         readonly TypeMap<IModule, IModule> _modules = new TypeMap<IModule, IModule>();
-        IResolvable[] _resolvables = Array.Empty<IResolvable>();
+        Func<bool> _resolve = _empty;
 
         public World(params IModule[] modules)
         {
-            using (var write = _state.Write())
-            {
-                _identifier = ++write.Value.Count;
-                write.Value.Worlds[_identifier] = new WeakReference<World>(this);
-            }
-
+            _identifier = Interlocked.Increment(ref _count);
+            _worlds.TryAdd(_identifier, new WeakReference<World>(this));
             for (int i = 0; i < modules.Length; i++) Set(modules[i]);
         }
 
-        ~World()
-        {
-            using var write = _state.Write();
-            write.Value.Worlds.Remove(_identifier);
-        }
+        ~World() { _worlds.TryRemove(_identifier, out _); }
 
         public bool TryGet<T>(out T module) where T : IModule
         {
@@ -105,7 +83,7 @@ namespace Entia
         public bool Set<T>(T module) where T : IModule
         {
             Remove<T>();
-            if (module is IResolvable resolvable) ArrayUtility.Add(ref _resolvables, resolvable);
+            if (module is IResolvable resolvable) _resolve += resolvable.Resolve;
             return _modules.Set<T>(module);
         }
 
@@ -113,7 +91,7 @@ namespace Entia
         {
             var type = module.GetType();
             Remove(type);
-            if (module is IResolvable resolvable) ArrayUtility.Add(ref _resolvables, resolvable);
+            if (module is IResolvable resolvable) _resolve += resolvable.Resolve;
             return _modules.Set(type, module);
         }
 
@@ -122,29 +100,23 @@ namespace Entia
 
         public bool Remove<T>() where T : IModule
         {
-            if (_modules.TryGet<T>(out var module) && module is IResolvable resolvable) ArrayUtility.Remove(ref _resolvables, resolvable);
+            if (_modules.TryGet<T>(out var module) && module is IResolvable resolvable) _resolve -= resolvable.Resolve;
             return _modules.Remove<T>();
         }
 
         public bool Remove(Type type)
         {
-            if (_modules.TryGet(type, out var module) && module is IResolvable resolvable) ArrayUtility.Remove(ref _resolvables, resolvable);
+            if (_modules.TryGet(type, out var module) && module is IResolvable resolvable) _resolve -= resolvable.Resolve;
             return _modules.Remove(type);
         }
 
         public bool Clear()
         {
-            var cleared = false;
-            foreach (var module in _modules.Values) if (module is IClearable clearable) cleared |= clearable.Clear();
-            return cleared;
+            _resolve = _empty;
+            return _modules.Clear();
         }
 
-        public bool Resolve()
-        {
-            var resolved = false;
-            for (int i = 0; i < _resolvables.Length; i++) resolved |= _resolvables[i].Resolve();
-            return resolved;
-        }
+        public bool Resolve() => _resolve();
 
         public override string ToString() =>
             TryGet<Modules.Resources>(out var resources) && resources.TryGet<Resources.Debug>(out var debug) ?

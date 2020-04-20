@@ -28,7 +28,9 @@ namespace Entia
             {
                 get
                 {
-                    var worlds = World.Instances(_entity, (world, state) => world.Entities().Has(state));
+                    var worlds = World.Instances()
+                        .Where(world => world.Entities().Has(_entity))
+                        .ToArray();
                     return worlds.Length switch
                     {
                         0 => null,
@@ -55,6 +57,12 @@ namespace Entia
             public ComponentView[] Components => World.TryGet<Modules.Components>(out var components) ?
                 components.Get(Entity, States.All).Select(component => new ComponentView(component, Entity, World)).ToArray() :
                 Array.Empty<ComponentView>();
+            public EntityView Parent => World.TryGet<Modules.Families>(out var families) &&
+                families.Parent(Entity) is var parent && parent ?
+                new EntityView(parent, World) : null;
+            public EntityView[] Children => World.TryGet<Modules.Families>(out var families) ?
+                families.Children(Entity).Select(child => new EntityView(child, World)).ToArray() :
+                Array.Empty<EntityView>();
 
             public EntityView(Entity entity, World world)
             {

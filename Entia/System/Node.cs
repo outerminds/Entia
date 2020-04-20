@@ -10,30 +10,28 @@ using Entia.Experimental.Scheduling;
 
 namespace Entia.Experimental
 {
-    // Could add 'When<TReact>.Parallel.RunEach' and 'When<TReact, TReceive>.Parallel.RunEach'
-
     public sealed partial class Node
     {
-        public static partial class When<TReact> where TReact : struct, IMessage
+        public static partial class Schedule<TPhase> where TPhase : struct, IMessage
         {
-            public static partial class Receive<TReceive> where TReceive : struct, IMessage
+            public static partial class Receive<TMessage> where TMessage : struct, IMessage
             {
-                public static Node Run(InAction<TReact, TReceive> run, int? capacity = null) => Node.Schedule(world =>
+                public static Node Run(InAction<TPhase, TMessage> run, int? capacity = null) => From(new Schedule(world =>
                 {
-                    var receiver = world.Messages().Receiver<TReceive>(capacity);
-                    return Schedule((in TReact react) => { while (receiver.TryMessage(out var receive)) run(react, receive); });
-                });
-                public static Node Run(InAction<TReceive> run, int? capacity = null) => Run((in TReact _, in TReceive receive) => run(receive), capacity);
-                public static Node Run(Action run, int? capacity = null) => Run((in TReact _, in TReceive __) => run(), capacity);
+                    var receiver = world.Messages().Receiver<TMessage>(capacity);
+                    return CreateRunner((in TPhase phase) => { while (receiver.TryMessage(out var message)) run(phase, message); });
+                }));
+                public static Node Run(InAction<TMessage> run, int? capacity = null) => Run((in TPhase _, in TMessage message) => run(message), capacity);
+                public static Node Run(Action run, int? capacity = null) => Run((in TPhase _, in TMessage __) => run(), capacity);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                static Node RunEach(Func<Segment, InAction<TReact, TReceive>> provide, Filter filter, int? capacity = null, params IDependency[] dependencies) => Node.Schedule(world =>
+                static Node RunEach(Func<Segment, InAction<TPhase, TMessage>> provide, Filter filter, int? capacity = null, params IDependency[] dependencies) => From(new Schedule(world =>
                 {
                     var components = world.Components();
-                    var receiver = world.Messages().Receiver<TReceive>(capacity);
-                    var run = new InAction<TReact, TReceive>((in TReact _, in TReceive __) => { });
+                    var receiver = world.Messages().Receiver<TMessage>(capacity);
+                    var run = new InAction<TPhase, TMessage>((in TPhase _, in TMessage __) => { });
                     var index = 0;
-                    return Schedule((in TReact react) =>
+                    return CreateRunner((in TPhase phase) =>
                     {
                         while (index < components.Segments.Length)
                         {
@@ -41,24 +39,25 @@ namespace Entia.Experimental
                             if (filter.Matches(segment)) run += provide(segment);
                         }
 
-                        while (receiver.TryMessage(out var receive)) run(react, receive);
+                        while (receiver.TryMessage(out var message)) run(phase, message);
                     }, dependencies.Prepend(new Read(typeof(Entity))));
-                });
+                }));
 
-                static Result<Runner> Schedule(InAction<TReact> run, params IDependency[] dependencies) =>
-                    Runner.From(run, dependencies.Prepend(new React(typeof(TReact)), new Read(typeof(TReceive))));
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                static Result<Runner> CreateRunner(InAction<TPhase> run, params IDependency[] dependencies) =>
+                    Runner.From(run, dependencies.Prepend(new React(typeof(TPhase)), new Read(typeof(TMessage))));
             }
 
-            public static Node Run(InAction<TReact> run) => Node.Schedule(_ => Schedule(run));
-            public static Node Run(Action run) => Run((in TReact _) => run());
+            public static Node Run(InAction<TPhase> run) => Node.From(new Schedule(_ => CreateRunner(run)));
+            public static Node Run(Action run) => Run((in TPhase _) => run());
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static Node RunEach(Func<Segment, InAction<TReact>> provide, Filter filter, params IDependency[] dependencies) => Node.Schedule(world =>
+            static Node RunEach(Func<Segment, InAction<TPhase>> provide, Filter filter, params IDependency[] dependencies) => Node.From(new Schedule(world =>
             {
                 var components = world.Components();
-                var run = new InAction<TReact>((in TReact _) => { });
+                var run = new InAction<TPhase>((in TPhase _) => { });
                 var index = 0;
-                return Schedule((in TReact message) =>
+                return CreateRunner((in TPhase message) =>
                 {
                     while (index < components.Segments.Length)
                     {
@@ -67,20 +66,19 @@ namespace Entia.Experimental
                     }
                     run(message);
                 }, dependencies.Prepend(new Read(typeof(Entity))));
-            });
+            }));
 
-            static Result<Runner> Schedule(InAction<TReact> run, params IDependency[] dependencies) =>
-                Runner.From(run, dependencies.Prepend(new React(typeof(TReact))));
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static Result<Runner> CreateRunner(InAction<TPhase> run, params IDependency[] dependencies) =>
+                Runner.From(run, dependencies.Prepend(new React(typeof(TPhase))));
         }
 
         public static Node From(INode data, params Node[] children) => new Node(data, children);
-        public static Node With(Func<Node> provide) => Lazy(_ => provide());
+        public static Node Lazy(Func<Node> provide) => From(new Lazy(_ => provide()));
         public static Node Sequence(params Node[] children) => From(new Sequence(), children);
-        public static Node Sequence(params Func<Node>[] children) => Sequence(children.Select(With));
+        public static Node Sequence(params Func<Node>[] children) => Sequence(children.Select(Lazy));
         public static Node Parallel(params Node[] children) => From(new Parallel(), children);
-        public static Node Parallel(params Func<Node>[] children) => Parallel(children.Select(With));
-        public static Node Schedule(Func<World, Result<Runner>> schedule) => From(new Schedule(schedule));
-        public static Node Lazy(Func<World, Result<Node>> provide) => From(new Lazy(provide));
+        public static Node Parallel(params Func<Node>[] children) => Parallel(children.Select(Lazy));
 
         public readonly INode Data;
         public readonly Node[] Children;

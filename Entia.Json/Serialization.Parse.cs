@@ -318,23 +318,22 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static unsafe double ParseExponent(char* pointer, double value, ref int index, int count)
         {
-            // TODO: use 'ParseInteger'
-            var exponent = 0uL;
+            var exponent = 0u;
             var powers = _positives;
             while (index < count)
             {
                 switch (pointer[index])
                 {
-                    case _0: index++; exponent *= 10uL; continue;
-                    case _1: index++; exponent = exponent * 10uL + 1uL; continue;
-                    case _2: index++; exponent = exponent * 10uL + 2uL; continue;
-                    case _3: index++; exponent = exponent * 10uL + 3uL; continue;
-                    case _4: index++; exponent = exponent * 10uL + 4uL; continue;
-                    case _5: index++; exponent = exponent * 10uL + 5uL; continue;
-                    case _6: index++; exponent = exponent * 10uL + 6uL; continue;
-                    case _7: index++; exponent = exponent * 10uL + 7uL; continue;
-                    case _8: index++; exponent = exponent * 10uL + 8uL; continue;
-                    case _9: index++; exponent = exponent * 10uL + 9uL; continue;
+                    case _0: index++; exponent *= 10u; continue;
+                    case _1: index++; exponent = exponent * 10u + 1u; continue;
+                    case _2: index++; exponent = exponent * 10u + 2u; continue;
+                    case _3: index++; exponent = exponent * 10u + 3u; continue;
+                    case _4: index++; exponent = exponent * 10u + 4u; continue;
+                    case _5: index++; exponent = exponent * 10u + 5u; continue;
+                    case _6: index++; exponent = exponent * 10u + 6u; continue;
+                    case _7: index++; exponent = exponent * 10u + 7u; continue;
+                    case _8: index++; exponent = exponent * 10u + 8u; continue;
+                    case _9: index++; exponent = exponent * 10u + 9u; continue;
                     case _plus: index++; powers = _positives; continue;
                     case _minus: index++; powers = _negatives; continue;
                 }

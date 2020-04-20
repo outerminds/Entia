@@ -19,8 +19,11 @@ namespace Entia.Experimental
         public static Result<Node> Descend(this Node node, Func<Node, Result<Node>> replace) =>
             node.Children.Select(child => child.Descend(replace)).All().Map(node.With).Bind(replace);
 
-        public static Result<Node> Resolve(this Node node, World world) =>
-            node.Descend(child => child.Data is Lazy data ? data.Provide(world).Bind(value => value.Resolve(world)) : child);
+        public static Result<Node> Expand(this Node node, World world) =>
+            node.Descend(child => child.Data is Lazy data ? data.Provide(world).Bind(value => value.Expand(world)) : child);
+
+        public static Node Resolve(this Node node) =>
+            node.Data is IAtomic ? node.Wrap(new Resolve()) : node.With(node.Children.Select(Resolve));
 
         public static Node Wrap(this Node node, IWrapper data) => Node.From(data, node);
         public static Node Depend(this Node node, params IDependency[] dependencies) => node.Wrap(new Depend(dependencies));

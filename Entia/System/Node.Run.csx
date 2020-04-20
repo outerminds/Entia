@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 
+const string phase = "TPhase";
 const string message = "TMessage";
-const string react = "TReact";
-const string receive = "TReceive";
 
 IEnumerable<(string declaration, string run1, string run2)> Generate(int depth)
 {
@@ -12,19 +11,19 @@ IEnumerable<(string declaration, string run1, string run2)> Generate(int depth)
         else for (var i = 1; i <= count; i++) yield return $"T{i}";
     }
 
-    static string Declaration(bool hasReceive, bool hasReact, IEnumerable<string> generics, IEnumerable<string> constraints)
+    static string Declaration(bool hasMessage, bool hasPhase, IEnumerable<string> generics, IEnumerable<string> constraints)
     {
         var suffix = "";
-        if (hasReceive) suffix += "M";
-        if (hasReact) suffix += "M";
+        if (hasPhase) suffix += "P";
+        if (hasMessage) suffix += "M";
         var parameters = generics.Select((generic, index) => $"ref {generic} resource{index + 1}");
-        if (hasReceive && hasReact)
+        if (hasMessage && hasPhase)
         {
-            generics = generics.Prepend($"{message}2").Prepend($"{message}1");
-            parameters = parameters.Prepend($"in {message}2 message2").Prepend($"in {message}1 message1");
-            constraints = constraints.Prepend($"where {message}2 : struct, IMessage").Prepend($"where {message}1 : struct, IMessage");
+            generics = generics.Prepend($"{message}").Prepend($"{phase}");
+            parameters = parameters.Prepend($"in {message} message").Prepend($"in {phase} phase");
+            constraints = constraints.Prepend($"where {message} : struct, IMessage").Prepend($"where {phase} : struct, IMessage");
         }
-        else if (hasReceive || hasReact)
+        else if (hasMessage || hasPhase)
         {
             generics = generics.Prepend(message);
             parameters = parameters.Prepend($"in {message} message");
@@ -33,33 +32,33 @@ IEnumerable<(string declaration, string run1, string run2)> Generate(int depth)
         return $"public delegate void Run{suffix}<{string.Join(", ", generics)}>({string.Join(", ", parameters)}) {string.Join(" ", constraints)};";
     }
 
-    static string Body1(bool hasMessage, IEnumerable<string> generics, IEnumerable<string> constraints)
+    static string Body1(bool hasPhase, IEnumerable<string> generics, IEnumerable<string> constraints)
     {
-        var suffix = hasMessage ? "M" : "";
-        var arguments = hasMessage ? generics.Prepend(react) : generics;
+        var suffix = hasPhase ? "P" : "";
+        var arguments = hasPhase ? generics.Prepend(phase) : generics;
+        var resourceVars = generics.Select((generic, index) => $"Resource<{generic}> resource{index + 1}");
+        var resourceRefs = generics.Select((generic, index) => $"ref resource{index + 1}.Value");
+        if (hasPhase) resourceRefs = resourceRefs.Prepend("phase");
+        return
+$@"public static Node Run<{string.Join(", ", generics)}>(Run{suffix}<{string.Join(", ", arguments)}> run) {string.Join(" ", constraints)} =>
+    Inject(({string.Join(", ", resourceVars)}) => Run((in {phase} phase) => run({string.Join(", ", resourceRefs)})));";
+    }
+
+    static string Body2(bool hasMessage, bool hasPhase, IEnumerable<string> generics, IEnumerable<string> constraints)
+    {
+        var suffix = "";
+        if (hasPhase) suffix += "P";
+        if (hasMessage) suffix += "M";
+        var arguments = generics;
+        if (hasMessage) arguments = arguments.Prepend(message);
+        if (hasPhase) arguments = arguments.Prepend(phase);
         var resourceVars = generics.Select((generic, index) => $"Resource<{generic}> resource{index + 1}");
         var resourceRefs = generics.Select((generic, index) => $"ref resource{index + 1}.Value");
         if (hasMessage) resourceRefs = resourceRefs.Prepend("message");
+        if (hasPhase) resourceRefs = resourceRefs.Prepend("phase");
         return
 $@"public static Node Run<{string.Join(", ", generics)}>(Run{suffix}<{string.Join(", ", arguments)}> run) {string.Join(" ", constraints)} =>
-    With(({string.Join(", ", resourceVars)}) => Run((in {react} message) => run({string.Join(", ", resourceRefs)})));";
-    }
-
-    static string Body2(bool hasReceive, bool hasReact, IEnumerable<string> generics, IEnumerable<string> constraints)
-    {
-        var suffix = "";
-        if (hasReceive) suffix += "M";
-        if (hasReact) suffix += "M";
-        var arguments = generics;
-        if (hasReceive) arguments = arguments.Prepend(receive);
-        if (hasReact) arguments = arguments.Prepend(react);
-        var resourceVars = generics.Select((generic, index) => $"Resource<{generic}> resource{index + 1}");
-        var resourceRefs = generics.Select((generic, index) => $"ref resource{index + 1}.Value");
-        if (hasReceive) resourceRefs = resourceRefs.Prepend("receive");
-        if (hasReact) resourceRefs = resourceRefs.Prepend("react");
-        return
-$@"public static Node Run<{string.Join(", ", generics)}>(Run{suffix}<{string.Join(", ", arguments)}> run) {string.Join(" ", constraints)} =>
-    With(({string.Join(", ", resourceVars)}) => Run((in {react} react, in {receive} receive) => run({string.Join(", ", resourceRefs)})));";
+    Inject(({string.Join(", ", resourceVars)}) => Run((in {phase} phase, in {message} message) => run({string.Join(", ", resourceRefs)})));";
     }
 
     for (int i = 1; i <= depth; i++)
@@ -75,6 +74,10 @@ $@"public static Node Run<{string.Join(", ", generics)}>(Run{suffix}<{string.Joi
         yield return (
             Declaration(false, true, generics, constraints),
             Body1(true, generics, constraints),
+            "");
+        yield return (
+            Declaration(true, false, generics, constraints),
+            "",
             Body2(true, false, generics, constraints));
         yield return (
             Declaration(true, true, generics, constraints),
@@ -83,7 +86,7 @@ $@"public static Node Run<{string.Join(", ", generics)}>(Run{suffix}<{string.Joi
     }
 }
 
-var results = Generate(5).ToArray();
+var results = Generate(9).ToArray();
 var file = "Node.Run";
 var code =
 $@"/* DO NOT MODIFY: The content of this file has been generated by the script '{file}.csx'. */
@@ -100,9 +103,9 @@ namespace Entia.Experimental
 
     public sealed partial class Node
     {{
-        public static partial class When<{react}>
+        public static partial class Schedule<{phase}>
         {{
-            public static partial class Receive<{receive}>
+            public static partial class Receive<{message}>
             {{
 {string.Join(Environment.NewLine, results.Select(result => result.run2).Where(value => !string.IsNullOrEmpty(value)))}
             }}

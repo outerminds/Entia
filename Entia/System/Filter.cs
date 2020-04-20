@@ -35,6 +35,10 @@ namespace Entia.Experimental
             ComponentUtility.TryGetConcreteMask<T>(out var mask) ?
             new Filter(segment => segment.Mask.HasAny(mask)) : False;
 
+        public static Filter Has(Type component) =>
+            ComponentUtility.TryGetConcreteMask(component, out var mask) ?
+            new Filter(segment => segment.Mask.HasAny(mask)) : False;
+
         public static readonly Filter True = new Filter(_ => true);
         public static readonly Filter False = new Filter(_ => false);
 

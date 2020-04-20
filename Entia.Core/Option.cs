@@ -293,8 +293,8 @@ namespace Entia.Core
         public static T OrDefault<T>(in this Option<T> option) => option.Or(default(T));
         public static Some<Unit> Ignore<T>(in this Some<T> some) => some.Map(_ => default(Unit));
         public static Option<Unit> Ignore<T>(in this Option<T> option) => option.Map(_ => default(Unit));
-        public static Some<object> Box<T>(in this Some<T> some) where T : IOption => some.Value;
-        public static Option<object> Box<T>(in this Option<T> option) where T : IOption => option.Map(value => (object)value);
+        public static Some<object> Box<T>(in this Some<T> some) => some.Value;
+        public static Option<object> Box<T>(in this Option<T> option) => option.Map(value => (object)value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<TOut> Map<TIn, TOut>(in this Option<TIn> option, Func<TIn, TOut> map)
