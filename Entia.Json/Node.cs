@@ -30,6 +30,7 @@ namespace Entia.Json
         static readonly Node[] _empty = { };
 
         public static Node Boolean(bool value) => value ? True : False;
+
         public static Node Number(char value) => Number((long)value);
         public static Node Number(byte value) => Number((long)value);
         public static Node Number(sbyte value) => Number((long)value);
@@ -37,13 +38,14 @@ namespace Entia.Json
         public static Node Number(ushort value) => Number((long)value);
         public static Node Number(int value) => Number((long)value);
         public static Node Number(uint value) => Number((long)value);
-        public static Node Number(long value) => new Node(Kinds.Number, Tags.None, value, _empty);
+        public static Node Number(long value) => Number((object)value);
         public static Node Number(ulong value) => Number((long)value);
         public static Node Number(float value) => Number((double)value);
-        public static Node Number(double value) => new Node(Kinds.Number, Tags.None, value, _empty);
+        public static Node Number(double value) => Number((object)value);
         public static Node Number(decimal value) => Number((double)value);
-        public static Node Number(object value) => new Node(Kinds.Number, Tags.None, value, _empty);
-        public static Node String(char value) => String(value.ToString());
+        internal static Node Number(object value) => new Node(Kinds.Number, Tags.None, value, _empty);
+
+        public static Node String(char value) => String(value.ToString(), true);
         public static Node String(string value, bool plain = false) =>
             value is null ? Null :
             new Node(Kinds.String, plain ? Tags.Plain : Tags.None, value, _empty);

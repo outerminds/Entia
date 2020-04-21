@@ -157,7 +157,7 @@ namespace Entia.Json
                                         case _backSlash:
                                             if (builder == null) builder = new StringBuilder(256);
                                             else builder.Clear();
-                                            nodes.Push(Node.String(builder.Unescape(pointer, ref start, ref index, count)));
+                                            nodes.Push(Node.String(builder.Unescape(pointer, ref start, ref index, count), false));
                                             break;
                                         case _quote:
                                             nodes.Push(Node.String(new string(pointer, start, index - 1 - start), true));

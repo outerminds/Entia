@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Entia.Core;
 
@@ -220,7 +221,7 @@ namespace Entia.Json
                 value =
                     node.Value is long @long ? @long :
                     node.Value is double @double ? (long)@double :
-                    Convert.ToInt64(node.Value);
+                    Convert.ToInt64(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
             value = default;
@@ -256,7 +257,7 @@ namespace Entia.Json
                 value =
                     node.Value is double @double ? @double :
                     node.Value is long @long ? @long :
-                    Convert.ToDouble(node.Value);
+                    Convert.ToDouble(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
             value = default;
