@@ -64,6 +64,41 @@ namespace Entia.Injectables
             public bool Set(Entity entity, IComponent component) =>
                 _resolvers.Defer((entity, component, _components), state => state._components.Set(state.entity, state.component));
 
+            public bool Modify<T>(Entity entity, RefAction<T> modify, States include = States.All) where T : struct, IComponent =>
+                _resolvers.Defer((entity, modify, include, _components), state =>
+                {
+                    ref var component = ref state._components.GetOrDummy<T>(state.entity, out var success, state.include);
+                    if (success) state.modify(ref component);
+                });
+            public bool Modify<T, TState>(Entity entity, in TState state, RefInAction<T, TState> modify, States include = States.All) where T : struct, IComponent =>
+                _resolvers.Defer((entity, state, modify, include, _components), state =>
+                {
+                    ref var component = ref state._components.GetOrDummy<T>(state.entity, out var success, state.include);
+                    if (success) state.modify(ref component, state.state);
+                });
+            public bool Modify<T>(Entity entity, Func<T, T> modify, States include = States.All) where T : struct, IComponent =>
+                _resolvers.Defer((entity, modify, include, _components), state =>
+                {
+                    ref var component = ref state._components.GetOrDummy<T>(state.entity, out var success, state.include);
+                    if (success) component = state.modify(component);
+                });
+            public bool Modify<T, TState>(Entity entity, in TState state, Func<T, TState, T> modify, States include = States.All) where T : struct, IComponent =>
+                _resolvers.Defer((entity, state, modify, include, _components), state =>
+                {
+                    ref var component = ref state._components.GetOrDummy<T>(state.entity, out var success, state.include);
+                    if (success) component = state.modify(component, state.state);
+                });
+
+            public bool Copy<T>(Entity source, Entity target, States include = States.All) where T : IComponent =>
+                _resolvers.Defer((source, target, include, _components), state => state._components.Copy<T>(state.source, state.target, state.include));
+            public bool Copy(Entity source, Entity target, Type type, States include = States.All) =>
+                _resolvers.Defer((source, target, type, include, _components), state => state._components.Copy(state.source, state.target, state.type, state.include));
+            public bool Copy(Entity source, Entity target, States include = States.All) =>
+                _resolvers.Defer((source, target, include, _components), state => state._components.Copy(state.source, state.target, state.include));
+
+            public bool Trim(Entity source, Entity target, States include = States.All) =>
+                _resolvers.Defer((source, target, include, _components), state => state._components.Trim(state.source, state.target, state.include));
+
             public bool Remove<T>(Entity entity, States include = States.All) where T : IComponent =>
                 _resolvers.Defer((entity, include, _components), state => state._components.Remove<T>(state.entity, state.include));
             public bool Remove(Entity entity, Type type, States include = States.All) =>

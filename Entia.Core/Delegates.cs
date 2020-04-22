@@ -20,5 +20,6 @@
     public delegate void RefAction<T1, T2, T3, T4>(ref T1 input1, ref T2 input2, ref T3 input3, ref T4 input4);
     public delegate void RefAction<T1, T2, T3, T4, T5>(ref T1 input1, ref T2 input2, ref T3 input3, ref T4 input4, ref T5 input5);
     public delegate void RefAction<T1, T2, T3, T4, T5, T6>(ref T1 input1, ref T2 input2, ref T3 input3, ref T4 input4, ref T5 input5, ref T6 input6);
+    public delegate void InRefAction<T1, T2>(in T1 input1, ref T2 input2);
     public delegate void RefInAction<T1, T2>(ref T1 input1, in T2 input2);
 }
