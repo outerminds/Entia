@@ -30,14 +30,14 @@ namespace Entia.Test
 
         public override void Do(World value, Model model)
         {
-            var run1 = Schedule<T1>.Run(() => _counter1++);
+            var run1 = System<T1>.Run(() => _counter1++);
             var nodes1 = new[]
             {
-                Schedule<T1>.Run(() => _counter1++),
-                Schedule<T1>.Run((in T1 _) => _counter1++),
+                System<T1>.Run(() => _counter1++),
+                System<T1>.Run((in T1 _) => _counter1++),
                 Sequence(
-                    Schedule<T1>.Run((ref Test.ResourceA _) => _counter1++),
-                    Schedule<T1>.Run((in T1 _, ref Test.ResourceA __) => _counter1++),
+                    System<T1>.Run((ref Test.ResourceA _) => _counter1++),
+                    System<T1>.Run((in T1 _, ref Test.ResourceA __) => _counter1++),
                     run1
                 ),
                 Inject((Emitter<T1> _, Reaction<T1> __, World ___, AllComponents.Read ____) => run1),
@@ -45,16 +45,16 @@ namespace Entia.Test
             };
             nodes1.Shuffle(model.Random);
 
-            var run2 = Schedule<T2>.Run(() => Interlocked.Increment(ref _counter2));
+            var run2 = System<T2>.Run(() => Interlocked.Increment(ref _counter2));
             var nodes2 = new[]
             {
-                Schedule<T2>.Run(() => Interlocked.Increment(ref _counter2)),
+                System<T2>.Run(() => Interlocked.Increment(ref _counter2)),
                 Sequence(
-                    Schedule<T2>.Run((in T2 _) => Interlocked.Increment(ref _counter2)),
-                    Schedule<T2>.Run((ref Test.ResourceA _) => Interlocked.Increment(ref _counter2)),
+                    System<T2>.Run((in T2 _) => Interlocked.Increment(ref _counter2)),
+                    System<T2>.Run((ref Test.ResourceA _) => Interlocked.Increment(ref _counter2)),
                     run2
                 ),
-                Schedule<T2>.Run((in T2 _, ref Test.ResourceA __, ref Test.ResourceB ___) => Interlocked.Increment(ref _counter2)),
+                System<T2>.Run((in T2 _, ref Test.ResourceA __, ref Test.ResourceB ___) => Interlocked.Increment(ref _counter2)),
                 Inject((Test.Injectable _) => run2),
                 Lazy(() => run2),
                 Inject((Resource<Test.ResourceA>.Read _, AllEntities __) => Parallel(Enumerable.Repeat(run2, _parallel).ToArray()))
@@ -63,13 +63,13 @@ namespace Entia.Test
 
             var nodes3 = new[]
             {
-                Schedule<T1>.Receive<T1>.Run(() => Interlocked.Increment(ref _counter3)),
-                Schedule<T2>.Receive<T2>.Run((in T2 _, in T2 __) => Interlocked.Increment(ref _counter3)),
-                Schedule<T1>.Receive<T2>.Run(() => Interlocked.Increment(ref _counter3)),
-                Schedule<T1>.Receive<T2>.Run((in T2 _) => Interlocked.Increment(ref _counter3)),
-                Schedule<T1>.Receive<T2>.Run((in T1 _, in T2 __) => Interlocked.Increment(ref _counter3)),
-                Schedule<T1>.Receive<T2>.Run((ref Test.ResourceB _) => Interlocked.Increment(ref _counter3)),
-                Schedule<T1>.Receive<T2>.Run((in T1 _, in T2 __, ref Test.ResourceC<string> ___) => Interlocked.Increment(ref _counter3))
+                System<T1>.Receive<T1>.Run(() => Interlocked.Increment(ref _counter3)),
+                System<T2>.Receive<T2>.Run((in T2 _, in T2 __) => Interlocked.Increment(ref _counter3)),
+                System<T1>.Receive<T2>.Run(() => Interlocked.Increment(ref _counter3)),
+                System<T1>.Receive<T2>.Run((in T2 _) => Interlocked.Increment(ref _counter3)),
+                System<T1>.Receive<T2>.Run((in T1 _, in T2 __) => Interlocked.Increment(ref _counter3)),
+                System<T1>.Receive<T2>.Run((ref Test.ResourceB _) => Interlocked.Increment(ref _counter3)),
+                System<T1>.Receive<T2>.Run((in T1 _, in T2 __, ref Test.ResourceC<string> ___) => Interlocked.Increment(ref _counter3))
             };
             nodes3.Shuffle(model.Random);
 
@@ -137,23 +137,23 @@ namespace Entia.Test
         {
             var nodes = new[]
             {
-                Schedule<TMessage1>.RunEach((ref TComponent1 _) => _counter1++),
-                Schedule<TMessage1>.Receive<TMessage2>.RunEach((ref TComponent1 _) => _counter1++),
+                System<TMessage1>.RunEach((ref TComponent1 _) => _counter1++),
+                System<TMessage1>.Receive<TMessage2>.RunEach((ref TComponent1 _) => _counter1++),
 
-                Schedule<TMessage1>.RunEach((in TMessage1 _, ref TComponent2 __) => _counter2++),
-                Schedule<TMessage1>.Receive<TMessage2>.RunEach((in TMessage1 _, in TMessage2 __, ref TComponent2 ___) => _counter2++),
+                System<TMessage1>.RunEach((in TMessage1 _, ref TComponent2 __) => _counter2++),
+                System<TMessage1>.Receive<TMessage2>.RunEach((in TMessage1 _, in TMessage2 __, ref TComponent2 ___) => _counter2++),
 
-                Schedule<TMessage1>.RunEach((ref TComponent1 _, ref TComponent2 __) => _counter3++),
-                Schedule<TMessage1>.Receive<TMessage2>.RunEach((ref TComponent1 _, ref TComponent2 __) => _counter3++),
+                System<TMessage1>.RunEach((ref TComponent1 _, ref TComponent2 __) => _counter3++),
+                System<TMessage1>.Receive<TMessage2>.RunEach((ref TComponent1 _, ref TComponent2 __) => _counter3++),
 
-                Schedule<TMessage1>.RunEach((ref TComponent1 _) => _counter4++, None(Has<TComponent2>())),
-                Schedule<TMessage1>.Receive<TMessage2>.RunEach((in TMessage2 _, ref TComponent1 __) => _counter4++, None(Has<TComponent2>())),
+                System<TMessage1>.RunEach((ref TComponent1 _) => _counter4++, None(Has<TComponent2>())),
+                System<TMessage1>.Receive<TMessage2>.RunEach((in TMessage2 _, ref TComponent1 __) => _counter4++, None(Has<TComponent2>())),
 
-                Schedule<TMessage1>.RunEach((in TMessage1 _) => _counter5++, Any(Has<TComponent1>(), Has<TComponent2>())),
-                Schedule<TMessage1>.Receive<TMessage2>.RunEach(_ => _counter5++, Any(Has<TComponent1>(), Has<TComponent2>())),
+                System<TMessage1>.RunEach((in TMessage1 _) => _counter5++, Any(Has<TComponent1>(), Has<TComponent2>())),
+                System<TMessage1>.Receive<TMessage2>.RunEach(_ => _counter5++, Any(Has<TComponent1>(), Has<TComponent2>())),
 
-                Schedule<TMessage1>.RunEach(() => _counter6++, None(Has<TComponent1>(), Has<TComponent2>())),
-                Schedule<TMessage1>.Receive<TMessage2>.RunEach((in TMessage1 _, in TMessage2 __) => _counter6++, None(Has<TComponent1>(), Has<TComponent2>()))
+                System<TMessage1>.RunEach(() => _counter6++, None(Has<TComponent1>(), Has<TComponent2>())),
+                System<TMessage1>.Receive<TMessage2>.RunEach((in TMessage1 _, in TMessage2 __) => _counter6++, None(Has<TComponent1>(), Has<TComponent2>()))
             };
             nodes.Shuffle(model.Random);
 

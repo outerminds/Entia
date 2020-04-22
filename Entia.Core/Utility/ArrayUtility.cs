@@ -104,19 +104,6 @@ namespace Entia.Core
             return resized;
         }
 
-        public static bool EnsureSet<T>(ref Array array, in T item, int index)
-        {
-            if (array is T[] casted)
-            {
-                var resized = Ensure(ref casted, index + 1);
-                casted[index] = item;
-                array = casted;
-                return resized;
-            }
-
-            return false;
-        }
-
         [ThreadSafe]
         public static int GetHashCode<T>(T[] array)
         {

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Entia.Core.Documentation;
 using Entia.Core.Providers;
 
 namespace Entia.Core
@@ -89,6 +90,7 @@ namespace Entia.Core
 
         static readonly TypeMap<object, TypeMap<ITrait, ITrait[]>> _defaults = new TypeMap<object, TypeMap<ITrait, ITrait[]>>();
 
+        [ThreadSafe]
         public static bool TryDefault<T, TTrait>(out TTrait implementation) where TTrait : ITrait
         {
             if (Defaults<T, TTrait>().TryFirst(out var trait) && trait is TTrait casted)
@@ -100,6 +102,7 @@ namespace Entia.Core
             return false;
         }
 
+        [ThreadSafe]
         public static bool TryDefault<TTrait>(Type type, out TTrait implementation) where TTrait : ITrait
         {
             if (Defaults<TTrait>(type).TryFirst(out var trait) && trait is TTrait casted)
@@ -111,30 +114,60 @@ namespace Entia.Core
             return false;
         }
 
+        [ThreadSafe]
         public static bool TryDefault(Type type, Type trait, out ITrait implementation) =>
             Defaults(type, trait).TryFirst(out implementation);
 
+        [ThreadSafe]
         public static ITrait[] Defaults<T, TTrait>() where TTrait : ITrait
         {
-            var traits = _defaults.TryGet<T>(out var map) ? map : _defaults[typeof(T)] = new TypeMap<ITrait, ITrait[]>();
-            if (traits.TryGet<TTrait>(out var implementations)) return implementations;
-            return traits[typeof(TTrait)] = CreateDefaults(typeof(T), typeof(TTrait));
+            var traits = GetTraits(_defaults.Index<T>());
+            return GetDefaults(traits, typeof(T), (typeof(TTrait), traits.Index<TTrait>()));
         }
 
+        [ThreadSafe]
         public static ITrait[] Defaults<TTrait>(Type type) where TTrait : ITrait
         {
-            var traits = _defaults.TryGet(type, out var map) ? map : _defaults[type] = new TypeMap<ITrait, ITrait[]>();
-            if (traits.TryGet<TTrait>(out var implementations)) return implementations;
-            return traits[typeof(TTrait)] = CreateDefaults(type, typeof(TTrait));
+            if (_defaults.TryIndex(type, out var typeIndex) && GetTraits(typeIndex) is var traits)
+                return GetDefaults(traits, type, (typeof(TTrait), traits.Index<TTrait>()));
+            return Array.Empty<ITrait>();
         }
 
+        [ThreadSafe]
         public static ITrait[] Defaults(Type type, Type trait)
         {
-            var traits = _defaults.TryGet(type, out var map) ? map : _defaults[type] = new TypeMap<ITrait, ITrait[]>();
-            if (traits.TryGet(trait, out var implementations)) return implementations;
-            return traits[trait] = CreateDefaults(type, trait);
+            if (_defaults.TryIndex(type, out var typeIndex) &&
+                GetTraits(typeIndex) is var traits &&
+                traits.TryIndex(trait, out var traitIndex))
+                return GetDefaults(traits, type, (trait, traitIndex));
+            return Array.Empty<ITrait>();
         }
 
+        [ThreadSafe]
+        static TypeMap<ITrait, ITrait[]> GetTraits(int index)
+        {
+            if (_defaults.TryGet(index, out var traits)) return traits;
+            lock (_defaults)
+            {
+                if (_defaults.TryGet(index, out traits)) return traits;
+                _defaults.Set(index, traits = new TypeMap<ITrait, ITrait[]>());
+                return traits;
+            }
+        }
+
+        [ThreadSafe]
+        static ITrait[] GetDefaults(TypeMap<ITrait, ITrait[]> traits, Type type, (Type type, int index) trait)
+        {
+            if (traits.TryGet(trait.index, out var defaults)) return defaults;
+            lock (traits)
+            {
+                if (traits.TryGet(trait.index, out defaults)) return defaults;
+                traits.Set(trait.index, defaults = CreateDefaults(type, trait.type));
+                return defaults;
+            }
+        }
+
+        [ThreadSafe]
         static ITrait[] CreateDefaults(Type type, Type trait)
         {
             static bool Is(Type current, Type other) => current.Is<IProvider>() || current.Is(other, true, true);
@@ -250,6 +283,7 @@ namespace Entia.Core
         public Implementations<TTrait> Get<T, TTrait>() where TTrait : ITrait =>
             new Implementations<TTrait>(GetImplementations<T, TTrait>(), Defaults<T, TTrait>());
 
+        [ThreadSafe]
         public bool TryGet(Type type, Type trait, out ITrait implementation)
         {
             if (_implementations.TryGet(type, out var traits, true, false) &&
@@ -258,6 +292,8 @@ namespace Entia.Core
                 return true;
             return TryDefault(type, trait, out implementation);
         }
+
+        [ThreadSafe]
         public bool TryGet<TTrait>(Type type, out TTrait implementation) where TTrait : ITrait
         {
             if (_implementations.TryGet(type, out var traits, true, false) &&
@@ -267,8 +303,10 @@ namespace Entia.Core
                 implementation = (TTrait)value;
                 return true;
             }
-            return TryDefault<TTrait>(type, out implementation);
+            return TryDefault(type, out implementation);
         }
+
+        [ThreadSafe]
         public bool TryGet<T, TTrait>(out TTrait implementation) where TTrait : ITrait
         {
             if (_implementations.TryGet<T>(out var traits, true, false) &&
@@ -281,16 +319,21 @@ namespace Entia.Core
             return TryDefault<T, TTrait>(out implementation);
         }
 
+        [ThreadSafe]
         public bool Has<T>() => _implementations.Has<T>(true, false);
+        [ThreadSafe]
         public bool Has(Type type) => _implementations.Has(type, true, false);
+        [ThreadSafe]
         public bool Has<T, TTrait>() where TTrait : ITrait =>
             _implementations.TryGet<T>(out var map, true, false) &&
             map.TryGet<TTrait>(out var implementations) &&
             implementations.Length > 0;
+        [ThreadSafe]
         public bool Has<TTrait>(Type type) where TTrait : ITrait =>
             _implementations.TryGet(type, out var map, true, false) &&
             map.TryGet<TTrait>(out var implementations) &&
             implementations.Length > 0;
+        [ThreadSafe]
         public bool Has(Type type, Type trait) =>
             _implementations.TryGet(type, out var map, true, false) &&
             map.TryGet(trait, out var implementations) &&
@@ -378,6 +421,7 @@ namespace Entia.Core
             return ref traits[index];
         }
 
+        [ThreadSafe]
         public IEnumerator<(Type type, Type trait, ITrait implementation)> GetEnumerator()
         {
             foreach (var (type, map) in _implementations)

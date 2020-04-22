@@ -5,5 +5,4 @@
     /// </summary>
     public interface IModule { }
     public interface IResolvable { bool Resolve(); }
-    public interface IClearable { bool Clear(); }
 }

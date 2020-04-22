@@ -1,12 +1,15 @@
 using System;
 using Entia.Core;
+using Entia.Core.Documentation;
 using Entia.Injectors;
 using Entia.Modules;
 
 namespace Entia.Injectables
 {
+    [ThreadSafe]
     public readonly struct Defer : IInjectable
     {
+        [ThreadSafe]
         public readonly struct Entities : IInjectable
         {
             [Implementation]
@@ -36,6 +39,7 @@ namespace Entia.Injectables
                 _resolvers.Defer(_entities, state => state.Clear());
         }
 
+        [ThreadSafe]
         public readonly struct Components : IInjectable
         {
             [Implementation]

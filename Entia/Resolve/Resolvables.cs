@@ -18,7 +18,7 @@ namespace Entia.Resolvables
         }
 
         [Implementation]
-        static readonly Resolver _resolver = new Resolver();
+        static Resolver _resolver => new Resolver();
 
         public readonly T State;
         public readonly Action<T> Action;

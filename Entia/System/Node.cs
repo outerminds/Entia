@@ -12,7 +12,7 @@ namespace Entia.Experimental
 {
     public sealed partial class Node
     {
-        public static partial class Schedule<TPhase> where TPhase : struct, IMessage
+        public static partial class System<TPhase> where TPhase : struct, IMessage
         {
             public static partial class Receive<TMessage> where TMessage : struct, IMessage
             {

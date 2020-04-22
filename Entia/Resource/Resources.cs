@@ -8,7 +8,7 @@ using System.Linq;
 namespace Entia.Modules
 {
     [ThreadSafe]
-    public sealed class Resources : IModule, IClearable, IEnumerable<IResource>
+    public sealed class Resources : IModule, IEnumerable<IResource>
     {
         readonly Boxes _boxes;
         public Resources(Boxes boxes) { _boxes = boxes; }

@@ -21,9 +21,10 @@ namespace Entia.Test
 
         public override void Do(World value, Model model)
         {
-            for (int i = 0; i < _random; i++) value.Resolvers().Defer(this, @this => @this._increment++);
-            value.Resolvers().Defer((random: _random, @this: this), data => data.@this._set = data.random);
-            _resolved = _resolve && value.Resolvers().Resolve();
+            var resolvers = value.Resolvers();
+            for (int i = 0; i < _random; i++) resolvers.Defer(this, @this => @this._increment++);
+            resolvers.Defer((random: _random, @this: this), data => data.@this._set = data.random);
+            _resolved = _resolve && resolvers.Resolve();
         }
 
         public override Property Check(World value, Model model) =>

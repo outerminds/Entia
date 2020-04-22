@@ -14,7 +14,7 @@ using System.Collections.Concurrent;
 
 namespace Entia
 {
-    public sealed class World : IClearable, IInjectable, IEnumerable<TypeMap<IModule, IModule>.ValueEnumerator, IModule>
+    public sealed class World : IInjectable, IEnumerable<TypeMap<IModule, IModule>.ValueEnumerator, IModule>
     {
         [Implementation]
         static Injector<World> _injector => Injector.From(context => context.World);

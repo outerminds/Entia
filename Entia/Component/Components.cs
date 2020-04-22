@@ -12,7 +12,7 @@ namespace Entia.Modules
     /// <summary>
     /// Module that stores and manages components.
     /// </summary>
-    public sealed partial class Components : IModule, IClearable, IResolvable, IEnumerable<IComponent>
+    public sealed partial class Components : IModule, IResolvable, IEnumerable<IComponent>
     {
         struct Data
         {

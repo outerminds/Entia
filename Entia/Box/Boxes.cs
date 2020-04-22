@@ -9,7 +9,7 @@ using Entia.Experimental.Serializers;
 namespace Entia.Modules
 {
     [ThreadSafe]
-    public sealed class Boxes : IModule, IClearable, IEnumerable<(Type type, object key, object value)>
+    public sealed class Boxes : IModule, IEnumerable<(Type type, object key, object value)>
     {
         struct Data
         {

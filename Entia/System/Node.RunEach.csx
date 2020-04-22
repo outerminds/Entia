@@ -163,7 +163,7 @@ namespace Entia.Experimental
 
     public sealed partial class Node
     {{
-        public static partial class Schedule<{phase}>
+        public static partial class System<{phase}>
         {{
             public static partial class Receive<{message}>
             {{

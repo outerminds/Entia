@@ -294,15 +294,15 @@ namespace Entia.Core
                 try
                 {
                     var name = assembly.GetName();
-                    _assemblies[name.Name] = assembly;
-                    _assemblies[name.FullName] = assembly;
+                    _assemblies.TryAdd(name.Name, assembly);
+                    _assemblies.TryAdd(name.FullName, assembly);
 
                     foreach (var type in assembly.GetTypes())
                     {
-                        _types[type.Name] = type;
-                        _types[type.FullName] = type;
-                        _types[type.AssemblyQualifiedName] = type;
-                        if (type.HasGuid()) _guidToType[type.GUID] = type;
+                        _types.TryAdd(type.Name, type);
+                        _types.TryAdd(type.FullName, type);
+                        _types.TryAdd(type.AssemblyQualifiedName, type);
+                        if (type.HasGuid()) _guidToType.TryAdd(type.GUID, type);
                     }
                 }
                 catch { }
@@ -316,9 +316,7 @@ namespace Entia.Core
         public static TypeData GetData(Type type)
         {
             if (type == null) return null;
-            if (_typeToData.TryGetValue(type, out var data)) return data;
-            _typeToData.TryAdd(type, data = new TypeData(type));
-            return data;
+            return _typeToData.GetOrAdd(type, key => new TypeData(key));
         }
 
         public static bool TryGetAssembly(string name, out Assembly assembly) => _assemblies.TryGetValue(name, out assembly);

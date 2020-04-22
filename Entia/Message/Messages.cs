@@ -11,7 +11,7 @@ using System.Collections.Concurrent;
 namespace Entia.Modules
 {
     [ThreadSafe]
-    public sealed class Messages : IModule, IClearable, IEnumerable<IEmitter>
+    public sealed class Messages : IModule, IEnumerable<IEmitter>
     {
         [Implementation]
         static Serializer<Messages> _serializer => Serializer.Object(

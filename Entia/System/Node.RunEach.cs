@@ -93,7 +93,7 @@ namespace Entia.Experimental
 
     public sealed partial class Node
     {
-        public static partial class Schedule<TPhase>
+        public static partial class System<TPhase>
         {
             public static partial class Receive<TMessage>
             {

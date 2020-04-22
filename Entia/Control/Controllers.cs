@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Entia.Modules
 {
-    public sealed class Controllers : IModule, IClearable, IEnumerable<Controller>
+    public sealed class Controllers : IModule, IEnumerable<Controller>
     {
         readonly World _world;
         readonly Dictionary<Node, Controller> _controllers = new Dictionary<Node, Controller>();

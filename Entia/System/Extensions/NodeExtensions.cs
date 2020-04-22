@@ -3,9 +3,8 @@ using Entia.Core;
 using System.Linq;
 using Entia.Dependencies;
 using System.Collections.Generic;
-using Entia.Experimental.Nodes;
 
-namespace Entia.Experimental
+namespace Entia.Experimental.Nodes
 {
     public static class NodeExtensions
     {

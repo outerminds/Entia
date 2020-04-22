@@ -50,8 +50,6 @@ namespace Entia.Modules
             return cleared;
         }
 
-        bool IClearable.Clear() => Clear();
-
         bool Clear(in Metadata metadata, States include) =>
             TryGetDelegates(metadata, out var delegates) && Clear(metadata, delegates, include);
 

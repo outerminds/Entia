@@ -39,6 +39,7 @@ using Entia.Core;
 using Entia.Injectables;
 using Entia.Injection;
 using Entia.Dependency;
+using Entia.Experimental.Nodes;
 
 namespace Entia.Experimental
 {{

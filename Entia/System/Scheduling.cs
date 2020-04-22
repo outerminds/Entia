@@ -1,4 +1,5 @@
 using Entia.Core;
+using Entia.Experimental.Nodes;
 using Entia.Experimental.Schedulers;
 
 namespace Entia.Experimental.Scheduling
