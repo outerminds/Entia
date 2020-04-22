@@ -80,16 +80,16 @@ namespace Entia.Experimental
         public static Node Parallel(params Node[] children) => From(new Parallel(), children);
         public static Node Parallel(params Func<Node>[] children) => Parallel(children.Select(Lazy));
 
-        public readonly INode Data;
+        public readonly INode Value;
         public readonly Node[] Children;
 
         Node(INode data, params Node[] children)
         {
-            Data = data;
+            Value = data;
             Children = children;
         }
 
         public Node With(INode data) => new Node(data, Children);
-        public Node With(params Node[] children) => new Node(Data, children);
+        public Node With(params Node[] children) => new Node(Value, children);
     }
 }

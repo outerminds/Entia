@@ -12,7 +12,7 @@ namespace Entia.Experimental.Schedulers
     public abstract class Scheduler<T> : IScheduler where T : struct, INode
     {
         public abstract Result<Runner[]> Schedule(in T data, in Context context);
-        Result<Runner[]> IScheduler.Schedule(in Context context) => Result.Cast<T>(context.Node.Data).Bind(context, (data, state) => Schedule(data, state));
+        Result<Runner[]> IScheduler.Schedule(in Context context) => Result.Cast<T>(context.Node.Value).Bind(context, (data, state) => Schedule(data, state));
     }
 
     public static class Scheduler

@@ -15,7 +15,7 @@ namespace Entia.Experimental.Scheduling
             World = world;
         }
 
-        public Result<Runner[]> Schedule(Node node) => World.Container.Get<IScheduler>(node.Data.GetType())
+        public Result<Runner[]> Schedule(Node node) => World.Container.Get<IScheduler>(node.Value.GetType())
             .Select(With(node), (scheduler, state) => scheduler.Schedule(state))
             .Any();
 
