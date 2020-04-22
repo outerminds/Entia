@@ -82,7 +82,19 @@ namespace Entia.Injectables
                     ref var component = ref state._components.GetOrDummy<T>(state.entity, out var success, state.include);
                     if (success) component = state.modify(component);
                 });
+            public bool Modify<T>(Entity entity, InFunc<T, T> modify, States include = States.All) where T : struct, IComponent =>
+                _resolvers.Defer((entity, modify, include, _components), state =>
+                {
+                    ref var component = ref state._components.GetOrDummy<T>(state.entity, out var success, state.include);
+                    if (success) component = state.modify(component);
+                });
             public bool Modify<T, TState>(Entity entity, in TState state, Func<T, TState, T> modify, States include = States.All) where T : struct, IComponent =>
+                _resolvers.Defer((entity, state, modify, include, _components), state =>
+                {
+                    ref var component = ref state._components.GetOrDummy<T>(state.entity, out var success, state.include);
+                    if (success) component = state.modify(component, state.state);
+                });
+            public bool Modify<T, TState>(Entity entity, in TState state, InFunc<T, TState, T> modify, States include = States.All) where T : struct, IComponent =>
                 _resolvers.Defer((entity, state, modify, include, _components), state =>
                 {
                     ref var component = ref state._components.GetOrDummy<T>(state.entity, out var success, state.include);
