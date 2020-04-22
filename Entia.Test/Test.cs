@@ -1,5 +1,4 @@
 ﻿using Entia.Core;
-using Entia.Experimental.Injectables;
 using Entia.Injectables;
 using Entia.Modules;
 using Entia.Modules.Family;

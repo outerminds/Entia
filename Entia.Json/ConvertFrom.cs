@@ -9,6 +9,10 @@ namespace Entia.Json
 {
     public readonly struct ConvertFromContext
     {
+        // NOTE: do not use a 'hard' cast '(T)value' because in some cases, a non-null value
+        // may be of the wrong type, for example in the case of type name collision
+        static T Cast<T>(object value) => value is T casted ? casted : default;
+
         public readonly Node Node;
         public readonly TypeData Type;
         public readonly List<object> References;
@@ -25,7 +29,7 @@ namespace Entia.Json
         }
 
         public T Convert<T>(Node node) =>
-            TrySpecial(node, out var special) ? (T)special : Concrete<T>(node);
+            TrySpecial(node, out var special) ? Cast<T>(special) : Concrete<T>(node);
         public object Convert(Node node, TypeData type) =>
             TrySpecial(node, out var special) ? special : Concrete(node, type);
         public object Convert(Node node, Type type) =>
@@ -49,9 +53,9 @@ namespace Entia.Json
         T Concrete<T>(Node node)
         {
             var type = TypeUtility.GetData<T>();
-            if (TryPrimitive(node, type, out var primitive)) return (T)primitive;
-            if (TryConverter<T>(node, type, out var instance)) return (T)instance;
-            return (T)Initialize(Instantiate<T>(type), node, type);
+            if (TryPrimitive(node, type, out var primitive)) return Cast<T>(primitive);
+            if (TryConverter<T>(node, type, out var instance)) return Cast<T>(instance);
+            return Cast<T>(Initialize(Instantiate<T>(type), node, type));
         }
 
         object Concrete(Node node, TypeData type)
@@ -148,7 +152,7 @@ namespace Entia.Json
         T Instantiate<T>(TypeData type)
         {
             if (typeof(T).IsValueType) return default;
-            return (T)Instantiate(type);
+            return Cast<T>(Instantiate(type));
         }
 
         object Initialize(object instance, Node node, TypeData type)
