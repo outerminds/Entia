@@ -134,14 +134,10 @@ namespace Entia.Json
 
         public static bool TryChar(this Node node, out char value)
         {
-            if (node.TryString(out var @string) && @string.Length > 0)
+            if (node.TryString(out var @string)) return @string.TryFirst(out value);
+            else if (node.TryLong(out var @long))
             {
-                value = @string[0];
-                return true;
-            }
-            else if (node.TryLong(out var @double))
-            {
-                value = (char)@double;
+                value = (char)@long;
                 return true;
             }
             value = default;

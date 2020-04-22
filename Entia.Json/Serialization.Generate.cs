@@ -29,8 +29,8 @@ namespace Entia.Json
         {
             switch (node.Kind)
             {
-                case Node.Kinds.Null:
-                case Node.Kinds.Boolean:
+                case Node.Kinds.Null: builder.Append("null"); break;
+                case Node.Kinds.Boolean: builder.Append((bool)node.Value ? "true" : "false"); break;
                 case Node.Kinds.Number: builder.Append(node.Value); break;
                 case Node.Kinds.String:
                     var value = (string)node.Value;
@@ -78,8 +78,8 @@ namespace Entia.Json
         {
             switch (node.Kind)
             {
-                case Node.Kinds.Null:
-                case Node.Kinds.Boolean:
+                case Node.Kinds.Null: builder.Append("null"); break;
+                case Node.Kinds.Boolean: builder.Append((bool)node.Value ? "true" : "false"); break;
                 case Node.Kinds.Number: builder.Append(node.Value); break;
                 case Node.Kinds.String:
                     var value = (string)node.Value;

@@ -9,7 +9,7 @@ namespace Entia.Json
     public static partial class Serialization
     {
         const char _a = 'a', _b = 'b', _c = 'c', _d = 'd', _e = 'e', _f = 'f';
-        const char _A = 'A', _B = 'B', _C = 'C', _D = 'D', _E = 'E', _F = 'F';
+        const char _A = 'A', _B = 'B', _C = 'C', _D = 'D', _E = 'E', _F = 'F', _N = 'N', _T = 'T';
         const char _l = 'l', _n = 'n', _r = 'r', _s = 's', _t = 't', _u = 'u';
         const char _0 = '0', _1 = '1', _2 = '2', _3 = '3', _4 = '4', _5 = '5', _6 = '6', _7 = '7', _8 = '8', _9 = '9';
         const char _plus = '+', _minus = '-', _comma = ',', _dot = '.', _colon = ':', _quote = '"', _backSlash = '\\', _frontSlash = '/';
@@ -119,18 +119,21 @@ namespace Entia.Json
                     switch (pointer[index++])
                     {
                         case _n:
+                        case _N:
                             if (index + 3 <= count && pointer[index++] == _u && pointer[index++] == _l && pointer[index++] == _l)
                                 nodes.Push(Node.Null);
                             else
                                 return Result.Failure($"Expected 'null' at index '{index - 1}'.");
                             break;
                         case _t:
+                        case _T:
                             if (index + 3 <= count && pointer[index++] == _r && pointer[index++] == _u && pointer[index++] == _e)
                                 nodes.Push(Node.True);
                             else
                                 return Result.Failure($"Expected 'true' at index '{index - 1}'.");
                             break;
                         case _f:
+                        case _F:
                             if (index + 4 <= count && pointer[index++] == _a && pointer[index++] == _l && pointer[index++] == _s && pointer[index++] == _e)
                                 nodes.Push(Node.False);
                             else
