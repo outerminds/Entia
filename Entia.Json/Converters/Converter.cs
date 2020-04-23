@@ -82,43 +82,44 @@ namespace Entia.Json.Converters
             public static readonly Initialize<T> Initialize = (ref T _, in ConvertFromContext __) => { };
         }
 
-        public static Converter<T> Version<T>(params (int version, Converter<T> converter)[] converters)
+        public static Converter<T> Version<T>(params (int version, Converter<T> converter)[] converters) =>
+            Version(converters.Min(pair => pair.version), converters.Max(pair => pair.version), converters);
+        public static Converter<T> Version<T>(int @default, int latest, params (int version, Converter<T> converter)[] converters)
         {
-            if (converters.Length == 0) return Default<T>();
-            var map = converters.ToDictionary(pair => pair.version, pair => pair.converter);
-            var latest = converters.MaxBy(pair => pair.version);
-
-            bool TryConverter(Node node, out Converter<T> converter, out Node value)
+            static bool TryVersion(Node node, out int version, out Node value)
             {
                 if (node.IsObject() && node.Children.Length == 4 &&
                     node.Children[0].AsString() == "$k" &&
-                    node.Children[2].AsString() == "$v" &&
-                    map.TryGetValue(node.Children[1].AsInt(), out converter))
+                    node.Children[2].AsString() == "$v")
                 {
+                    version = node.Children[1].AsInt();
                     value = node.Children[3];
                     return true;
                 }
-                converter = default;
+                version = default;
                 value = default;
                 return false;
             }
 
+            if (converters.Length == 0) return Default<T>();
+            var versionToConverter = converters.ToDictionary(pair => pair.version, pair => pair.converter);
+            var defaultConverter = versionToConverter[@default];
+            var latestConverter = versionToConverter[latest];
+
             return Create(
                 (in T instance, in ConvertToContext context) =>
-                {
-                    var value = latest.converter.Convert(instance, context);
-                    return Node.Object("$k", latest.version, "$v", value);
-                },
+                    Node.Object("$k", latest, "$v", latestConverter.Convert(instance, context)),
                 (in ConvertFromContext context) =>
-                    TryConverter(context.Node, out var converter, out var value) ?
-                    converter.Instantiate(context.With(value)) :
-                    latest.converter.Instantiate(context),
+                    TryVersion(context.Node, out var version, out var value) &&
+                    versionToConverter.TryGetValue(version, out var converter) ?
+                    converter.Instantiate(context.With(value)) : defaultConverter.Instantiate(context),
                 (ref T instance, in ConvertFromContext context) =>
                 {
-                    if (TryConverter(context.Node, out var converter, out var value))
+                    if (TryVersion(context.Node, out var version, out var value) &&
+                        versionToConverter.TryGetValue(version, out var converter))
                         converter.Initialize(ref instance, context.With(value));
                     else
-                        latest.converter.Initialize(ref instance, context);
+                        defaultConverter.Initialize(ref instance, context);
                 });
         }
 
