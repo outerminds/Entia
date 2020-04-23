@@ -81,6 +81,11 @@ namespace Entia.Json.Converters
         {
             public static readonly Instantiate<T> Instantiate = (in ConvertFromContext context) => context.Instantiate<T>();
             public static readonly Initialize<T> Initialize = (ref T _, in ConvertFromContext __) => { };
+            public static readonly Converter<T> Default = Create(
+                (in T _, in ConvertToContext __) => Node.Null,
+                (in ConvertFromContext _) => default,
+                (ref T _, in ConvertFromContext __) => { },
+                _ => false);
         }
 
         public static Converter<T> Version<T>(params (int version, Converter<T> converter)[] converters) =>
@@ -114,11 +119,7 @@ namespace Entia.Json.Converters
                     Converter(context.Node, out var value).Initialize(ref instance, context.With(value)));
         }
 
-        public static Converter<T> Default<T>() => Create(
-            (in T _, in ConvertToContext __) => Node.Null,
-            (in ConvertFromContext _) => default,
-            (ref T _, in ConvertFromContext __) => { },
-            _ => false);
+        public static Converter<T> Default<T>() => Cache<T>.Default;
 
         public static Converter<T> Object<T>(Instantiate<T> instantiate = null, params Member<T>[] members)
         {
