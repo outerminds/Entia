@@ -160,7 +160,7 @@ namespace Entia.Json
                                         case _backSlash:
                                             if (builder == null) builder = new StringBuilder(256);
                                             else builder.Clear();
-                                            nodes.Push(Node.String(builder.Unescape(pointer, ref start, ref index, count), false));
+                                            nodes.Push(Node.String(builder.Unescape(pointer, ref start, ref index, count), true));
                                             break;
                                         case _quote:
                                             nodes.Push(Node.String(new string(pointer, start, index - 1 - start), true));
@@ -344,8 +344,5 @@ namespace Entia.Json
             }
             return value * powers[exponent];
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static bool IsDigit(char character) => character >= '0' && character <= '9';
     }
 }
