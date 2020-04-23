@@ -112,11 +112,11 @@ namespace Entia.Json
 
         bool TryConverter<T>(Node node, TypeData type, out object instance)
         {
-            var context = With(node, type);
             foreach (var converter in Container.Get<T, IConverter>())
             {
                 if (converter.Validate(type))
                 {
+                    var context = With(node, type);
                     var index = References.Count;
                     References.Add(default);
                     instance = converter.Instantiate(context);
@@ -133,11 +133,11 @@ namespace Entia.Json
 
         bool TryConverter(Node node, TypeData type, out object instance)
         {
-            var context = With(node, type);
             foreach (var converter in Container.Get<IConverter>(type))
             {
                 if (converter.Validate(type))
                 {
+                    var context = With(node, type);
                     var index = References.Count;
                     References.Add(default);
                     instance = converter.Instantiate(context);
