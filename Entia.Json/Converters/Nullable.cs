@@ -38,7 +38,7 @@ namespace Entia.Json.Converters
 
     public sealed class ConcreteNullable : IConverter
     {
-        public bool CanConvert(TypeData type) => type.Definition == typeof(Nullable<>);
+        public bool Validate(TypeData type) => type.Definition == typeof(Nullable<>);
 
         public Node Convert(in ConvertToContext context)
         {

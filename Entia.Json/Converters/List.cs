@@ -87,7 +87,7 @@ namespace Entia.Json.Converters
 
     public sealed class AbstractList : Converter<IList>
     {
-        public override bool CanConvert(TypeData type) => type.Element is TypeData;
+        public override bool Validate(TypeData type) => type.Element is TypeData;
 
         public override Node Convert(in IList instance, in ConvertToContext context)
         {

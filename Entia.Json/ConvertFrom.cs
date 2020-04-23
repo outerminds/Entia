@@ -48,7 +48,8 @@ namespace Entia.Json
 
         public object Instantiate(Type type) => Instantiate(TypeUtility.GetData(type));
 
-        public ConvertFromContext With(Node node, TypeData type) => new ConvertFromContext(node, type, References, Container);
+        public ConvertFromContext With(Node node = null, TypeData type = null) =>
+            new ConvertFromContext(node ?? Node, type ?? Type, References, Container);
 
         T Concrete<T>(Node node)
         {
@@ -111,15 +112,16 @@ namespace Entia.Json
 
         bool TryConverter<T>(Node node, TypeData type, out object instance)
         {
+            var context = With(node, type);
             foreach (var converter in Container.Get<T, IConverter>())
             {
-                if (converter.CanConvert(type))
+                if (converter.Validate(type))
                 {
                     var index = References.Count;
                     References.Add(default);
-                    instance = converter.Instantiate(With(node, type));
+                    instance = converter.Instantiate(context);
                     References[index] = instance;
-                    converter.Initialize(ref instance, With(node, type));
+                    converter.Initialize(ref instance, context);
                     References[index] = instance;
                     return true;
                 }
@@ -131,15 +133,16 @@ namespace Entia.Json
 
         bool TryConverter(Node node, TypeData type, out object instance)
         {
+            var context = With(node, type);
             foreach (var converter in Container.Get<IConverter>(type))
             {
-                if (converter.CanConvert(type))
+                if (converter.Validate(type))
                 {
                     var index = References.Count;
                     References.Add(default);
-                    instance = converter.Instantiate(With(node, type));
+                    instance = converter.Instantiate(context);
                     References[index] = instance;
-                    converter.Initialize(ref instance, With(node, type));
+                    converter.Initialize(ref instance, context);
                     References[index] = instance;
                     return true;
                 }

@@ -86,7 +86,7 @@ namespace Entia.Json.Converters
 
     public sealed class AbstractArray : Converter<Array>
     {
-        public override bool CanConvert(TypeData type) => type.Element is TypeData;
+        public override bool Validate(TypeData type) => type.Element is TypeData;
 
         public override Node Convert(in Array instance, in ConvertToContext context)
         {

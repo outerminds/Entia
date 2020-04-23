@@ -22,7 +22,7 @@ namespace Entia.Json.Converters
     [Implementation(typeof(ISerializable), typeof(AbstractSerializable))]
     public interface IConverter : ITrait
     {
-        bool CanConvert(TypeData type);
+        bool Validate(TypeData type);
         Node Convert(in ConvertToContext context);
         object Instantiate(in ConvertFromContext context);
         void Initialize(ref object instance, in ConvertFromContext context);
@@ -30,7 +30,7 @@ namespace Entia.Json.Converters
 
     public abstract class Converter<T> : IConverter
     {
-        public virtual bool CanConvert(TypeData type) => true;
+        public virtual bool Validate(TypeData type) => true;
         public abstract Node Convert(in T instance, in ConvertToContext context);
         public abstract T Instantiate(in ConvertFromContext context);
         public virtual void Initialize(ref T instance, in ConvertFromContext context) { }
@@ -50,6 +50,7 @@ namespace Entia.Json.Converters
 
     public static class Converter
     {
+        public delegate bool Validate(TypeData type);
         public delegate Node Convert<T>(in T instance, in ConvertToContext context);
         public delegate T Instantiate<T>(in ConvertFromContext context);
         public delegate void Initialize<T>(ref T instance, in ConvertFromContext context);
@@ -59,14 +60,17 @@ namespace Entia.Json.Converters
             public readonly Convert<T> _convert;
             public readonly Instantiate<T> _instantiate;
             public readonly Initialize<T> _initialize;
+            public readonly Validate _validate;
 
-            public Function(Convert<T> convert, Instantiate<T> instantiate, Initialize<T> initialize)
+            public Function(Convert<T> convert, Instantiate<T> instantiate, Initialize<T> initialize, Validate validate)
             {
                 _convert = convert;
                 _instantiate = instantiate;
                 _initialize = initialize;
+                _validate = validate;
             }
 
+            public override bool Validate(TypeData type) => _validate(type);
             public override Node Convert(in T instance, in ConvertToContext context) => _convert(instance, context);
             public override T Instantiate(in ConvertFromContext context) => _instantiate(context);
             public override void Initialize(ref T instance, in ConvertFromContext context) => _initialize(ref instance, context);
@@ -77,6 +81,52 @@ namespace Entia.Json.Converters
             public static readonly Instantiate<T> Instantiate = (in ConvertFromContext context) => context.Instantiate<T>();
             public static readonly Initialize<T> Initialize = (ref T _, in ConvertFromContext __) => { };
         }
+
+        public static Converter<T> Version<T>(params (int version, Converter<T> converter)[] converters)
+        {
+            if (converters.Length == 0) return Default<T>();
+            var map = converters.ToDictionary(pair => pair.version, pair => pair.converter);
+            var latest = converters.MaxBy(pair => pair.version);
+
+            bool TryConverter(Node node, out Converter<T> converter, out Node value)
+            {
+                if (node.IsObject() && node.Children.Length == 4 &&
+                    node.Children[0].AsString() == "$k" &&
+                    node.Children[2].AsString() == "$v" &&
+                    map.TryGetValue(node.Children[1].AsInt(), out converter))
+                {
+                    value = node.Children[3];
+                    return true;
+                }
+                converter = default;
+                value = default;
+                return false;
+            }
+
+            return Create(
+                (in T instance, in ConvertToContext context) =>
+                {
+                    var value = latest.converter.Convert(instance, context);
+                    return Node.Object("$k", latest.version, "$v", value);
+                },
+                (in ConvertFromContext context) =>
+                    TryConverter(context.Node, out var converter, out var value) ?
+                    converter.Instantiate(context.With(value)) :
+                    latest.converter.Instantiate(context),
+                (ref T instance, in ConvertFromContext context) =>
+                {
+                    if (TryConverter(context.Node, out var converter, out var value))
+                        converter.Initialize(ref instance, context.With(value));
+                    else
+                        latest.converter.Initialize(ref instance, context);
+                });
+        }
+
+        public static Converter<T> Default<T>() => Create(
+            (in T _, in ConvertToContext __) => Node.Null,
+            (in ConvertFromContext _) => default,
+            (ref T _, in ConvertFromContext __) => { },
+            _ => false);
 
         public static Converter<T> Object<T>(Instantiate<T> instantiate, params IMember<T>[] members)
         {
@@ -102,7 +152,7 @@ namespace Entia.Json.Converters
                     foreach (var (key, value) in context.Node.Members())
                     {
                         if (map.TryGetValue(key, out var member))
-                            member.Initialize(ref instance, value, context);
+                            member.Initialize(ref instance, context.With(value));
                     }
                 }
             );
@@ -118,8 +168,8 @@ namespace Entia.Json.Converters
             (in T instance, in ConvertToContext context) => to(instance),
             (in ConvertFromContext context) => from(context.Node));
 
-        public static Converter<T> Create<T>(Convert<T> convert, Instantiate<T> instantiate = null, Initialize<T> initialize = null) =>
-            new Function<T>(convert, instantiate ?? Cache<T>.Instantiate, initialize ?? Cache<T>.Initialize);
+        public static Converter<T> Create<T>(Convert<T> convert, Instantiate<T> instantiate = null, Initialize<T> initialize = null, Validate validate = null) =>
+            new Function<T>(convert, instantiate ?? Cache<T>.Instantiate, initialize ?? Cache<T>.Initialize, validate ?? (_ => true));
     }
 
     public interface IMember<T>
@@ -127,14 +177,14 @@ namespace Entia.Json.Converters
         string Name { get; }
 
         Node Convert(in T instance, in ConvertToContext context);
-        void Initialize(ref T instance, Node node, in ConvertFromContext context);
+        void Initialize(ref T instance, in ConvertFromContext context);
     }
 
     public static class Member
     {
         public delegate bool Validate<T>(in T instance);
         public delegate Node Convert<T>(in T instance, in ConvertToContext context);
-        public delegate void Initialize<T>(ref T instance, Node node, in ConvertFromContext context);
+        public delegate void Initialize<T>(ref T instance, in ConvertFromContext context);
         public delegate ref readonly TValue Get<T, TValue>(in T instance);
         public delegate TValue Getter<T, TValue>(in T instance);
         public delegate void Setter<T, TValue>(ref T instance, in TValue value);
@@ -156,7 +206,7 @@ namespace Entia.Json.Converters
             }
 
             public Node Convert(in T instance, in ConvertToContext context) => _convert(instance, context);
-            public void Initialize(ref T instance, Node node, in ConvertFromContext context) => _initialize(ref instance, node, context);
+            public void Initialize(ref T instance, in ConvertFromContext context) => _initialize(ref instance, context);
         }
 
         static class Cache<T>
@@ -178,9 +228,9 @@ namespace Entia.Json.Converters
                     if (validate(value)) return to(value, context);
                     return default;
                 },
-                (ref T instance, Node node, in ConvertFromContext context) =>
+                (ref T instance, in ConvertFromContext context) =>
                 {
-                    var value = from(node, context);
+                    var value = from(context.Node, context);
                     if (validate(value)) UnsafeUtility.Set(get(instance), value);
                 });
         }
@@ -197,9 +247,9 @@ namespace Entia.Json.Converters
                     if (validate(value)) return to(value, context);
                     return default;
                 },
-                (ref T instance, Node node, in ConvertFromContext context) =>
+                (ref T instance, in ConvertFromContext context) =>
                 {
-                    var value = from(node, context);
+                    var value = from(context.Node, context);
                     if (validate(value)) set(ref instance, value);
                 });
         }

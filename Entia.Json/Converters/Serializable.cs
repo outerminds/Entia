@@ -9,7 +9,7 @@ namespace Entia.Json.Converters
         static readonly FormatterConverter _converter = new FormatterConverter();
         static readonly StreamingContext _context = new StreamingContext(StreamingContextStates.All);
 
-        public override bool CanConvert(TypeData type) => type.SerializationConstructor is ConstructorInfo;
+        public override bool Validate(TypeData type) => type.SerializationConstructor is ConstructorInfo;
 
         public override Node Convert(in ISerializable instance, in ConvertToContext context)
         {

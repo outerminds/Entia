@@ -119,7 +119,7 @@ namespace Entia.Json
         {
             foreach (var converter in Container.Get<T, IConverter>())
             {
-                if (converter.CanConvert(type))
+                if (converter.Validate(type))
                 {
                     node = converter.Convert(With(instance, type));
                     return true;
@@ -134,7 +134,7 @@ namespace Entia.Json
         {
             foreach (var converter in Container.Get<IConverter>(type))
             {
-                if (converter.CanConvert(type))
+                if (converter.Validate(type))
                 {
                     node = converter.Convert(With(instance, type));
                     return true;

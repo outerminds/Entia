@@ -26,7 +26,7 @@ namespace Entia.Json.Converters
 
     public sealed class Enumerable<T> : Converter<IEnumerable<T>>
     {
-        public override bool CanConvert(TypeData type) =>
+        public override bool Validate(TypeData type) =>
             type.EnumerableConstructor.constructor is ConstructorInfo &&
             type.Element.Array.Type.Is(type.EnumerableConstructor.parameter.ParameterType);
 
@@ -53,7 +53,7 @@ namespace Entia.Json.Converters
     {
         static readonly TypeData _default = TypeUtility.GetData<object>();
 
-        public override bool CanConvert(TypeData type) =>
+        public override bool Validate(TypeData type) =>
             type.EnumerableConstructor.constructor is ConstructorInfo &&
             (type.Element?.Array.Type ?? _default.Array.Type).Is(type.EnumerableConstructor.parameter.ParameterType);
 

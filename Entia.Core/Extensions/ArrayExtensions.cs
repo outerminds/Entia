@@ -5,6 +5,37 @@ namespace Entia.Core
 {
     public static class ArrayExtensions
     {
+        static class Cache<T>
+        {
+            public static readonly Comparison<T> Compare = Comparer<T>.Default.Compare;
+        }
+
+        public static TSource MaxBy<TSource, T>(this TSource[] array, Func<TSource, T> selector, Comparison<T> compare = null)
+        {
+            compare ??= Cache<T>.Compare;
+
+            var maximum = (index: 0, value: selector(array[0]));
+            for (int i = 1; i < array.Length; i++)
+            {
+                var value = selector(array[i]);
+                if (compare(value, maximum.value) > 0) maximum = (i, value);
+            }
+            return array[maximum.index];
+        }
+
+        public static TSource MinBy<TSource, T>(this TSource[] array, Func<TSource, T> selector, Comparison<T> compare = null)
+        {
+            compare ??= Cache<T>.Compare;
+
+            var minimum = (index: 0, value: selector(array[0]));
+            for (int i = 1; i < array.Length; i++)
+            {
+                var value = selector(array[i]);
+                if (compare(value, minimum.value) < 0) minimum = (i, value);
+            }
+            return array[minimum.index];
+        }
+
         public static bool TryFirst<T>(this T[] array, out T item)
         {
             if (array.Length > 0)
@@ -121,6 +152,27 @@ namespace Entia.Core
         {
             var target = new TResult[source.Length];
             for (int i = 0; i < source.Length; i++) target[i] = selector(source[i]);
+            return target;
+        }
+
+        public static TResult[] Select<TSource, TResult>(this TSource[] source, Func<TSource, int, TResult> selector)
+        {
+            var target = new TResult[source.Length];
+            for (int i = 0; i < source.Length; i++) target[i] = selector(source[i], i);
+            return target;
+        }
+
+        public static TResult[] Select<TSource, TResult, TState>(this TSource[] source, in TState state, Func<TSource, TState, TResult> selector)
+        {
+            var target = new TResult[source.Length];
+            for (int i = 0; i < source.Length; i++) target[i] = selector(source[i], state);
+            return target;
+        }
+
+        public static TResult[] Select<TSource, TResult, TState>(this TSource[] source, in TState state, Func<TSource, TState, int, TResult> selector)
+        {
+            var target = new TResult[source.Length];
+            for (int i = 0; i < source.Length; i++) target[i] = selector(source[i], state, i);
             return target;
         }
 

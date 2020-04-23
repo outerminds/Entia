@@ -55,7 +55,7 @@ namespace Entia.Json.Converters
 
     public sealed class AbstractDictionary<TKey, TValue> : Converter<IDictionary<TKey, TValue>>
     {
-        public override bool CanConvert(TypeData type) => type.DefaultConstructor is ConstructorInfo;
+        public override bool Validate(TypeData type) => type.DefaultConstructor is ConstructorInfo;
 
         public override Node Convert(in IDictionary<TKey, TValue> instance, in ConvertToContext context)
         {
@@ -92,7 +92,7 @@ namespace Entia.Json.Converters
             _value = value;
         }
 
-        public override bool CanConvert(TypeData type) => type.DefaultConstructor is ConstructorInfo;
+        public override bool Validate(TypeData type) => type.DefaultConstructor is ConstructorInfo;
 
         public override Node Convert(in IDictionary instance, in ConvertToContext context)
         {
