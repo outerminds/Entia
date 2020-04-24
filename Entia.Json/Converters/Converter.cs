@@ -14,15 +14,12 @@ namespace Entia.Json.Converters
     [Implementation(typeof(Guid), typeof(ConcreteGuid))]
     [Implementation(typeof(Nullable<>), typeof(Providers.Nullable))]
     [Implementation(typeof(Array), typeof(Providers.Array))]
-    [Implementation(typeof(List<>), typeof(Providers.List))]
-    [Implementation(typeof(IList), typeof(AbstractList))]
-    [Implementation(typeof(IDictionary<,>), typeof(Providers.Dictionary))]
-    [Implementation(typeof(IDictionary), typeof(AbstractDictionary))]
+    [Implementation(typeof(IList), typeof(Providers.List))]
+    [Implementation(typeof(IDictionary), typeof(Providers.Dictionary))]
     [Implementation(typeof(IEnumerable), typeof(Providers.Enumerable))]
-    [Implementation(typeof(ISerializable), typeof(AbstractSerializable))]
+    [Implementation(typeof(ISerializable), typeof(Providers.Serializable))]
     public interface IConverter : ITrait
     {
-        bool Validate(TypeData type);
         Node Convert(in ConvertToContext context);
         object Instantiate(in ConvertFromContext context);
         void Initialize(ref object instance, in ConvertFromContext context);
@@ -30,7 +27,6 @@ namespace Entia.Json.Converters
 
     public abstract class Converter<T> : IConverter
     {
-        public virtual bool Validate(TypeData type) => true;
         public abstract Node Convert(in T instance, in ConvertToContext context);
         public abstract T Instantiate(in ConvertFromContext context);
         public virtual void Initialize(ref T instance, in ConvertFromContext context) { }
@@ -61,17 +57,14 @@ namespace Entia.Json.Converters
             public readonly Convert<T> _convert;
             public readonly Instantiate<T> _instantiate;
             public readonly Initialize<T> _initialize;
-            public readonly Validate _validate;
 
-            public Function(Convert<T> convert, Instantiate<T> instantiate, Initialize<T> initialize, Validate validate)
+            public Function(Convert<T> convert, Instantiate<T> instantiate, Initialize<T> initialize)
             {
                 _convert = convert;
                 _instantiate = instantiate;
                 _initialize = initialize;
-                _validate = validate;
             }
 
-            public override bool Validate(TypeData type) => _validate(type);
             public override Node Convert(in T instance, in ConvertToContext context) => _convert(instance, context);
             public override T Instantiate(in ConvertFromContext context) => _instantiate(context);
             public override void Initialize(ref T instance, in ConvertFromContext context) => _initialize(ref instance, context);
@@ -79,13 +72,10 @@ namespace Entia.Json.Converters
 
         static class Cache<T>
         {
+            public static readonly Convert<T> Convert = (in T instance, in ConvertToContext context) => context.Convert(instance);
             public static readonly Instantiate<T> Instantiate = (in ConvertFromContext context) => context.Instantiate<T>();
             public static readonly Initialize<T> Initialize = (ref T _, in ConvertFromContext __) => { };
-            public static readonly Converter<T> Default = Create(
-                (in T _, in ConvertToContext __) => Node.Null,
-                (in ConvertFromContext _) => default,
-                (ref T _, in ConvertFromContext __) => { },
-                _ => false);
+            public static readonly Converter<T> Default = Create<T>();
         }
 
         public static Converter<T> Version<T>(params (int version, Converter<T> converter)[] converters) =>
@@ -95,7 +85,7 @@ namespace Entia.Json.Converters
             const string versionKey = "$k";
             const string valueKey = "$v";
 
-            if (converters.Length == 0) return Default<T>();
+            if (converters.Length == 0) return Cache<T>.Default;
             var versionToConverter = converters.ToDictionary(pair => pair.version, pair => pair.converter);
             var defaultConverter = versionToConverter[@default];
             var latestConverter = versionToConverter[latest];
@@ -162,7 +152,7 @@ namespace Entia.Json.Converters
             (in T instance, in ConvertToContext context) => to(instance),
             (in ConvertFromContext context) => from(context.Node));
 
-        public static Converter<T> Create<T>(Convert<T> convert, Instantiate<T> instantiate = null, Initialize<T> initialize = null, Validate validate = null) =>
-            new Function<T>(convert, instantiate ?? Cache<T>.Instantiate, initialize ?? Cache<T>.Initialize, validate ?? (_ => true));
+        public static Converter<T> Create<T>(Convert<T> convert = null, Instantiate<T> instantiate = null, Initialize<T> initialize = null) =>
+            new Function<T>(convert ?? Cache<T>.Convert, instantiate ?? Cache<T>.Instantiate, initialize ?? Cache<T>.Initialize);
     }
 }

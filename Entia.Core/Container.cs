@@ -10,11 +10,11 @@ namespace Entia.Core
 {
     namespace Providers
     {
-        public interface IProvider : ITrait { IEnumerable<ITrait> Provide(Type type, Type trait); }
+        public interface IProvider : ITrait { IEnumerable<ITrait> Provide(TypeData type, TypeData trait); }
         public abstract class Provider<T> : IProvider where T : ITrait
         {
-            public abstract IEnumerable<T> Provide(Type type);
-            IEnumerable<ITrait> IProvider.Provide(Type type, Type trait) =>
+            public abstract IEnumerable<T> Provide(TypeData type);
+            IEnumerable<ITrait> IProvider.Provide(TypeData type, TypeData trait) =>
                 typeof(T).Is(trait, true, true) ? Provide(type).Cast<ITrait>() : Array.Empty<ITrait>();
         }
     }
@@ -122,14 +122,14 @@ namespace Entia.Core
         public static ITrait[] Defaults<T, TTrait>() where TTrait : ITrait
         {
             var traits = GetTraits(_defaults.Index<T>());
-            return GetDefaults(traits, typeof(T), (typeof(TTrait), traits.Index<TTrait>()));
+            return GetDefaults(traits, TypeUtility.GetData<T>(), (TypeUtility.GetData<TTrait>(), traits.Index<TTrait>()));
         }
 
         [ThreadSafe]
         public static ITrait[] Defaults<TTrait>(Type type) where TTrait : ITrait
         {
             if (_defaults.TryIndex(type, out var typeIndex) && GetTraits(typeIndex) is var traits)
-                return GetDefaults(traits, type, (typeof(TTrait), traits.Index<TTrait>()));
+                return GetDefaults(traits, type, (TypeUtility.GetData<TTrait>(), traits.Index<TTrait>()));
             return Array.Empty<ITrait>();
         }
 
@@ -156,7 +156,7 @@ namespace Entia.Core
         }
 
         [ThreadSafe]
-        static ITrait[] GetDefaults(TypeMap<ITrait, ITrait[]> traits, Type type, (Type type, int index) trait)
+        static ITrait[] GetDefaults(TypeMap<ITrait, ITrait[]> traits, TypeData type, (TypeData type, int index) trait)
         {
             if (traits.TryGet(trait.index, out var defaults)) return defaults;
             lock (traits)
@@ -168,7 +168,7 @@ namespace Entia.Core
         }
 
         [ThreadSafe]
-        static ITrait[] CreateDefaults(Type type, Type trait)
+        static ITrait[] CreateDefaults(TypeData type, TypeData trait)
         {
             static bool Is(Type current, Type other) => current.Is<IProvider>() || current.Is(other, true, true);
 
@@ -195,7 +195,7 @@ namespace Entia.Core
             IEnumerable<Option<ITrait>> Create()
             {
                 var typeData = TypeUtility.GetData(type);
-                foreach (var attribute in type.GetCustomAttributes<ImplementationAttribute>(true))
+                foreach (var attribute in type.Type.GetCustomAttributes<ImplementationAttribute>(true))
                 {
                     if (Is(attribute.Implementation.Type, trait))
                         yield return GetInstance(Concrete(typeData, attribute), attribute.Arguments);
@@ -234,9 +234,9 @@ namespace Entia.Core
                 }
 
                 var traitData = TypeUtility.GetData(trait);
-                foreach (var attribute in trait.GetCustomAttributes<ImplementationAttribute>(true))
+                foreach (var attribute in trait.Type.GetCustomAttributes<ImplementationAttribute>(true))
                 {
-                    if (type.Is(attribute.Type.Type, true, true) && Is(attribute.Implementation.Type, trait))
+                    if (type.Type.Is(attribute.Type.Type, true, true) && Is(attribute.Implementation.Type, trait))
                         yield return GetInstance(Concrete(typeData, attribute), attribute.Arguments);
                 }
 
@@ -245,7 +245,7 @@ namespace Entia.Core
                     if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IImplementation<,>))
                     {
                         var arguments = @interface.GetGenericArguments();
-                        if (type.Is(arguments[0], true, true) && Is(arguments[1], trait))
+                        if (type.Type.Is(arguments[0], true, true) && Is(arguments[1], trait))
                             yield return GetInstance(arguments[1]);
                     }
                 }

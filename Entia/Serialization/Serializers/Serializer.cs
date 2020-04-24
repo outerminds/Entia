@@ -99,10 +99,10 @@ namespace Entia.Experimental.Serializers
 
     public sealed class Default : Provider<ISerializer>
     {
-        public override IEnumerable<ISerializer> Provide(Type type)
+        public override IEnumerable<ISerializer> Provide(TypeData type)
         {
             var data = TypeUtility.GetData(type);
-            if (type.IsArray) yield return Array(data.Element);
+            if (type.Type.IsArray) yield return Array(data.Element);
             else yield return Object(type);
         }
     }

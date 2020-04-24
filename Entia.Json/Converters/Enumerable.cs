@@ -12,23 +12,41 @@ namespace Entia.Json.Converters
     {
         public sealed class Enumerable : Provider<IConverter>
         {
-            public override IEnumerable<IConverter> Provide(Type type)
+            public override IEnumerable<IConverter> Provide(TypeData type)
             {
-                if (type.TryElement(out var element) &&
-                    Option.Try(element, state => Activator.CreateInstance(typeof(Enumerable<>).MakeGenericType(state)))
-                    .Cast<IConverter>()
-                    .TryValue(out var converter))
-                    yield return converter;
-                yield return new Converters.Enumerable();
+                {
+                    if (type.Interfaces.TryFirst(@interface => @interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IEnumerable<>), out var @interface) &&
+                        @interface.GetGenericArguments() is Type[] arguments &&
+                        arguments.Select(TypeUtility.GetData).TryFirst(out var element) &&
+                        type.InstanceConstructors.TryFirst(constructor =>
+                            constructor.GetParameters() is ParameterInfo[] parameters &&
+                            parameters.TryFirst(out var parameter) &&
+                            element.Array.Type.Is(parameter.ParameterType), out var constructor))
+                    {
+                        if (Option.Try(() => Activator.CreateInstance(typeof(Enumerable<>).MakeGenericType(element), constructor))
+                            .Cast<IConverter>()
+                            .TryValue(out var converter))
+                            yield return converter;
+                        yield return new Converters.Enumerable(element, constructor);
+                    }
+                }
+                {
+                    if (type.Interfaces.Contains(typeof(IEnumerable)) &&
+                        type.InstanceConstructors.TryFirst(constructor =>
+                            constructor.GetParameters() is ParameterInfo[] parameters &&
+                            parameters.TryFirst(out var parameter) &&
+                            typeof(object[]).Is(parameter.ParameterType), out var constructor))
+                        yield return new Converters.Enumerable(typeof(object), constructor);
+                }
             }
         }
     }
 
     public sealed class Enumerable<T> : Converter<IEnumerable<T>>
     {
-        public override bool Validate(TypeData type) =>
-            type.EnumerableConstructor.constructor is ConstructorInfo &&
-            type.Element.Array.Type.Is(type.EnumerableConstructor.parameter.ParameterType);
+        readonly ConstructorInfo _constructor;
+
+        public Enumerable(ConstructorInfo constructor) { _constructor = constructor; }
 
         public override Node Convert(in IEnumerable<T> instance, in ConvertToContext context)
         {
@@ -45,23 +63,25 @@ namespace Entia.Json.Converters
             var items = new T[context.Node.Children.Length];
             for (int i = 0; i < context.Node.Children.Length; i++)
                 items[i] = context.Convert<T>(context.Node.Children[i]);
-            context.Type.EnumerableConstructor.constructor.Invoke(instance, new object[] { items });
+            _constructor.Invoke(instance, new object[] { items });
         }
     }
 
     public sealed class Enumerable : Converter<IEnumerable>
     {
-        static readonly TypeData _default = TypeUtility.GetData<object>();
+        readonly TypeData _element;
+        readonly ConstructorInfo _constructor;
 
-        public override bool Validate(TypeData type) =>
-            type.EnumerableConstructor.constructor is ConstructorInfo &&
-            (type.Element?.Array.Type ?? _default.Array.Type).Is(type.EnumerableConstructor.parameter.ParameterType);
+        public Enumerable(TypeData element, ConstructorInfo constructor)
+        {
+            _element = element;
+            _constructor = constructor;
+        }
 
         public override Node Convert(in IEnumerable instance, in ConvertToContext context)
         {
             var items = new List<Node>();
-            var element = context.Type.Element ?? _default;
-            foreach (var value in instance) items.Add(context.Convert(value, element));
+            foreach (var value in instance) items.Add(context.Convert(value, _element));
             return Node.Array(items.ToArray());
         }
 
@@ -70,11 +90,10 @@ namespace Entia.Json.Converters
 
         public override void Initialize(ref IEnumerable instance, in ConvertFromContext context)
         {
-            var element = context.Type.Element ?? _default;
-            var items = Array.CreateInstance(element, context.Node.Children.Length);
+            var items = Array.CreateInstance(_element, context.Node.Children.Length);
             for (int i = 0; i < context.Node.Children.Length; i++)
-                items.SetValue(context.Convert(context.Node.Children[i], element), i);
-            context.Type.EnumerableConstructor.constructor.Invoke(instance, new object[] { items });
+                items.SetValue(context.Convert(context.Node.Children[i], _element), i);
+            _constructor.Invoke(instance, new object[] { items });
         }
     }
 }

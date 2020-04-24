@@ -9,14 +9,16 @@ namespace Entia.Json.Converters
     {
         public sealed class Nullable : Provider<IConverter>
         {
-            public override IEnumerable<IConverter> Provide(Type type)
+            public override IEnumerable<IConverter> Provide(TypeData type)
             {
-                var arguments = type.GetGenericArguments();
-                if (Option.Try(arguments, state => Activator.CreateInstance(typeof(ConcreteNullable<>).MakeGenericType(state)))
-                    .Cast<IConverter>()
-                    .TryValue(out var converter))
-                    yield return converter;
-                yield return new ConcreteNullable();
+                if (type.Definition == typeof(Nullable<>) && type.Arguments.TryFirst(out var argument))
+                {
+                    if (Option.Try(argument, state => Activator.CreateInstance(typeof(ConcreteNullable<>).MakeGenericType(state)))
+                        .Cast<IConverter>()
+                        .TryValue(out var converter))
+                        yield return converter;
+                    yield return new ConcreteNullable(argument);
+                }
             }
         }
     }
@@ -38,18 +40,20 @@ namespace Entia.Json.Converters
 
     public sealed class ConcreteNullable : IConverter
     {
-        public bool Validate(TypeData type) => type.Definition == typeof(Nullable<>);
+        readonly TypeData _argument;
+
+        public ConcreteNullable(TypeData argument) { _argument = argument; }
 
         public Node Convert(in ConvertToContext context)
         {
             if (context.Instance is null) return Node.Null;
-            return context.Convert(context.Instance, context.Type.Arguments[0]);
+            return context.Convert(context.Instance, _argument);
         }
 
         public object Instantiate(in ConvertFromContext context)
         {
             if (context.Node.IsNull()) return default;
-            return context.Convert(context.Node, context.Type.Arguments[0]);
+            return context.Convert(context.Node, _argument);
         }
 
         public void Initialize(ref object instance, in ConvertFromContext context) { }

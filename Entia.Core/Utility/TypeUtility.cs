@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 
 namespace Entia.Core
 {
     public sealed class TypeData
     {
         public static implicit operator TypeData(Type type) => TypeUtility.GetData(type);
-        public static implicit operator Type(TypeData type) => type.Type;
+        public static implicit operator Type(TypeData type) => type?.Type;
 
         public readonly Type Type;
         public TypeCode Code => _code.Value;
@@ -30,8 +28,6 @@ namespace Entia.Core
         public MethodInfo[] InstanceMethods => _instanceMethods.Value;
         public ConstructorInfo[] InstanceConstructors => _instanceConstructors.Value;
         public ConstructorInfo DefaultConstructor => _defaultConstructor.Value;
-        public ConstructorInfo SerializationConstructor => _serializationConstructor.Value;
-        public (ConstructorInfo constructor, ParameterInfo parameter) EnumerableConstructor => _enumerableConstructor.Value;
         public Type[] Interfaces => _interfaces.Value;
         public Type[] Declaring => _declaring.Value;
         public Type[] Arguments => _arguments.Value;
@@ -58,8 +54,6 @@ namespace Entia.Core
         readonly Lazy<MethodInfo[]> _instanceMethods;
         readonly Lazy<ConstructorInfo[]> _instanceConstructors;
         readonly Lazy<ConstructorInfo> _defaultConstructor;
-        readonly Lazy<ConstructorInfo> _serializationConstructor;
-        readonly Lazy<(ConstructorInfo, ParameterInfo)> _enumerableConstructor;
         readonly Lazy<Type[]> _interfaces;
         readonly Lazy<Type[]> _declaring;
         readonly Lazy<Type[]> _arguments;
@@ -181,31 +175,6 @@ namespace Entia.Core
                 else return true;
             }
 
-            static ConstructorInfo GetSerializationConstructor(ConstructorInfo[] constructors)
-            {
-                foreach (var constructor in constructors)
-                {
-                    var parameters = constructor.GetParameters();
-                    if (parameters.Length == 2 &&
-                        parameters[0].ParameterType == typeof(SerializationInfo) &&
-                        parameters[1].ParameterType == typeof(StreamingContext))
-                        return constructor;
-                }
-                return default;
-            }
-
-            static (ConstructorInfo, ParameterInfo) GetEnumerableConstructor(ConstructorInfo[] constructors)
-            {
-                foreach (var constructor in constructors)
-                {
-                    var parameters = constructor.GetParameters();
-                    if (parameters.Length == 1 &&
-                        parameters[0].ParameterType.Is<IEnumerable>())
-                        return (constructor, parameters[0]);
-                }
-                return default;
-            }
-
             static unsafe int? GetSize(Type current, TypeCode code, bool blittable)
             {
                 switch (code)
@@ -251,8 +220,6 @@ namespace Entia.Core
             // NOTE: do not use 'InstanceMembers' such that base class constructors are not included
             _instanceConstructors = new Lazy<ConstructorInfo[]>(() => Type.GetConstructors(TypeUtility.Instance));
             _defaultConstructor = new Lazy<ConstructorInfo>(() => InstanceConstructors.FirstOrDefault(constructor => constructor.GetParameters().None()));
-            _serializationConstructor = new Lazy<ConstructorInfo>(() => GetSerializationConstructor(InstanceConstructors));
-            _enumerableConstructor = new Lazy<(ConstructorInfo, ParameterInfo)>(() => GetEnumerableConstructor(InstanceConstructors));
             _declaring = new Lazy<Type[]>(() => GetDeclaring(Type).ToArray());
             _arguments = new Lazy<Type[]>(() => Type.GetGenericArguments());
             _isShallow = new Lazy<bool>(() => GetIsShallow(Type, InstanceFields));

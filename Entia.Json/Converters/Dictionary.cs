@@ -11,19 +11,33 @@ namespace Entia.Json.Converters
     {
         public sealed class Dictionary : Provider<IConverter>
         {
-            public override IEnumerable<IConverter> Provide(Type type)
+            public override IEnumerable<IConverter> Provide(TypeData type)
             {
-                var arguments = type.GetGenericArguments();
-                if (type.Is(typeof(Dictionary<,>), definition: true) &&
-                    Option.Try(arguments, state => Activator.CreateInstance(typeof(ConcreteDictionary<,>).MakeGenericType(state)))
-                    .Cast<IConverter>()
-                    .TryValue(out var converter))
-                    yield return converter;
-                if (Option.Try(arguments, state => Activator.CreateInstance(typeof(AbstractDictionary<,>).MakeGenericType(state)))
-                    .Cast<IConverter>()
-                    .TryValue(out converter))
-                    yield return converter;
-                yield return new AbstractDictionary(arguments[0], arguments[1]);
+                {
+                    if (type.Interfaces.TryFirst(@interface => @interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IDictionary<,>), out var @interface) &&
+                        @interface.GetGenericArguments() is Type[] arguments &&
+                        arguments.Length == 2)
+                    {
+                        if (type.Definition == typeof(Dictionary<,>) &&
+                            Option.Try(() => Activator.CreateInstance(typeof(ConcreteDictionary<,>).MakeGenericType(arguments)))
+                            .Cast<IConverter>()
+                            .TryValue(out var converter))
+                            yield return converter;
+                        if (type.DefaultConstructor is ConstructorInfo constructor)
+                        {
+                            if (Option.Try(() => Activator.CreateInstance(typeof(AbstractDictionary<,>).MakeGenericType(arguments), constructor))
+                                .Cast<IConverter>()
+                                .TryValue(out converter))
+                                yield return converter;
+                            yield return new AbstractDictionary(arguments[0], arguments[1], constructor);
+                        }
+                    };
+                }
+                {
+                    if (type.Interfaces.Contains(typeof(IDictionary)) &&
+                        type.DefaultConstructor is ConstructorInfo constructor)
+                        yield return new AbstractDictionary(typeof(object), typeof(object), constructor);
+                }
             }
         }
     }
@@ -55,7 +69,9 @@ namespace Entia.Json.Converters
 
     public sealed class AbstractDictionary<TKey, TValue> : Converter<IDictionary<TKey, TValue>>
     {
-        public override bool Validate(TypeData type) => type.DefaultConstructor is ConstructorInfo;
+        readonly ConstructorInfo _constructor;
+
+        public AbstractDictionary(ConstructorInfo constructor) { _constructor = constructor; }
 
         public override Node Convert(in IDictionary<TKey, TValue> instance, in ConvertToContext context)
         {
@@ -70,7 +86,7 @@ namespace Entia.Json.Converters
         }
 
         public override IDictionary<TKey, TValue> Instantiate(in ConvertFromContext context) =>
-            context.Type.DefaultConstructor.Invoke(Array.Empty<object>()) as IDictionary<TKey, TValue>;
+            _constructor.Invoke(Array.Empty<object>()) as IDictionary<TKey, TValue>;
 
         public override void Initialize(ref IDictionary<TKey, TValue> instance, in ConvertFromContext context)
         {
@@ -82,17 +98,16 @@ namespace Entia.Json.Converters
 
     public sealed class AbstractDictionary : Converter<IDictionary>
     {
-        readonly Type _key;
-        readonly Type _value;
+        readonly TypeData _key;
+        readonly TypeData _value;
+        readonly ConstructorInfo _constructor;
 
-        public AbstractDictionary() : this(typeof(object), typeof(object)) { }
-        public AbstractDictionary(Type key, Type value)
+        public AbstractDictionary(TypeData key, TypeData value, ConstructorInfo constructor)
         {
             _key = key;
             _value = value;
+            _constructor = constructor;
         }
-
-        public override bool Validate(TypeData type) => type.DefaultConstructor is ConstructorInfo;
 
         public override Node Convert(in IDictionary instance, in ConvertToContext context)
         {
@@ -107,7 +122,7 @@ namespace Entia.Json.Converters
         }
 
         public override IDictionary Instantiate(in ConvertFromContext context) =>
-            context.Type.DefaultConstructor.Invoke(Array.Empty<object>()) as IDictionary;
+            _constructor.Invoke(Array.Empty<object>()) as IDictionary;
 
         public override void Initialize(ref IDictionary instance, in ConvertFromContext context)
         {

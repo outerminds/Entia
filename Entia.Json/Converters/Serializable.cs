@@ -1,15 +1,36 @@
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
 using Entia.Core;
+using Entia.Core.Providers;
 
 namespace Entia.Json.Converters
 {
+    namespace Providers
+    {
+        public sealed class Serializable : Provider<IConverter>
+        {
+            public override IEnumerable<IConverter> Provide(TypeData type)
+            {
+                if (type.Interfaces.Contains(typeof(ISerializable)) &&
+                    type.InstanceConstructors.TryFirst(constructor =>
+                        constructor.GetParameters() is ParameterInfo[] parameters &&
+                        parameters.Length == 2 &&
+                        parameters[0].ParameterType == typeof(SerializationInfo) &&
+                        parameters[1].ParameterType == typeof(StreamingContext), out var constructor))
+                    yield return new AbstractSerializable(constructor);
+            }
+        }
+    }
+
     public sealed class AbstractSerializable : Converter<ISerializable>
     {
         static readonly FormatterConverter _converter = new FormatterConverter();
         static readonly StreamingContext _context = new StreamingContext(StreamingContextStates.All);
 
-        public override bool Validate(TypeData type) => type.SerializationConstructor is ConstructorInfo;
+        readonly ConstructorInfo _constructor;
+
+        public AbstractSerializable(ConstructorInfo constructor) { _constructor = constructor; }
 
         public override Node Convert(in ISerializable instance, in ConvertToContext context)
         {
@@ -37,7 +58,7 @@ namespace Entia.Json.Converters
                 if (children[i - 1].TryString(out var key))
                     info.AddValue(key, context.Convert<object>(children[i]));
             }
-            context.Type.SerializationConstructor.Invoke(instance, new object[] { info, _context });
+            _constructor.Invoke(instance, new object[] { info, _context });
             if (instance is IDeserializationCallback callback) callback.OnDeserialization(this);
         }
     }

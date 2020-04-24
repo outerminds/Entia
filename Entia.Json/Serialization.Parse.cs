@@ -213,7 +213,7 @@ namespace Entia.Json
                 if (current == _backSlash) builder.AppendUnescaped(pointer, ref start, ref index, count);
                 else if (current == _quote) break;
             }
-
+            builder.Append(pointer + start, index - 1 - start);
             return builder.ToString();
         }
 

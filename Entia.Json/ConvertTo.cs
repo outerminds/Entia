@@ -41,7 +41,7 @@ namespace Entia.Json
         }
 
         public Node Convert<T>(in T instance) =>
-            TrySpecial(instance, typeof(T), out var special) ? special : Concrete<T>(instance);
+            TrySpecial(instance, typeof(T), out var special) ? special : Concrete(instance);
         public Node Convert(object instance, Type type) =>
             TrySpecial(instance, type, out var special) ? special : Concrete(instance, type);
         public Node Convert(object instance, TypeData type) =>
@@ -54,7 +54,7 @@ namespace Entia.Json
         {
             var data = TypeUtility.GetData<T>();
             if (TryPrimitive(instance, data, out var primitive)) return primitive;
-            References[instance] = References.Count;
+            if (Options.HasAll(ConvertOptions.Reference)) References[instance] = References.Count;
             if (TryConverter<T>(instance, data, out var node)) return node;
             return Default(instance, data);
         }
@@ -62,7 +62,7 @@ namespace Entia.Json
         Node Concrete(object instance, TypeData type)
         {
             if (TryPrimitive(instance, type, out var primitive)) return primitive;
-            References[instance] = References.Count;
+            if (Options.HasAll(ConvertOptions.Reference)) References[instance] = References.Count;
             if (TryConverter(instance, type, out var node)) return node;
             return Default(instance, type);
         }
@@ -96,7 +96,7 @@ namespace Entia.Json
                 node = Node.Null;
                 return true;
             }
-            else if (Options.HasAll(ConvertOptions.Reference) && References.TryGetValue(instance, out var reference))
+            else if (References.TryGetValue(instance, out var reference))
             {
                 node = Node.Reference(reference);
                 return true;
@@ -117,13 +117,10 @@ namespace Entia.Json
 
         bool TryConverter<T>(object instance, TypeData type, out Node node)
         {
-            foreach (var converter in Container.Get<T, IConverter>())
+            if (Container.TryGet<T, IConverter>(out var converter))
             {
-                if (converter.Validate(type))
-                {
-                    node = converter.Convert(With(instance, type));
-                    return true;
-                }
+                node = converter.Convert(With(instance, type));
+                return true;
             }
 
             node = default;
@@ -132,13 +129,10 @@ namespace Entia.Json
 
         bool TryConverter(object instance, TypeData type, out Node node)
         {
-            foreach (var converter in Container.Get<IConverter>(type))
+            if (Container.TryGet<IConverter>(type, out var converter))
             {
-                if (converter.Validate(type))
-                {
-                    node = converter.Convert(With(instance, type));
-                    return true;
-                }
+                node = converter.Convert(With(instance, type));
+                return true;
             }
 
             node = default;

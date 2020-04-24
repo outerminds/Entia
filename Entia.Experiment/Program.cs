@@ -337,6 +337,7 @@ namespace Entia.Experiment
             var node2 = Json.Serialization.Parse(json2).Or(Node.Null);
             var json3 = Json.Serialization.Generate(node1, GenerateFormat.Compact);
             var node3 = Json.Serialization.Parse(json3);
+            var node31 = Json.Serialization.Parse(@"""<a href=\""http://twitter.com\"" rel=\""nofollow\"">Twitter Web Client</a>""");
 
             var settings = new JsonSerializerSettings
             {
@@ -417,8 +418,8 @@ namespace Entia.Experiment
             void ObjectDictionaryB() => SerializeB(new Dictionary<object, object> { { DateTime.Now, TimeSpan.MaxValue }, { DateTime.Now, TimeSpan.MaxValue }, { DateTime.Now, TimeSpan.MaxValue } });
             void LargeArrayB() => SerializeB(new ulong[256]);
 
-            for (int i = 0; i < 25; i++)
-            // while (true)
+            // for (int i = 0; i < 25; i++)
+            while (true)
             {
                 Experiment.Test.Measure(ParseA, new Action[]
                 {
@@ -454,75 +455,11 @@ namespace Entia.Experiment
             }
         }
 
-        delegate void Poulah<T1, T2>(Entity entity, ref T1 a, in T2 b);
-        delegate void Poulah(IntPtr a, IntPtr b, IntPtr c);
-        static void VeryUnsafe()
-        {
-            static void Method(Entity entity, ref Position position, in Velocity velocity)
-            {
-                Console.WriteLine("$Auiaofiu");
-            }
-
-            var entity = new Entity(1, 2);
-            var positions = new Position[8];
-            var velocities = new Velocity[8];
-
-            var pointerA = UnsafeUtility.As<Entity, IntPtr>(ref entity);
-            var pointerB = UnsafeUtility.AsPointer(ref positions[0]);
-            var pointerC = UnsafeUtility.AsPointer(ref velocities[0]);
-
-            var pointer = new Poulah<Position, Velocity>(Method);//.Method.MethodHandle.GetFunctionPointer();
-            var function = UnsafeUtility.As<Poulah<Position, Velocity>, Poulah>(ref pointer);//Marshal.GetDelegateForFunctionPointer<Poulah>(pointer);
-            function(pointerA, pointerB, pointerC);
-
-            /*
-            public static System Motion(World world)
-            {
-                world.Systems().Run((ref Time time) =>
-                {
-
-                });
-                return world.Systems().RunEach((ref Position position, in Velocity velocity) =>
-                {
-                    position.X += velocity.X;
-                    position.Y += velocity.Y;
-                });
-                return world.Systems().RunEach((ref Position position, ref Velocity velocity) =>
-                {
-                    position.X += velocity.X;
-                    position.Y += velocity.Y;
-                });
-                return world.Systems().RunEach((Write<Position> position, Read<Velocity> velocity) =>
-                {
-                    position.Value.X += velocity.Value.X;
-                    position.Value.Y += velocity.Value.Y;
-                });
-            }
-            */
-        }
-
-        delegate void Do(IntPtr pointer);
-        static void SuperDuperUnsafe()
-        {
-            var action = new InAction<TimeSpan>((in TimeSpan value) => Console.WriteLine(value));
-            var @do = new Do(_ => throw null);
-            UnsafeUtility.Copy(action, @do);
-            @do += @do;
-            @do += @do;
-            @do += @do;
-            @do += @do;
-
-            var date = TimeSpan.FromHours(2);
-            var pointer = UnsafeUtility.AsPointer(ref date);
-            @do(pointer);
-            Console.ReadKey();
-        }
-
         static void Main()
         {
-            SuperDuperUnsafe();
+            // SuperDuperUnsafe();
             // VeryUnsafe();
-            // TestJson();
+            TestJson();
             // TestFamilies();
             // Serializer();
             // TypeMapTest.Benchmark();
