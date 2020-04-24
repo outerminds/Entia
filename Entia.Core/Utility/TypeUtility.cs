@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Entia.Core
 {
+    /// <summary> Caches metadata about a type lazily. </summary>
     public sealed class TypeData
     {
         public static implicit operator TypeData(Type type) => TypeUtility.GetData(type);

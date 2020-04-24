@@ -10,7 +10,13 @@ namespace Entia.Core
 {
     namespace Providers
     {
+        /// <summary>
+        /// Interface that provides implementations for a given type.
+        /// </summary>
         public interface IProvider : ITrait { IEnumerable<ITrait> Provide(TypeData type, TypeData trait); }
+        /// <summary>
+        /// Interface that provides implementations of a trait 'T' for a given type.
+        /// </summary>
         public abstract class Provider<T> : IProvider where T : ITrait
         {
             public abstract IEnumerable<T> Provide(TypeData type);
@@ -19,10 +25,26 @@ namespace Entia.Core
         }
     }
 
+    /// <summary>
+    /// Interface that all traits must implement.
+    /// </summary>
     public interface ITrait { }
+    /// <summary>
+    /// Interface that links an implementing type with a trait implementation 'TTrait'.
+    /// </summary>
     public interface IImplementation<TTrait> where TTrait : ITrait, new() { }
+    /// <summary>
+    /// Interface that links a type 'T' with a trait implementation 'TTrait'. Must be implemented a trait interface.
+    /// </summary>
     public interface IImplementation<T, TTrait> where TTrait : ITrait, new() { }
 
+    /// <summary>
+    /// Attribute that links a type with a trait implementation. This attribute can be used in the following scenarios:
+    /// - can be applied to a type by specifying the trait implementation type
+    /// - can be applied to a static field/property/method of a type that provides a trait implementation
+    /// - can be applied to a sub type of a type that implements a trait implementation
+    /// - can be applied to a trait interface by specifying a type and an implementation type
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface | AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method, Inherited = true, AllowMultiple = true)]
     public sealed class ImplementationAttribute : PreserveAttribute
     {
@@ -40,6 +62,12 @@ namespace Entia.Core
         }
     }
 
+    /// <summary>
+    /// Links any type with its trait implementations. A trait is essentially an extension interface, meaning that
+    /// it can be considered as an interface that can be defined for types that are not owned by their consumer. The
+    /// container stores and retrieves the implementations for a given type. It also retrieves default implementations
+    /// that can be linked using the 'IImplementation<T>' interface or the '[Implementation]' attribute.
+    /// </summary>
     public sealed class Container : IEnumerable<(Type type, Type trait, ITrait implementation)>
     {
         public readonly struct Implementations<T> : IEnumerable<Implementations<T>.Enumerator, T> where T : ITrait
