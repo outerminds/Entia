@@ -26,18 +26,20 @@ namespace Entia.Json
         public readonly object Instance;
         public readonly TypeData Type;
         public readonly ConvertOptions Options;
-        public readonly Dictionary<object, int> References;
+        public readonly Dictionary<object, int> Global;
+        public readonly Dictionary<object, int> Local;
         public readonly Container Container;
 
         public ConvertToContext(ConvertOptions options, Dictionary<object, int> references, Container container = null)
-            : this(null, null, options, references, container) { }
-        public ConvertToContext(object instance, TypeData type, ConvertOptions options, Dictionary<object, int> references, Container container = null)
+            : this(null, null, options, references, new Dictionary<object, int>(), container ?? new Container()) { }
+        ConvertToContext(object instance, TypeData type, ConvertOptions options, Dictionary<object, int> global, Dictionary<object, int> local, Container container)
         {
             Instance = instance;
             Type = type;
             Options = options;
-            References = references;
-            Container = container ?? new Container();
+            Global = global;
+            Local = local;
+            Container = container;
         }
 
         public Node Convert<T>(in T instance) =>
@@ -48,13 +50,13 @@ namespace Entia.Json
             TrySpecial(instance, type, out var special) ? special : Concrete(instance, type);
 
         public ConvertToContext With(object instance, TypeData type, ConvertOptions? options = null) =>
-            new ConvertToContext(instance, type, options ?? Options, References, Container);
+            new ConvertToContext(instance, type, options ?? Options, Global, Local, Container);
 
         Node Concrete<T>(in T instance)
         {
             var data = TypeUtility.GetData<T>();
             if (TryPrimitive(instance, data, out var primitive)) return primitive;
-            if (Options.HasAll(ConvertOptions.Reference)) References[instance] = References.Count;
+            if (Options.HasAll(ConvertOptions.Reference)) Local[instance] = Local.Count;
             if (TryConverter<T>(instance, data, out var node)) return node;
             return Default(instance, data);
         }
@@ -62,7 +64,7 @@ namespace Entia.Json
         Node Concrete(object instance, TypeData type)
         {
             if (TryPrimitive(instance, type, out var primitive)) return primitive;
-            if (Options.HasAll(ConvertOptions.Reference)) References[instance] = References.Count;
+            if (Options.HasAll(ConvertOptions.Reference)) Local[instance] = Local.Count;
             if (TryConverter(instance, type, out var node)) return node;
             return Default(instance, type);
         }
@@ -96,9 +98,14 @@ namespace Entia.Json
                 node = Node.Null;
                 return true;
             }
-            else if (References.TryGetValue(instance, out var reference))
+            else if (Local.TryGetValue(instance, out var reference))
             {
                 node = Node.Reference(reference);
+                return true;
+            }
+            else if (Global.TryGetValue(instance, out reference))
+            {
+                node = Node.Reference(-reference - 1);
                 return true;
             }
 

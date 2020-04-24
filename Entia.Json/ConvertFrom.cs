@@ -15,17 +15,19 @@ namespace Entia.Json
 
         public readonly Node Node;
         public readonly TypeData Type;
-        public readonly List<object> References;
+        public readonly object[] Global;
+        public readonly List<object> Local;
         public readonly Container Container;
 
-        public ConvertFromContext(List<object> references, Container container = null)
-            : this(Node.Null, null, references, container) { }
-        public ConvertFromContext(Node node, TypeData type, List<object> references, Container container = null)
+        public ConvertFromContext(object[] references, Container container = null)
+            : this(null, null, references, new List<object>(), container ?? new Container()) { }
+        ConvertFromContext(Node node, TypeData type, object[] global, List<object> local, Container container)
         {
             Node = node;
             Type = type;
-            References = references;
-            Container = container ?? new Container();
+            Global = global;
+            Local = local;
+            Container = container;
         }
 
         public T Convert<T>(Node node) =>
@@ -49,7 +51,7 @@ namespace Entia.Json
         public object Instantiate(Type type) => Instantiate(TypeUtility.GetData(type));
 
         public ConvertFromContext With(Node node = null, TypeData type = null) =>
-            new ConvertFromContext(node ?? Node, type ?? Type, References, Container);
+            new ConvertFromContext(node ?? Node, type ?? Type, Global, Local, Container);
 
         T Concrete<T>(Node node)
         {
@@ -75,7 +77,7 @@ namespace Entia.Json
             }
             else if (node.TryReference(out var reference))
             {
-                instance = References[reference];
+                instance = reference < 0 ? Global[-reference - 1] : Local[reference];
                 return true;
             }
             else if (node.TryAbstract(out var type, out var value) && Convert<Type>(type) is Type concrete)
@@ -115,12 +117,12 @@ namespace Entia.Json
             if (Container.TryGet<T, IConverter>(out var converter))
             {
                 var context = With(node, type);
-                var index = References.Count;
-                References.Add(default);
+                var index = Local.Count;
+                Local.Add(default);
                 instance = converter.Instantiate(context);
-                References[index] = instance;
+                Local[index] = instance;
                 converter.Initialize(ref instance, context);
-                References[index] = instance;
+                Local[index] = instance;
                 return true;
             }
 
@@ -133,12 +135,12 @@ namespace Entia.Json
             if (Container.TryGet<IConverter>(type, out var converter))
             {
                 var context = With(node, type);
-                var index = References.Count;
-                References.Add(default);
+                var index = Local.Count;
+                Local.Add(default);
                 instance = converter.Instantiate(context);
-                References[index] = instance;
+                Local[index] = instance;
                 converter.Initialize(ref instance, context);
-                References[index] = instance;
+                Local[index] = instance;
                 return true;
             }
 
@@ -157,7 +159,7 @@ namespace Entia.Json
             if (instance == null) return instance;
 
             var members = type.InstanceMembers;
-            References.Add(instance);
+            Local.Add(instance);
             foreach (var (key, value) in node.Members())
             {
                 if (members.TryGetValue(key, out var member))
@@ -180,11 +182,7 @@ namespace Entia.Json
         public static object Instantiate(Node node, Type type, Container container = null, params object[] references) =>
             FromContext(references, container).Convert(node, type);
 
-        static ConvertFromContext FromContext(object[] references, Container container)
-        {
-            var list = new List<object>(references.Length);
-            for (int i = 0; i < references.Length; i++) list.Add(references[i]);
-            return new ConvertFromContext(list, container);
-        }
+        static ConvertFromContext FromContext(object[] references, Container container) =>
+            new ConvertFromContext(references, container);
     }
 }

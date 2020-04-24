@@ -351,11 +351,11 @@ namespace Entia.Experiment
             var twitterNode = Json.Serialization.Parse(twitterJson).Or(Node.Null);
             var twitterObject = JsonConvert.DeserializeObject<JObject>(twitterJson, settings);
 
-            void Test<T>(in T value, out string json, out Node node, out T instance, ConvertOptions options = ConvertOptions.All)
+            void Test<T>(in T value, out string json, out Node node, out T instance, ConvertOptions options = ConvertOptions.All, params object[] references)
             {
-                json = Json.Serialization.Serialize(value, options, container: container);
+                json = Json.Serialization.Serialize(value, options, container: container, references: references);
                 node = Json.Serialization.Parse(json).Or(Node.Null);
-                instance = Json.Serialization.Instantiate<T>(node, container: container);
+                instance = Json.Serialization.Instantiate<T>(node, container: container, references: references);
             }
 
             Test(new Cyclic(), out var json4, out var node4, out var value4);
@@ -371,7 +371,10 @@ namespace Entia.Experiment
 
             var dictionary = new Dictionary<object, object>();
             dictionary[1] = dictionary;
-            Test(dictionary, out var json8, out var node8, out var value8);
+            dictionary[1f] = dictionary;
+            dictionary[1uL] = dictionary;
+            dictionary[1d] = 1f;
+            Test(dictionary, out var json8, out var node8, out var value8, references: new object[] { 1, 1d });
 
             Test(new Stack<int>(new int[] { 1, 2, 3 }), out var json9, out var node9, out var value9);
             Test(new Queue<int>(new int[] { 1, 2, 3 }), out var json10, out var node10, out var value10);
