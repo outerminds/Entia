@@ -98,7 +98,7 @@ namespace Entia.Json
                 node = Node.Null;
                 return true;
             }
-            else if (Local.TryGetValue(instance, out var reference))
+            else if (Options.HasAll(ConvertOptions.Reference) && Local.TryGetValue(instance, out var reference))
             {
                 node = Node.Reference(reference);
                 return true;
