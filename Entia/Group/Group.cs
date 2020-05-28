@@ -418,12 +418,12 @@ namespace Entia.Modules.Group
 
                 // NOTE: less maintenance is required for the special case 'Group<Entity>'
                 if (typeof(T) == typeof(Entity))
-                    ArrayUtility.Add(ref _segments, new Segment<T>(segment, segment.Entities.items as T[]));
+                    ArrayUtility.Append(ref _segments, new Segment<T>(segment, segment.Entities.items as T[]));
                 else
                 {
                     var items = new T[segment.Entities.items.Length];
                     for (var i = 0; i < items.Length; i++) items[i] = query.Get(i);
-                    ArrayUtility.Add(ref _segments, new Segment<T>(segment, items));
+                    ArrayUtility.Append(ref _segments, new Segment<T>(segment, items));
                 }
                 return true;
             }

@@ -52,6 +52,28 @@ namespace Entia.Experimental.Nodes
                 runners.Select(runner => Runner.Wrap(runner, () => world.Resolve(), () => world.Resolve())).Choose().ToArray()));
     }
 
+    public readonly struct If : IWrapper
+    {
+        [Implementation]
+        static Scheduler<If> _scheduler => Scheduler.From((in If data, in Context context) =>
+            context.Schedule(context.Node.Children).Map(data.Condition, (runners, condition) =>
+                runners.Select(runner => Runner.If(runner, condition)).Choose().ToArray()));
+
+        public readonly Func<bool> Condition;
+        public If(Func<bool> condition) { Condition = condition; }
+    }
+
+    public readonly struct Map : IWrapper
+    {
+        [Implementation]
+        static Scheduler<Map> _scheduler => Scheduler.From((in Map data, in Context context) =>
+            context.Schedule(context.Node.Children).Map(data.Mapper, (runners, mapper) =>
+                runners.Select(runner => mapper(runner)).Choose().ToArray()));
+
+        public readonly Func<Runner, Option<Runner>> Mapper;
+        public Map(Func<Runner, Option<Runner>> mapper) { Mapper = mapper; }
+    }
+
     public readonly struct Sequence : IBranch
     {
         [Implementation]

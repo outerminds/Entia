@@ -1,26 +1,40 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Entia.Core;
 
 namespace Entia.Json
 {
-    public enum GenerateFormat { Compact, Indented }
+    public enum Formats { Compact, Indented }
 
     public static partial class Serialization
     {
-        public static string Serialize<T>(in T instance, ConvertOptions options = ConvertOptions.All, GenerateFormat format = GenerateFormat.Compact, Container container = null, params object[] references) =>
-            Generate(Convert(instance, options, container, references), format);
-        public static string Serialize(object instance, Type type, ConvertOptions options = ConvertOptions.All, GenerateFormat format = GenerateFormat.Compact, Container container = null, params object[] references) =>
-            Generate(Convert(instance, type, options, container, references), format);
-
-        public static string Generate(Node node, GenerateFormat format = GenerateFormat.Compact)
+        public static string Serialize<T>(in T instance, Features features = Features.None, Formats format = Formats.Compact, Container container = null)
         {
+            var context = ToContext(features, container);
+            var node = context.Convert(instance);
+            return Generate(node, format, new Dictionary<uint, int>(), context.References);
+        }
+
+        public static string Serialize(object instance, Type type, Features features = Features.None, Formats format = Formats.Compact, Container container = null)
+        {
+            var context = ToContext(features, container);
+            var node = context.Convert(instance, type);
+            return Generate(node, format, new Dictionary<uint, int>(), context.References);
+        }
+
+        public static string Generate(Node node, Formats format = Formats.Compact) =>
+            Generate(node, format, new Dictionary<uint, int>(), new Dictionary<object, uint>());
+
+        static string Generate(Node node, Formats format, Dictionary<uint, int> identifiers, Dictionary<object, uint> references)
+        {
+            Wrap(ref node, identifiers, references);
             var builder = new StringBuilder(1024);
             switch (format)
             {
-                case GenerateFormat.Compact: GenerateCompact(node, builder); break;
-                case GenerateFormat.Indented: GenerateIndented(node, builder, 0); break;
+                case Formats.Compact: GenerateCompact(node, builder); break;
+                case Formats.Indented: GenerateIndented(node, builder, 0); break;
             }
             return builder.ToString();
         }
@@ -230,5 +244,35 @@ namespace Entia.Json
             15 => 'F',
             _ => '\0',
         };
+
+        static void Wrap(ref Node node, Dictionary<uint, int> identifiers, Dictionary<object, uint> references)
+        {
+            switch (node.Kind)
+            {
+                case Node.Kinds.Reference:
+                    var reference = node.AsReference();
+                    node = Node.Object("$r",
+                        identifiers.TryGetValue(reference, out var index) ?
+                        index : identifiers[reference] = identifiers.Count);
+                    // NOTE: no need to visit children
+                    return;
+                case Node.Kinds.Abstract:
+                    if (node.TryAbstract(out var type, out var value))
+                    {
+                        var typeNode = JsonUtility.TypeToNode(type, references);
+                        node = value.IsObject() ? value.AddMember("$a", typeNode) : Node.Object("$a", typeNode, "$v", value);
+                    }
+                    break;
+                case Node.Kinds.Type:
+                    node = Node.Object("$t", JsonUtility.TypeToNode(node.AsType(), references));
+                    break;
+            }
+
+            node = node.With(node.Children.Clone() as Node[]);
+            for (int i = 0; i < node.Children.Length; i++) Wrap(ref node.Children[i], identifiers, references);
+
+            if (identifiers.TryGetValue(node.Identifier, out var identifier))
+                node = node.IsObject() ? node.AddMember("$i", identifier) : Node.Object("$i", identifier, "$v", node);
+        }
     }
 }

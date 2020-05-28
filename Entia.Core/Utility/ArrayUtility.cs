@@ -6,120 +6,166 @@ namespace Entia.Core
 {
     public static class ArrayUtility
     {
-        public static bool Ensure<T>(ref T[] array, int size)
+        public static bool Ensure<T>(ref T[] source, int size)
         {
-            if (size <= array.Length) return false;
-            Array.Resize(ref array, MathUtility.NextPowerOfTwo(size));
+            if (size <= source.Length) return false;
+            Array.Resize(ref source, MathUtility.NextPowerOfTwo(size));
             return true;
         }
 
-        public static bool Ensure<T>(ref T[] array, int size, T initial)
+        public static bool Ensure<T>(ref T[] source, int size, T initial)
         {
-            if (size <= array.Length) return false;
+            if (size <= source.Length) return false;
 
-            var old = array.Length;
+            var old = source.Length;
             var @new = MathUtility.NextPowerOfTwo(size);
-            Array.Resize(ref array, @new);
-            array.Fill(initial, old, @new - old);
+            Array.Resize(ref source, @new);
+            source.Fill(initial, old, @new - old);
             return true;
         }
 
-        public static bool Ensure<T>(ref T[] array, int size, Func<T> initial)
+        public static bool Ensure<T>(ref T[] source, int size, Func<T> initial)
         {
-            if (size <= array.Length) return false;
+            if (size <= source.Length) return false;
 
-            var old = array.Length;
+            var old = source.Length;
             var @new = MathUtility.NextPowerOfTwo(size);
-            Array.Resize(ref array, @new);
-            array.Fill(initial, old, @new - old);
+            Array.Resize(ref source, @new);
+            source.Fill(initial, old, @new - old);
             return true;
         }
 
-        public static bool Ensure<T>(ref T[] array, uint size) => Ensure(ref array, MathUtility.ClampToInt(size));
+        public static bool Ensure<T>(ref T[] source, uint size) => Ensure(ref source, MathUtility.ClampToInt(size));
 
-        public static bool Ensure(ref Array array, Type element, int size)
+        public static bool Ensure(ref Array source, Type element, int size)
         {
-            if (size <= array.Length) return false;
-            Resize(ref array, element, MathUtility.NextPowerOfTwo(size));
+            if (size <= source.Length) return false;
+            Resize(ref source, element, MathUtility.NextPowerOfTwo(size));
             return true;
         }
 
-        public static bool Resize(ref Array array, Type element, int size)
+        public static bool Resize(ref Array source, Type element, int size)
         {
             var target = Array.CreateInstance(element, size);
-            array.CopyTo(target, 0);
-            array = target;
+            source.CopyTo(target, 0);
+            source = target;
             return true;
         }
 
-        public static bool Set<T>(ref T[] array, in T item, int index)
+        public static bool Set<T>(ref T[] source, in T item, int index)
         {
-            var resized = Ensure(ref array, index + 1);
-            array[index] = item;
+            var resized = Ensure(ref source, index + 1);
+            source[index] = item;
             return resized;
         }
 
-        public static ref T Add<T>(ref T[] array, in T item)
+        public static bool Prepend<T>(ref T[] source, in T item) => Insert(ref source, 0, item);
+        public static bool Prepend<T>(ref T[] source, params T[] items) => Insert(ref source, 0, items);
+        public static bool Append<T>(ref T[] source, params T[] items) => Insert(ref source, source.Length, items);
+        public static bool Append<T>(ref T[] source, in T item) => Insert(ref source, source.Length, item);
+
+        public static bool Overwrite<T>(ref T[] source, int index, params T[] items)
         {
-            var index = array.Length;
-            var local = array;
-            Array.Resize(ref local, index + 1);
-            ref var slot = ref local[index];
-            slot = item;
-            // NOTE: set the array after the item is set such that no threads can observe the slot uninitialized
-            array = local;
-            return ref slot;
-        }
-
-        public static bool Add<T>(ref T[] array, params T[] items)
-        {
-            if (items.Length == 0) return false;
-
-            var index = array.Length;
-            Array.Resize(ref array, index + items.Length);
-            Array.Copy(items, 0, array, index, items.Length);
-            return true;
-        }
-
-        public static bool Remove<T>(ref T[] array, T item)
-        {
-            var index = Array.IndexOf(array, item);
-            if (index < 0) return false;
-
-            if (array.Length == 1) array = Dummy<T>.Array.Zero;
+            if (index < 0 || index > source.Length) return false;
+            else if (items.Length == 0) return true;
+            else if (index == 0 && items.Length >= source.Length)
+            {
+                source = items;
+                return true;
+            }
             else
             {
-                var shrunk = new T[array.Length - 1];
-                Array.Copy(array, 0, shrunk, 0, index);
-                Array.Copy(array, index + 1, shrunk, index, shrunk.Length - index);
-                array = shrunk;
+                var end = index + items.Length;
+                var target = new T[Math.Max(source.Length, end)];
+                if (index > 0) Array.Copy(source, 0, target, 0, index);
+                Array.Copy(items, 0, target, index, items.Length);
+                if (end < source.Length) Array.Copy(source, end, target, end, source.Length - end);
+                source = target;
+                return true;
             }
-            return true;
         }
 
-        public static bool EnsureSet<T>(ref T[] array, in T item, int index)
+        public static bool Insert<T>(ref T[] source, int index, params T[] items)
         {
-            var resized = Ensure(ref array, index + 1);
-            array[index] = item;
+            if (index < 0 || index > source.Length) return false;
+            else if (items.Length == 0) return true;
+            else if (source.Length == 0)
+            {
+                source = items;
+                return true;
+            }
+            else
+            {
+                var target = new T[source.Length + items.Length];
+                if (index > 0) Array.Copy(source, 0, target, 0, index);
+                Array.Copy(items, 0, target, index, items.Length);
+                if (index < source.Length) Array.Copy(source, index, target, items.Length + index, source.Length - index);
+                source = target;
+                return true;
+            }
+        }
+
+        public static bool Insert<T>(ref T[] source, int index, in T item)
+        {
+            if (index < 0 || index > source.Length) return false;
+            else
+            {
+                var target = new T[source.Length + 1];
+                if (index > 0) Array.Copy(source, 0, target, 0, index);
+                target[index] = item;
+                if (index < source.Length) Array.Copy(source, index, target, 1 + index, source.Length - index);
+                source = target;
+                return true;
+            }
+        }
+
+        public static bool Remove<T>(ref T[] source, in T item) => RemoveAt(ref source, Array.IndexOf(source, item));
+
+        public static bool RemoveAt<T>(ref T[] source, int index) => RemoveAt(ref source, index, 1);
+
+        public static bool RemoveAt<T>(ref T[] source, int index, int count)
+        {
+            var end = index + count;
+            if (index < 0 || end > source.Length) return false;
+            else if (count == 0) return true;
+            else if (count == source.Length)
+            {
+                source = Array.Empty<T>();
+                return true;
+            }
+            else
+            {
+                var target = new T[source.Length - count];
+                if (index > 0) Array.Copy(source, 0, target, 0, index);
+                if (end < source.Length) Array.Copy(source, end, target, index, target.Length - index);
+                source = target;
+                return true;
+            }
+        }
+
+        public static bool EnsureSet<T>(ref T[] source, in T item, int index)
+        {
+            var resized = Ensure(ref source, index + 1);
+            source[index] = item;
             return resized;
         }
 
         [ThreadSafe]
-        public static int GetHashCode<T>(T[] array)
+        public static int GetHashCode<T>(T[] source)
         {
-            if (array == null) return 0;
+            if (source == null) return 0;
             var hash = 0;
             var comparer = EqualityComparer<T>.Default;
-            foreach (var item in array) hash ^= comparer.GetHashCode(item);
+            foreach (var item in source) hash ^= comparer.GetHashCode(item);
             return hash;
         }
 
         [ThreadSafe]
-        public static int GetHashCode<T>((T[] items, int count) array)
+        public static int GetHashCode<T>((T[] items, int count) source)
         {
-            var hash = array.count;
+            var hash = source.count;
             var comparer = EqualityComparer<T>.Default;
-            for (int i = 0; i < array.count; i++) hash ^= comparer.GetHashCode(array.items[i]);
+            for (int i = 0; i < source.count; i++) hash ^= comparer.GetHashCode(source.items[i]);
             return hash;
         }
 
@@ -136,23 +182,23 @@ namespace Entia.Core
             return results;
         }
 
-        public static T[] Concatenate<T>(params T[][] arrays)
+        public static T[] Concatenate<T>(params T[][] sources)
         {
-            if (arrays.Length == 0) return Array.Empty<T>();
-            if (arrays.Length == 1) return arrays[0];
-            if (arrays.Length == 2) return Concatenate(arrays[0], arrays[1]);
+            if (sources.Length == 0) return Array.Empty<T>();
+            if (sources.Length == 1) return sources[0];
+            if (sources.Length == 2) return Concatenate(sources[0], sources[1]);
 
             var count = 0;
-            for (int i = 0; i < arrays.Length; i++) count += arrays[i].Length;
+            for (int i = 0; i < sources.Length; i++) count += sources[i].Length;
             if (count == 0) return Array.Empty<T>();
 
             var results = new T[count];
             var index = 0;
-            for (int i = 0; i < arrays.Length; i++)
+            for (int i = 0; i < sources.Length; i++)
             {
-                var array = arrays[i];
-                Array.Copy(array, 0, results, index, array.Length);
-                index += array.Length;
+                var source = sources[i];
+                Array.Copy(source, 0, results, index, source.Length);
+                index += source.Length;
             }
             return results;
         }

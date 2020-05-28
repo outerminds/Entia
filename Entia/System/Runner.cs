@@ -30,11 +30,18 @@ namespace Entia.Experimental.Scheduling
                 var run = (InAction<T>)runner.Run;
                 return From((in T message) => { before(); run(message); after(); }, runner.Dependencies);
             };
+            public static readonly Func<Runner, Func<bool>, Runner> If = (runner, condition) =>
+            {
+                condition ??= () => true;
+                var run = (InAction<T>)runner.Run;
+                return From((in T message) => { if (condition()) run(message); }, runner.Dependencies);
+            };
         }
 
         static readonly TypeMap<Delegate, Func<World, IReaction>> _reactions = new TypeMap<Delegate, Func<World, IReaction>>();
         static readonly TypeMap<Delegate, Func<Runner[], Loop, Runner>> _loops = new TypeMap<Delegate, Func<Runner[], Loop, Runner>>();
         static readonly TypeMap<Delegate, Func<Runner, Action, Action, Runner>> _wraps = new TypeMap<Delegate, Func<Runner, Action, Action, Runner>>();
+        static readonly TypeMap<Delegate, Func<Runner, Func<bool>, Runner>> _ifs = new TypeMap<Delegate, Func<Runner, Func<bool>, Runner>>();
 
         public static Runner From<T>(InAction<T> run, params IDependency[] dependencies) where T : struct, IMessage
         {
@@ -42,6 +49,7 @@ namespace Entia.Experimental.Scheduling
             _reactions.Set<InAction<T>>(Cache<T>.Reaction);
             _loops.Set<InAction<T>>(Cache<T>.Loop);
             _wraps.Set<InAction<T>>(Cache<T>.Wrap);
+            _ifs.Set<InAction<T>>(Cache<T>.If);
             return new Runner(typeof(InAction<T>), run, dependencies);
         }
 
@@ -75,6 +83,12 @@ namespace Entia.Experimental.Scheduling
         public static Option<Runner> Wrap(in Runner runner, Action before = null, Action after = null)
         {
             if (_wraps.TryGet(runner.Type, out var wrap)) return wrap(runner, before, after);
+            else return Option.None();
+        }
+
+        public static Option<Runner> If(in Runner runner, Func<bool> condition)
+        {
+            if (_ifs.TryGet(runner.Type, out var @if)) return @if(runner, condition);
             else return Option.None();
         }
 

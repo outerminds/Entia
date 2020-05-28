@@ -283,7 +283,8 @@ namespace Entia.Modules
             if (mask.IsEmpty) return _empty;
             if (_maskToSegment.TryGetValue(mask, out var segment)) return segment;
             var clone = new BitMask { mask };
-            segment = _maskToSegment[clone] = ArrayUtility.Add(ref _segments, new Segment((uint)_segments.Length, clone));
+            segment = _maskToSegment[clone] = new Segment((uint)_segments.Length, clone);
+            ArrayUtility.Append(ref _segments, segment);
             _onCreate.Emit(new Entia.Messages.Segment.OnCreate { Segment = segment });
             return segment;
         }

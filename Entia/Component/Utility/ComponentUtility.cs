@@ -189,7 +189,7 @@ namespace Entia.Modules.Component
                     else write.Value.AbstractToMask[@abstract] = new BitMask(index);
 
                     ref var types = ref write.Value.AbstractToMetadata.Get(@abstract, out var success);
-                    if (success) ArrayUtility.Add(ref types, data);
+                    if (success) ArrayUtility.Append(ref types, data);
                     else write.Value.AbstractToMetadata[@abstract] = new[] { data };
                 }
                 return data;

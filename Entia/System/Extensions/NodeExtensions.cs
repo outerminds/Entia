@@ -24,6 +24,8 @@ namespace Entia.Experimental.Nodes
         public static Node Resolve(this Node node) =>
             node.Value is IAtomic ? node.Wrap(new Resolve()) : node.With(node.Children.Select(Resolve));
 
+        public static Node If(this Node node, Func<bool> condition) => node.Wrap(new If(condition));
+
         public static Node Wrap(this Node node, IWrapper data) => Node.From(data, node);
         public static Node Depend(this Node node, params IDependency[] dependencies) => node.Wrap(new Depend(dependencies));
     }

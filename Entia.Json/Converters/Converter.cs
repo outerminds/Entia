@@ -8,11 +8,9 @@ using Entia.Core;
 namespace Entia.Json.Converters
 {
     [Implementation(typeof(Node), typeof(ConcreteNode))]
-    [Implementation(typeof(Type), typeof(AbstractType))]
     [Implementation(typeof(DateTime), typeof(ConcreteDateTime))]
     [Implementation(typeof(TimeSpan), typeof(ConcreteTimeSpan))]
     [Implementation(typeof(Guid), typeof(ConcreteGuid))]
-    [Implementation(typeof(Nullable<>), typeof(Providers.Nullable))]
     [Implementation(typeof(Array), typeof(Providers.Array))]
     [Implementation(typeof(IList), typeof(Providers.List))]
     [Implementation(typeof(IDictionary), typeof(Providers.Dictionary))]
@@ -111,6 +109,25 @@ namespace Entia.Json.Converters
 
         public static Converter<T> Default<T>() => Cache<T>.Default;
 
+        public static Converter<T> If<T>((InFunc<T, bool> to, Func<Node, bool> from) condition, Converter<T> @true, Converter<T> @false)
+        {
+            condition.to ??= (in T _) => true;
+            condition.from ??= _ => true;
+            return Create(
+                (in T instance, in ConvertToContext context) =>
+                    condition.to(instance) ? @true.Convert(instance, context) : @false.Convert(instance, context),
+                (in ConvertFromContext context) =>
+                    condition.from(context.Node) ? @true.Instantiate(context) : @false.Instantiate(context),
+                (ref T instance, in ConvertFromContext context) =>
+                {
+                    if (condition.from(context.Node))
+                        @true.Initialize(ref instance, context);
+                    else
+                        @false.Initialize(ref instance, context);
+                }
+            );
+        }
+
         public static Converter<T> Object<T>(Instantiate<T> instantiate = null, params Member<T>[] members)
         {
             var map = members
@@ -120,17 +137,17 @@ namespace Entia.Json.Converters
             return Create(
                 (in T instance, in ConvertToContext context) =>
                 {
-                    var nodes = new List<Node>(members.Length * 2);
+                    var children = new List<Node>(members.Length * 2);
                     for (int i = 0; i < members.Length; i++)
                     {
                         var member = members[i];
                         if (member.Convert(instance, context) is Node node)
                         {
-                            nodes.Add(member.Name);
-                            nodes.Add(node);
+                            children.Add(member.Name);
+                            children.Add(node);
                         }
                     }
-                    return Node.Object(nodes.ToArray());
+                    return Node.Object(children.ToArray());
                 },
                 instantiate,
                 (ref T instance, in ConvertFromContext context) =>
@@ -140,6 +157,32 @@ namespace Entia.Json.Converters
                         if (map.TryGetValue(key, out var member))
                             member.Initialize(ref instance, context.With(value));
                     }
+                }
+            );
+        }
+
+        public static Converter<T> Array<T>(Instantiate<T> instantiate = null, params Item<T>[] items)
+        {
+            var map = new Item<T>[items.Max(item => item.Index + 1)];
+            for (int i = 0; i < items.Length; i++)
+            {
+                var item = items[i];
+                map[item.Index] = item;
+            }
+            return Create(
+                (in T instance, in ConvertToContext context) =>
+                {
+                    var children = new Node[map.Length];
+                    for (int i = 0; i < map.Length; i++)
+                        children[i] = map[i]?.Convert(instance, context) ?? Node.Null;
+                    return Node.Array(children.ToArray());
+                },
+                instantiate,
+                (ref T instance, in ConvertFromContext context) =>
+                {
+                    var children = context.Node.Children;
+                    for (int i = 0; i < children.Length && i < map.Length; i++)
+                        map[i]?.Initialize(ref instance, context.With(children[i]));
                 }
             );
         }

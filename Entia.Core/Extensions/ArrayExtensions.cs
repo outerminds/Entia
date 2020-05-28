@@ -36,12 +36,31 @@ namespace Entia.Core
             return array[minimum.index];
         }
 
+        public static T FirstOrDefault<T>(this T[] array) =>
+            array.TryFirst(out var value) ? value : default;
+
+        public static T FirstOrDefault<T>(this T[] array, Func<T, bool> predicate) =>
+            array.TryFirst(predicate, out var value) ? value : default;
+
+        public static T LastOrDefault<T>(this T[] array) => array.TryLast(out var value) ? value : default;
+
         public static bool TryFirst<T>(this T[] array, out T item)
         {
             if (array.Length > 0)
             {
                 item = array[0];
                 return true;
+            }
+            item = default;
+            return false;
+        }
+
+        public static bool TryFirst<T>(this T[] array, Func<T, bool> predicate, out T item)
+        {
+            for (int i = 0; i < array.Length; i++)
+            {
+                item = array[i];
+                if (predicate(item)) return true;
             }
             item = default;
             return false;
@@ -176,15 +195,47 @@ namespace Entia.Core
             return target;
         }
 
-        public static T[] Prepend<T>(this T[] source, params T[] values)
+        public static T[] Prepend<T>(this T[] source, params T[] items)
         {
-            var target = new T[source.Length + values.Length];
-            Array.Copy(values, 0, target, 0, values.Length);
-            Array.Copy(source, 0, target, values.Length, source.Length);
-            return target;
+            ArrayUtility.Prepend(ref source, items);
+            return source;
         }
 
-        public static T[] Append<T>(this T[] source, params T[] values) => values.Prepend(source);
+        public static T[] Append<T>(this T[] source, params T[] items)
+        {
+            ArrayUtility.Append(ref source, items);
+            return source;
+        }
+
+        public static T[] Overwrite<T>(this T[] source, int index, params T[] items)
+        {
+            ArrayUtility.Overwrite(ref source, index, items);
+            return source;
+        }
+
+        public static T[] Insert<T>(this T[] source, int index, params T[] items)
+        {
+            ArrayUtility.Insert(ref source, index, items);
+            return source;
+        }
+
+        public static T[] Remove<T>(this T[] source, in T item)
+        {
+            ArrayUtility.Remove(ref source, item);
+            return source;
+        }
+
+        public static T[] RemoveAt<T>(this T[] source, int index)
+        {
+            ArrayUtility.RemoveAt(ref source, index);
+            return source;
+        }
+
+        public static T[] RemoveAt<T>(this T[] source, int index, int count)
+        {
+            ArrayUtility.RemoveAt(ref source, index, count);
+            return source;
+        }
 
         public static Array RemoveAt(this Array source, Type element, int index)
         {
@@ -194,17 +245,17 @@ namespace Entia.Core
             return target;
         }
 
-        public static Array Prepend(this Array source, Type element, Array values)
+        public static Array Prepend(this Array source, Type element, Array items)
         {
-            var target = Array.CreateInstance(element, source.Length + values.Length);
-            Array.Copy(values, 0, target, 0, values.Length);
-            Array.Copy(source, 0, target, values.Length, source.Length);
+            var target = Array.CreateInstance(element, source.Length + items.Length);
+            Array.Copy(items, 0, target, 0, items.Length);
+            Array.Copy(source, 0, target, items.Length, source.Length);
             return target;
         }
 
-        public static Array Prepend(this Array source, Type element, params object[] values) => Prepend(source, element, (Array)values);
-        public static Array Append(this Array source, Type element, params object[] values) => Prepend((Array)values, element, source);
-        public static Array Append(this Array source, Type element, Array values) => Prepend(values, element, source);
+        public static Array Prepend(this Array source, Type element, params object[] items) => Prepend(source, element, (Array)items);
+        public static Array Append(this Array source, Type element, params object[] items) => Prepend((Array)items, element, source);
+        public static Array Append(this Array source, Type element, Array items) => Prepend(items, element, source);
 
         public static T[] Take<T>(this T[] source, int count)
         {

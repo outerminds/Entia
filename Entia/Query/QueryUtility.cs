@@ -81,7 +81,7 @@ namespace Entia.Modules.Query
             var indices = data.Indices;
             var segments = data.Segments;
             ArrayUtility.Set(ref indices, segments.Length, (int)segment.Index);
-            ArrayUtility.Add(ref segments, segment);
+            ArrayUtility.Append(ref segments, segment);
             data = data.With(segments, indices);
             return true;
         }

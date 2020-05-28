@@ -80,10 +80,12 @@ namespace Entia.Core
             static Type GetElement(Type current, Type[] interfaces)
             {
                 if (current.IsArray || current.IsPointer) return current.GetElementType();
+                if (current.IsEnum) return current.GetEnumUnderlyingType();
+                if (current.IsNullable()) return current.GetGenericArguments().FirstOrDefault();
                 return interfaces
-                    .Where(child => child.IsGenericType && child.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                    .SelectMany(child => child.GetGenericArguments())
-                    .FirstOrDefault();
+                    .FirstOrDefault(child => child.IsGenericType && child.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                    ?.GetGenericArguments()
+                    ?.FirstOrDefault();
             }
 
             static object GetDefault(Type current)
@@ -326,19 +328,8 @@ namespace Entia.Core
             type.Namespace is string ? $"{type.Namespace}.{type.Format()}" :
             type.Format();
 
-        public static bool TryElement(this Type type, out Type element)
-        {
-            if (type.IsArray) element = type.GetElementType();
-            else
-            {
-                element = type.GetInterfaces()
-                    .Where(child => child.IsGenericType && child.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                    .SelectMany(child => child.GetGenericArguments())
-                    .FirstOrDefault();
-            }
-
-            return element != null;
-        }
+        public static bool IsNullable(this Type type) =>
+            type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
 
         public static bool Is(this Type type, Type other, bool hierarchy = false, bool definition = false)
         {

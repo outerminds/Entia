@@ -10,7 +10,7 @@ namespace Entia.Json.Converters
             Node.Array(instance.Ticks, (int)instance.Kind);
         public override DateTime Instantiate(in ConvertFromContext context) =>
             context.Node.TryInt(out var special) ? special < 0 ? DateTime.MinValue : DateTime.MaxValue :
-            context.Node.TryLong(0, out var ticks) && context.Node.TryInt(1, out var kind) ? new DateTime(ticks, (DateTimeKind)kind) :
+            context.Node.TryItem(0, out var ticks) && context.Node.TryItem(1, out var kind) ? new DateTime(ticks.AsLong(), (DateTimeKind)kind.AsInt()) :
             context.Node.TryString(out var value) ? DateTime.Parse(value) :
             default;
     }

@@ -44,7 +44,7 @@ namespace Entia.Core
             {
                 // NOTE: the lock only tries to prevent multiple resize/assign of the array;
                 // it doesn't matter if another thread access different outer chunks arrays since the inner chunk arrays never move
-                lock (_chunks) { if (chunk >= _chunks.Length) ArrayUtility.Add(ref _chunks, new T[_chunk]); }
+                lock (_chunks) { if (chunk >= _chunks.Length) ArrayUtility.Append(ref _chunks, new T[_chunk]); }
             }
             return _chunks[chunk];
         }

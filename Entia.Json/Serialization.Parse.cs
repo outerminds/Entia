@@ -16,6 +16,7 @@ namespace Entia.Json
         const char _openCurly = '{', _closeCurly = '}', _openSquare = '[', _closeSquare = ']';
         const char _tab = '\t', _space = ' ', _line = '\n', _return = '\r', _back = '\b', _feed = '\f';
 
+        static readonly Node[] _empty = { };
         static readonly double[] _positives =
         {
             1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
@@ -91,79 +92,92 @@ namespace Entia.Json
             1e-300, 1e-301, 1e-302, 1e-303, 1e-304, 1e-305, 1e-306, 1e-307, 1e-308,
         };
 
-        public static Result<T> Deserialize<T>(string json, Container container = null, params object[] references)
-        {
-            var result = Parse(json);
-            if (result.TryValue(out var node)) return Instantiate<T>(node, container, references);
-            return result.AsFailure();
-        }
+        public static Result<Node> Parse(string text) => Parse(text, out _, out _);
 
-        public static Result<object> Deserialize(string json, Type type, Container container = null, params object[] references)
+        static unsafe Result<Node> Parse(string text, out Dictionary<int, uint> identifiers, out Dictionary<uint, object> references)
         {
-            var result = Parse(json);
-            if (result.TryValue(out var node)) return Instantiate(node, type, container, references);
-            return result.AsFailure();
-        }
-
-        public static unsafe Result<Node> Parse(string text)
-        {
+            identifiers = new Dictionary<int, uint>();
+            references = new Dictionary<uint, object>();
             var index = 0;
-            var count = text.Length;
-            var nodes = new Stack<Node>(64);
+            var nodes = new Node[64];
             var brackets = new Stack<int>(8);
             var builder = default(StringBuilder);
+
+            void Push(Node node)
+            {
+                if (index >= nodes.Length)
+                {
+                    var resized = new Node[nodes.Length * 2];
+                    Array.Copy(nodes, 0, resized, 0, nodes.Length);
+                    nodes = resized;
+                }
+                nodes[index++] = node;
+            }
+
+            Node[] Pop(int count)
+            {
+                if (count == 0) return _empty;
+                index -= count;
+                var popped = new Node[count];
+                Array.Copy(nodes, index, popped, 0, count);
+                return popped;
+            }
+
             fixed (char* pointer = text)
             {
-                while (index < count)
+                var head = pointer;
+                var tail = pointer + text.Length;
+                while (head != tail)
                 {
-                    switch (pointer[index++])
+                    switch (*head++)
                     {
                         case _n:
                         case _N:
-                            if (index + 3 <= count && pointer[index++] == _u && pointer[index++] == _l && pointer[index++] == _l)
-                                nodes.Push(Node.Null);
+                            if (tail - head >= 3 && *head++ == _u && *head++ == _l && *head++ == _l)
+                                Push(Node.Null);
                             else
-                                return Result.Failure($"Expected 'null' at index '{index - 1}'.");
+                                return Result.Failure($"Expected 'null' at index '{Index(pointer, head) - 1}'.");
                             break;
                         case _t:
                         case _T:
-                            if (index + 3 <= count && pointer[index++] == _r && pointer[index++] == _u && pointer[index++] == _e)
-                                nodes.Push(Node.True);
+                            if (tail - head >= 3 && *head++ == _r && *head++ == _u && *head++ == _e)
+                                Push(Node.True);
                             else
-                                return Result.Failure($"Expected 'true' at index '{index - 1}'.");
+                                return Result.Failure($"Expected 'true' at index '{Index(pointer, head) - 1}'.");
                             break;
                         case _f:
                         case _F:
-                            if (index + 4 <= count && pointer[index++] == _a && pointer[index++] == _l && pointer[index++] == _s && pointer[index++] == _e)
-                                nodes.Push(Node.False);
+                            if (tail - head >= 4 && *head++ == _a && *head++ == _l && *head++ == _s && *head++ == _e)
+                                Push(Node.False);
                             else
-                                return Result.Failure($"Expected 'false' at index '{index - 1}'.");
+                                return Result.Failure($"Expected 'false' at index '{Index(pointer, head) - 1}'.");
                             break;
-                        case _minus: nodes.Push(Node.Number(ParseNumber(pointer, 0, -1, ref index, count))); break;
-                        case _0: nodes.Push(Node.Number(ParseNumber(pointer, 0, 1, ref index, count))); break;
-                        case _1: nodes.Push(Node.Number(ParseNumber(pointer, 1, 1, ref index, count))); break;
-                        case _2: nodes.Push(Node.Number(ParseNumber(pointer, 2, 1, ref index, count))); break;
-                        case _3: nodes.Push(Node.Number(ParseNumber(pointer, 3, 1, ref index, count))); break;
-                        case _4: nodes.Push(Node.Number(ParseNumber(pointer, 4, 1, ref index, count))); break;
-                        case _5: nodes.Push(Node.Number(ParseNumber(pointer, 5, 1, ref index, count))); break;
-                        case _6: nodes.Push(Node.Number(ParseNumber(pointer, 6, 1, ref index, count))); break;
-                        case _7: nodes.Push(Node.Number(ParseNumber(pointer, 7, 1, ref index, count))); break;
-                        case _8: nodes.Push(Node.Number(ParseNumber(pointer, 8, 1, ref index, count))); break;
-                        case _9: nodes.Push(Node.Number(ParseNumber(pointer, 9, 1, ref index, count))); break;
+                        case _minus: Push(Node.Number(ParseNumber(ref head, tail, 0, -1))); break;
+                        case _0: Push(Node.Number(ParseNumber(ref head, tail, 0, 1))); break;
+                        case _1: Push(Node.Number(ParseNumber(ref head, tail, 1, 1))); break;
+                        case _2: Push(Node.Number(ParseNumber(ref head, tail, 2, 1))); break;
+                        case _3: Push(Node.Number(ParseNumber(ref head, tail, 3, 1))); break;
+                        case _4: Push(Node.Number(ParseNumber(ref head, tail, 4, 1))); break;
+                        case _5: Push(Node.Number(ParseNumber(ref head, tail, 5, 1))); break;
+                        case _6: Push(Node.Number(ParseNumber(ref head, tail, 6, 1))); break;
+                        case _7: Push(Node.Number(ParseNumber(ref head, tail, 7, 1))); break;
+                        case _8: Push(Node.Number(ParseNumber(ref head, tail, 8, 1))); break;
+                        case _9: Push(Node.Number(ParseNumber(ref head, tail, 9, 1))); break;
                         case _quote:
                             {
-                                var start = index;
-                                while (index < count)
+                                var start = head;
+                                while (head != tail)
                                 {
-                                    switch (pointer[index++])
+                                    switch (*head++)
                                     {
                                         case _backSlash:
                                             if (builder == null) builder = new StringBuilder(256);
                                             else builder.Clear();
-                                            nodes.Push(Node.String(builder.Unescape(pointer, ref start, ref index, count), true));
+                                            // NOTE: this string is not plain since at least 1 character was unescaped
+                                            Push(Node.String(builder.Unescape(ref head, tail, ref start), false));
                                             break;
                                         case _quote:
-                                            nodes.Push(Node.String(new string(pointer, start, index - 1 - start), true));
+                                            Push(Node.String(new string(start, 0, Index(start, head) - 1), true));
                                             break;
                                         default: continue;
                                     }
@@ -172,56 +186,57 @@ namespace Entia.Json
                                 break;
                             }
                         case _openCurly:
-                        case _openSquare: brackets.Push(nodes.Count); break;
+                        case _openSquare: brackets.Push(index); break;
                         case _closeCurly:
                             if (brackets.TryPop(out var memberCount))
                             {
-                                var members = new Node[nodes.Count - memberCount];
-                                for (var i = members.Length - 1; i >= 0; i--) members[i] = nodes.Pop();
-                                nodes.Push(Node.Object(members));
+                                Push(Node.Object(Pop(index - memberCount)));
                                 break;
                             }
                             else
-                                return Result.Failure($"Expected balanced curly bracket at index '{index - 1}'.");
+                                return Result.Failure($"Expected balanced curly bracket at index '{Index(pointer, head) - 1}'.");
                         case _closeSquare:
                             if (brackets.TryPop(out var itemCount))
                             {
-                                var items = new Node[nodes.Count - itemCount];
-                                for (var i = items.Length - 1; i >= 0; i--) items[i] = nodes.Pop();
-                                nodes.Push(Node.Array(items));
+                                Push(Node.Array(Pop(index - itemCount)));
                                 break;
                             }
                             else
-                                return Result.Failure($"Expected balanced square bracket at index '{index - 1}'.");
+                                return Result.Failure($"Expected balanced square bracket at index '{Index(pointer, head) - 1}'.");
                         case _space: case _tab: case _line: case _return: case _comma: case _colon: break;
-                        default: return Result.Failure($"Expected character '{pointer[index - 1]}' at index '{index - 1}' to be valid.");
+                        default: return Result.Failure($"Expected character '{head[1]}' at index '{Index(pointer, head) - 1}' to be valid.");
                     }
                 }
             }
 
-            if (nodes.Count == 0) return Result.Failure("Expected valid json.");
-            return nodes.Pop();
+            if (index == 0) return Result.Failure("Expected valid json.");
+            var node = nodes[0];
+            Unwrap(ref node, identifiers, references);
+            return node;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe string Unescape(this StringBuilder builder, char* pointer, ref int start, ref int index, int count)
+        static unsafe int Index(char* head, char* tail) => (int)(tail - head);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static unsafe string Unescape(this StringBuilder builder, ref char* head, char* tail, ref char* start)
         {
-            builder.AppendUnescaped(pointer, ref start, ref index, count);
-            while (index < count)
+            builder.AppendUnescaped(ref head, tail, ref start);
+            while (head != tail)
             {
-                var current = pointer[index++];
-                if (current == _backSlash) builder.AppendUnescaped(pointer, ref start, ref index, count);
+                var current = *head++;
+                if (current == _backSlash) builder.AppendUnescaped(ref head, tail, ref start);
                 else if (current == _quote) break;
             }
-            builder.Append(pointer + start, index - 1 - start);
+            builder.Append(start, Index(start, head) - 1);
             return builder.ToString();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe void AppendUnescaped(this StringBuilder builder, char* pointer, ref int start, ref int index, int count)
+        static unsafe void AppendUnescaped(this StringBuilder builder, ref char* head, char* tail, ref char* start)
         {
-            builder.Append(pointer + start, index - 1 - start);
-            switch (pointer[index++])
+            builder.Append(start, Index(start, head) - 1);
+            switch (*head++)
             {
                 case _n: builder.Append(_line); break;
                 case _b: builder.Append(_back); break;
@@ -232,117 +247,139 @@ namespace Entia.Json
                 case _backSlash: builder.Append(_backSlash); break;
                 case _frontSlash: builder.Append(_frontSlash); break;
                 case _u:
-                    if (index + 4 <= count)
+                    if (tail - head >= 4)
                     {
                         var value =
-                            (FromHex(pointer[index++]) << 12) |
-                            (FromHex(pointer[index++]) << 8) |
-                            (FromHex(pointer[index++]) << 4) |
-                            FromHex(pointer[index++]);
+                            (FromHex(*head++) << 12) |
+                            (FromHex(*head++) << 8) |
+                            (FromHex(*head++) << 4) |
+                            FromHex(*head++);
                         builder.Append((char)value);
                     }
                     break;
             }
-            start = index++;
+            start = head++;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static int FromHex(char character)
         {
-            switch (character)
-            {
-                case _0: return 0;
-                case _1: return 1;
-                case _2: return 2;
-                case _3: return 3;
-                case _4: return 4;
-                case _5: return 5;
-                case _6: return 6;
-                case _7: return 7;
-                case _8: return 8;
-                case _9: return 9;
-                case _A: case _a: return 10;
-                case _B: case _b: return 11;
-                case _C: case _c: return 12;
-                case _D: case _d: return 13;
-                case _E: case _e: return 14;
-                case _F: case _f: return 15;
-                default: return -1;
-            }
+            if (character >= _0 && character <= _9) return character - _0;
+            else if (character >= _a && character <= _f) return character - _a + 10;
+            else if (character >= _A && character <= _F) return character - _A + 10;
+            else return 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe char ParseInteger(char* pointer, ref long value, ref int index, int count)
+        static unsafe char ParseInteger(ref char* head, char* tail, ref long value)
         {
-            while (index < count)
+            while (head != tail)
             {
-                var character = pointer[index];
-                switch (character)
+                var character = *head;
+                if (character >= _0 && character <= _9)
                 {
-                    case _0: index++; value *= 10; continue;
-                    case _1: index++; value = value * 10 + 1; continue;
-                    case _2: index++; value = value * 10 + 2; continue;
-                    case _3: index++; value = value * 10 + 3; continue;
-                    case _4: index++; value = value * 10 + 4; continue;
-                    case _5: index++; value = value * 10 + 5; continue;
-                    case _6: index++; value = value * 10 + 6; continue;
-                    case _7: index++; value = value * 10 + 7; continue;
-                    case _8: index++; value = value * 10 + 8; continue;
-                    case _9: index++; value = value * 10 + 9; continue;
-                    default: return character;
+                    head++;
+                    value = value * 10 + (character - _0);
                 }
+                else return character;
             }
-            return '\0';
+            return default;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe object ParseNumber(char* pointer, long value, long sign, ref int index, int count)
+        static unsafe object ParseNumber(ref char* head, char* tail, long value, long sign)
         {
-            switch (ParseInteger(pointer, ref value, ref index, count))
+            var character = ParseInteger(ref head, tail, ref value);
+            if (character == _dot)
             {
-                case _dot: index++; return ParseFraction(pointer, value, ref index, count) * sign;
-                case _e: case _E: index++; return ParseExponent(pointer, value, ref index, count) * sign;
-                default: return value * sign;
+                head++;
+                return ParseFraction(ref head, tail, value) * sign;
             }
+            else if (character == _e || character == _E)
+            {
+                head++;
+                return ParseExponent(ref head, tail, value) * sign;
+            }
+            else return value * sign;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe double ParseFraction(char* pointer, double value, ref int index, int count)
+        static unsafe double ParseFraction(ref char* head, char* tail, double value)
         {
-            var start = index;
+            var start = head;
             var fraction = 0L;
-            switch (ParseInteger(pointer, ref fraction, ref index, count))
+            var character = ParseInteger(ref head, tail, ref fraction);
+            if (character == _e || character == _E)
             {
-                case _e: case _E: index++; return ParseExponent(pointer, value + fraction / _positives[index - start], ref index, count);
-                default: return value + fraction / _positives[index - start];
+                head++;
+                return ParseExponent(ref head, tail, value + fraction / _positives[Index(start, head)]);
             }
+            else return value + fraction / _positives[Index(start, head)];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe double ParseExponent(char* pointer, double value, ref int index, int count)
+        static unsafe double ParseExponent(ref char* head, char* tail, double value)
         {
             var exponent = 0u;
             var powers = _positives;
-            while (index < count)
+            while (head != tail)
             {
-                switch (pointer[index])
+                switch (*head)
                 {
-                    case _0: index++; exponent *= 10u; continue;
-                    case _1: index++; exponent = exponent * 10u + 1u; continue;
-                    case _2: index++; exponent = exponent * 10u + 2u; continue;
-                    case _3: index++; exponent = exponent * 10u + 3u; continue;
-                    case _4: index++; exponent = exponent * 10u + 4u; continue;
-                    case _5: index++; exponent = exponent * 10u + 5u; continue;
-                    case _6: index++; exponent = exponent * 10u + 6u; continue;
-                    case _7: index++; exponent = exponent * 10u + 7u; continue;
-                    case _8: index++; exponent = exponent * 10u + 8u; continue;
-                    case _9: index++; exponent = exponent * 10u + 9u; continue;
-                    case _plus: index++; powers = _positives; continue;
-                    case _minus: index++; powers = _negatives; continue;
+                    case _0: head++; exponent *= 10u; continue;
+                    case _1: head++; exponent = exponent * 10u + 1u; continue;
+                    case _2: head++; exponent = exponent * 10u + 2u; continue;
+                    case _3: head++; exponent = exponent * 10u + 3u; continue;
+                    case _4: head++; exponent = exponent * 10u + 4u; continue;
+                    case _5: head++; exponent = exponent * 10u + 5u; continue;
+                    case _6: head++; exponent = exponent * 10u + 6u; continue;
+                    case _7: head++; exponent = exponent * 10u + 7u; continue;
+                    case _8: head++; exponent = exponent * 10u + 8u; continue;
+                    case _9: head++; exponent = exponent * 10u + 9u; continue;
+                    case _plus: head++; powers = _positives; continue;
+                    case _minus: head++; powers = _negatives; continue;
                 }
                 break;
             }
             return value * powers[exponent];
+        }
+
+        static void Unwrap(ref Node node, Dictionary<int, uint> identifiers, Dictionary<uint, object> references)
+        {
+            if (node.TryMember("$i", out var identifierNode, out var identifierIndex) &&
+                identifierNode.TryInt(out var identifier))
+            {
+                if (node.TryMember("$v", out var valueNode))
+                {
+                    identifiers[identifier] = valueNode.Identifier;
+                    node = valueNode;
+                }
+                else
+                {
+                    identifiers[identifier] = node.Identifier;
+                    node = node.RemoveAt(identifierIndex, 2);
+                }
+            }
+            if (node.TryMember("$r", out var referenceNode))
+                node = identifiers.TryGetValue(referenceNode.AsInt(), out var reference) ?
+                    Node.Reference(reference) : Node.Null;
+
+            for (int i = 0; i < node.Children.Length; i++) Unwrap(ref node.Children[i], identifiers, references);
+
+            if (node.TryMember("$t", out var typeNode) &&
+                JsonUtility.NodeToType(typeNode, references) is Type type)
+                node = Node.Type(type).With(typeNode.Identifier);
+            else if (node.TryMember("$a", out var abstractNode, out var abstractIndex) &&
+                JsonUtility.NodeToType(abstractNode, references) is Type @abstract)
+            {
+                typeNode = Node.Type(@abstract).With(abstractNode.Identifier);
+                if (node.TryMember("$v", out var valueNode))
+                    node = Node.Abstract(typeNode, valueNode);
+                else
+                    node = Node.Abstract(typeNode, node.RemoveAt(abstractIndex, 2));
+            }
+            else if (node.TryMember("$v", out var valueNode))
+                node = valueNode;
         }
     }
 }

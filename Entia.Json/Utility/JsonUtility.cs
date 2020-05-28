@@ -4,9 +4,9 @@ using System.Linq;
 using System.Reflection;
 using Entia.Core;
 
-namespace Entia.Json.Converters
+namespace Entia.Json
 {
-    public sealed class AbstractType : Converter<Type>
+    public static class JsonUtility
     {
         [Preserve]
         readonly struct Members
@@ -19,7 +19,7 @@ namespace Entia.Json.Converters
             public Members(object field, object property) { Field = field; Property = property; Method(); }
         }
 
-        enum Kinds { Type = 1, Array = 2, Pointer = 3, Generic = 4 }
+        public enum Types { Array = 1, Pointer = 2, Generic = 3 }
 
         static readonly (int identifier, Type type)[] _types =
         {
@@ -64,81 +64,99 @@ namespace Entia.Json.Converters
             (306, typeof(Pointer)),
             #endregion
         };
+
         static readonly Dictionary<int, Type> _identifierToType = _types.ToDictionary(pair => pair.identifier, pair => pair.type);
         static readonly Dictionary<Type, int> _typeToIdentifier = _types.ToDictionary(pair => pair.type, pair => pair.identifier);
 
-        public override Node Convert(in Type instance, in ConvertToContext context)
+        public static Type NodeToType(Node node, Dictionary<uint, object> references)
         {
-            if (_typeToIdentifier.TryGetValue(instance, out var identifier)) return Node.Number(identifier);
-            else if (instance.IsArray) return Node.Array(
-                (int)Kinds.Array,
-                instance.GetArrayRank(),
-                context.Convert(instance.GetElementType()));
-            else if (instance.IsPointer) return Node.Array(
-                (int)Kinds.Pointer,
-                context.Convert(instance.GetElementType()));
-            else if (instance.IsConstructedGenericType)
+            var type = Convert(node, references);
+            references[node.Identifier] = type;
+            return type;
+
+            static Type Convert(Node node, Dictionary<uint, object> references)
             {
-                var definition = instance.GetGenericTypeDefinition();
-                var arguments = instance.GetGenericArguments();
-                var items = new Node[arguments.Length + 2];
-                items[0] = (int)Kinds.Generic;
-                items[1] = context.Convert(definition);
-                for (int i = 0; i < arguments.Length; i++)
-                    items[i + 2] = context.Convert(arguments[i]);
-                return Node.Array(items);
+                switch (node.Kind)
+                {
+                    case Node.Kinds.Null: break;
+                    case Node.Kinds.Reference:
+                        if (references.TryGetValue(node.AsReference(), out var reference)) return reference as Type;
+                        break;
+                    case Node.Kinds.Number:
+                        if (_identifierToType.TryGetValue(node.AsInt(), out var type)) return type;
+                        break;
+                    case Node.Kinds.String:
+                        {
+                            var value = node.AsString();
+                            if (TypeUtility.TryGetType(value, out type)) return type;
+                            if (Guid.TryParse(value, out var guid) && TypeUtility.TryGetType(guid, out type)) return type;
+                            break;
+                        }
+                    case Node.Kinds.Array:
+                        switch ((Types)node.Children[0].AsInt())
+                        {
+                            case Types.Array:
+                                var rank = node.Children[1].AsInt();
+                                if (NodeToType(node.Children[2], references) is Type element)
+                                    return rank > 1 ? element.MakeArrayType(rank) : element.MakeArrayType();
+                                break;
+                            case Types.Pointer:
+                                if (NodeToType(node.Children[1], references) is Type pointer)
+                                    return pointer.MakePointerType();
+                                break;
+                            case Types.Generic:
+                                if (NodeToType(node.Children[1], references) is Type definition)
+                                {
+                                    var arguments = new Type[node.Children.Length - 2];
+                                    for (int i = 0; i < arguments.Length; i++)
+                                    {
+                                        if (NodeToType(node.Children[i + 2], references) is Type argument)
+                                            arguments[i] = argument;
+                                        else
+                                            return default;
+                                    }
+                                    return definition.MakeGenericType(arguments);
+                                }
+                                break;
+                        }
+                        break;
+                }
+                return default;
             }
-            else if (TypeUtility.TryGetGuid(instance, out var guid)) return guid.ToString();
-            else return Node.Array(Node.Number((int)Kinds.Type), instance.FullName);
         }
 
-        public override Type Instantiate(in ConvertFromContext context)
+        public static Node TypeToNode(Type type, Dictionary<object, uint> references)
         {
-            var node = context.Node;
-            switch (node.Kind)
+            var node = Create(type, references);
+            references[type] = node.Identifier;
+            return node;
+
+            static Node Create(Type type, Dictionary<object, uint> references)
             {
-                case Node.Kinds.Number:
-                    {
-                        return _identifierToType.TryGetValue(node.AsInt(), out var type) ? type : default;
-                    }
-                case Node.Kinds.String:
-                    {
-                        var value = node.AsString();
-                        if (Guid.TryParse(value, out var guid) && TypeUtility.TryGetType(guid, out var type)) return type;
-                        else if (TypeUtility.TryGetType(value, out type)) return type;
-                        return default;
-                    }
-                case Node.Kinds.Array:
-                    switch ((Kinds)node.Children[0].AsInt())
-                    {
-                        case Kinds.Type:
-                            return TypeUtility.TryGetType(node.Children[1].AsString(), out var value) ? value : default;
-                        case Kinds.Array:
-                            var rank = node.Children[1].AsInt();
-                            if (context.Convert<Type>(node.Children[2]) is Type element)
-                                return rank > 1 ? element.MakeArrayType(rank) : element.MakeArrayType();
-                            else return default;
-                        case Kinds.Pointer:
-                            if (context.Convert<Type>(node.Children[1]) is Type pointer)
-                                return pointer.MakePointerType();
-                            else return default;
-                        case Kinds.Generic:
-                            if (context.Convert<Type>(node.Children[1]) is Type definition)
-                            {
-                                var arguments = new Type[node.Children.Length - 2];
-                                for (int i = 0; i < arguments.Length; i++)
-                                {
-                                    if (context.Convert<Type>(node.Children[i + 2]) is Type argument)
-                                        arguments[i] = argument;
-                                    else return default;
-                                }
-                                return definition.MakeGenericType(arguments);
-                            }
-                            else return default;
-                    }
-                    break;
+                if (type == null)
+                    return Node.Null;
+                else if (_typeToIdentifier.TryGetValue(type, out var identifier))
+                    return Node.Number(identifier);
+                else if (references.TryGetValue(type, out var reference))
+                    return Node.Reference(reference);
+                else if (type.IsArray)
+                    return Node.Array((int)Types.Array, type.GetArrayRank(), TypeToNode(type.GetElementType(), references));
+                else if (type.IsPointer)
+                    return Node.Array((int)Types.Pointer, TypeToNode(type.GetElementType(), references));
+                else if (type.IsConstructedGenericType)
+                {
+                    var definition = type.GetGenericTypeDefinition();
+                    var arguments = type.GetGenericArguments();
+                    var items = new Node[arguments.Length + 2];
+                    items[0] = (int)Types.Generic;
+                    items[1] = TypeToNode(definition, references);
+                    for (int i = 0; i < arguments.Length; i++)
+                        items[i + 2] = TypeToNode(arguments[i], references);
+                    return Node.Array(items);
+                }
+                else if (TypeUtility.TryGetGuid(type, out var guid)) return guid.ToString();
+                else return type.FullName;
             }
-            return default;
         }
     }
 }

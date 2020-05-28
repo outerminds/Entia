@@ -56,25 +56,51 @@ namespace Entia.Json
             public void Dispose() => this = default;
         }
 
-        public static Node With(this Node node, params Node[] children) => new Node(node.Kind, node.Tag, node.Value, children);
-        public static Node WithMember(this Node node, string key, Node value)
+        public static Node With(this Node node, uint identifier) =>
+            new Node(identifier, node.Kind, node.Tag, node.Value, node.Children);
+        public static Node With(this Node node, params Node[] children) =>
+            new Node(node.Identifier, node.Kind, node.Tag, node.Value, children);
+
+        public static Node Map(this Node node, Func<Node, Node> map)
         {
-            if (node.IsObject())
-            {
-                foreach (var pair in node.Members())
-                    if (pair.key == key) return node.WithReplacement(pair.value, value);
-                return node.With(node.Children.Append(key, value));
-            }
+            if (node.Children.Length > 0) node.With(node.Children.Select(map));
             return node;
         }
 
-        public static Node Without(this Node node, params Node[] children) =>
-            node.With(node.Children.Except(children).ToArray());
+        public static Node Map<TState>(this Node node, in TState state, Func<Node, TState, Node> map)
+        {
+            if (node.Children.Length > 0) node.With(node.Children.Select(state, map));
+            return node;
+        }
 
-        public static Node WithReplacement(this Node node, Node child, Node replacement) =>
-            node.WithReplacement(Array.IndexOf(node.Children, child), replacement);
+        public static Node Add(this Node node, Node child) => node.With(node.Children.Append(child));
+        public static Node Add(this Node node, params Node[] children) => node.With(node.Children.Append(children));
+        public static Node AddAt(this Node node, int index, Node child) => node.With(node.Children.Insert(index, child));
+        public static Node AddAt(this Node node, int index, params Node[] children) => node.With(node.Children.Insert(index, children));
 
-        public static Node WithReplacement(this Node node, int index, Node replacement)
+        public static Node Remove(this Node node, Node child) => node.With(node.Children.Remove(child));
+        public static Node Remove(this Node node, params Node[] children) => node.With(node.Children.Except(children).ToArray());
+        public static Node RemoveAt(this Node node, int index) => node.With(node.Children.RemoveAt(index));
+        public static Node RemoveAt(this Node node, int index, int count) => node.With(node.Children.RemoveAt(index, count));
+
+        public static Node Remove(this Node node, Func<Node, bool> match)
+        {
+            if (node.Children.Length > 0)
+            {
+                var children = new List<Node>(node.Children.Length);
+                foreach (var child in node.Children)
+                {
+                    if (match(child)) continue;
+                    children.Add(child);
+                }
+                return node.With(children.ToArray());
+            }
+            else return node;
+        }
+
+        public static Node Replace(this Node node, Node child, Node replacement) =>
+            node.ReplaceAt(Array.IndexOf(node.Children, child), replacement);
+        public static Node ReplaceAt(this Node node, int index, Node replacement)
         {
             if (index < 0 || index >= node.Children.Length) return node;
             var children = node.Children.Clone() as Node[];
@@ -82,12 +108,78 @@ namespace Entia.Json
             return node.With(children);
         }
 
+        public static IEnumerable<Node> Family(this Node node)
+        {
+            yield return node;
+            foreach (var descendant in node.Descendants()) yield return descendant;
+        }
+
+        public static IEnumerable<Node> Descendants(this Node node)
+        {
+            foreach (var child in node.Children)
+            {
+                yield return child;
+                foreach (var descendant in child.Descendants()) yield return descendant;
+            }
+        }
+
+        public static Node AddMember(this Node node, string key, Node value) =>
+            node.TryMember(key, out _, out var index) ? node.ReplaceAt(index, value) : node.Add(Node.String(key), value);
+        public static Node RemoveMember(this Node node, string key) =>
+            node.TryMember(key, out _, out var index) ? node.RemoveAt(index, 2) : node;
+
+        public static Node RemoveMembers(this Node node, Func<string, Node, bool> match)
+        {
+            if (node.IsObject())
+            {
+                var children = new List<Node>(node.Children.Length);
+                foreach (var (key, value) in node.Members())
+                {
+                    if (match(key, value)) continue;
+                    children.Add(key);
+                    children.Add(value);
+                }
+                return node.With(children.ToArray());
+            }
+            else return node;
+        }
+
+        public static MemberEnumerable Members(this Node node) => new MemberEnumerable(node);
+        public static bool TryMember(this Node node, string key, out Node value) => node.TryMember(key, out value, out _);
+        public static bool TryMember(this Node node, string key, out Node value, out int index)
+        {
+            if (node.IsObject())
+            {
+                for (index = 0; index < node.Children.Length; index += 2)
+                {
+                    if (node.Children[index].AsString() == key)
+                    {
+                        value = node.Children[index + 1];
+                        return true;
+                    }
+                }
+            }
+
+            value = default;
+            index = default;
+            return false;
+        }
+
+        public static bool TryItem(this Node node, int index, out Node item)
+        {
+            if (node.IsArray() && index >= 0 && index < node.Children.Length)
+            {
+                item = node.Children[index];
+                return true;
+            }
+            item = default;
+            return false;
+        }
+
+        public static Node[] Items(this Node node) => node.IsArray() ? node.Children : Array.Empty<Node>();
+
         public static bool Is(this Node node, Node.Kinds kind) => node.Kind == kind;
-        public static bool Is(this Node node, string key, Node.Kinds kind) => node.TryMember(key, out var value) && value.Is(kind);
-        public static bool Is(this Node node, int index, Node.Kinds kind) => node.TryItem(index, out var item) && item.Is(kind);
         public static bool Has(this Node node, Node.Tags tag) => (node.Tag & tag) == tag;
-        public static bool Has(this Node node, string key, Node.Tags tag) => node.TryMember(key, out var value) && value.Has(tag);
-        public static bool Has(this Node node, int index, Node.Tags tag) => node.TryItem(index, out var item) && item.Has(tag);
         public static bool HasPlain(this Node node) => node.Has(Node.Tags.Plain);
         public static bool IsNull(this Node node) => node.Is(Node.Kinds.Null);
         public static bool IsString(this Node node) => node.Is(Node.Kinds.String);
@@ -95,20 +187,9 @@ namespace Entia.Json
         public static bool IsNumber(this Node node) => node.Is(Node.Kinds.Number);
         public static bool IsArray(this Node node) => node.Is(Node.Kinds.Array);
         public static bool IsObject(this Node node) => node.Is(Node.Kinds.Object) && node.Children.Length % 2 == 0;
-        public static bool HasPlain(this Node node, string key) => node.Has(key, Node.Tags.Plain);
-        public static bool IsNull(this Node node, string key) => node.Is(key, Node.Kinds.Null);
-        public static bool IsString(this Node node, string key) => node.Is(key, Node.Kinds.String);
-        public static bool IsBoolean(this Node node, string key) => node.Is(key, Node.Kinds.Boolean);
-        public static bool IsNumber(this Node node, string key) => node.Is(key, Node.Kinds.Number);
-        public static bool IsArray(this Node node, string key) => node.Is(key, Node.Kinds.Array);
-        public static bool IsObject(this Node node, string key) => node.Is(key, Node.Kinds.Object);
-        public static bool HasPlain(this Node node, int index) => node.Has(index, Node.Tags.Plain);
-        public static bool IsNull(this Node node, int index) => node.Is(index, Node.Kinds.Null);
-        public static bool IsString(this Node node, int index) => node.Is(index, Node.Kinds.String);
-        public static bool IsBoolean(this Node node, int index) => node.Is(index, Node.Kinds.Boolean);
-        public static bool IsNumber(this Node node, int index) => node.Is(index, Node.Kinds.Number);
-        public static bool IsArray(this Node node, int index) => node.Is(index, Node.Kinds.Array);
-        public static bool IsObject(this Node node, int index) => node.Is(index, Node.Kinds.Object);
+        public static bool IsType(this Node node) => node.Is(Node.Kinds.Type);
+        public static bool IsReference(this Node node) => node.Is(Node.Kinds.Reference);
+        public static bool IsAbstract(this Node node) => node.Is(Node.Kinds.Abstract) && node.Children.Length == 2;
 
         public static bool TryString(this Node node, out string value)
         {
@@ -132,23 +213,29 @@ namespace Entia.Json
             return false;
         }
 
+
         public static bool TryChar(this Node node, out char value)
         {
-            if (node.TryString(out var @string)) return @string.TryFirst(out value);
-            else if (node.TryLong(out var @long))
+            if (node.IsNumber())
             {
-                value = (char)@long;
+                value =
+                    node.Value is long number ? (char)number :
+                    Convert.ToChar(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
+            else if (node.TryString(out var @string))
+                return @string.TryFirst(out value);
             value = default;
             return false;
         }
 
         public static bool TrySByte(this Node node, out sbyte value)
         {
-            if (node.TryLong(out var number))
+            if (node.IsNumber())
             {
-                value = (sbyte)number;
+                value =
+                    node.Value is long number ? (sbyte)number :
+                    Convert.ToSByte(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
             value = default;
@@ -157,9 +244,11 @@ namespace Entia.Json
 
         public static bool TryByte(this Node node, out byte value)
         {
-            if (node.TryLong(out var number))
+            if (node.IsNumber())
             {
-                value = (byte)number;
+                value =
+                    node.Value is long number ? (byte)number :
+                    Convert.ToByte(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
             value = default;
@@ -168,9 +257,11 @@ namespace Entia.Json
 
         public static bool TryShort(this Node node, out short value)
         {
-            if (node.TryLong(out var number))
+            if (node.IsNumber())
             {
-                value = (short)number;
+                value =
+                    node.Value is long number ? (short)number :
+                    Convert.ToInt16(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
             value = default;
@@ -179,9 +270,11 @@ namespace Entia.Json
 
         public static bool TryUShort(this Node node, out ushort value)
         {
-            if (node.TryLong(out var number))
+            if (node.IsNumber())
             {
-                value = (ushort)number;
+                value =
+                    node.Value is long number ? (ushort)number :
+                    Convert.ToUInt16(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
             value = default;
@@ -190,9 +283,11 @@ namespace Entia.Json
 
         public static bool TryInt(this Node node, out int value)
         {
-            if (node.TryLong(out var number))
+            if (node.IsNumber())
             {
-                value = (int)number;
+                value =
+                    node.Value is long number ? (int)number :
+                    Convert.ToInt32(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
             value = default;
@@ -201,9 +296,11 @@ namespace Entia.Json
 
         public static bool TryUInt(this Node node, out uint value)
         {
-            if (node.TryLong(out var number))
+            if (node.IsNumber())
             {
-                value = (uint)number;
+                value =
+                    node.Value is long number ? (uint)number :
+                    Convert.ToUInt32(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
             value = default;
@@ -215,8 +312,7 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long @long ? @long :
-                    node.Value is double @double ? (long)@double :
+                    node.Value is long number ? number :
                     Convert.ToInt64(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -226,9 +322,11 @@ namespace Entia.Json
 
         public static bool TryULong(this Node node, out ulong value)
         {
-            if (node.TryLong(out var number))
+            if (node.IsNumber())
             {
-                value = (ulong)number;
+                value =
+                    node.Value is ulong number ? number :
+                    Convert.ToUInt64(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
             value = default;
@@ -237,9 +335,11 @@ namespace Entia.Json
 
         public static bool TryFloat(this Node node, out float value)
         {
-            if (node.TryDouble(out var number))
+            if (node.IsNumber())
             {
-                value = (float)number;
+                value =
+                    node.Value is float number ? number :
+                    Convert.ToSingle(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
             value = default;
@@ -251,8 +351,7 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is double @double ? @double :
-                    node.Value is long @long ? @long :
+                    node.Value is double number ? number :
                     Convert.ToDouble(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -262,212 +361,89 @@ namespace Entia.Json
 
         public static bool TryDecimal(this Node node, out decimal value)
         {
-            if (node.TryDouble(out var number))
+            if (node.IsNumber())
             {
-                value = (decimal)number;
+                value =
+                    node.Value is decimal number ? number :
+                    Convert.ToDecimal(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
             value = default;
             return false;
         }
 
-        public static bool TryString(this Node node, string key, out string value)
+        public static bool TryEnum<T>(this Node node, out T value) where T : struct, Enum
         {
-            if (node.TryMember(key, out var member)) return member.TryString(out value);
+            if (node.IsNumber())
+            {
+                value =
+                    node.Value is long number ? (T)Enum.ToObject(typeof(T), number) :
+                    (T)Enum.ToObject(typeof(T), node.Value);
+                return true;
+            }
+            else if (node.TryString(out var @string))
+                return Enum.TryParse(@string, out value);
             value = default;
             return false;
         }
 
-        public static bool TryBool(this Node node, string key, out bool value)
+        public static bool TryEnum(this Node node, Type type, out Enum value)
         {
-            if (node.TryMember(key, out var member)) return member.TryBool(out value);
+            if (node.IsNumber())
+            {
+                value =
+                    node.Value is long number ? (Enum)Enum.ToObject(type, number) :
+                    (Enum)Enum.ToObject(type, node.Value);
+                return true;
+            }
+            else if (node.TryString(out var @string))
+            {
+                try
+                {
+                    value = (Enum)Enum.Parse(type, @string);
+                    return true;
+                }
+                catch { }
+            }
             value = default;
             return false;
         }
 
-        public static bool TryChar(this Node node, string key, out char value)
+        public static bool TryType(this Node node, out Type value)
         {
-            if (node.TryMember(key, out var member)) return member.TryChar(out value);
+            if (node.IsType())
+            {
+                value = (Type)node.Value;
+                return true;
+            }
             value = default;
             return false;
         }
 
-        public static bool TrySByte(this Node node, string key, out sbyte value)
+        public static bool TryReference(this Node node, out uint value)
         {
-            if (node.TryMember(key, out var member)) return member.TrySByte(out value);
+            if (node.IsReference())
+            {
+                value = (uint)node.Value;
+                return true;
+            }
             value = default;
             return false;
         }
 
-        public static bool TryByte(this Node node, string key, out byte value)
+        public static bool TryAbstract(this Node node, out Type type, out Node value)
         {
-            if (node.TryMember(key, out var member)) return member.TryByte(out value);
+            if (node.IsAbstract() && node.Children[0].TryType(out type))
+            {
+                value = node.Children[1];
+                return true;
+            }
+            type = default;
             value = default;
             return false;
         }
 
-        public static bool TryShort(this Node node, string key, out short value)
-        {
-            if (node.TryMember(key, out var member)) return member.TryShort(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryUShort(this Node node, string key, out ushort value)
-        {
-            if (node.TryMember(key, out var member)) return member.TryUShort(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryInt(this Node node, string key, out int value)
-        {
-            if (node.TryMember(key, out var member)) return member.TryInt(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryUInt(this Node node, string key, out uint value)
-        {
-            if (node.TryMember(key, out var member)) return member.TryUInt(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryLong(this Node node, string key, out long value)
-        {
-            if (node.TryMember(key, out var member)) return member.TryLong(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryULong(this Node node, string key, out ulong value)
-        {
-            if (node.TryMember(key, out var member)) return member.TryULong(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryFloat(this Node node, string key, out float value)
-        {
-            if (node.TryMember(key, out var member)) return member.TryFloat(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryDouble(this Node node, string key, out double value)
-        {
-            if (node.TryMember(key, out var member)) return member.TryDouble(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryDecimal(this Node node, string key, out decimal value)
-        {
-            if (node.TryMember(key, out var member)) return member.TryDecimal(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryString(this Node node, int index, out string value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryString(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryBool(this Node node, int index, out bool value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryBool(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryChar(this Node node, int index, out char value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryChar(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TrySByte(this Node node, int index, out sbyte value)
-        {
-            if (node.TryItem(index, out var item)) return item.TrySByte(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryByte(this Node node, int index, out byte value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryByte(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryShort(this Node node, int index, out short value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryShort(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryUShort(this Node node, int index, out ushort value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryUShort(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryInt(this Node node, int index, out int value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryInt(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryUInt(this Node node, int index, out uint value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryUInt(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryLong(this Node node, int index, out long value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryLong(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryULong(this Node node, int index, out ulong value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryULong(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryFloat(this Node node, int index, out float value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryFloat(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryDouble(this Node node, int index, out double value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryDouble(out value);
-            value = default;
-            return false;
-        }
-
-        public static bool TryDecimal(this Node node, int index, out decimal value)
-        {
-            if (node.TryItem(index, out var item)) return item.TryDecimal(out value);
-            value = default;
-            return false;
-        }
-
-        public static string AsString(this Node node, string @default = "") => node.TryString(out var value) ? value : @default;
+        public static string AsString(this Node node, string @default = default) => node.TryString(out var value) ? value : @default;
         public static bool AsBool(this Node node, bool @default = default) => node.TryBool(out var value) ? value : @default;
         public static char AsChar(this Node node, char @default = default) => node.TryChar(out var value) ? value : @default;
         public static sbyte AsSByte(this Node node, sbyte @default = default) => node.TrySByte(out var value) ? value : @default;
@@ -481,87 +457,9 @@ namespace Entia.Json
         public static float AsFloat(this Node node, float @default = default) => node.TryFloat(out var value) ? value : @default;
         public static double AsDouble(this Node node, double @default = default) => node.TryDouble(out var value) ? value : @default;
         public static decimal AsDecimal(this Node node, decimal @default = default) => node.TryDecimal(out var value) ? value : @default;
-        public static string AsString(this Node node, string key, string @default = "") => node.TryString(key, out var value) ? value : @default;
-        public static bool AsBool(this Node node, string key, bool @default = default) => node.TryBool(key, out var value) ? value : @default;
-        public static char AsChar(this Node node, string key, char @default = default) => node.TryChar(key, out var value) ? value : @default;
-        public static sbyte AsSByte(this Node node, string key, sbyte @default = default) => node.TrySByte(key, out var value) ? value : @default;
-        public static byte AsByte(this Node node, string key, byte @default = default) => node.TryByte(key, out var value) ? value : @default;
-        public static short AsShort(this Node node, string key, short @default = default) => node.TryShort(key, out var value) ? value : @default;
-        public static ushort AsUShort(this Node node, string key, ushort @default = default) => node.TryUShort(key, out var value) ? value : @default;
-        public static int AsInt(this Node node, string key, int @default = default) => node.TryInt(key, out var value) ? value : @default;
-        public static uint AsUInt(this Node node, string key, uint @default = default) => node.TryUInt(key, out var value) ? value : @default;
-        public static long AsLong(this Node node, string key, long @default = default) => node.TryLong(key, out var value) ? value : @default;
-        public static ulong AsULong(this Node node, string key, ulong @default = default) => node.TryULong(key, out var value) ? value : @default;
-        public static float AsFloat(this Node node, string key, float @default = default) => node.TryFloat(key, out var value) ? value : @default;
-        public static double AsDouble(this Node node, string key, double @default = default) => node.TryDouble(key, out var value) ? value : @default;
-        public static decimal AsDecimal(this Node node, string key, decimal @default = default) => node.TryDecimal(key, out var value) ? value : @default;
-        public static string AsString(this Node node, int index, string @default = "") => node.TryString(index, out var value) ? value : @default;
-        public static bool AsBool(this Node node, int index, bool @default = default) => node.TryBool(index, out var value) ? value : @default;
-        public static char AsChar(this Node node, int index, char @default = default) => node.TryChar(index, out var value) ? value : @default;
-        public static sbyte AsSByte(this Node node, int index, sbyte @default = default) => node.TrySByte(index, out var value) ? value : @default;
-        public static byte AsByte(this Node node, int index, byte @default = default) => node.TryByte(index, out var value) ? value : @default;
-        public static short AsShort(this Node node, int index, short @default = default) => node.TryShort(index, out var value) ? value : @default;
-        public static ushort AsUShort(this Node node, int index, ushort @default = default) => node.TryUShort(index, out var value) ? value : @default;
-        public static int AsInt(this Node node, int index, int @default = default) => node.TryInt(index, out var value) ? value : @default;
-        public static uint AsUInt(this Node node, int index, uint @default = default) => node.TryUInt(index, out var value) ? value : @default;
-        public static long AsLong(this Node node, int index, long @default = default) => node.TryLong(index, out var value) ? value : @default;
-        public static ulong AsULong(this Node node, int index, ulong @default = default) => node.TryULong(index, out var value) ? value : @default;
-        public static float AsFloat(this Node node, int index, float @default = default) => node.TryFloat(index, out var value) ? value : @default;
-        public static double AsDouble(this Node node, int index, double @default = default) => node.TryDouble(index, out var value) ? value : @default;
-        public static decimal AsDecimal(this Node node, int index, decimal @default = default) => node.TryDecimal(index, out var value) ? value : @default;
-
-        public static MemberEnumerable Members(this Node node) => new MemberEnumerable(node);
-        public static bool TryMember(this Node node, string key, out Node value)
-        {
-            foreach (var pair in node.Members())
-            {
-                if (pair.key == key)
-                {
-                    value = pair.value;
-                    return true;
-                }
-            }
-            value = default;
-            return false;
-        }
-
-        public static bool TryItem(this Node node, int index, out Node item)
-        {
-            if (node.IsArray() && index >= 0 && index < node.Children.Length)
-            {
-                item = node.Children[index];
-                return true;
-            }
-            item = default;
-            return false;
-        }
-
-        public static Node[] Items(this Node node) => node.IsArray() ? node.Children : Array.Empty<Node>();
-
-        public static bool TryReference(this Node node, out int reference)
-        {
-            if (node.IsObject() && node.Children.Length == 2 &&
-                node.Children[0].AsString() == "$r" &&
-                node.Children[1].TryInt(out reference))
-                return true;
-            reference = default;
-            return false;
-        }
-
-        public static bool TryAbstract(this Node node, out Node type, out Node value)
-        {
-            if (node.IsObject() && node.Children.Length == 4 &&
-                node.Children[0].AsString() == "$t" &&
-                node.Children[2].AsString() == "$v")
-            {
-                type = node.Children[1];
-                value = node.Children[3];
-                return true;
-            }
-
-            type = default;
-            value = default;
-            return false;
-        }
+        public static T AsEnum<T>(this Node node, T @default = default) where T : struct, Enum => node.TryEnum<T>(out var value) ? value : @default;
+        public static Enum AsEnum(this Node node, Type type, Enum @default = default) => node.TryEnum(type, out var value) ? value : @default;
+        public static Type AsType(this Node node, Type @default = default) => node.TryType(out var value) ? value : @default;
+        public static uint AsReference(this Node node, uint @default = default) => node.TryReference(out var value) ? value : @default;
     }
 }

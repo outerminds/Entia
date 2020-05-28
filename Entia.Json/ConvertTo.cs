@@ -6,7 +6,7 @@ using Entia.Json.Converters;
 namespace Entia.Json
 {
     [Flags]
-    public enum ConvertOptions
+    public enum Features
     {
         None = 0,
         All = ~0,
@@ -14,63 +14,50 @@ namespace Entia.Json
         Abstract = 1 << 1,
     }
 
-    public static class OptionsExtensions
+    public static class FeaturesExtensions
     {
-        public static bool HasAll(this ConvertOptions options, ConvertOptions others) => (options & others) == others;
-        public static bool HasAny(this ConvertOptions options, ConvertOptions others) => (options & others) != 0;
-        public static bool HasNone(this ConvertOptions options, ConvertOptions others) => !options.HasAny(others);
+        public static bool HasAll(this Features features, Features others) => (features & others) == others;
+        public static bool HasAny(this Features features, Features others) => (features & others) != 0;
+        public static bool HasNone(this Features features, Features others) => !features.HasAny(others);
     }
 
     public readonly struct ConvertToContext
     {
         public readonly object Instance;
         public readonly TypeData Type;
-        public readonly ConvertOptions Options;
-        public readonly Dictionary<object, int> Global;
-        public readonly Dictionary<object, int> Local;
+        public readonly Features Features;
+        public readonly Dictionary<object, uint> References;
         public readonly Container Container;
 
-        public ConvertToContext(ConvertOptions options, Dictionary<object, int> references, Container container = null)
-            : this(null, null, options, references, new Dictionary<object, int>(), container ?? new Container()) { }
-        ConvertToContext(object instance, TypeData type, ConvertOptions options, Dictionary<object, int> global, Dictionary<object, int> local, Container container)
+        public ConvertToContext(Features features, Container container)
+            : this(null, null, features, new Dictionary<object, uint>(), container) { }
+        ConvertToContext(object instance, TypeData type, Features features, Dictionary<object, uint> references, Container container)
         {
             Instance = instance;
             Type = type;
-            Options = options;
-            Global = global;
-            Local = local;
+            Features = features;
+            References = references;
             Container = container;
         }
 
-        public Node Convert<T>(in T instance) =>
-            TrySpecial(instance, typeof(T), out var special) ? special : Concrete(instance);
-        public Node Convert(object instance, Type type) =>
-            TrySpecial(instance, type, out var special) ? special : Concrete(instance, type);
+        public Node Convert<T>(in T instance) => Convert(instance, TypeUtility.GetData<T>());
+        public Node Convert(object instance, Type type) => Convert(instance, TypeUtility.GetData(type));
+        public Node Convert<T>(in T instance, TypeData type) =>
+            TrySpecial(instance, type, out var node) ? node : Abstract<T>(instance, type);
         public Node Convert(object instance, TypeData type) =>
-            TrySpecial(instance, type, out var special) ? special : Concrete(instance, type);
+            TrySpecial(instance, type, out var node) ? node : Abstract(instance, type);
 
-        public ConvertToContext With(object instance, TypeData type, ConvertOptions? options = null) =>
-            new ConvertToContext(instance, type, options ?? Options, Global, Local, Container);
+        public ConvertToContext With(object instance, TypeData type, Features? features = null) =>
+            new ConvertToContext(instance, type, features ?? Features, References, Container);
 
-        Node Concrete<T>(in T instance)
+        bool TrySpecial(object instance, TypeData type, out Node node)
         {
-            var data = TypeUtility.GetData<T>();
-            if (TryPrimitive(instance, data, out var primitive)) return primitive;
-            if (Options.HasAll(ConvertOptions.Reference)) Local[instance] = Local.Count;
-            if (TryConverter<T>(instance, data, out var node)) return node;
-            return Default(instance, data);
-        }
+            if (instance is null)
+            {
+                node = Node.Null;
+                return true;
+            }
 
-        Node Concrete(object instance, TypeData type)
-        {
-            if (TryPrimitive(instance, type, out var primitive)) return primitive;
-            if (Options.HasAll(ConvertOptions.Reference)) Local[instance] = Local.Count;
-            if (TryConverter(instance, type, out var node)) return node;
-            return Default(instance, type);
-        }
-
-        bool TryPrimitive(object instance, TypeData type, out Node node)
-        {
             switch (type.Code)
             {
                 case TypeCode.Byte: node = (byte)instance; return true;
@@ -87,67 +74,68 @@ namespace Entia.Json
                 case TypeCode.Boolean: node = (bool)instance; return true;
                 case TypeCode.Char: node = (char)instance; return true;
                 case TypeCode.String: node = (string)instance; return true;
-                default: node = default; return false;
+                case TypeCode.Object when type.Definition == typeof(Nullable<>):
+                    node = Convert(instance, type.Element);
+                    return true;
+                default:
+                    if (References.TryGetValue(instance, out var reference))
+                    {
+                        node = Features.HasAll(Features.Reference) ? Node.Reference(reference) : Node.Null;
+                        return true;
+                    }
+                    else if (instance is Type value)
+                    {
+                        var identifier = Reserve(value);
+                        node = Node.Type(value).With(identifier);
+                        return true;
+                    }
+                    else
+                    {
+                        node = default;
+                        return false;
+                    }
             }
         }
 
-        bool TrySpecial(object instance, Type type, out Node node)
+        Node Abstract<T>(object instance, TypeData type)
         {
-            if (instance is null)
-            {
-                node = Node.Null;
-                return true;
-            }
-            else if (Options.HasAll(ConvertOptions.Reference) && Local.TryGetValue(instance, out var reference))
-            {
-                node = Node.Reference(reference);
-                return true;
-            }
-            else if (Global.TryGetValue(instance, out reference))
-            {
-                node = Node.Reference(-reference - 1);
-                return true;
-            }
-
             var concrete = instance.GetType();
-            if (type != typeof(Type) && type != concrete)
-            {
-                node = Options.HasAll(ConvertOptions.Abstract) ?
-                    Node.Abstract(Convert(concrete), Concrete(instance, concrete)) :
-                    Node.Null;
-                return true;
-            }
-
-            node = default;
-            return false;
+            if (type.Type == concrete)
+                return Concrete<T>(instance, type);
+            else if (Features.HasAll(Features.Abstract))
+                return Node.Abstract(concrete, Convert(instance, concrete));
+            else
+                return Node.Null;
         }
 
-        bool TryConverter<T>(object instance, TypeData type, out Node node)
+        Node Abstract(object instance, TypeData type)
         {
-            if (Container.TryGet<T, IConverter>(out var converter))
-            {
-                node = converter.Convert(With(instance, type));
-                return true;
-            }
-
-            node = default;
-            return false;
+            var concrete = instance.GetType();
+            if (type.Type == concrete)
+                return Concrete(instance, type);
+            else if (Features.HasAll(Features.Abstract))
+                return Node.Abstract(concrete, Convert(instance, concrete));
+            else
+                return Node.Null;
         }
 
-        bool TryConverter(object instance, TypeData type, out Node node)
-        {
-            if (Container.TryGet<IConverter>(type, out var converter))
-            {
-                node = converter.Convert(With(instance, type));
-                return true;
-            }
+        Node Concrete<T>(object instance, TypeData type) =>
+            Container.TryGet<IConverter>(type, out var converter) ?
+            ConvertWith(instance, type, converter) : Default(instance, type);
 
-            node = default;
-            return false;
+        Node Concrete(object instance, TypeData type) =>
+            Container.TryGet<IConverter>(type, out var converter) ?
+            ConvertWith(instance, type, converter) : Default(instance, type);
+
+        Node ConvertWith(object instance, TypeData type, IConverter converter)
+        {
+            var identifier = Reserve(instance);
+            return converter.Convert(With(instance, type)).With(identifier);
         }
 
         Node Default(object instance, TypeData type)
         {
+            var identifier = Reserve(instance);
             var fields = type.InstanceFields;
             var members = new Node[fields.Length * 2];
             for (int i = 0; i < fields.Length; i++)
@@ -156,22 +144,9 @@ namespace Entia.Json
                 members[i * 2] = field.Name;
                 members[i * 2 + 1] = Convert(field.GetValue(instance), field.FieldType);
             }
-            return Node.Object(members);
+            return Node.Object(members).With(identifier);
         }
-    }
 
-    public static partial class Serialization
-    {
-        public static Node Convert<T>(in T instance, ConvertOptions options = ConvertOptions.All, Container container = null, params object[] references) =>
-            ToContext(options, references, container).Convert(instance);
-        public static Node Convert(object instance, Type type, ConvertOptions options = ConvertOptions.All, Container container = null, params object[] references) =>
-            ToContext(options, references, container).Convert(instance, type);
-
-        static ConvertToContext ToContext(ConvertOptions options, object[] references, Container container)
-        {
-            var dictionary = new Dictionary<object, int>(references.Length);
-            for (int i = 0; i < references.Length; i++) dictionary[references[i]] = dictionary.Count;
-            return new ConvertToContext(options, dictionary, container);
-        }
+        uint Reserve(object instance) => References[instance] = Node.Reserve();
     }
 }

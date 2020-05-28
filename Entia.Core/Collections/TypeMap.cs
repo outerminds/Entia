@@ -177,8 +177,8 @@ namespace Entia.Core
                         .ToArray();
                     var sub = _entries.Where(current => current.Type.Is(type, true, true)).ToArray();
                     entry = new Entry(type, _entries.Length, super, sub);
-                    ArrayUtility.Add(ref _entries, entry);
-                    for (int i = 0; i < super.Length; i++) ArrayUtility.Add(ref super[i].Sub, entry);
+                    ArrayUtility.Append(ref _entries, entry);
+                    for (int i = 0; i < super.Length; i++) ArrayUtility.Append(ref super[i].Sub, entry);
                     return _typeToEntry[type] = entry;
                 }
             }

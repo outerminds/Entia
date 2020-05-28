@@ -15,29 +15,39 @@ namespace Entia.Json
 
         public readonly Node Node;
         public readonly TypeData Type;
-        public readonly object[] Global;
-        public readonly List<object> Local;
+        public readonly Dictionary<uint, object> References;
         public readonly Container Container;
 
-        public ConvertFromContext(object[] references, Container container = null)
-            : this(null, null, references, new List<object>(), container ?? new Container()) { }
-        ConvertFromContext(Node node, TypeData type, object[] global, List<object> local, Container container)
+        public ConvertFromContext(Dictionary<uint, object> references, Container container)
+            : this(null, null, references, container) { }
+        ConvertFromContext(Node node, TypeData type, Dictionary<uint, object> references, Container container)
         {
             Node = node;
             Type = type;
-            Global = global;
-            Local = local;
             Container = container;
+            References = references;
         }
 
-        public T Convert<T>(Node node) =>
-            TrySpecial(node, out var special) ? Cast<T>(special) : Concrete<T>(node);
+        public T Convert<T>(Node node) => Convert<T>(node, TypeUtility.GetData<T>());
+        public object Convert(Node node, Type type) => Convert(node, TypeUtility.GetData(type));
+        public T Convert<T>(Node node, TypeData type) =>
+            TrySpecial(node, type, out var instance) ? Cast<T>(instance) :
+            TryConverter<T>(node, type, out instance) ? Cast<T>(instance) :
+            Default<T>(node, type);
         public object Convert(Node node, TypeData type) =>
-            TrySpecial(node, out var special) ? special : Concrete(node, type);
-        public object Convert(Node node, Type type) =>
-            TrySpecial(node, out var special) ? special : Concrete(node, type);
+            TrySpecial(node, type, out var instance) ? instance :
+            TryConverter(node, type, out instance) ? instance :
+            Default(node, type);
 
         public T Instantiate<T>() => Instantiate<T>(TypeUtility.GetData<T>());
+
+        public object Instantiate(Type type) => Instantiate(TypeUtility.GetData(type));
+
+        public T Instantiate<T>(TypeData type)
+        {
+            if (type.Type.IsValueType) return default;
+            return Cast<T>(Instantiate(type));
+        }
 
         public object Instantiate(TypeData type)
         {
@@ -48,67 +58,47 @@ namespace Entia.Json
                 FormatterServices.GetUninitializedObject(type);
         }
 
-        public object Instantiate(Type type) => Instantiate(TypeUtility.GetData(type));
-
         public ConvertFromContext With(Node node = null, TypeData type = null) =>
-            new ConvertFromContext(node ?? Node, type ?? Type, Global, Local, Container);
+            new ConvertFromContext(node ?? Node, type ?? Type, References, Container);
 
-        T Concrete<T>(Node node)
+        bool TrySpecial(Node node, TypeData type, out object instance)
         {
-            var type = TypeUtility.GetData<T>();
-            if (TryPrimitive(node, type, out var primitive)) return Cast<T>(primitive);
-            if (TryConverter<T>(node, type, out var instance)) return Cast<T>(instance);
-            return Cast<T>(Initialize(Instantiate<T>(type), node, type));
-        }
-
-        object Concrete(Node node, TypeData type)
-        {
-            if (TryPrimitive(node, type, out var primitive)) return primitive;
-            if (TryConverter(node, type, out var instance)) return instance;
-            return Initialize(Instantiate(type), node, type);
-        }
-
-        bool TrySpecial(Node node, out object instance)
-        {
-            if (node.IsNull())
+            switch (node.Kind)
             {
-                instance = null;
-                return true;
-            }
-            else if (node.TryReference(out var reference))
-            {
-                instance = reference < 0 ? Global[-reference - 1] : Local[reference];
-                return true;
-            }
-            else if (node.TryAbstract(out var type, out var value) && Convert<Type>(type) is Type concrete)
-            {
-                instance = Convert(value, concrete);
-                return true;
-            }
-
-            instance = default;
-            return false;
-        }
-
-        bool TryPrimitive(Node node, TypeData type, out object instance)
-        {
-            switch (type.Code)
-            {
-                case TypeCode.Byte: instance = node.AsByte(); return true;
-                case TypeCode.SByte: instance = node.AsSByte(); return true;
-                case TypeCode.Int16: instance = node.AsShort(); return true;
-                case TypeCode.Int32: instance = node.AsInt(); return true;
-                case TypeCode.Int64: instance = node.AsLong(); return true;
-                case TypeCode.UInt16: instance = node.AsUShort(); return true;
-                case TypeCode.UInt32: instance = node.AsUInt(); return true;
-                case TypeCode.UInt64: instance = node.AsULong(); return true;
-                case TypeCode.Single: instance = node.AsFloat(); return true;
-                case TypeCode.Double: instance = node.AsDouble(); return true;
-                case TypeCode.Decimal: instance = node.AsDecimal(); return true;
-                case TypeCode.Boolean: instance = node.AsBool(); return true;
-                case TypeCode.Char: instance = node.AsChar(); return true;
-                case TypeCode.String: instance = node.AsString(); return true;
-                default: instance = default; return false;
+                case Node.Kinds.Null:
+                    instance = null;
+                    return true;
+                case Node.Kinds.Type:
+                    instance = node.AsType();
+                    return true;
+                case Node.Kinds.Reference:
+                    References.TryGetValue(node.AsReference(), out instance);
+                    return true;
+                case Node.Kinds.Abstract:
+                    instance = node.TryAbstract(out var concrete, out var value) ? Convert(value, concrete) : null;
+                    return true;
+                default:
+                    switch (type.Code)
+                    {
+                        case TypeCode.Byte: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsByte()) : node.AsByte(); return true;
+                        case TypeCode.SByte: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsSByte()) : node.AsSByte(); return true;
+                        case TypeCode.Int16: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsShort()) : node.AsShort(); return true;
+                        case TypeCode.Int32: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsInt()) : node.AsInt(); return true;
+                        case TypeCode.Int64: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsLong()) : node.AsLong(); return true;
+                        case TypeCode.UInt16: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsUShort()) : node.AsUShort(); return true;
+                        case TypeCode.UInt32: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsUInt()) : node.AsUInt(); return true;
+                        case TypeCode.UInt64: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsULong()) : node.AsULong(); return true;
+                        case TypeCode.Single: instance = node.AsFloat(); return true;
+                        case TypeCode.Double: instance = node.AsDouble(); return true;
+                        case TypeCode.Decimal: instance = node.AsDecimal(); return true;
+                        case TypeCode.Boolean: instance = node.AsBool(); return true;
+                        case TypeCode.Char: instance = node.AsChar(); return true;
+                        case TypeCode.String: instance = node.AsString(); return true;
+                        case TypeCode.Object when type.Definition == typeof(Nullable<>):
+                            instance = Convert(node, type.Element);
+                            return true;
+                        default: instance = default; return false;
+                    }
             }
         }
 
@@ -116,13 +106,7 @@ namespace Entia.Json
         {
             if (Container.TryGet<T, IConverter>(out var converter))
             {
-                var context = With(node, type);
-                var index = Local.Count;
-                Local.Add(default);
-                instance = converter.Instantiate(context);
-                Local[index] = instance;
-                converter.Initialize(ref instance, context);
-                Local[index] = instance;
+                instance = Instantiate(node, type, converter);
                 return true;
             }
 
@@ -134,13 +118,7 @@ namespace Entia.Json
         {
             if (Container.TryGet<IConverter>(type, out var converter))
             {
-                var context = With(node, type);
-                var index = Local.Count;
-                Local.Add(default);
-                instance = converter.Instantiate(context);
-                Local[index] = instance;
-                converter.Initialize(ref instance, context);
-                Local[index] = instance;
+                instance = Instantiate(node, type, converter);
                 return true;
             }
 
@@ -148,18 +126,36 @@ namespace Entia.Json
             return false;
         }
 
-        T Instantiate<T>(TypeData type)
+        object Instantiate(Node node, TypeData type, IConverter converter)
         {
-            if (typeof(T).IsValueType) return default;
-            return Cast<T>(Instantiate(type));
+            var context = With(node, type);
+            var instance = References[node.Identifier] = converter.Instantiate(context);
+            converter.Initialize(ref instance, context);
+            // NOTE: must be set again in the case where the boxed instance is unboxed and reboxed
+            References[node.Identifier] = instance;
+            return instance;
         }
 
-        object Initialize(object instance, Node node, TypeData type)
+        T Default<T>(Node node, TypeData type)
         {
-            if (instance == null) return instance;
+            // NOTE: instance must be boxed to ensure it is not copied around if it is a struct
+            var instance = References[node.Identifier] = Instantiate<T>(type);
+            Initialize(instance, node, type);
+            return Cast<T>(instance);
+        }
+
+        object Default(Node node, TypeData type)
+        {
+            var instance = References[node.Identifier] = Instantiate(type);
+            Initialize(instance, node, type);
+            return instance;
+        }
+
+        void Initialize(object instance, Node node, TypeData type)
+        {
+            if (instance == null) return;
 
             var members = type.InstanceMembers;
-            Local.Add(instance);
             foreach (var (key, value) in node.Members())
             {
                 if (members.TryGetValue(key, out var member))
@@ -170,19 +166,6 @@ namespace Entia.Json
                         property.SetValue(instance, Convert(value, property.PropertyType));
                 }
             }
-
-            return instance;
         }
-    }
-
-    public static partial class Serialization
-    {
-        public static T Instantiate<T>(Node node, Container container = null, params object[] references) =>
-            FromContext(references, container).Convert<T>(node);
-        public static object Instantiate(Node node, Type type, Container container = null, params object[] references) =>
-            FromContext(references, container).Convert(node, type);
-
-        static ConvertFromContext FromContext(object[] references, Container container) =>
-            new ConvertFromContext(references, container);
     }
 }

@@ -66,7 +66,7 @@ namespace Entia.Core
     /// Links any type with its trait implementations. A trait is essentially an extension interface, meaning that
     /// it can be considered as an interface that can be defined for types that are not owned by their consumer. The
     /// container stores and retrieves the implementations for a given type. It also retrieves default implementations
-    /// that can be linked using the 'IImplementation<T>' interface or the '[Implementation]' attribute.
+    /// that can be linked using the 'IImplementation' interface or the '[Implementation]' attribute.
     /// </summary>
     public sealed class Container : IEnumerable<(Type type, Type trait, ITrait implementation)>
     {
@@ -368,12 +368,12 @@ namespace Entia.Core
             implementations.Length > 0;
 
         public void Add<T, TTrait>(TTrait implementation) where TTrait : ITrait =>
-            ArrayUtility.Add(ref GetImplementations<T, TTrait>(), implementation);
+            ArrayUtility.Append(ref GetImplementations<T, TTrait>(), implementation);
         public void Add<TTrait>(Type type, TTrait implementation) where TTrait : ITrait =>
-            ArrayUtility.Add(ref GetImplementations<TTrait>(type), implementation);
+            ArrayUtility.Append(ref GetImplementations<TTrait>(type), implementation);
         public void Add(Type type, ITrait implementation) => Add(type, implementation.GetType(), implementation);
         public void Add(Type type, Type trait, ITrait implementation) =>
-            ArrayUtility.Add(ref GetImplementations(type, trait), implementation);
+            ArrayUtility.Append(ref GetImplementations(type, trait), implementation);
 
         public bool Remove<T, TTrait>(TTrait implementation) where TTrait : ITrait =>
             ArrayUtility.Remove(ref GetImplementations<T, TTrait>(), implementation);

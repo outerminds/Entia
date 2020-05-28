@@ -8,7 +8,7 @@ namespace Entia.Core
         {
             public static Func<T, T> Clone =
                 typeof(T).IsValueType ? new Func<T, T>(value => value) :
-                new Func<T, T>((value => value == null ? default : (T)_clone(value)));
+                new Func<T, T>(value => value == null ? default : (T)_clone(value));
         }
 
         static readonly Func<object, object> _clone = typeof(object)
