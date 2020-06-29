@@ -392,6 +392,9 @@ namespace Entia.Experiment
             Test(new Queue(new object[] { 1, "2", 3L }), out var json13, out var node13, out var value13, Features.Abstract);
             Test(new SortedDictionary<int, int> { { 1, 2 }, { 3, 4 } }, out var json14, out var node14, out var value14);
             Test(new ConcurrentDictionary<int, int>(new[] { new KeyValuePair<int, int>(1, 2), new KeyValuePair<int, int>(3, 4) }), out var json15, out var node15, out var value15);
+            Test(Features.Abstract, out var json16, out var node16, out var value16);
+            Test<Features?>(Features.Abstract, out var json17, out var node17, out var value17);
+            Test<Features?>(null, out var json18, out var node18, out var value18);
 
             void SerializeA<T>(T value)
             {

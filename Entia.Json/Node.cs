@@ -21,7 +21,7 @@ namespace Entia.Json
         public static implicit operator Node(double value) => Number(value);
         public static implicit operator Node(decimal value) => Number(value);
         public static implicit operator Node(Enum value) => Number(value);
-        public static implicit operator Node(char value) => String(value);
+        public static implicit operator Node(char value) => Number(value);
         public static implicit operator Node(string value) => String(value);
         public static implicit operator Node(Type value) => Type(value);
 

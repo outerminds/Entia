@@ -330,8 +330,9 @@ namespace Entia.Core
         public static Result<T> Or<T>(in this Result<T> result1, in Result<T> result2, in Result<T> result3, in Result<T> result4) => result1.Or(result2).Or(result3).Or(result4);
         public static Result<T> Or<T>(in this Result<T> result1, in Result<T> result2, in Result<T> result3, in Result<T> result4, in Result<T> result5) => result1.Or(result2).Or(result3).Or(result4).Or(result5);
 
+        public static T OrThrow<T>(in this Result<T> result) => result.Or(() => throw new NullReferenceException());
         public static T OrDefault<T>(in this Result<T> result) => result.Or(default(T));
-        public static Success<Unit> Ignore<T>(in this Success<T> success) => Success();
+        public static Success<Unit> Ignore<T>(in this Success<T> _) => Success();
         public static Result<Unit> Ignore<T>(in this Result<T> result) => result.Map(_ => default(Unit));
         public static Success<object> Box<T>(in this Success<T> success) => success.Value;
         public static Result<object> Box<T>(in this Result<T> result) => result.Map(value => (object)value);

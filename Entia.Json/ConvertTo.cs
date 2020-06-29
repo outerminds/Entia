@@ -85,8 +85,8 @@ namespace Entia.Json
                     }
                     else if (instance is Type value)
                     {
-                        var identifier = Reserve(value);
-                        node = Node.Type(value).With(identifier);
+                        node = Node.Type(value);
+                        References[value] = node.Identifier;
                         return true;
                     }
                     else
@@ -120,7 +120,7 @@ namespace Entia.Json
         }
 
         Node Concrete<T>(object instance, TypeData type) =>
-            Container.TryGet<IConverter>(type, out var converter) ?
+            Container.TryGet<T, IConverter>(out var converter) ?
             ConvertWith(instance, type, converter) : Default(instance, type);
 
         Node Concrete(object instance, TypeData type) =>
@@ -141,7 +141,7 @@ namespace Entia.Json
             for (int i = 0; i < fields.Length; i++)
             {
                 var field = fields[i];
-                members[i * 2] = field.Name;
+                members[i * 2] = Node.String(field.Name, true);
                 members[i * 2 + 1] = Convert(field.GetValue(instance), field.FieldType);
             }
             return Node.Object(members).With(identifier);

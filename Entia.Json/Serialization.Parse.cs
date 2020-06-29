@@ -346,40 +346,70 @@ namespace Entia.Json
 
         static void Unwrap(ref Node node, Dictionary<int, uint> identifiers, Dictionary<uint, object> references)
         {
-            if (node.TryMember("$i", out var identifierNode, out var identifierIndex) &&
-                identifierNode.TryInt(out var identifier))
+            static bool TryIdentifier(Node node, out int index, out Node value)
             {
-                if (node.TryMember("$v", out var valueNode))
+                if (node.Children.Length == 4 &&
+                    node.Children[0].AsString() == "$i" &&
+                    node.Children[1].TryInt(out index) &&
+                    node.Children[2].AsString() == "$v")
                 {
-                    identifiers[identifier] = valueNode.Identifier;
-                    node = valueNode;
+                    value = node.Children[3];
+                    return true;
                 }
-                else
-                {
-                    identifiers[identifier] = node.Identifier;
-                    node = node.RemoveAt(identifierIndex, 2);
-                }
+                index = default;
+                value = default;
+                return false;
             }
-            if (node.TryMember("$r", out var referenceNode))
-                node = identifiers.TryGetValue(referenceNode.AsInt(), out var reference) ?
+
+            static bool TryReference(Node node, out int reference)
+            {
+                if (node.Children.Length == 2 && node.Children[0].AsString() == "$r")
+                    return node.Children[1].TryInt(out reference);
+                reference = default;
+                return false;
+            }
+
+            static bool TryType(Node node, Dictionary<uint, object> references, out Node type)
+            {
+                if (node.Children.Length == 2 && node.Children[0].AsString() == "$t")
+                {
+                    type = Node.Type(JsonUtility.NodeToType(node.Children[1], references)).With(node.Identifier);
+                    return true;
+                }
+                type = default;
+                return false;
+            }
+
+            static bool TryAbstract(Node node, Dictionary<uint, object> references, out Node @abstract)
+            {
+                if (node.Children.Length == 4 &&
+                    node.Children[0].AsString() == "$a" &&
+                    node.Children[2].AsString() == "$v")
+                {
+                    var value = node.Children[1];
+                    @abstract = Node.Abstract(
+                        Node.Type(JsonUtility.NodeToType(value, references)).With(value.Identifier),
+                        node.Children[3]).With(node.Identifier);
+                    return true;
+                }
+                @abstract = default;
+                return false;
+            }
+
+            if (TryIdentifier(node, out var index, out var value))
+            {
+                identifiers[index] = value.Identifier;
+                node = value;
+            }
+
+            if (TryReference(node, out index))
+                node = identifiers.TryGetValue(index, out var reference) ?
                     Node.Reference(reference) : Node.Null;
 
             for (int i = 0; i < node.Children.Length; i++) Unwrap(ref node.Children[i], identifiers, references);
 
-            if (node.TryMember("$t", out var typeNode) &&
-                JsonUtility.NodeToType(typeNode, references) is Type type)
-                node = Node.Type(type).With(typeNode.Identifier);
-            else if (node.TryMember("$a", out var abstractNode, out var abstractIndex) &&
-                JsonUtility.NodeToType(abstractNode, references) is Type @abstract)
-            {
-                typeNode = Node.Type(@abstract).With(abstractNode.Identifier);
-                if (node.TryMember("$v", out var valueNode))
-                    node = Node.Abstract(typeNode, valueNode);
-                else
-                    node = Node.Abstract(typeNode, node.RemoveAt(abstractIndex, 2));
-            }
-            else if (node.TryMember("$v", out var valueNode))
-                node = valueNode;
+            if (TryType(node, references, out var type)) node = type;
+            else if (TryAbstract(node, references, out var @abstract)) node = @abstract;
         }
     }
 }
