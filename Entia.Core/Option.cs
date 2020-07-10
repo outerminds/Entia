@@ -31,8 +31,7 @@ namespace Entia.Core
         public bool Equals(Some<T> other) => EqualityComparer<T>.Default.Equals(Value, other.Value);
         public override bool Equals(object obj) =>
             obj is T value ? this == value :
-            obj is Some<T> some ? this == some :
-            false;
+            obj is Some<T> some && this == some;
 
         public override int GetHashCode() => EqualityComparer<T>.Default.GetHashCode(Value);
         public override string ToString() => $"{GetType().Format()}({Value})";
@@ -40,7 +39,7 @@ namespace Entia.Core
 
     public readonly struct None : IOption, IEquatable<None>
     {
-        public static bool operator ==(None left, None right) => true;
+        public static bool operator ==(None _, None __) => true;
         public static bool operator !=(None left, None right) => !(left == right);
 
         Option.Tags IOption.Tag => Option.Tags.None;
@@ -61,7 +60,7 @@ namespace Entia.Core
         public static implicit operator Option<T>(in T value) => _isNull(value) ?
             new Option<T>(Option.Tags.None, value) :
             new Option<T>(Option.Tags.Some, value);
-        public static implicit operator Option<T>(None none) => new Option<T>(Option.Tags.None, default);
+        public static implicit operator Option<T>(None _) => new Option<T>(Option.Tags.None, default);
         public static implicit operator bool(in Option<T> option) => option.Tag == Option.Tags.Some;
         public static explicit operator Some<T>(in Option<T> option) => option.Tag == Option.Tags.Some ? new Some<T>(option._value) : throw new InvalidCastException();
         public static explicit operator None(in Option<T> option) => option.Tag == Option.Tags.None ? new None() : throw new InvalidCastException();
@@ -75,7 +74,7 @@ namespace Entia.Core
         public static bool operator !=(in Option<T> left, in Some<T> right) => !(left == right);
         public static bool operator ==(in Some<T> left, in Option<T> right) => right == left.Value;
         public static bool operator !=(in Some<T> left, in Option<T> right) => !(left == right);
-        public static bool operator ==(in Option<T> left, None right) => left.IsNone();
+        public static bool operator ==(in Option<T> left, None _) => left.IsNone();
         public static bool operator !=(in Option<T> left, None right) => !(left == right);
         public static bool operator ==(None left, in Option<T> right) => right == left;
         public static bool operator !=(None left, in Option<T> right) => !(left == right);
@@ -99,8 +98,7 @@ namespace Entia.Core
             obj is null ? this.IsNone() :
             obj is Option<T> option ? this == option :
             obj is Some<T> some ? this == some :
-            obj is None none ? this == none :
-            false;
+            obj is None none && this == none;
 
         public override int GetHashCode() => this.TryValue(out var value) ? EqualityComparer<T>.Default.GetHashCode(value) : 0;
 
@@ -220,7 +218,7 @@ namespace Entia.Core
         public static Option<Unit> AsOption(this None none) => none;
         public static T? AsNullable<T>(in this Option<T> option) where T : struct => option.TryValue(out var value) ? (T?)value : null;
         public static T? AsNullable<T>(in this Some<T> some) where T : struct => some.Value;
-        public static T? AsNullable<T>(this None none) where T : struct => null;
+        public static T? AsNullable<T>(this None _) where T : struct => null;
 
         public static bool TrySome<T>(in this Option<T> option, out Some<T> some)
         {

@@ -7,6 +7,8 @@ using Entia.Modules.Component;
 using System.Runtime.CompilerServices;
 using Entia.Experimental.Nodes;
 using Entia.Experimental.Scheduling;
+using Entia.Experimental.Systems;
+using static Entia.Experimental.Filter;
 
 namespace Entia.Experimental
 {
@@ -52,19 +54,19 @@ namespace Entia.Experimental
             public static Node Run(Action run) => Run((in TPhase _) => run());
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static Node RunEach(Func<Segment, InAction<TPhase>> provide, Filter filter, params IDependency[] dependencies) => Node.From(new Schedule(world =>
+            static Node RunEach(Func<Segment, InAction<TPhase>> provide, Filter filter, params IDependency[] dependencies) => From(new Schedule(world =>
             {
                 var components = world.Components();
                 var run = new InAction<TPhase>((in TPhase _) => { });
                 var index = 0;
-                return CreateRunner((in TPhase message) =>
+                return CreateRunner((in TPhase phase) =>
                 {
                     while (index < components.Segments.Length)
                     {
                         var segment = components.Segments[index++];
                         if (filter.Matches(segment)) run += provide(segment);
                     }
-                    run(message);
+                    run(phase);
                 }, dependencies.Prepend(new Read(typeof(Entity))));
             }));
 
