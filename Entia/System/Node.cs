@@ -7,8 +7,6 @@ using Entia.Modules.Component;
 using System.Runtime.CompilerServices;
 using Entia.Experimental.Nodes;
 using Entia.Experimental.Scheduling;
-using Entia.Experimental.Systems;
-using static Entia.Experimental.Filter;
 
 namespace Entia.Experimental
 {
