@@ -12,65 +12,31 @@ namespace Entia.Experimental
 {
     public sealed partial class Node
     {
-        public static partial class System<TPhase> where TPhase : struct, IMessage
+        public static partial class System<TMessage> where TMessage : struct, IMessage
         {
-            public static partial class Receive<TMessage> where TMessage : struct, IMessage
-            {
-                public static Node Run(InAction<TPhase, TMessage> run, int? capacity = null) => From(new Schedule(world =>
-                {
-                    var receiver = world.Messages().Receiver<TMessage>(capacity);
-                    return CreateRunner((in TPhase phase) => { while (receiver.TryMessage(out var message)) run(phase, message); });
-                }));
-                public static Node Run(InAction<TMessage> run, int? capacity = null) => Run((in TPhase _, in TMessage message) => run(message), capacity);
-                public static Node Run(Action run, int? capacity = null) => Run((in TPhase _, in TMessage __) => run(), capacity);
-
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                static Node RunEach(Func<Segment, InAction<TPhase, TMessage>> provide, Filter filter, int? capacity = null, params IDependency[] dependencies) => From(new Schedule(world =>
-                {
-                    var components = world.Components();
-                    var receiver = world.Messages().Receiver<TMessage>(capacity);
-                    var run = new InAction<TPhase, TMessage>((in TPhase _, in TMessage __) => { });
-                    var index = 0;
-                    return CreateRunner((in TPhase phase) =>
-                    {
-                        while (index < components.Segments.Length)
-                        {
-                            var segment = components.Segments[index++];
-                            if (filter.Matches(segment)) run += provide(segment);
-                        }
-
-                        while (receiver.TryMessage(out var message)) run(phase, message);
-                    }, dependencies.Prepend(new Read(typeof(Entity))));
-                }));
-
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                static Result<Runner> CreateRunner(InAction<TPhase> run, params IDependency[] dependencies) =>
-                    Runner.From(run, dependencies.Prepend(new React(typeof(TPhase)), new Read(typeof(TMessage))));
-            }
-
-            public static Node Run(InAction<TPhase> run) => Node.From(new Schedule(_ => CreateRunner(run)));
-            public static Node Run(Action run) => Run((in TPhase _) => run());
+            public static Node Run(InAction<TMessage> run) => Node.From(new Schedule(_ => CreateRunner(run)));
+            public static Node Run(Action run) => Run((in TMessage _) => run());
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static Node RunEach(Func<Segment, InAction<TPhase>> provide, Filter filter, params IDependency[] dependencies) => From(new Schedule(world =>
+            static Node RunEach(Func<Segment, InAction<TMessage>> provide, Filter filter, params IDependency[] dependencies) => From(new Schedule(world =>
             {
                 var components = world.Components();
-                var run = new InAction<TPhase>((in TPhase _) => { });
+                var run = new InAction<TMessage>((in TMessage _) => { });
                 var index = 0;
-                return CreateRunner((in TPhase phase) =>
+                return CreateRunner((in TMessage message) =>
                 {
                     while (index < components.Segments.Length)
                     {
                         var segment = components.Segments[index++];
                         if (filter.Matches(segment)) run += provide(segment);
                     }
-                    run(phase);
+                    run(message);
                 }, dependencies.Prepend(new Read(typeof(Entity))));
             }));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static Result<Runner> CreateRunner(InAction<TPhase> run, params IDependency[] dependencies) =>
-                Runner.From(run, dependencies.Prepend(new React(typeof(TPhase))));
+            static Result<Runner> CreateRunner(InAction<TMessage> run, params IDependency[] dependencies) =>
+                Runner.From(run, dependencies.Prepend(new React(typeof(TMessage))));
         }
 
         public static Node From(INode data, params Node[] children) => new Node(data, children);

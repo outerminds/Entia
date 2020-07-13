@@ -11,7 +11,7 @@ namespace Entia.Experimental
 {
     public sealed partial class Node
     {
-        public static Node Inject<T>(Func<T, Node> provide) where T : IInjectable => From(new Nodes.Lazy(world =>
+        public static Node Inject<T>(Func<T, Node> provide) where T : IInjectable => From(new Lazy(world =>
         {
             var result1 = world.Inject<T>();
             if (result1.TryValue(out var value1))
@@ -19,7 +19,7 @@ namespace Entia.Experimental
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages()));
         }));
-        public static Node Inject<T1, T2>(Func<T1, T2, Node> provide) where T1 : IInjectable where T2 : IInjectable => From(new Nodes.Lazy(world =>
+        public static Node Inject<T1, T2>(Func<T1, T2, Node> provide) where T1 : IInjectable where T2 : IInjectable => From(new Lazy(world =>
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2))
@@ -27,7 +27,7 @@ namespace Entia.Experimental
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages()));
         }));
-        public static Node Inject<T1, T2, T3>(Func<T1, T2, T3, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable => From(new Nodes.Lazy(world =>
+        public static Node Inject<T1, T2, T3>(Func<T1, T2, T3, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable => From(new Lazy(world =>
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3))
@@ -35,7 +35,7 @@ namespace Entia.Experimental
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages()));
         }));
-        public static Node Inject<T1, T2, T3, T4>(Func<T1, T2, T3, T4, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable => From(new Nodes.Lazy(world =>
+        public static Node Inject<T1, T2, T3, T4>(Func<T1, T2, T3, T4, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable => From(new Lazy(world =>
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4))
@@ -43,7 +43,7 @@ namespace Entia.Experimental
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages()));
         }));
-        public static Node Inject<T1, T2, T3, T4, T5>(Func<T1, T2, T3, T4, T5, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable => From(new Nodes.Lazy(world =>
+        public static Node Inject<T1, T2, T3, T4, T5>(Func<T1, T2, T3, T4, T5, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable => From(new Lazy(world =>
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5))
@@ -51,7 +51,7 @@ namespace Entia.Experimental
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages()));
         }));
-        public static Node Inject<T1, T2, T3, T4, T5, T6>(Func<T1, T2, T3, T4, T5, T6, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable where T6 : IInjectable => From(new Nodes.Lazy(world =>
+        public static Node Inject<T1, T2, T3, T4, T5, T6>(Func<T1, T2, T3, T4, T5, T6, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable where T6 : IInjectable => From(new Lazy(world =>
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>(); var result6 = world.Inject<T6>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5) && result6.TryValue(out var value6))
@@ -59,7 +59,7 @@ namespace Entia.Experimental
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages(), result6.Messages()));
         }));
-        public static Node Inject<T1, T2, T3, T4, T5, T6, T7>(Func<T1, T2, T3, T4, T5, T6, T7, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable where T6 : IInjectable where T7 : IInjectable => From(new Nodes.Lazy(world =>
+        public static Node Inject<T1, T2, T3, T4, T5, T6, T7>(Func<T1, T2, T3, T4, T5, T6, T7, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable where T6 : IInjectable where T7 : IInjectable => From(new Lazy(world =>
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>(); var result6 = world.Inject<T6>(); var result7 = world.Inject<T7>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5) && result6.TryValue(out var value6) && result7.TryValue(out var value7))
@@ -67,7 +67,7 @@ namespace Entia.Experimental
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages(), result6.Messages(), result7.Messages()));
         }));
-        public static Node Inject<T1, T2, T3, T4, T5, T6, T7, T8>(Func<T1, T2, T3, T4, T5, T6, T7, T8, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable where T6 : IInjectable where T7 : IInjectable where T8 : IInjectable => From(new Nodes.Lazy(world =>
+        public static Node Inject<T1, T2, T3, T4, T5, T6, T7, T8>(Func<T1, T2, T3, T4, T5, T6, T7, T8, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable where T6 : IInjectable where T7 : IInjectable where T8 : IInjectable => From(new Lazy(world =>
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>(); var result6 = world.Inject<T6>(); var result7 = world.Inject<T7>(); var result8 = world.Inject<T8>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5) && result6.TryValue(out var value6) && result7.TryValue(out var value7) && result8.TryValue(out var value8))
@@ -75,7 +75,7 @@ namespace Entia.Experimental
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages(), result6.Messages(), result7.Messages(), result8.Messages()));
         }));
-        public static Node Inject<T1, T2, T3, T4, T5, T6, T7, T8, T9>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable where T6 : IInjectable where T7 : IInjectable where T8 : IInjectable where T9 : IInjectable => From(new Nodes.Lazy(world =>
+        public static Node Inject<T1, T2, T3, T4, T5, T6, T7, T8, T9>(Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, Node> provide) where T1 : IInjectable where T2 : IInjectable where T3 : IInjectable where T4 : IInjectable where T5 : IInjectable where T6 : IInjectable where T7 : IInjectable where T8 : IInjectable where T9 : IInjectable => From(new Lazy(world =>
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>(); var result6 = world.Inject<T6>(); var result7 = world.Inject<T7>(); var result8 = world.Inject<T8>(); var result9 = world.Inject<T9>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5) && result6.TryValue(out var value6) && result7.TryValue(out var value7) && result8.TryValue(out var value8) && result9.TryValue(out var value9))

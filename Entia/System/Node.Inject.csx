@@ -19,7 +19,7 @@ IEnumerable<string> Generate(int depth)
         var dependencies = generics.Select(generic => $"world.Dependencies<{generic}>()");
 
         yield return
-$@"public static Node Inject<{string.Join(", ", generics)}>(Func<{string.Join(", ", generics.Append("Node"))}> provide) {string.Join(" ", constraints)} => From(new Nodes.Lazy(world =>
+$@"public static Node Inject<{string.Join(", ", generics)}>(Func<{string.Join(", ", generics.Append("Node"))}> provide) {string.Join(" ", constraints)} => From(new Lazy(world =>
 {{
     {string.Join(" ", resultVars)}
     if ({string.Join(" && ", resultTries)})

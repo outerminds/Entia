@@ -9,1054 +9,730 @@ namespace Entia.Experimental
 {
     namespace Systems
     {
-        public delegate void RunEach();
+        public delegate void RunEachPAE<TMessage>(in TMessage message, Entity[] entities, int count) where TMessage : struct, IMessage;
+        public delegate void RunEachPA<TMessage>(in TMessage message, int count) where TMessage : struct, IMessage;
+        public delegate void RunEachAE(Entity[] entities, int count);
+        public delegate void RunEachA(int count);
+        public delegate void RunEachPAE<TMessage, T>(in TMessage message, Entity[] entities, T[] store1, int count) where TMessage : struct, IMessage where T : struct, IComponent;
+        public delegate void RunEachPA<TMessage, T>(in TMessage message, T[] store1, int count) where TMessage : struct, IMessage where T : struct, IComponent;
+        public delegate void RunEachAE<T>(Entity[] entities, T[] store1, int count) where T : struct, IComponent;
+        public delegate void RunEachA<T>(T[] store1, int count) where T : struct, IComponent;
+        public delegate void RunEachPAE<TMessage, T1, T2>(in TMessage message, Entity[] entities, T1[] store1, T2[] store2, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent;
+        public delegate void RunEachPA<TMessage, T1, T2>(in TMessage message, T1[] store1, T2[] store2, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent;
+        public delegate void RunEachAE<T1, T2>(Entity[] entities, T1[] store1, T2[] store2, int count) where T1 : struct, IComponent where T2 : struct, IComponent;
+        public delegate void RunEachA<T1, T2>(T1[] store1, T2[] store2, int count) where T1 : struct, IComponent where T2 : struct, IComponent;
+        public delegate void RunEachPAE<TMessage, T1, T2, T3>(in TMessage message, Entity[] entities, T1[] store1, T2[] store2, T3[] store3, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
+        public delegate void RunEachPA<TMessage, T1, T2, T3>(in TMessage message, T1[] store1, T2[] store2, T3[] store3, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
+        public delegate void RunEachAE<T1, T2, T3>(Entity[] entities, T1[] store1, T2[] store2, T3[] store3, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
+        public delegate void RunEachA<T1, T2, T3>(T1[] store1, T2[] store2, T3[] store3, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
+        public delegate void RunEachPAE<TMessage, T1, T2, T3, T4>(in TMessage message, Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
+        public delegate void RunEachPA<TMessage, T1, T2, T3, T4>(in TMessage message, T1[] store1, T2[] store2, T3[] store3, T4[] store4, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
+        public delegate void RunEachAE<T1, T2, T3, T4>(Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
+        public delegate void RunEachA<T1, T2, T3, T4>(T1[] store1, T2[] store2, T3[] store3, T4[] store4, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
+        public delegate void RunEachPAE<TMessage, T1, T2, T3, T4, T5>(in TMessage message, Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
+        public delegate void RunEachPA<TMessage, T1, T2, T3, T4, T5>(in TMessage message, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
+        public delegate void RunEachAE<T1, T2, T3, T4, T5>(Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
+        public delegate void RunEachA<T1, T2, T3, T4, T5>(T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
+        public delegate void RunEachPAE<TMessage, T1, T2, T3, T4, T5, T6>(in TMessage message, Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
+        public delegate void RunEachPA<TMessage, T1, T2, T3, T4, T5, T6>(in TMessage message, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
+        public delegate void RunEachAE<T1, T2, T3, T4, T5, T6>(Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
+        public delegate void RunEachA<T1, T2, T3, T4, T5, T6>(T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
+        public delegate void RunEachPAE<TMessage, T1, T2, T3, T4, T5, T6, T7>(in TMessage message, Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
+        public delegate void RunEachPA<TMessage, T1, T2, T3, T4, T5, T6, T7>(in TMessage message, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
+        public delegate void RunEachAE<T1, T2, T3, T4, T5, T6, T7>(Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
+        public delegate void RunEachA<T1, T2, T3, T4, T5, T6, T7>(T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
+        public delegate void RunEachPAE<TMessage, T1, T2, T3, T4, T5, T6, T7, T8>(in TMessage message, Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, T8[] store8, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
+        public delegate void RunEachPA<TMessage, T1, T2, T3, T4, T5, T6, T7, T8>(in TMessage message, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, T8[] store8, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
+        public delegate void RunEachAE<T1, T2, T3, T4, T5, T6, T7, T8>(Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, T8[] store8, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
+        public delegate void RunEachA<T1, T2, T3, T4, T5, T6, T7, T8>(T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, T8[] store8, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
+        public delegate void RunEachPAE<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9>(in TMessage message, Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, T8[] store8, T9[] store9, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
+        public delegate void RunEachPA<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9>(in TMessage message, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, T8[] store8, T9[] store9, int count) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
+        public delegate void RunEachAE<T1, T2, T3, T4, T5, T6, T7, T8, T9>(Entity[] entities, T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, T8[] store8, T9[] store9, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
+        public delegate void RunEachA<T1, T2, T3, T4, T5, T6, T7, T8, T9>(T1[] store1, T2[] store2, T3[] store3, T4[] store4, T5[] store5, T6[] store6, T7[] store7, T8[] store8, T9[] store9, int count) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
+        public delegate void RunEachPE<TMessage>(in TMessage message, Entity entity) where TMessage : struct, IMessage;
+        public delegate void RunEachP<TMessage>(in TMessage message) where TMessage : struct, IMessage;
         public delegate void RunEachE(Entity entity);
-        public delegate void RunEachP<TPhase>(in TPhase phase) where TPhase : struct, IMessage;
-        public delegate void RunEachPE<TPhase>(in TPhase phase, Entity entity) where TPhase : struct, IMessage;
-        public delegate void RunEachM<TMessage>(in TMessage message) where TMessage : struct, IMessage;
-        public delegate void RunEachME<TMessage>(in TMessage message, Entity entity) where TMessage : struct, IMessage;
-        public delegate void RunEachPM<TPhase, TMessage>(in TPhase phase, in TMessage message) where TPhase : struct, IMessage where TMessage : struct, IMessage;
-        public delegate void RunEachPME<TPhase, TMessage>(in TPhase phase, in TMessage message, Entity entity) where TPhase : struct, IMessage where TMessage : struct, IMessage;
-        public delegate void RunEach<T>(ref T component1) where T : struct, IComponent;
+        public delegate void RunEach();
+        public delegate void RunEachPE<TMessage, T>(in TMessage message, Entity entity, ref T component1) where TMessage : struct, IMessage where T : struct, IComponent;
+        public delegate void RunEachP<TMessage, T>(in TMessage message, ref T component1) where TMessage : struct, IMessage where T : struct, IComponent;
         public delegate void RunEachE<T>(Entity entity, ref T component1) where T : struct, IComponent;
-        public delegate void RunEachP<TPhase, T>(in TPhase phase, ref T component1) where TPhase : struct, IMessage where T : struct, IComponent;
-        public delegate void RunEachPE<TPhase, T>(in TPhase phase, Entity entity, ref T component1) where TPhase : struct, IMessage where T : struct, IComponent;
-        public delegate void RunEachM<TMessage, T>(in TMessage message, ref T component1) where TMessage : struct, IMessage where T : struct, IComponent;
-        public delegate void RunEachME<TMessage, T>(in TMessage message, Entity entity, ref T component1) where TMessage : struct, IMessage where T : struct, IComponent;
-        public delegate void RunEachPM<TPhase, TMessage, T>(in TPhase phase, in TMessage message, ref T component1) where TPhase : struct, IMessage where TMessage : struct, IMessage where T : struct, IComponent;
-        public delegate void RunEachPME<TPhase, TMessage, T>(in TPhase phase, in TMessage message, Entity entity, ref T component1) where TPhase : struct, IMessage where TMessage : struct, IMessage where T : struct, IComponent;
-        public delegate void RunEach<T1, T2>(ref T1 component1, ref T2 component2) where T1 : struct, IComponent where T2 : struct, IComponent;
+        public delegate void RunEach<T>(ref T component1) where T : struct, IComponent;
+        public delegate void RunEachPE<TMessage, T1, T2>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent;
+        public delegate void RunEachP<TMessage, T1, T2>(in TMessage message, ref T1 component1, ref T2 component2) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent;
         public delegate void RunEachE<T1, T2>(Entity entity, ref T1 component1, ref T2 component2) where T1 : struct, IComponent where T2 : struct, IComponent;
-        public delegate void RunEachP<TPhase, T1, T2>(in TPhase phase, ref T1 component1, ref T2 component2) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent;
-        public delegate void RunEachPE<TPhase, T1, T2>(in TPhase phase, Entity entity, ref T1 component1, ref T2 component2) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent;
-        public delegate void RunEachM<TMessage, T1, T2>(in TMessage message, ref T1 component1, ref T2 component2) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent;
-        public delegate void RunEachME<TMessage, T1, T2>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent;
-        public delegate void RunEachPM<TPhase, TMessage, T1, T2>(in TPhase phase, in TMessage message, ref T1 component1, ref T2 component2) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent;
-        public delegate void RunEachPME<TPhase, TMessage, T1, T2>(in TPhase phase, in TMessage message, Entity entity, ref T1 component1, ref T2 component2) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent;
-        public delegate void RunEach<T1, T2, T3>(ref T1 component1, ref T2 component2, ref T3 component3) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
+        public delegate void RunEach<T1, T2>(ref T1 component1, ref T2 component2) where T1 : struct, IComponent where T2 : struct, IComponent;
+        public delegate void RunEachPE<TMessage, T1, T2, T3>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
+        public delegate void RunEachP<TMessage, T1, T2, T3>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
         public delegate void RunEachE<T1, T2, T3>(Entity entity, ref T1 component1, ref T2 component2, ref T3 component3) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
-        public delegate void RunEachP<TPhase, T1, T2, T3>(in TPhase phase, ref T1 component1, ref T2 component2, ref T3 component3) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
-        public delegate void RunEachPE<TPhase, T1, T2, T3>(in TPhase phase, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
-        public delegate void RunEachM<TMessage, T1, T2, T3>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
-        public delegate void RunEachME<TMessage, T1, T2, T3>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
-        public delegate void RunEachPM<TPhase, TMessage, T1, T2, T3>(in TPhase phase, in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
-        public delegate void RunEachPME<TPhase, TMessage, T1, T2, T3>(in TPhase phase, in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
-        public delegate void RunEach<T1, T2, T3, T4>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
+        public delegate void RunEach<T1, T2, T3>(ref T1 component1, ref T2 component2, ref T3 component3) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent;
+        public delegate void RunEachPE<TMessage, T1, T2, T3, T4>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
+        public delegate void RunEachP<TMessage, T1, T2, T3, T4>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
         public delegate void RunEachE<T1, T2, T3, T4>(Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
-        public delegate void RunEachP<TPhase, T1, T2, T3, T4>(in TPhase phase, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
-        public delegate void RunEachPE<TPhase, T1, T2, T3, T4>(in TPhase phase, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
-        public delegate void RunEachM<TMessage, T1, T2, T3, T4>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
-        public delegate void RunEachME<TMessage, T1, T2, T3, T4>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
-        public delegate void RunEachPM<TPhase, TMessage, T1, T2, T3, T4>(in TPhase phase, in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
-        public delegate void RunEachPME<TPhase, TMessage, T1, T2, T3, T4>(in TPhase phase, in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
-        public delegate void RunEach<T1, T2, T3, T4, T5>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
+        public delegate void RunEach<T1, T2, T3, T4>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent;
+        public delegate void RunEachPE<TMessage, T1, T2, T3, T4, T5>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
+        public delegate void RunEachP<TMessage, T1, T2, T3, T4, T5>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
         public delegate void RunEachE<T1, T2, T3, T4, T5>(Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
-        public delegate void RunEachP<TPhase, T1, T2, T3, T4, T5>(in TPhase phase, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
-        public delegate void RunEachPE<TPhase, T1, T2, T3, T4, T5>(in TPhase phase, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
-        public delegate void RunEachM<TMessage, T1, T2, T3, T4, T5>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
-        public delegate void RunEachME<TMessage, T1, T2, T3, T4, T5>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
-        public delegate void RunEachPM<TPhase, TMessage, T1, T2, T3, T4, T5>(in TPhase phase, in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
-        public delegate void RunEachPME<TPhase, TMessage, T1, T2, T3, T4, T5>(in TPhase phase, in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
-        public delegate void RunEach<T1, T2, T3, T4, T5, T6>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
+        public delegate void RunEach<T1, T2, T3, T4, T5>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent;
+        public delegate void RunEachPE<TMessage, T1, T2, T3, T4, T5, T6>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
+        public delegate void RunEachP<TMessage, T1, T2, T3, T4, T5, T6>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
         public delegate void RunEachE<T1, T2, T3, T4, T5, T6>(Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
-        public delegate void RunEachP<TPhase, T1, T2, T3, T4, T5, T6>(in TPhase phase, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
-        public delegate void RunEachPE<TPhase, T1, T2, T3, T4, T5, T6>(in TPhase phase, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
-        public delegate void RunEachM<TMessage, T1, T2, T3, T4, T5, T6>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
-        public delegate void RunEachME<TMessage, T1, T2, T3, T4, T5, T6>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
-        public delegate void RunEachPM<TPhase, TMessage, T1, T2, T3, T4, T5, T6>(in TPhase phase, in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
-        public delegate void RunEachPME<TPhase, TMessage, T1, T2, T3, T4, T5, T6>(in TPhase phase, in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
-        public delegate void RunEach<T1, T2, T3, T4, T5, T6, T7>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
+        public delegate void RunEach<T1, T2, T3, T4, T5, T6>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent;
+        public delegate void RunEachPE<TMessage, T1, T2, T3, T4, T5, T6, T7>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
+        public delegate void RunEachP<TMessage, T1, T2, T3, T4, T5, T6, T7>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
         public delegate void RunEachE<T1, T2, T3, T4, T5, T6, T7>(Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
-        public delegate void RunEachP<TPhase, T1, T2, T3, T4, T5, T6, T7>(in TPhase phase, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
-        public delegate void RunEachPE<TPhase, T1, T2, T3, T4, T5, T6, T7>(in TPhase phase, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
-        public delegate void RunEachM<TMessage, T1, T2, T3, T4, T5, T6, T7>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
-        public delegate void RunEachME<TMessage, T1, T2, T3, T4, T5, T6, T7>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
-        public delegate void RunEachPM<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7>(in TPhase phase, in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
-        public delegate void RunEachPME<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7>(in TPhase phase, in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
-        public delegate void RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
+        public delegate void RunEach<T1, T2, T3, T4, T5, T6, T7>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent;
+        public delegate void RunEachPE<TMessage, T1, T2, T3, T4, T5, T6, T7, T8>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
+        public delegate void RunEachP<TMessage, T1, T2, T3, T4, T5, T6, T7, T8>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
         public delegate void RunEachE<T1, T2, T3, T4, T5, T6, T7, T8>(Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
-        public delegate void RunEachP<TPhase, T1, T2, T3, T4, T5, T6, T7, T8>(in TPhase phase, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
-        public delegate void RunEachPE<TPhase, T1, T2, T3, T4, T5, T6, T7, T8>(in TPhase phase, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
-        public delegate void RunEachM<TMessage, T1, T2, T3, T4, T5, T6, T7, T8>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
-        public delegate void RunEachME<TMessage, T1, T2, T3, T4, T5, T6, T7, T8>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
-        public delegate void RunEachPM<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7, T8>(in TPhase phase, in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
-        public delegate void RunEachPME<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7, T8>(in TPhase phase, in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
-        public delegate void RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8, ref T9 component9) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
+        public delegate void RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent;
+        public delegate void RunEachPE<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8, ref T9 component9) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
+        public delegate void RunEachP<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8, ref T9 component9) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
         public delegate void RunEachE<T1, T2, T3, T4, T5, T6, T7, T8, T9>(Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8, ref T9 component9) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
-        public delegate void RunEachP<TPhase, T1, T2, T3, T4, T5, T6, T7, T8, T9>(in TPhase phase, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8, ref T9 component9) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
-        public delegate void RunEachPE<TPhase, T1, T2, T3, T4, T5, T6, T7, T8, T9>(in TPhase phase, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8, ref T9 component9) where TPhase : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
-        public delegate void RunEachM<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9>(in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8, ref T9 component9) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
-        public delegate void RunEachME<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9>(in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8, ref T9 component9) where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
-        public delegate void RunEachPM<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9>(in TPhase phase, in TMessage message, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8, ref T9 component9) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
-        public delegate void RunEachPME<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9>(in TPhase phase, in TMessage message, Entity entity, ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8, ref T9 component9) where TPhase : struct, IMessage where TMessage : struct, IMessage where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
+        public delegate void RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(ref T1 component1, ref T2 component2, ref T3 component3, ref T4 component4, ref T5 component5, ref T6 component6, ref T7 component7, ref T8 component8, ref T9 component9) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent;
     }
 
     public sealed partial class Node
     {
-        public static partial class System<TPhase>
+        public static partial class System<TMessage>
         {
-            public static partial class Receive<TMessage>
-            {
-                public static Node RunEach(RunEach run, Filter? filter = null, int? capacity = null) => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-
-                        for (int i = 0; i < count; i++) run();
-                    },
-                    All(filter ?? True), capacity, Array.Empty<IDependency>());
-                public static Node RunEach(RunEachE run, Filter? filter = null, int? capacity = null) => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-
-                        for (int i = 0; i < count; i++) run(entities[i]);
-                    },
-                    All(filter ?? True), capacity, Array.Empty<IDependency>());
-                public static Node RunEach(RunEachP<TPhase> run, Filter? filter = null, int? capacity = null) => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-
-                        for (int i = 0; i < count; i++) run(phase);
-                    },
-                    All(filter ?? True), capacity, Array.Empty<IDependency>());
-                public static Node RunEach(RunEachPE<TPhase> run, Filter? filter = null, int? capacity = null) => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-
-                        for (int i = 0; i < count; i++) run(phase, entities[i]);
-                    },
-                    All(filter ?? True), capacity, Array.Empty<IDependency>());
-                public static Node RunEach(RunEachM<TMessage> run, Filter? filter = null, int? capacity = null) => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-
-                        for (int i = 0; i < count; i++) run(message);
-                    },
-                    All(filter ?? True), capacity, Array.Empty<IDependency>());
-                public static Node RunEach(RunEachME<TMessage> run, Filter? filter = null, int? capacity = null) => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-
-                        for (int i = 0; i < count; i++) run(message, entities[i]);
-                    },
-                    All(filter ?? True), capacity, Array.Empty<IDependency>());
-                public static Node RunEach(RunEachPM<TPhase, TMessage> run, Filter? filter = null, int? capacity = null) => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-
-                        for (int i = 0; i < count; i++) run(phase, message);
-                    },
-                    All(filter ?? True), capacity, Array.Empty<IDependency>());
-                public static Node RunEach(RunEachPME<TPhase, TMessage> run, Filter? filter = null, int? capacity = null) => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-
-                        for (int i = 0; i < count; i++) run(phase, message, entities[i]);
-                    },
-                    All(filter ?? True), capacity, Array.Empty<IDependency>());
-                public static Node RunEach<T>(RunEach<T> run, Filter? filter = null, int? capacity = null) where T : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T>();
-                        for (int i = 0; i < count; i++) run(ref store1[i]);
-                    },
-                    All(Has<T>(), filter ?? True), capacity, new Write(typeof(T)));
-                public static Node RunEach<T>(RunEachE<T> run, Filter? filter = null, int? capacity = null) where T : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T>();
-                        for (int i = 0; i < count; i++) run(entities[i], ref store1[i]);
-                    },
-                    All(Has<T>(), filter ?? True), capacity, new Write(typeof(T)));
-                public static Node RunEach<T>(RunEachP<TPhase, T> run, Filter? filter = null, int? capacity = null) where T : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T>();
-                        for (int i = 0; i < count; i++) run(phase, ref store1[i]);
-                    },
-                    All(Has<T>(), filter ?? True), capacity, new Write(typeof(T)));
-                public static Node RunEach<T>(RunEachPE<TPhase, T> run, Filter? filter = null, int? capacity = null) where T : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T>();
-                        for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i]);
-                    },
-                    All(Has<T>(), filter ?? True), capacity, new Write(typeof(T)));
-                public static Node RunEach<T>(RunEachM<TMessage, T> run, Filter? filter = null, int? capacity = null) where T : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T>();
-                        for (int i = 0; i < count; i++) run(message, ref store1[i]);
-                    },
-                    All(Has<T>(), filter ?? True), capacity, new Write(typeof(T)));
-                public static Node RunEach<T>(RunEachME<TMessage, T> run, Filter? filter = null, int? capacity = null) where T : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T>();
-                        for (int i = 0; i < count; i++) run(message, entities[i], ref store1[i]);
-                    },
-                    All(Has<T>(), filter ?? True), capacity, new Write(typeof(T)));
-                public static Node RunEach<T>(RunEachPM<TPhase, TMessage, T> run, Filter? filter = null, int? capacity = null) where T : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T>();
-                        for (int i = 0; i < count; i++) run(phase, message, ref store1[i]);
-                    },
-                    All(Has<T>(), filter ?? True), capacity, new Write(typeof(T)));
-                public static Node RunEach<T>(RunEachPME<TPhase, TMessage, T> run, Filter? filter = null, int? capacity = null) where T : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T>();
-                        for (int i = 0; i < count; i++) run(phase, message, entities[i], ref store1[i]);
-                    },
-                    All(Has<T>(), filter ?? True), capacity, new Write(typeof(T)));
-                public static Node RunEach<T1, T2>(RunEach<T1, T2> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                        for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)));
-                public static Node RunEach<T1, T2>(RunEachE<T1, T2> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                        for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)));
-                public static Node RunEach<T1, T2>(RunEachP<TPhase, T1, T2> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                        for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)));
-                public static Node RunEach<T1, T2>(RunEachPE<TPhase, T1, T2> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                        for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)));
-                public static Node RunEach<T1, T2>(RunEachM<TMessage, T1, T2> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                        for (int i = 0; i < count; i++) run(message, ref store1[i], ref store2[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)));
-                public static Node RunEach<T1, T2>(RunEachME<TMessage, T1, T2> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                        for (int i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)));
-                public static Node RunEach<T1, T2>(RunEachPM<TPhase, TMessage, T1, T2> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                        for (int i = 0; i < count; i++) run(phase, message, ref store1[i], ref store2[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)));
-                public static Node RunEach<T1, T2>(RunEachPME<TPhase, TMessage, T1, T2> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                        for (int i = 0; i < count; i++) run(phase, message, entities[i], ref store1[i], ref store2[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)));
-                public static Node RunEach<T1, T2, T3>(RunEach<T1, T2, T3> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                        for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
-                public static Node RunEach<T1, T2, T3>(RunEachE<T1, T2, T3> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                        for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
-                public static Node RunEach<T1, T2, T3>(RunEachP<TPhase, T1, T2, T3> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                        for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
-                public static Node RunEach<T1, T2, T3>(RunEachPE<TPhase, T1, T2, T3> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                        for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
-                public static Node RunEach<T1, T2, T3>(RunEachM<TMessage, T1, T2, T3> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                        for (int i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
-                public static Node RunEach<T1, T2, T3>(RunEachME<TMessage, T1, T2, T3> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                        for (int i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
-                public static Node RunEach<T1, T2, T3>(RunEachPM<TPhase, TMessage, T1, T2, T3> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                        for (int i = 0; i < count; i++) run(phase, message, ref store1[i], ref store2[i], ref store3[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
-                public static Node RunEach<T1, T2, T3>(RunEachPME<TPhase, TMessage, T1, T2, T3> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                        for (int i = 0; i < count; i++) run(phase, message, entities[i], ref store1[i], ref store2[i], ref store3[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
-                public static Node RunEach<T1, T2, T3, T4>(RunEach<T1, T2, T3, T4> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                        for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
-                public static Node RunEach<T1, T2, T3, T4>(RunEachE<T1, T2, T3, T4> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                        for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
-                public static Node RunEach<T1, T2, T3, T4>(RunEachP<TPhase, T1, T2, T3, T4> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                        for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
-                public static Node RunEach<T1, T2, T3, T4>(RunEachPE<TPhase, T1, T2, T3, T4> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                        for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
-                public static Node RunEach<T1, T2, T3, T4>(RunEachM<TMessage, T1, T2, T3, T4> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                        for (int i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
-                public static Node RunEach<T1, T2, T3, T4>(RunEachME<TMessage, T1, T2, T3, T4> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                        for (int i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
-                public static Node RunEach<T1, T2, T3, T4>(RunEachPM<TPhase, TMessage, T1, T2, T3, T4> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                        for (int i = 0; i < count; i++) run(phase, message, ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
-                public static Node RunEach<T1, T2, T3, T4>(RunEachPME<TPhase, TMessage, T1, T2, T3, T4> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                        for (int i = 0; i < count; i++) run(phase, message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
-                public static Node RunEach<T1, T2, T3, T4, T5>(RunEach<T1, T2, T3, T4, T5> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                        for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
-                public static Node RunEach<T1, T2, T3, T4, T5>(RunEachE<T1, T2, T3, T4, T5> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                        for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
-                public static Node RunEach<T1, T2, T3, T4, T5>(RunEachP<TPhase, T1, T2, T3, T4, T5> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                        for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
-                public static Node RunEach<T1, T2, T3, T4, T5>(RunEachPE<TPhase, T1, T2, T3, T4, T5> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                        for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
-                public static Node RunEach<T1, T2, T3, T4, T5>(RunEachM<TMessage, T1, T2, T3, T4, T5> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                        for (int i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
-                public static Node RunEach<T1, T2, T3, T4, T5>(RunEachME<TMessage, T1, T2, T3, T4, T5> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                        for (int i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
-                public static Node RunEach<T1, T2, T3, T4, T5>(RunEachPM<TPhase, TMessage, T1, T2, T3, T4, T5> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                        for (int i = 0; i < count; i++) run(phase, message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
-                public static Node RunEach<T1, T2, T3, T4, T5>(RunEachPME<TPhase, TMessage, T1, T2, T3, T4, T5> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                        for (int i = 0; i < count; i++) run(phase, message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEach<T1, T2, T3, T4, T5, T6> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                        for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachE<T1, T2, T3, T4, T5, T6> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                        for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachP<TPhase, T1, T2, T3, T4, T5, T6> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                        for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachPE<TPhase, T1, T2, T3, T4, T5, T6> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                        for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachM<TMessage, T1, T2, T3, T4, T5, T6> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                        for (int i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachME<TMessage, T1, T2, T3, T4, T5, T6> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                        for (int i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachPM<TPhase, TMessage, T1, T2, T3, T4, T5, T6> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                        for (int i = 0; i < count; i++) run(phase, message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachPME<TPhase, TMessage, T1, T2, T3, T4, T5, T6> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                        for (int i = 0; i < count; i++) run(phase, message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEach<T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                        for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachE<T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                        for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachP<TPhase, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                        for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachPE<TPhase, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                        for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachM<TMessage, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                        for (int i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachME<TMessage, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                        for (int i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachPM<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                        for (int i = 0; i < count; i++) run(phase, message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachPME<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                        for (int i = 0; i < count; i++) run(phase, message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEach<T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                        for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachE<T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                        for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachP<TPhase, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                        for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachPE<TPhase, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                        for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachM<TMessage, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                        for (int i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachME<TMessage, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                        for (int i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachPM<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                        for (int i = 0; i < count; i++) run(phase, message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachPME<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                        for (int i = 0; i < count; i++) run(phase, message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                        for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachE<T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                        for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachP<TPhase, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                        for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachPE<TPhase, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                        for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachM<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                        for (int i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachME<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                        for (int i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachPM<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                        for (int i = 0; i < count; i++) run(phase, message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
-                public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachPME<TPhase, TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null, int? capacity = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                    segment => (in TPhase phase, in TMessage message) =>
-                    {
-                        var (entities, count) = segment.Entities;
-                        var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                        for (int i = 0; i < count; i++) run(phase, message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
-                    },
-                    All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), capacity, new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
-            }
-
-            public static Node RunEach(RunEach run, Filter? filter = null) => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach(RunEachPAE<TMessage> run, Filter? filter = null) => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
 
-                    for (int i = 0; i < count; i++) run();
+                    run(message, entities, count);
+                },
+                All(filter ?? True), Array.Empty<IDependency>());
+            public static Node RunEach(RunEachPA<TMessage> run, Filter? filter = null) => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+
+                    run(message, count);
+                },
+                All(filter ?? True), Array.Empty<IDependency>());
+            public static Node RunEach(RunEachAE run, Filter? filter = null) => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+
+                    run(entities, count);
+                },
+                All(filter ?? True), Array.Empty<IDependency>());
+            public static Node RunEach(RunEachA run, Filter? filter = null) => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+
+                    run(count);
+                },
+                All(filter ?? True), Array.Empty<IDependency>());
+            public static Node RunEach<T>(RunEachPAE<TMessage, T> run, Filter? filter = null) where T : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T>();
+                    run(message, entities, store1, count);
+                },
+                All(Has<T>(), filter ?? True), new Write(typeof(T)));
+            public static Node RunEach<T>(RunEachPA<TMessage, T> run, Filter? filter = null) where T : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T>();
+                    run(message, store1, count);
+                },
+                All(Has<T>(), filter ?? True), new Write(typeof(T)));
+            public static Node RunEach<T>(RunEachAE<T> run, Filter? filter = null) where T : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T>();
+                    run(entities, store1, count);
+                },
+                All(Has<T>(), filter ?? True), new Write(typeof(T)));
+            public static Node RunEach<T>(RunEachA<T> run, Filter? filter = null) where T : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T>();
+                    run(store1, count);
+                },
+                All(Has<T>(), filter ?? True), new Write(typeof(T)));
+            public static Node RunEach<T1, T2>(RunEachPAE<TMessage, T1, T2> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
+                    run(message, entities, store1, store2, count);
+                },
+                All(Has<T1>(), Has<T2>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)));
+            public static Node RunEach<T1, T2>(RunEachPA<TMessage, T1, T2> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
+                    run(message, store1, store2, count);
+                },
+                All(Has<T1>(), Has<T2>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)));
+            public static Node RunEach<T1, T2>(RunEachAE<T1, T2> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
+                    run(entities, store1, store2, count);
+                },
+                All(Has<T1>(), Has<T2>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)));
+            public static Node RunEach<T1, T2>(RunEachA<T1, T2> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
+                    run(store1, store2, count);
+                },
+                All(Has<T1>(), Has<T2>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)));
+            public static Node RunEach<T1, T2, T3>(RunEachPAE<TMessage, T1, T2, T3> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
+                    run(message, entities, store1, store2, store3, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
+            public static Node RunEach<T1, T2, T3>(RunEachPA<TMessage, T1, T2, T3> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
+                    run(message, store1, store2, store3, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
+            public static Node RunEach<T1, T2, T3>(RunEachAE<T1, T2, T3> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
+                    run(entities, store1, store2, store3, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
+            public static Node RunEach<T1, T2, T3>(RunEachA<T1, T2, T3> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
+                    run(store1, store2, store3, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
+            public static Node RunEach<T1, T2, T3, T4>(RunEachPAE<TMessage, T1, T2, T3, T4> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
+                    run(message, entities, store1, store2, store3, store4, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
+            public static Node RunEach<T1, T2, T3, T4>(RunEachPA<TMessage, T1, T2, T3, T4> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
+                    run(message, store1, store2, store3, store4, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
+            public static Node RunEach<T1, T2, T3, T4>(RunEachAE<T1, T2, T3, T4> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
+                    run(entities, store1, store2, store3, store4, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
+            public static Node RunEach<T1, T2, T3, T4>(RunEachA<T1, T2, T3, T4> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
+                    run(store1, store2, store3, store4, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
+            public static Node RunEach<T1, T2, T3, T4, T5>(RunEachPAE<TMessage, T1, T2, T3, T4, T5> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
+                    run(message, entities, store1, store2, store3, store4, store5, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
+            public static Node RunEach<T1, T2, T3, T4, T5>(RunEachPA<TMessage, T1, T2, T3, T4, T5> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
+                    run(message, store1, store2, store3, store4, store5, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
+            public static Node RunEach<T1, T2, T3, T4, T5>(RunEachAE<T1, T2, T3, T4, T5> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
+                    run(entities, store1, store2, store3, store4, store5, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
+            public static Node RunEach<T1, T2, T3, T4, T5>(RunEachA<T1, T2, T3, T4, T5> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
+                    run(store1, store2, store3, store4, store5, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachPAE<TMessage, T1, T2, T3, T4, T5, T6> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
+                    run(message, entities, store1, store2, store3, store4, store5, store6, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachPA<TMessage, T1, T2, T3, T4, T5, T6> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
+                    run(message, store1, store2, store3, store4, store5, store6, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachAE<T1, T2, T3, T4, T5, T6> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
+                    run(entities, store1, store2, store3, store4, store5, store6, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachA<T1, T2, T3, T4, T5, T6> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
+                    run(store1, store2, store3, store4, store5, store6, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachPAE<TMessage, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
+                    run(message, entities, store1, store2, store3, store4, store5, store6, store7, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachPA<TMessage, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
+                    run(message, store1, store2, store3, store4, store5, store6, store7, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachAE<T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
+                    run(entities, store1, store2, store3, store4, store5, store6, store7, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachA<T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
+                    run(store1, store2, store3, store4, store5, store6, store7, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachPAE<TMessage, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
+                    run(message, entities, store1, store2, store3, store4, store5, store6, store7, store8, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachPA<TMessage, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
+                    run(message, store1, store2, store3, store4, store5, store6, store7, store8, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachAE<T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
+                    run(entities, store1, store2, store3, store4, store5, store6, store7, store8, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachA<T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
+                    run(store1, store2, store3, store4, store5, store6, store7, store8, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachPAE<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
+                    run(message, entities, store1, store2, store3, store4, store5, store6, store7, store8, store9, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachPA<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
+                    run(message, store1, store2, store3, store4, store5, store6, store7, store8, store9, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachAE<T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
+                    run(entities, store1, store2, store3, store4, store5, store6, store7, store8, store9, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachA<T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
+                    run(store1, store2, store3, store4, store5, store6, store7, store8, store9, count);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
+            public static Node RunEach(RunEachPE<TMessage> run, Filter? filter = null) => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+
+                    for (var i = 0; i < count; i++) run(message, entities[i]);
+                },
+                All(filter ?? True), Array.Empty<IDependency>());
+            public static Node RunEach(RunEachP<TMessage> run, Filter? filter = null) => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+
+                    for (var i = 0; i < count; i++) run(message);
                 },
                 All(filter ?? True), Array.Empty<IDependency>());
             public static Node RunEach(RunEachE run, Filter? filter = null) => RunEach(
-                segment => (in TPhase phase) =>
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
 
-                    for (int i = 0; i < count; i++) run(entities[i]);
+                    for (var i = 0; i < count; i++) run(entities[i]);
                 },
                 All(filter ?? True), Array.Empty<IDependency>());
-            public static Node RunEach(RunEachP<TPhase> run, Filter? filter = null) => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach(RunEach run, Filter? filter = null) => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
 
-                    for (int i = 0; i < count; i++) run(phase);
+                    for (var i = 0; i < count; i++) run();
                 },
                 All(filter ?? True), Array.Empty<IDependency>());
-            public static Node RunEach(RunEachPE<TPhase> run, Filter? filter = null) => RunEach(
-                segment => (in TPhase phase) =>
-                {
-                    var (entities, count) = segment.Entities;
-
-                    for (int i = 0; i < count; i++) run(phase, entities[i]);
-                },
-                All(filter ?? True), Array.Empty<IDependency>());
-            public static Node RunEach<T>(RunEach<T> run, Filter? filter = null) where T : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T>(RunEachPE<TMessage, T> run, Filter? filter = null) where T : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T>();
-                    for (int i = 0; i < count; i++) run(ref store1[i]);
+                    for (var i = 0; i < count; i++) run(message, entities[i], ref store1[i]);
+                },
+                All(Has<T>(), filter ?? True), new Write(typeof(T)));
+            public static Node RunEach<T>(RunEachP<TMessage, T> run, Filter? filter = null) where T : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T>();
+                    for (var i = 0; i < count; i++) run(message, ref store1[i]);
                 },
                 All(Has<T>(), filter ?? True), new Write(typeof(T)));
             public static Node RunEach<T>(RunEachE<T> run, Filter? filter = null) where T : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T>();
-                    for (int i = 0; i < count; i++) run(entities[i], ref store1[i]);
+                    for (var i = 0; i < count; i++) run(entities[i], ref store1[i]);
                 },
                 All(Has<T>(), filter ?? True), new Write(typeof(T)));
-            public static Node RunEach<T>(RunEachP<TPhase, T> run, Filter? filter = null) where T : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T>(RunEach<T> run, Filter? filter = null) where T : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T>();
-                    for (int i = 0; i < count; i++) run(phase, ref store1[i]);
+                    for (var i = 0; i < count; i++) run(ref store1[i]);
                 },
                 All(Has<T>(), filter ?? True), new Write(typeof(T)));
-            public static Node RunEach<T>(RunEachPE<TPhase, T> run, Filter? filter = null) where T : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
-                {
-                    var (entities, count) = segment.Entities;
-                    var store1 = segment.Store<T>();
-                    for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i]);
-                },
-                All(Has<T>(), filter ?? True), new Write(typeof(T)));
-            public static Node RunEach<T1, T2>(RunEach<T1, T2> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2>(RunEachPE<TMessage, T1, T2> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                    for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i]);
+                    for (var i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i]);
+                },
+                All(Has<T1>(), Has<T2>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)));
+            public static Node RunEach<T1, T2>(RunEachP<TMessage, T1, T2> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
+                    for (var i = 0; i < count; i++) run(message, ref store1[i], ref store2[i]);
                 },
                 All(Has<T1>(), Has<T2>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)));
             public static Node RunEach<T1, T2>(RunEachE<T1, T2> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                    for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i]);
+                    for (var i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i]);
                 },
                 All(Has<T1>(), Has<T2>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)));
-            public static Node RunEach<T1, T2>(RunEachP<TPhase, T1, T2> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2>(RunEach<T1, T2> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                    for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i]);
+                    for (var i = 0; i < count; i++) run(ref store1[i], ref store2[i]);
                 },
                 All(Has<T1>(), Has<T2>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)));
-            public static Node RunEach<T1, T2>(RunEachPE<TPhase, T1, T2> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
-                {
-                    var (entities, count) = segment.Entities;
-                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>();
-                    for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i]);
-                },
-                All(Has<T1>(), Has<T2>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)));
-            public static Node RunEach<T1, T2, T3>(RunEach<T1, T2, T3> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3>(RunEachPE<TMessage, T1, T2, T3> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                    for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i]);
+                    for (var i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i]);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
+            public static Node RunEach<T1, T2, T3>(RunEachP<TMessage, T1, T2, T3> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
+                    for (var i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
             public static Node RunEach<T1, T2, T3>(RunEachE<T1, T2, T3> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                    for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i]);
+                    for (var i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
-            public static Node RunEach<T1, T2, T3>(RunEachP<TPhase, T1, T2, T3> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3>(RunEach<T1, T2, T3> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                    for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i]);
+                    for (var i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
-            public static Node RunEach<T1, T2, T3>(RunEachPE<TPhase, T1, T2, T3> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
-                {
-                    var (entities, count) = segment.Entities;
-                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>();
-                    for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i]);
-                },
-                All(Has<T1>(), Has<T2>(), Has<T3>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)));
-            public static Node RunEach<T1, T2, T3, T4>(RunEach<T1, T2, T3, T4> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4>(RunEachPE<TMessage, T1, T2, T3, T4> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                    for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
+                    for (var i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
+            public static Node RunEach<T1, T2, T3, T4>(RunEachP<TMessage, T1, T2, T3, T4> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
+                    for (var i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
             public static Node RunEach<T1, T2, T3, T4>(RunEachE<T1, T2, T3, T4> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                    for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
+                    for (var i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
-            public static Node RunEach<T1, T2, T3, T4>(RunEachP<TPhase, T1, T2, T3, T4> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4>(RunEach<T1, T2, T3, T4> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                    for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
+                    for (var i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
-            public static Node RunEach<T1, T2, T3, T4>(RunEachPE<TPhase, T1, T2, T3, T4> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
-                {
-                    var (entities, count) = segment.Entities;
-                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>();
-                    for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i]);
-                },
-                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)));
-            public static Node RunEach<T1, T2, T3, T4, T5>(RunEach<T1, T2, T3, T4, T5> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4, T5>(RunEachPE<TMessage, T1, T2, T3, T4, T5> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                    for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
+                    for (var i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
+            public static Node RunEach<T1, T2, T3, T4, T5>(RunEachP<TMessage, T1, T2, T3, T4, T5> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
+                    for (var i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
             public static Node RunEach<T1, T2, T3, T4, T5>(RunEachE<T1, T2, T3, T4, T5> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                    for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
+                    for (var i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
-            public static Node RunEach<T1, T2, T3, T4, T5>(RunEachP<TPhase, T1, T2, T3, T4, T5> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4, T5>(RunEach<T1, T2, T3, T4, T5> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                    for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
+                    for (var i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
-            public static Node RunEach<T1, T2, T3, T4, T5>(RunEachPE<TPhase, T1, T2, T3, T4, T5> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
-                {
-                    var (entities, count) = segment.Entities;
-                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>();
-                    for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i]);
-                },
-                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEach<T1, T2, T3, T4, T5, T6> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachPE<TMessage, T1, T2, T3, T4, T5, T6> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                    for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
+                    for (var i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachP<TMessage, T1, T2, T3, T4, T5, T6> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
+                    for (var i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
             public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachE<T1, T2, T3, T4, T5, T6> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                    for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
+                    for (var i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachP<TPhase, T1, T2, T3, T4, T5, T6> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEach<T1, T2, T3, T4, T5, T6> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                    for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
+                    for (var i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6>(RunEachPE<TPhase, T1, T2, T3, T4, T5, T6> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
-                {
-                    var (entities, count) = segment.Entities;
-                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>();
-                    for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i]);
-                },
-                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEach<T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachPE<TMessage, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                    for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
+                    for (var i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachP<TMessage, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
+                    for (var i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
             public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachE<T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                    for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
+                    for (var i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachP<TPhase, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEach<T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                    for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
+                    for (var i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7>(RunEachPE<TPhase, T1, T2, T3, T4, T5, T6, T7> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
-                {
-                    var (entities, count) = segment.Entities;
-                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>();
-                    for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i]);
-                },
-                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEach<T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachPE<TMessage, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                    for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
+                    for (var i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachP<TMessage, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
+                    for (var i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
             public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachE<T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                    for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
+                    for (var i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachP<TPhase, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEach<T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                    for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
+                    for (var i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8>(RunEachPE<TPhase, T1, T2, T3, T4, T5, T6, T7, T8> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
-                {
-                    var (entities, count) = segment.Entities;
-                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>();
-                    for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i]);
-                },
-                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachPE<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                    for (int i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
+                    for (var i = 0; i < count; i++) run(message, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
+                },
+                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachP<TMessage, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
+                {
+                    var (entities, count) = segment.Entities;
+                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
+                    for (var i = 0; i < count; i++) run(message, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
             public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachE<T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                    for (int i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
+                    for (var i = 0; i < count; i++) run(entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachP<TPhase, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
+            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
+                segment => (in TMessage message) =>
                 {
                     var (entities, count) = segment.Entities;
                     var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                    for (int i = 0; i < count; i++) run(phase, ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
-                },
-                All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
-            public static Node RunEach<T1, T2, T3, T4, T5, T6, T7, T8, T9>(RunEachPE<TPhase, T1, T2, T3, T4, T5, T6, T7, T8, T9> run, Filter? filter = null) where T1 : struct, IComponent where T2 : struct, IComponent where T3 : struct, IComponent where T4 : struct, IComponent where T5 : struct, IComponent where T6 : struct, IComponent where T7 : struct, IComponent where T8 : struct, IComponent where T9 : struct, IComponent => RunEach(
-                segment => (in TPhase phase) =>
-                {
-                    var (entities, count) = segment.Entities;
-                    var store1 = segment.Store<T1>(); var store2 = segment.Store<T2>(); var store3 = segment.Store<T3>(); var store4 = segment.Store<T4>(); var store5 = segment.Store<T5>(); var store6 = segment.Store<T6>(); var store7 = segment.Store<T7>(); var store8 = segment.Store<T8>(); var store9 = segment.Store<T9>();
-                    for (int i = 0; i < count; i++) run(phase, entities[i], ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
+                    for (var i = 0; i < count; i++) run(ref store1[i], ref store2[i], ref store3[i], ref store4[i], ref store5[i], ref store6[i], ref store7[i], ref store8[i], ref store9[i]);
                 },
                 All(Has<T1>(), Has<T2>(), Has<T3>(), Has<T4>(), Has<T5>(), Has<T6>(), Has<T7>(), Has<T8>(), Has<T9>(), filter ?? True), new Write(typeof(T1)), new Write(typeof(T2)), new Write(typeof(T3)), new Write(typeof(T4)), new Write(typeof(T5)), new Write(typeof(T6)), new Write(typeof(T7)), new Write(typeof(T8)), new Write(typeof(T9)));
         }

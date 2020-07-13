@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using Entia.Injectables;
 using System.Linq;
 using System.Threading;
-using Entia.Experimental;
 
 namespace Entia.Test
 {
@@ -18,7 +17,6 @@ namespace Entia.Test
         int _parallel;
         int _counter1;
         int _counter2;
-        int _counter3;
         Result<Unit> _result;
 
         public override bool Pre(World value, Model model)
@@ -61,19 +59,7 @@ namespace Entia.Test
             };
             nodes2.Shuffle(model.Random);
 
-            var nodes3 = new[]
-            {
-                System<T1>.Receive<T1>.Run(() => Interlocked.Increment(ref _counter3)),
-                System<T2>.Receive<T2>.Run((in T2 _, in T2 __) => Interlocked.Increment(ref _counter3)),
-                System<T1>.Receive<T2>.Run(() => Interlocked.Increment(ref _counter3)),
-                System<T1>.Receive<T2>.Run((in T2 _) => Interlocked.Increment(ref _counter3)),
-                System<T1>.Receive<T2>.Run((in T1 _, in T2 __) => Interlocked.Increment(ref _counter3)),
-                System<T1>.Receive<T2>.Run((ref Test.ResourceB _) => Interlocked.Increment(ref _counter3)),
-                System<T1>.Receive<T2>.Run((in T1 _, in T2 __, ref Test.ResourceC<string> ___) => Interlocked.Increment(ref _counter3))
-            };
-            nodes3.Shuffle(model.Random);
-
-            var node = Sequence(Sequence(nodes1), Parallel(nodes2), Parallel(nodes3));
+            var node = Sequence(Sequence(nodes1), Parallel(nodes2));
             var messages = value.Messages();
             _result = value.Schedule(node).Use(() =>
             {
@@ -96,10 +82,9 @@ namespace Entia.Test
                 yield return (_result.IsSuccess(), "Result.IsSuccess()");
                 yield return (_counter1 == 7 * 2 * _iterations, "counter1");
                 yield return (_counter2 == (7 + _parallel) * 2 * _iterations, "counter2");
-                yield return (_counter3 == 7 * 2 * _iterations, "counter3");
             }
         }
-        public override string ToString() => $"{GetType().Format()}({_counter1}, {_counter2}, {_counter3}, {_iterations}, {_parallel}, {_result})";
+        public override string ToString() => $"{GetType().Format()}({_counter1}, {_counter2}, {_iterations}, {_parallel}, {_result})";
     }
 
     public sealed class RunEachSystem<TMessage1, TMessage2, TComponent1, TComponent2> : Action<World, Model>
@@ -138,22 +123,11 @@ namespace Entia.Test
             var nodes = new[]
             {
                 System<TMessage1>.RunEach((ref TComponent1 _) => _counter1++),
-                System<TMessage1>.Receive<TMessage2>.RunEach((ref TComponent1 _) => _counter1++),
-
                 System<TMessage1>.RunEach((in TMessage1 _, ref TComponent2 __) => _counter2++),
-                System<TMessage1>.Receive<TMessage2>.RunEach((in TMessage1 _, in TMessage2 __, ref TComponent2 ___) => _counter2++),
-
                 System<TMessage1>.RunEach((ref TComponent1 _, ref TComponent2 __) => _counter3++),
-                System<TMessage1>.Receive<TMessage2>.RunEach((ref TComponent1 _, ref TComponent2 __) => _counter3++),
-
-                System<TMessage1>.RunEach((ref TComponent1 _) => _counter4++, None(Has<TComponent2>())),
-                System<TMessage1>.Receive<TMessage2>.RunEach((in TMessage2 _, ref TComponent1 __) => _counter4++, None(Has<TComponent2>())),
-
-                System<TMessage1>.RunEach((in TMessage1 _) => _counter5++, Any(Has<TComponent1>(), Has<TComponent2>())),
-                System<TMessage1>.Receive<TMessage2>.RunEach(_ => _counter5++, Any(Has<TComponent1>(), Has<TComponent2>())),
-
-                System<TMessage1>.RunEach(() => _counter6++, None(Has<TComponent1>(), Has<TComponent2>())),
-                System<TMessage1>.Receive<TMessage2>.RunEach((in TMessage1 _, in TMessage2 __) => _counter6++, None(Has<TComponent1>(), Has<TComponent2>()))
+                System<TMessage2>.RunEach((ref TComponent1 _) => _counter4++, None(Has<TComponent2>())),
+                System<TMessage2>.RunEach((in TMessage2 _) => _counter5++, Any(Has<TComponent1>(), Has<TComponent2>())),
+                System<TMessage2>.RunEach(() => _counter6++, None(Has<TComponent1>(), Has<TComponent2>())),
             };
             nodes.Shuffle(model.Random);
 
@@ -175,12 +149,12 @@ namespace Entia.Test
             IEnumerable<(bool tests, string label)> Tests()
             {
                 yield return (_result.IsSuccess(), "Result.IsSuccess()");
-                yield return (_counter1 == _entities1.Length * 4, "counter1");
-                yield return (_counter2 == _entities2.Length * 4, "counter2");
-                yield return (_counter3 == _entities3.Length * 4, "counter3");
-                yield return (_counter4 == _entities4.Length * 4, "counter4");
-                yield return (_counter5 == _entities5.Length * 4, "counter5");
-                yield return (_counter6 == _entities6.Length * 4, "counter6");
+                yield return (_counter1 == _entities1.Length * 2, "counter1");
+                yield return (_counter2 == _entities2.Length * 2, "counter2");
+                yield return (_counter3 == _entities3.Length * 2, "counter3");
+                yield return (_counter4 == _entities4.Length * 2, "counter4");
+                yield return (_counter5 == _entities5.Length * 2, "counter5");
+                yield return (_counter6 == _entities6.Length * 2, "counter6");
             }
         }
         public override string ToString() => $"{GetType().Format()}({_counter1}, {_counter2}, {_counter3}, {_counter4}, {_counter5}, {_counter6}, {_result})";

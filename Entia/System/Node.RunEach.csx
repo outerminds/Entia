@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 
-const string phase = "TPhase";
 const string message = "TMessage";
 
-IEnumerable<(string declaration, string run1, string run2)> Generate(int depth)
+IEnumerable<(string declaration1, string declaration2, string run1, string run2)> Generate(int depth)
 {
     static IEnumerable<string> GenericParameters(int count)
     {
@@ -11,136 +10,110 @@ IEnumerable<(string declaration, string run1, string run2)> Generate(int depth)
         else for (var i = 1; i <= count; i++) yield return $"T{i}";
     }
 
-    static string Declaration(string suffix, IEnumerable<string> generics, IEnumerable<string> parameters, IEnumerable<string> constraints)
+    static IEnumerable<string> MessageParameters(bool hasPhase)
     {
-        var runGenerics = generics.ToArray();
-        var runEach = $"RunEach{suffix}{(runGenerics.Length == 0 ? "" : $"<{string.Join(", ", runGenerics)}>")}";
-        return $"public delegate void {runEach}({string.Join(", ", parameters)}) {string.Join(" ", constraints)};";
+        if (hasPhase) yield return $"in {message} {nameof(message)}";
     }
 
-    static string Body1(string suffix, bool hasEntity, bool hasPhase, IEnumerable<string> generics, IEnumerable<string> constraints)
+    static IEnumerable<string> MessageGenericParameters(bool hasPhase)
     {
-        IEnumerable<string> Arguments()
-        {
-            if (hasPhase) yield return "phase";
-            if (hasEntity) yield return "entities[i]";
-        }
+        if (hasPhase) yield return message;
+    }
 
-        var parameters = generics.Any() ? $"<{string.Join(", ", generics)}>" : "";
-        var runGenerics = generics;
-        if (hasPhase) runGenerics = runGenerics.Prepend(phase);
-        var runParameters = runGenerics.Any() ? $"<{string.Join(", ", runGenerics)}>" : "";
+    static IEnumerable<string> RunArguments(bool hasPhase, bool hasArray, bool hasEntity, string[] generics)
+    {
+        if (hasPhase) yield return $"{nameof(message)}";
+
+        if (hasArray && hasEntity) yield return "entities";
+        else if (hasEntity) yield return "entities[i]";
+
+        for (int i = 0; i < generics.Length; i++)
+            yield return hasArray ? $"store{i + 1}" : $"ref store{i + 1}[i]";
+
+        if (hasArray) yield return "count";
+    }
+
+    static string Suffix(bool hasPhase, bool hasArray, bool hasEntity) =>
+        (hasPhase ? "P" : "") +
+        (hasArray ? "A" : "") +
+        (hasEntity ? "E" : "");
+
+    static string DeclarationGenerics(IEnumerable<string> generics) =>
+        generics.Any() ? $"<{string.Join(", ", generics)}>" : "";
+
+    static IEnumerable<string> DeclarationParameters(bool hasPhase, bool hasArray, bool hasEntity, string[] generics)
+    {
+        if (hasPhase) yield return $"in {message} {nameof(message)}";
+
+        if (hasArray && hasEntity) yield return "Entity[] entities";
+        else if (hasEntity) yield return "Entity entity";
+
+        for (int i = 0; i < generics.Length; i++)
+            yield return hasArray ? $"{generics[i]}[] store{i + 1}" : $"ref {generics[i]} component{i + 1}";
+
+        if (hasArray) yield return "int count";
+    }
+
+    static IEnumerable<string> MessageConstraints(string[] generics) =>
+        generics.Select(generic => $"where {generic} : struct, IMessage");
+    static IEnumerable<string> ComponentConstraints(string[] generics) =>
+        generics.Select(generic => $"where {generic} : struct, IComponent");
+
+    static string DelegateName(bool hasPhase, bool hasArray, bool hasEntity) =>
+        $"RunEach{Suffix(hasPhase, hasArray, hasEntity)}";
+
+    static (string declaration1, string declaration2, string run1, string run2) Declaration(bool hasPhase, bool hasEntity, string[] generics)
+    {
+        var runStoreName = DelegateName(hasPhase, true, hasEntity);
+        var runComponentName = DelegateName(hasPhase, false, hasEntity);
+        var storeParameters = DeclarationParameters(hasPhase, true, hasEntity, generics);
+        var componentParameters = DeclarationParameters(hasPhase, false, hasEntity, generics);
+
+        var messageParameters = MessageParameters(true);
+        var messageGenerics = MessageGenericParameters(hasPhase).ToArray();
+        var declarationGenerics = DeclarationGenerics(messageGenerics.Concat(generics));
+        var runGenerics = DeclarationGenerics(generics);
+        var runStoreType = $"{runStoreName}{declarationGenerics}";
+        var runComponentType = $"{runComponentName}{declarationGenerics}";
+
+        var declarationConstraints = string.Join(" ", MessageConstraints(messageGenerics).Concat(ComponentConstraints(generics)));
+        var runConstraints = string.Join(" ", ComponentConstraints(generics));
         var storeVars = generics.Select((generic, index) => $"var store{index + 1} = segment.Store<{generic}>();");
         var storeRefs = generics.Select((generic, index) => $"ref store{index + 1}[i]");
-        var dependencies = generics.Any() ? string.Join(", ", generics.Select(generic => $"new Write(typeof({generic}))")) : "Array.Empty<IDependency>()";
-        var arguments = Arguments().Concat(storeRefs);
-        var forRun = $"for (int i = 0; i < count; i++) run({string.Join(", ", arguments)});";
+        var storeArguments = RunArguments(hasPhase, true, hasEntity, generics);
+        var componentArguments = RunArguments(hasPhase, false, hasEntity, generics);
         var has = generics.Select(generic => $"Has<{generic}>()").Append("filter ?? True");
+        var filter = $"All({string.Join(", ", has)})";
+        var dependencies = generics.Any() ? string.Join(", ", generics.Select(generic => $"new Write(typeof({generic}))")) : "Array.Empty<IDependency>()";
 
-        return
-$@"public static Node RunEach{parameters}(RunEach{suffix}{runParameters} run, Filter? filter = null) {string.Join(" ", constraints)} => RunEach(
-    segment => (in {phase} phase) =>
+        return (
+$@"public delegate void {runStoreName}{declarationGenerics}({string.Join(", ", storeParameters)}) {declarationConstraints};",
+$@"public delegate void {runComponentName}{declarationGenerics}({string.Join(", ", componentParameters)}) {declarationConstraints};",
+$@"public static Node RunEach{runGenerics}({runStoreType} run, Filter? filter = null) {runConstraints} => RunEach(
+    segment => ({string.Join(", ", messageParameters)}) =>
     {{
         var (entities, count) = segment.Entities;
         {string.Join(" ", storeVars)}
-        {forRun}
+        run({string.Join(", ", storeArguments)});
     }},
-    All({string.Join(", ", has)}), {dependencies});";
-    }
-
-    static string Body2(string suffix, bool hasEntity, bool hasMessage, bool hasPhase, IEnumerable<string> generics, IEnumerable<string> constraints)
-    {
-        IEnumerable<string> Arguments()
-        {
-            if (hasPhase) yield return "phase";
-            if (hasMessage) yield return "message";
-            if (hasEntity) yield return "entities[i]";
-        }
-
-        var parameters = generics.Any() ? $"<{string.Join(", ", generics)}>" : "";
-        var runGenerics = generics;
-        if (hasMessage) runGenerics = runGenerics.Prepend(message);
-        if (hasPhase) runGenerics = runGenerics.Prepend(phase);
-        var runParameters = runGenerics.Any() ? $"<{string.Join(", ", runGenerics)}>" : "";
-        var storeVars = generics.Select((generic, index) => $"var store{index + 1} = segment.Store<{generic}>();");
-        var storeRefs = generics.Select((generic, index) => $"ref store{index + 1}[i]");
-        var dependencies = generics.Any() ? string.Join(", ", generics.Select(generic => $"new Write(typeof({generic}))")) : "Array.Empty<IDependency>()";
-        var arguments = Arguments().Concat(storeRefs);
-        var forRun = $"for (int i = 0; i < count; i++) run({string.Join(", ", arguments)});";
-        var has = generics.Select(generic => $"Has<{generic}>()").Append("filter ?? True");
-
-        return
-$@"public static Node RunEach{parameters}(RunEach{suffix}{runParameters} run, Filter? filter = null, int? capacity = null) {string.Join(" ", constraints)} => RunEach(
-    segment => (in {phase} phase, in {message} message) =>
+    {filter}, {dependencies});",
+$@"public static Node RunEach{runGenerics}({runComponentType} run, Filter? filter = null) {runConstraints} => RunEach(
+    segment => ({string.Join(", ", messageParameters)}) =>
     {{
         var (entities, count) = segment.Entities;
         {string.Join(" ", storeVars)}
-        {forRun}
+        for (var i = 0; i < count; i++) run({string.Join(", ", componentArguments)});
     }},
-    All({string.Join(", ", has)}), capacity, {dependencies});";
+    {filter}, {dependencies});");
     }
 
     for (int i = 0; i <= depth; i++)
     {
         var generics = GenericParameters(i).ToArray();
-        var parameters = generics.Select((generic, index) => $"ref {generic} component{index + 1}");
-        var constraints = generics.Select((generic, index) => $"where {generic} : struct, IComponent");
-
-        yield return (
-            Declaration("", generics, parameters, constraints),
-            Body1("", false, false, generics, constraints),
-            Body2("", false, false, false, generics, constraints));
-        yield return (
-            Declaration("E", generics, parameters.Prepend("Entity entity"), constraints),
-            Body1("E", true, false, generics, constraints),
-            Body2("E", true, false, false, generics, constraints));
-
-        yield return (
-            Declaration("P",
-                generics.Prepend(phase),
-                parameters.Prepend($"in {phase} phase"),
-                constraints.Prepend($"where {phase} : struct, IMessage")),
-            Body1("P", false, true, generics, constraints),
-            Body2("P", false, false, true, generics, constraints));
-        yield return (
-            Declaration("PE",
-                generics.Prepend(phase),
-                parameters.Prepend("Entity entity").Prepend($"in {phase} phase"),
-                constraints.Prepend($"where {phase} : struct, IMessage")),
-            Body1("PE", true, true, generics, constraints),
-            Body2("PE", true, false, true, generics, constraints));
-
-        yield return (
-            Declaration("M",
-                generics.Prepend(message),
-                parameters.Prepend($"in {message} message"),
-                constraints.Prepend($"where {message} : struct, IMessage")),
-            "",
-            Body2("M", false, true, false, generics, constraints));
-        yield return (
-            Declaration("ME",
-                generics.Prepend(message),
-                parameters.Prepend("Entity entity").Prepend($"in {message} message"),
-                constraints.Prepend($"where {message} : struct, IMessage")),
-            "",
-            Body2("ME", true, true, false, generics, constraints));
-
-        yield return (
-            Declaration("PM",
-                generics.Prepend($"{message}").Prepend($"{phase}"),
-                parameters.Prepend($"in {message} message").Prepend($"in {phase} phase"),
-                constraints.Prepend($"where {message} : struct, IMessage").Prepend($"where {phase} : struct, IMessage")),
-            "",
-            Body2("PM", false, true, true, generics, constraints)
-        );
-        yield return (
-            Declaration("PME",
-                generics.Prepend($"{message}").Prepend($"{phase}"),
-                parameters.Prepend("Entity entity").Prepend($"in {message} message").Prepend($"in {phase} phase"),
-                constraints.Prepend($"where {message} : struct, IMessage").Prepend($"where {phase} : struct, IMessage")),
-            "",
-            Body2("PME", true, true, true, generics, constraints)
-        );
+        yield return Declaration(true, true, generics);
+        yield return Declaration(true, false, generics);
+        yield return Declaration(false, true, generics);
+        yield return Declaration(false, false, generics);
     }
 }
 
@@ -158,22 +131,18 @@ namespace Entia.Experimental
 {{
     namespace Systems
     {{
-{string.Join(Environment.NewLine, results.Select(result => result.declaration).Where(value => !string.IsNullOrEmpty(value)))}
+{string.Join(Environment.NewLine, results.Select(result => result.declaration1).Where(value => !string.IsNullOrEmpty(value)))}
+{string.Join(Environment.NewLine, results.Select(result => result.declaration2).Where(value => !string.IsNullOrEmpty(value)))}
     }}
 
     public sealed partial class Node
     {{
-        public static partial class System<{phase}>
+        public static partial class System<{message}>
         {{
-            public static partial class Receive<{message}>
-            {{
-{string.Join(Environment.NewLine, results.Select(result => result.run2).Where(value => !string.IsNullOrEmpty(value)))}
-            }}
-
 {string.Join(Environment.NewLine, results.Select(result => result.run1).Where(value => !string.IsNullOrEmpty(value)))}
+{string.Join(Environment.NewLine, results.Select(result => result.run2).Where(value => !string.IsNullOrEmpty(value)))}
         }}
     }}
 }}";
-
 
 File.WriteAllText($"./{file}.cs", code);

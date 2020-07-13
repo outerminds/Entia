@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 
-const string phase = "TPhase";
 const string message = "TMessage";
 
-IEnumerable<(string declaration, string run1, string run2)> Generate(int depth)
+IEnumerable<(string declaration, string run)> Generate(int depth)
 {
     static IEnumerable<string> GenericParameters(int count)
     {
@@ -11,54 +10,31 @@ IEnumerable<(string declaration, string run1, string run2)> Generate(int depth)
         else for (var i = 1; i <= count; i++) yield return $"T{i}";
     }
 
-    static string Declaration(bool hasMessage, bool hasPhase, IEnumerable<string> generics, IEnumerable<string> constraints)
+    static string Declaration(bool hasPhase, IEnumerable<string> generics, IEnumerable<string> constraints)
     {
         var suffix = "";
         if (hasPhase) suffix += "P";
-        if (hasMessage) suffix += "M";
         var parameters = generics.Select((generic, index) => $"ref {generic} resource{index + 1}");
-        if (hasMessage && hasPhase)
-        {
-            generics = generics.Prepend($"{message}").Prepend($"{phase}");
-            parameters = parameters.Prepend($"in {message} message").Prepend($"in {phase} phase");
-            constraints = constraints.Prepend($"where {message} : struct, IMessage").Prepend($"where {phase} : struct, IMessage");
-        }
-        else if (hasMessage || hasPhase)
+
+        if (hasPhase)
         {
             generics = generics.Prepend(message);
-            parameters = parameters.Prepend($"in {message} message");
+            parameters = parameters.Prepend($"in {message} {nameof(message)}");
             constraints = constraints.Prepend($"where {message} : struct, IMessage");
         }
         return $"public delegate void Run{suffix}<{string.Join(", ", generics)}>({string.Join(", ", parameters)}) {string.Join(" ", constraints)};";
     }
 
-    static string Body1(bool hasPhase, IEnumerable<string> generics, IEnumerable<string> constraints)
+    static string Body(bool hasPhase, IEnumerable<string> generics, IEnumerable<string> constraints)
     {
         var suffix = hasPhase ? "P" : "";
-        var arguments = hasPhase ? generics.Prepend(phase) : generics;
+        var arguments = hasPhase ? generics.Prepend(message) : generics;
         var resourceVars = generics.Select((generic, index) => $"Resource<{generic}> resource{index + 1}");
         var resourceRefs = generics.Select((generic, index) => $"ref resource{index + 1}.Value");
-        if (hasPhase) resourceRefs = resourceRefs.Prepend("phase");
+        if (hasPhase) resourceRefs = resourceRefs.Prepend(nameof(message));
         return
 $@"public static Node Run<{string.Join(", ", generics)}>(Run{suffix}<{string.Join(", ", arguments)}> run) {string.Join(" ", constraints)} =>
-    Inject(({string.Join(", ", resourceVars)}) => Run((in {phase} phase) => run({string.Join(", ", resourceRefs)})));";
-    }
-
-    static string Body2(bool hasMessage, bool hasPhase, IEnumerable<string> generics, IEnumerable<string> constraints)
-    {
-        var suffix = "";
-        if (hasPhase) suffix += "P";
-        if (hasMessage) suffix += "M";
-        var arguments = generics;
-        if (hasMessage) arguments = arguments.Prepend(message);
-        if (hasPhase) arguments = arguments.Prepend(phase);
-        var resourceVars = generics.Select((generic, index) => $"Resource<{generic}> resource{index + 1}");
-        var resourceRefs = generics.Select((generic, index) => $"ref resource{index + 1}.Value");
-        if (hasMessage) resourceRefs = resourceRefs.Prepend("message");
-        if (hasPhase) resourceRefs = resourceRefs.Prepend("phase");
-        return
-$@"public static Node Run<{string.Join(", ", generics)}>(Run{suffix}<{string.Join(", ", arguments)}> run) {string.Join(" ", constraints)} =>
-    Inject(({string.Join(", ", resourceVars)}) => Run((in {phase} phase, in {message} message) => run({string.Join(", ", resourceRefs)})));";
+    Inject(({string.Join(", ", resourceVars)}) => Run((in {message} {nameof(message)}) => run({string.Join(", ", resourceRefs)})));";
     }
 
     for (int i = 1; i <= depth; i++)
@@ -67,22 +43,8 @@ $@"public static Node Run<{string.Join(", ", generics)}>(Run{suffix}<{string.Joi
         var constraints = generics.Select((generic, index) => $"where {generic} : struct, IResource");
         var parameters = generics.Select((generic, index) => $"ref resource{index + 1}");
 
-        yield return (
-            Declaration(false, false, generics, constraints),
-            Body1(false, generics, constraints),
-            Body2(false, false, generics, constraints));
-        yield return (
-            Declaration(false, true, generics, constraints),
-            Body1(true, generics, constraints),
-            "");
-        yield return (
-            Declaration(true, false, generics, constraints),
-            "",
-            Body2(true, false, generics, constraints));
-        yield return (
-            Declaration(true, true, generics, constraints),
-            "",
-            Body2(true, true, generics, constraints));
+        yield return (Declaration(true, generics, constraints), Body(true, generics, constraints));
+        yield return (Declaration(false, generics, constraints), Body(false, generics, constraints));
     }
 }
 
@@ -103,14 +65,9 @@ namespace Entia.Experimental
 
     public sealed partial class Node
     {{
-        public static partial class System<{phase}>
+        public static partial class System<{message}>
         {{
-            public static partial class Receive<{message}>
-            {{
-{string.Join(Environment.NewLine, results.Select(result => result.run2).Where(value => !string.IsNullOrEmpty(value)))}
-            }}
-
-{string.Join(Environment.NewLine, results.Select(result => result.run1).Where(value => !string.IsNullOrEmpty(value)))}
+{string.Join(Environment.NewLine, results.Select(result => result.run).Where(value => !string.IsNullOrEmpty(value)))}
         }}
 
     }}
