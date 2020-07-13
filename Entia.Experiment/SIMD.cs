@@ -113,26 +113,26 @@ namespace Entia.Experiment.SIMD
                 transforms.Add(velocities.As<float>())),
 
             // Give direct access to stores?
-            // Node.System<Phases.Run>.RunEach((Entity[] entities, Transform[] transforms, Velocity[] velocities, int count) =>
-            // {
-            //     var index = 0;
-            //     for (; index < count; index += Vector<Transform>.Count)
-            //     {
-            //         var sum = Vector.As<float>(transforms, index) + Vector.As<float>(velocities, index);
-            //         sum.CopyTo(transforms, index);
-            //     }
-            //     // deal with potential remaining transforms if 'count % Vector<Transform>.Count != 0'
-            // }),
-            // Node.System<Phases.Run>.RunEach((Transform[] transforms, Velocity[] velocities, int count) =>
-            // {
-            //     var index = 0;
-            //     for (; index < count; index += Vector<Transform>.Count)
-            //     {
-            //         var sum = Vector.As<float>(transforms, index) + Vector.As<float>(velocities, index);
-            //         sum.CopyTo(transforms, index);
-            //     }
-            //     // deal with potential remaining transforms if 'count % Vector<Transform>.Count != 0'
-            // }),
+            Node.System<Phases.Run>.RunEach((Entity[] entities, Transform[] transforms, Velocity[] velocities, int count) =>
+            {
+                var index = 0;
+                for (; index < count; index += Vector<Transform>.Count)
+                {
+                    // var sum = Vector.As<float>(transforms, index) + Vector.As<float>(velocities, index);
+                    // sum.CopyTo(transforms, index);
+                }
+                // deal with potential remaining transforms if 'count % Vector<Transform>.Count != 0'
+            }),
+            Node.System<Phases.Run>.RunEach((Transform[] transforms, Velocity[] velocities, int count) =>
+            {
+                var index = 0;
+                for (; index < count; index += Vector<Transform>.Count)
+                {
+                    // var sum = Vector.As<float>(transforms, index) + Vector.As<float>(velocities, index);
+                    // sum.CopyTo(transforms, index);
+                }
+                // deal with potential remaining transforms if 'count % Vector<Transform>.Count != 0'
+            }),
 
             Node.System<Phases.Run>.RunEach((ref Transform transform) => transform.Angle %= (float)Math.PI * 2f),
 
