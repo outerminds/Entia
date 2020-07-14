@@ -14,7 +14,7 @@ namespace Entia.Experimental
     {
         public static partial class System<TMessage> where TMessage : struct, IMessage
         {
-            public static Node Run(InAction<TMessage> run) => Node.From(new Schedule(_ => CreateRunner(run)));
+            public static Node Run(InAction<TMessage> run) => From(new Schedule(_ => CreateRunner(run)));
             public static Node Run(Action run) => Run((in TMessage _) => run());
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -40,7 +40,8 @@ namespace Entia.Experimental
         }
 
         public static Node From(INode data, params Node[] children) => new Node(data, children);
-        public static Node Lazy(Func<Node> provide) => From(new Lazy(_ => provide()));
+        public static Node Lazy(Func<Node> provide) => From(new Lazy(_ => provide())).Name(provide.Method);
+
         public static Node Sequence(params Node[] children) => From(new Sequence(), children);
         public static Node Sequence(params Func<Node>[] children) => Sequence(children.Select(Lazy));
         public static Node Parallel(params Node[] children) => From(new Parallel(), children);

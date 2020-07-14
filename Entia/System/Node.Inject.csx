@@ -23,7 +23,7 @@ $@"public static Node Inject<{string.Join(", ", generics)}>(Func<{string.Join(",
 {{
     {string.Join(" ", resultVars)}
     if ({string.Join(" && ", resultTries)})
-        return provide({string.Join(", ", arguments)}).Depend(new [] {{ {string.Join(", ", dependencies)} }}.Flatten());
+        return provide({string.Join(", ", arguments)}).Depend(new [] {{ {string.Join(", ", dependencies)} }}.Flatten()).Name(provide.Method);
     else
         return Result.Failure(ArrayUtility.Concatenate({string.Join(", ", resultMessages)}));
 }}));";

@@ -74,6 +74,16 @@ namespace Entia.Experimental.Nodes
         public Map(Func<Runner, Option<Runner>> mapper) { Mapper = mapper; }
     }
 
+    public readonly struct Name : IWrapper
+    {
+        [Implementation]
+        static Scheduler<Name> _scheduler => Scheduler.From((in Name _, in Context context) =>
+            context.Schedule(context.Node.Children));
+
+        public readonly string Value;
+        public Name(string value) { Value = value; }
+    }
+
     public readonly struct Sequence : IBranch
     {
         [Implementation]

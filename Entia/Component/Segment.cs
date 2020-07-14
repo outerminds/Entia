@@ -141,7 +141,7 @@ namespace Entia.Modules.Component
         public Array Store(in Metadata type) => _stores[GetStoreIndex(type)];
         [ThreadSafe]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T[] Store<T>() where T : struct, IComponent => _stores[GetStoreIndex(ComponentUtility.Concrete<T>.Data)] as T[];
+        public T[] Store<T>() where T : struct, IComponent => (T[])_stores[GetStoreIndex(ComponentUtility.Concrete<T>.Data)];
 
         /// <summary>
         /// Ensures that all component stores are at least of the same size as the <see cref="Entities"/> array.

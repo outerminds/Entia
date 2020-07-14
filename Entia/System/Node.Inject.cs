@@ -15,7 +15,7 @@ namespace Entia.Experimental
         {
             var result1 = world.Inject<T>();
             if (result1.TryValue(out var value1))
-                return provide(value1).Depend(new[] { world.Dependencies<T>() }.Flatten());
+                return provide(value1).Depend(new[] { world.Dependencies<T>() }.Flatten()).Name(provide.Method);
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages()));
         }));
@@ -23,7 +23,7 @@ namespace Entia.Experimental
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2))
-                return provide(value1, value2).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>() }.Flatten());
+                return provide(value1, value2).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>() }.Flatten()).Name(provide.Method);
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages()));
         }));
@@ -31,7 +31,7 @@ namespace Entia.Experimental
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3))
-                return provide(value1, value2, value3).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>() }.Flatten());
+                return provide(value1, value2, value3).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>() }.Flatten()).Name(provide.Method);
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages()));
         }));
@@ -39,7 +39,7 @@ namespace Entia.Experimental
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4))
-                return provide(value1, value2, value3, value4).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>() }.Flatten());
+                return provide(value1, value2, value3, value4).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>() }.Flatten()).Name(provide.Method);
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages()));
         }));
@@ -47,7 +47,7 @@ namespace Entia.Experimental
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5))
-                return provide(value1, value2, value3, value4, value5).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>() }.Flatten());
+                return provide(value1, value2, value3, value4, value5).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>() }.Flatten()).Name(provide.Method);
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages()));
         }));
@@ -55,7 +55,7 @@ namespace Entia.Experimental
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>(); var result6 = world.Inject<T6>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5) && result6.TryValue(out var value6))
-                return provide(value1, value2, value3, value4, value5, value6).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>(), world.Dependencies<T6>() }.Flatten());
+                return provide(value1, value2, value3, value4, value5, value6).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>(), world.Dependencies<T6>() }.Flatten()).Name(provide.Method);
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages(), result6.Messages()));
         }));
@@ -63,7 +63,7 @@ namespace Entia.Experimental
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>(); var result6 = world.Inject<T6>(); var result7 = world.Inject<T7>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5) && result6.TryValue(out var value6) && result7.TryValue(out var value7))
-                return provide(value1, value2, value3, value4, value5, value6, value7).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>(), world.Dependencies<T6>(), world.Dependencies<T7>() }.Flatten());
+                return provide(value1, value2, value3, value4, value5, value6, value7).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>(), world.Dependencies<T6>(), world.Dependencies<T7>() }.Flatten()).Name(provide.Method);
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages(), result6.Messages(), result7.Messages()));
         }));
@@ -71,7 +71,7 @@ namespace Entia.Experimental
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>(); var result6 = world.Inject<T6>(); var result7 = world.Inject<T7>(); var result8 = world.Inject<T8>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5) && result6.TryValue(out var value6) && result7.TryValue(out var value7) && result8.TryValue(out var value8))
-                return provide(value1, value2, value3, value4, value5, value6, value7, value8).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>(), world.Dependencies<T6>(), world.Dependencies<T7>(), world.Dependencies<T8>() }.Flatten());
+                return provide(value1, value2, value3, value4, value5, value6, value7, value8).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>(), world.Dependencies<T6>(), world.Dependencies<T7>(), world.Dependencies<T8>() }.Flatten()).Name(provide.Method);
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages(), result6.Messages(), result7.Messages(), result8.Messages()));
         }));
@@ -79,7 +79,7 @@ namespace Entia.Experimental
         {
             var result1 = world.Inject<T1>(); var result2 = world.Inject<T2>(); var result3 = world.Inject<T3>(); var result4 = world.Inject<T4>(); var result5 = world.Inject<T5>(); var result6 = world.Inject<T6>(); var result7 = world.Inject<T7>(); var result8 = world.Inject<T8>(); var result9 = world.Inject<T9>();
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5) && result6.TryValue(out var value6) && result7.TryValue(out var value7) && result8.TryValue(out var value8) && result9.TryValue(out var value9))
-                return provide(value1, value2, value3, value4, value5, value6, value7, value8, value9).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>(), world.Dependencies<T6>(), world.Dependencies<T7>(), world.Dependencies<T8>(), world.Dependencies<T9>() }.Flatten());
+                return provide(value1, value2, value3, value4, value5, value6, value7, value8, value9).Depend(new[] { world.Dependencies<T1>(), world.Dependencies<T2>(), world.Dependencies<T3>(), world.Dependencies<T4>(), world.Dependencies<T5>(), world.Dependencies<T6>(), world.Dependencies<T7>(), world.Dependencies<T8>(), world.Dependencies<T9>() }.Flatten()).Name(provide.Method);
             else
                 return Result.Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages(), result6.Messages(), result7.Messages(), result8.Messages(), result9.Messages()));
         }));

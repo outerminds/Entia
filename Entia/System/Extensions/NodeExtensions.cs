@@ -3,6 +3,7 @@ using Entia.Core;
 using System.Linq;
 using Entia.Dependencies;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Entia.Experimental.Nodes
 {
@@ -25,6 +26,11 @@ namespace Entia.Experimental.Nodes
             node.Value is IAtomic ? node.Wrap(new Resolve()) : node.With(node.Children.Select(Resolve));
 
         public static Node If(this Node node, Func<bool> condition) => node.Wrap(new If(condition));
+
+        public static Node Name(this Node node, string name) =>
+            string.IsNullOrEmpty(name) ? node : node.Wrap(new Name(name));
+        public static Node Name(this Node node, MethodInfo method) =>
+            method.IsSpecialName ? node : node.Name(method.Name);
 
         public static Node Wrap(this Node node, IWrapper data) => Node.From(data, node);
         public static Node Depend(this Node node, params IDependency[] dependencies) => node.Wrap(new Depend(dependencies));
