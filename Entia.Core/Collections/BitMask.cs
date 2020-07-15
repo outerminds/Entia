@@ -20,7 +20,7 @@ namespace Entia.Core
 
             int IComparable<Bucket>.CompareTo(Bucket other) => Index.CompareTo(other.Index);
 
-            public static Bucket OfIndex(int index) => new Bucket((index / Size), 1uL << (index % Size));
+            public static Bucket OfIndex(int index) => new Bucket(index / Size, 1uL << (index % Size));
         }
 
         public bool IsEmpty => _buckets.count == 0;
@@ -45,7 +45,9 @@ namespace Entia.Core
         public bool Has(int index) => Has(Bucket.OfIndex(index));
 
         [ThreadSafe]
-        public bool Has(Bucket bucket) => bucket.Index < _buckets.count && (_buckets.items[bucket.Index] & bucket.Mask) == bucket.Mask;
+        public bool Has(Bucket bucket) =>
+            bucket.Index < _buckets.count &&
+            (_buckets.items[bucket.Index] & bucket.Mask) == bucket.Mask;
 
         [ThreadSafe]
         public bool HasAll(BitMask mask)

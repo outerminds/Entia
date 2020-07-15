@@ -10,7 +10,7 @@ namespace Entia.Modules
 {
     public delegate bool Resolve<T>(in T resolvable);
 
-    public sealed class Resolvers : IModule, Entia.Modules.IResolvable
+    public sealed class Resolvers : IModule, IResolvable
     {
         struct Data
         {
