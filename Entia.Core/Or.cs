@@ -54,13 +54,21 @@ namespace Entia.Core
         public static bool operator !=(in Or<TLeft, TRight> left, in Or<TLeft, TRight> right) => !(left == right);
         public static bool operator !=(in TLeft left, in Or<TLeft, TRight> or) => !(left == or);
         public static bool operator !=(in TRight right, in Or<TLeft, TRight> or) => !(right == or);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Or<TLeft, TRight>(in Left<TLeft> left) => left.Value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Or<TLeft, TRight>(in Right<TRight> right) => right.Value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Or<TLeft, TRight>(in TLeft value) => new Or<TLeft, TRight>(Or.Tags.Left, value, default);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Or<TLeft, TRight>(in TRight value) => new Or<TLeft, TRight>(Or.Tags.Right, default, value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator TLeft(in Or<TLeft, TRight> or) => or.IsLeft() ? or._left : throw new InvalidCastException();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator TRight(in Or<TLeft, TRight> or) => or.IsRight() ? or._right : throw new InvalidCastException();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Left<TLeft>(in Or<TLeft, TRight> or) => (TLeft)or;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Right<TRight>(in Or<TLeft, TRight> or) => (TRight)or;
 
         public Or.Tags Tag { get; }
