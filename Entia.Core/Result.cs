@@ -34,8 +34,7 @@ namespace Entia.Core
         public bool Equals(Success<T> other) => EqualityComparer<T>.Default.Equals(Value, other.Value);
         public override bool Equals(object obj) =>
             obj is T value ? this == value :
-            obj is Success<T> success ? this == success :
-            false;
+            obj is Success<T> success && this == success;
 
         public override int GetHashCode() => EqualityComparer<T>.Default.GetHashCode(Value);
         public override string ToString() => $"{GetType().Format()}({Value})";
@@ -43,10 +42,10 @@ namespace Entia.Core
 
     public readonly struct Failure : IResult, IEquatable<Failure>
     {
-        public static bool operator ==(Failure left, Failure right) => true;
+        public static bool operator ==(Failure _, Failure __) => true;
         public static bool operator !=(Failure left, Failure right) => !(left == right);
-        public static implicit operator None(Failure failure) => Option.None();
-        public static implicit operator Failure(None none) => Result.Failure();
+        public static implicit operator None(Failure _) => Option.None();
+        public static implicit operator Failure(None _) => Result.Failure();
 
         public readonly string[] Messages;
         public Failure(params string[] messages) { Messages = messages; }
@@ -56,7 +55,7 @@ namespace Entia.Core
 
         public bool Equals(Failure other) => this == other;
         public override bool Equals(object obj) => obj is null || obj is Failure;
-        public override int GetHashCode() => 0;
+        public override int GetHashCode() => ArrayUtility.GetHashCode(Messages);
         public override string ToString() => $"{GetType().Format()}({string.Join(", ", Messages)})";
     }
 
@@ -95,6 +94,20 @@ namespace Entia.Core
             _messages = messages;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryValue(out T value)
+        {
+            value = _value;
+            return Tag == Result.Tags.Success;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryMessages(out string[] messages)
+        {
+            messages = _messages;
+            return Tag == Result.Tags.Failure;
+        }
+
         public Result<TTo> Cast<TTo>() => this.Bind(value => value is TTo casted ?
             Result.Success(casted).AsResult() :
             Result.Failure($"Expected value '{value?.ToString() ?? "null"}' to be of type '{typeof(TTo)}'."));
@@ -103,31 +116,36 @@ namespace Entia.Core
         public bool Equals(Success<T> other) => this == other;
         public override bool Equals(object obj) =>
             obj is T value ? this == value :
-            obj is Success<T> success ? this == success :
-            false;
+            obj is Success<T> success && this == success;
 
-        public override int GetHashCode() =>
-            this.TryValue(out var value) ? EqualityComparer<T>.Default.GetHashCode(value) :
-            this.TryMessages(out var messages) ? ArrayUtility.GetHashCode(messages) :
-            0;
-
-        public override string ToString()
+        public override int GetHashCode() => Tag switch
         {
-            return
-                this.TrySuccess(out var success) ? success.ToString() :
-                this.TryFailure(out var failure) ? failure.ToString() :
-                base.ToString();
-        }
+            Result.Tags.Success => Result.Success(_value).GetHashCode(),
+            Result.Tags.Failure => Result.Failure(_messages).GetHashCode(),
+            _ => throw new InvalidOperationException()
+        };
+
+        public override string ToString() => Tag switch
+        {
+            Result.Tags.Success => Result.Success(_value).ToString(),
+            Result.Tags.Failure => Result.Failure(_messages).ToString(),
+            _ => throw new InvalidOperationException()
+        };
     }
 
     public static class Result
     {
         public enum Tags : byte { Failure, Success }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Success<T> Success<T>(in T value) => new Success<T>(value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Success<Unit> Success() => new Success<Unit>(default);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Failure Failure(params string[] messages) => new Failure(messages);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Failure Failure(IEnumerable<string> messages) => Failure(messages.ToArray());
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Failure Exception(Exception exception) => Failure(exception.ToString());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -170,23 +188,9 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<TOut> Use<TIn, TOut, TState>(in this Result<TIn> result, in TState state, Func<TState, TOut> use) where TIn : IDisposable
-        {
-            if (result.TryValue(out var value)) using (value) return use(state);
-            return result.AsFailure();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<TOut> Use<TIn, TOut>(in this Result<TIn> result, Func<TIn, TOut> use) where TIn : IDisposable
         {
             if (result.TryValue(out var value)) using (value) return use(value);
-            return result.AsFailure();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<TOut> Use<TIn, TOut>(in this Result<TIn> result, Func<TOut> use) where TIn : IDisposable
-        {
-            if (result.TryValue(out var value)) using (value) return use();
             return result.AsFailure();
         }
 
@@ -198,13 +202,6 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<Unit> Use<T, TState>(in this Result<T> result, in TState state, Action<TState> use) where T : IDisposable
-        {
-            if (result.TryValue(out var value)) using (value) use(state);
-            return result.Ignore();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<Unit> Use<T>(in this Result<T> result, Action<T> use) where T : IDisposable
         {
             if (result.TryValue(out var value)) using (value) use(value);
@@ -212,96 +209,33 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<Unit> Use<T>(in this Result<T> result, Action use) where T : IDisposable
-        {
-            if (result.TryValue(out var value)) using (value) use();
-            return result.Ignore();
-        }
-
         public static bool Is<T>(in this Result<T> result, Tags tag) => result.Tag == tag;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsSuccess<T>(in this Result<T> result) => result.Is(Tags.Success);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsFailure<T>(in this Result<T> result) => result.Is(Tags.Failure);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> AsResult<T>(in this T? value) where T : struct =>
             value is T casted ? Success(casted).AsResult() :
             Failure($"Expected value of type '{typeof(T).FullFormat()}?' to not be 'null'.");
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> AsResult<T>(in this Success<T> success) => success;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> AsResult<T>(this Failure failure) => failure;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<Unit> AsResult(this Failure failure) => failure;
-        public static Success<T> AsResult<T>(in this Some<T> some) => some.Value;
-        public static Failure AsResult(in this None none, params string[] messages) => new Failure(messages);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> AsResult<T>(in this Option<T> option, params string[] messages) =>
             option.TryValue(out var value) ? Success(value).AsResult() : Failure(messages);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> AsOption<T>(in this Result<T> result) => result;
-        public static Failure AsFailure<T>(in this Result<T> result) => result.TryFailure(out var failure) ? failure : Failure();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Failure AsFailure<T>(in this Result<T> result) => Failure(result.Messages());
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T? AsNullable<T>(in this Result<T> result) where T : struct => result.TryValue(out var value) ? (T?)value : null;
-        public static T? AsNullable<T>(in this Success<T> success) where T : struct => success.Value;
-        public static T? AsNullable<T>(this Failure failure) where T : struct => null;
 
-        public static bool TrySuccess<T>(in this Result<T> result, out Success<T> success)
-        {
-            if (result.IsSuccess())
-            {
-                success = (Success<T>)result;
-                return true;
-            }
-
-            success = default;
-            return false;
-        }
-
-        public static bool TryValue<T>(in this Result<T> result, out T value)
-        {
-            if (result.TrySuccess(out var success))
-            {
-                value = success.Value;
-                return true;
-            }
-
-            value = default;
-            return false;
-        }
-
-        public static bool TryFailure<T>(in this Result<T> result, out Failure failure)
-        {
-            if (result.IsFailure())
-            {
-                failure = (Failure)result;
-                return true;
-            }
-
-            failure = default;
-            return false;
-        }
-
-        public static bool TryMessages<T>(in this Result<T> result, out string[] messages)
-        {
-            if (result.TryFailure(out var failure))
-            {
-                messages = failure.Messages;
-                return true;
-            }
-
-            messages = default;
-            return false;
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string[] Messages<T>(in this Result<T> result) => result.TryMessages(out var messages) ? messages : Array.Empty<string>();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Success<TOut> Map<TIn, TOut>(in this Success<TIn> success, Func<TIn, TOut> map) => map(success.Value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Success<TOut> Map<TIn, TOut, TState>(in this Success<TIn> success, in TState state, Func<TIn, TState, TOut> map) => map(success.Value, state);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> Filter<T>(in this Success<T> success, Func<T, bool> filter) => filter(success.Value) ? success.AsResult() : Failure();
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> Filter<T, TState>(in this Success<T> success, in TState state, Func<T, TState, bool> filter) => filter(success.Value, state) ? success.AsResult() : Failure();
-        public static T Flatten<T>(in this Success<T> success) where T : IResult => success.Value;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<TOut> Bind<TIn, TOut>(in this Success<TIn> success, Func<TIn, Result<TOut>> bind) => bind(success.Value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Success<TOut> Bind<TIn, TOut>(in this Success<TIn> success, Func<TIn, Success<TOut>> bind) => bind(success.Value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Failure Bind<T>(in this Success<T> success, Func<T, Failure> bind) => bind(success.Value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> Do<T>(in this Result<T> result, Action<T> @do)
@@ -332,9 +266,7 @@ namespace Entia.Core
 
         public static T OrThrow<T>(in this Result<T> result) => result.Or(() => throw new NullReferenceException());
         public static T OrDefault<T>(in this Result<T> result) => result.Or(default(T));
-        public static Success<Unit> Ignore<T>(in this Success<T> _) => Success();
         public static Result<Unit> Ignore<T>(in this Result<T> result) => result.Map(_ => default(Unit));
-        public static Success<object> Box<T>(in this Success<T> success) => success.Value;
         public static Result<object> Box<T>(in this Result<T> result) => result.Map(value => (object)value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -456,9 +388,6 @@ namespace Entia.Core
             if (result1.TryValue(out var value1) && result2.TryValue(out var value2) && result3.TryValue(out var value3) && result4.TryValue(out var value4) && result5.TryValue(out var value5)) return (value1, value2, value3, value4, value5);
             return Failure(ArrayUtility.Concatenate(result1.Messages(), result2.Messages(), result3.Messages(), result4.Messages(), result5.Messages()));
         }
-
-        public static Result<T1> Left<T1, T2>(in this Result<(T1, T2)> result) => result.Map(pair => pair.Item1);
-        public static Result<T2> Right<T1, T2>(in this Result<(T1, T2)> result) => result.Map(pair => pair.Item2);
 
         public static Result<TOut> Return<TIn, TOut>(in this Result<TIn> result, TOut value)
         {

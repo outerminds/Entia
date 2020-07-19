@@ -61,7 +61,7 @@ namespace Entia.Test
 
             var node = Sequence(Sequence(nodes1), Parallel(nodes2));
             var messages = value.Messages();
-            _result = value.Schedule(node).Use(() =>
+            _result = value.Schedule(node).Use(_ =>
             {
                 for (int i = 0; i < _iterations; i++)
                 {
@@ -133,7 +133,7 @@ namespace Entia.Test
 
             var node = Sequence(nodes);
             var messages = value.Messages();
-            _result = value.Schedule(node).Use(() =>
+            _result = value.Schedule(node).Use(_ =>
             {
                 messages.Emit(typeof(TMessage1));
                 messages.Emit(typeof(TMessage2));

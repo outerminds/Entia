@@ -56,14 +56,20 @@ namespace Entia.Core
         static readonly Func<T, bool> _isNull = typeof(T).IsValueType ?
             new Func<T, bool>(_ => false) : new Func<T, bool>(value => value == null);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Option<T>(in Some<T> some) => new Option<T>(Option.Tags.Some, some.Value);
-        public static implicit operator Option<T>(in T value) => _isNull(value) ?
-            new Option<T>(Option.Tags.None, value) :
-            new Option<T>(Option.Tags.Some, value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Option<T>(in T value) => new Option<T>(_isNull(value) ? Option.Tags.None : Option.Tags.Some, value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Option<T>(None _) => new Option<T>(Option.Tags.None, default);
-        public static implicit operator bool(in Option<T> option) => option.Tag == Option.Tags.Some;
-        public static explicit operator Some<T>(in Option<T> option) => option.Tag == Option.Tags.Some ? new Some<T>(option._value) : throw new InvalidCastException();
-        public static explicit operator None(in Option<T> option) => option.Tag == Option.Tags.None ? new None() : throw new InvalidCastException();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator bool(in Option<T> option) => option.IsSome();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator T(in Option<T> option) => option.IsSome() ? option._value : throw new InvalidCastException();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Some<T>(in Option<T> option) => (T)option;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator None(in Option<T> option) => option.IsNone() ? new None() : throw new InvalidCastException();
         public static bool operator ==(in Option<T> left, in T right) => left.TryValue(out var value) && EqualityComparer<T>.Default.Equals(value, right);
         public static bool operator !=(in Option<T> left, in T right) => !(left == right);
         public static bool operator ==(in T left, in Option<T> right) => right == left;
@@ -83,10 +89,18 @@ namespace Entia.Core
 
         readonly T _value;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         Option(Option.Tags tag, in T value)
         {
             Tag = tag;
             _value = value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryValue(out T value)
+        {
+            value = _value;
+            return Tag == Option.Tags.Some;
         }
 
         public Option<TTo> Cast<TTo>() => this.Bind(value => value is TTo casted ? Option.From(casted) : Option.None());
@@ -100,26 +114,52 @@ namespace Entia.Core
             obj is Some<T> some ? this == some :
             obj is None none && this == none;
 
-        public override int GetHashCode() => this.TryValue(out var value) ? EqualityComparer<T>.Default.GetHashCode(value) : 0;
-
-        public override string ToString()
+        public override int GetHashCode() => Tag switch
         {
-            return
-                this.TrySome(out var some) ? some.ToString() :
-                this.IsNone() ? Option.None().ToString() :
-                base.ToString();
-        }
+            Option.Tags.Some => Option.Some(_value).GetHashCode(),
+            Option.Tags.None => Option.None().GetHashCode(),
+            _ => throw new InvalidOperationException()
+        };
+
+        public override string ToString() => Tag switch
+        {
+            Option.Tags.Some => Option.Some(_value).ToString(),
+            Option.Tags.None => Option.None().ToString(),
+            _ => throw new InvalidOperationException()
+        };
     }
 
     public static class Option
     {
         public enum Tags : byte { None, Some }
 
-        public static Some<T> Some<T>(in T value) where T : struct => new Some<T>(value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Some<T> Some<T>(in T value) => new Some<T>(value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Some<Unit> Some() => new Some<Unit>(default);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static None None() => new None();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> From<T>(in T value) => value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> From<T>(in T? value) where T : struct => value.HasValue ? From(value.Value) : None();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Is<T>(in this Option<T> option, Tags tag) => option.Tag == tag;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsSome<T>(in this Option<T> option) => option.Is(Tags.Some);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNone<T>(in this Option<T> option) => option.Is(Tags.None);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> AsOption<T>(in this T? value) where T : struct => From(value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> AsOption<T>(in this Some<T> some) => some;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> AsOption<T>(this None none) => none;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<Unit> AsOption(this None none) => none;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T? AsNullable<T>(in this Option<T> option) where T : struct => option.TryValue(out var value) ? (T?)value : null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Try<T>(Func<T> @try, Action @finally = null)
@@ -161,23 +201,9 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<TOut> Use<TIn, TOut, TState>(in this Option<TIn> option, in TState state, Func<TState, TOut> use) where TIn : IDisposable
-        {
-            if (option.TryValue(out var value)) using (value) return use(state);
-            return None();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<TOut> Use<TIn, TOut>(in this Option<TIn> option, Func<TIn, TOut> use) where TIn : IDisposable
         {
             if (option.TryValue(out var value)) using (value) return use(value);
-            return None();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<TOut> Use<TIn, TOut>(in this Option<TIn> option, Func<TOut> use) where TIn : IDisposable
-        {
-            if (option.TryValue(out var value)) using (value) return use();
             return None();
         }
 
@@ -189,77 +215,11 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<Unit> Use<T, TState>(in this Option<T> option, in TState state, Action<TState> use) where T : IDisposable
-        {
-            if (option.TryValue(out var value)) using (value) use(state);
-            return option.Ignore();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<Unit> Use<T>(in this Option<T> option, Action<T> use) where T : IDisposable
         {
             if (option.TryValue(out var value)) using (value) use(value);
             return option.Ignore();
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<Unit> Use<T>(in this Option<T> option, Action use) where T : IDisposable
-        {
-            if (option.TryValue(out var value)) using (value) use();
-            return option.Ignore();
-        }
-
-        public static bool Is<T>(in this Option<T> option, Tags tag) => option.Tag == tag;
-        public static bool IsSome<T>(in this Option<T> option) => option.Is(Tags.Some);
-        public static bool IsNone<T>(in this Option<T> option) => option.Is(Tags.None);
-        public static Option<T> AsOption<T>(in this T? value) where T : struct => From(value);
-        public static Option<T> AsOption<T>(in this Some<T> some) => some;
-        public static Option<T> AsOption<T>(this None none) => none;
-        public static Option<Unit> AsOption(this None none) => none;
-        public static T? AsNullable<T>(in this Option<T> option) where T : struct => option.TryValue(out var value) ? (T?)value : null;
-        public static T? AsNullable<T>(in this Some<T> some) where T : struct => some.Value;
-        public static T? AsNullable<T>(this None _) where T : struct => null;
-
-        public static bool TrySome<T>(in this Option<T> option, out Some<T> some)
-        {
-            if (option.IsSome())
-            {
-                some = (Some<T>)option;
-                return true;
-            }
-
-            some = default;
-            return false;
-        }
-
-        public static bool TryValue<T>(in this Option<T> option, out T value)
-        {
-            if (option.TrySome(out var some))
-            {
-                value = some.Value;
-                return true;
-            }
-
-            value = default;
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Some<TOut> Map<TIn, TOut>(in this Some<TIn> some, Func<TIn, TOut> map) => map(some.Value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Some<TOut> Map<TIn, TOut, TState>(in this Some<TIn> some, in TState state, Func<TIn, TState, TOut> map) => map(some.Value, state);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T> Filter<T>(in this Some<T> some, Func<T, bool> filter) => filter(some.Value) ? some.AsOption() : None();
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T> Filter<T, TState>(in this Some<T> some, in TState state, Func<T, TState, bool> filter) => filter(some.Value, state) ? some.AsOption() : None();
-        public static T Flatten<T>(in this Some<T> some) where T : IOption => some.Value;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<TOut> Bind<TIn, TOut>(in this Some<TIn> some, Func<TIn, Option<TOut>> bind) => bind(some.Value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Some<TOut> Bind<TIn, TOut>(in this Some<TIn> some, Func<TIn, Some<TOut>> bind) => bind(some.Value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static None Bind<T>(in this Some<T> some, Func<T, None> bind) => bind(some.Value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Do<T>(in this Option<T> option, Action<T> @do)
@@ -282,7 +242,7 @@ namespace Entia.Core
         public static T Or<T>(in this Option<T> option, Func<T> provide) =>
             option.TryValue(out var current) ? current : provide();
 
-        public static T Or<T>(in this Option<T> option, in T value) => option.TryValue(out var current) ? current : value;
+        public static T Or<T>(in this Option<T> option, in T @default) => option.TryValue(out var value) ? value : @default;
         public static Option<T> Or<T>(in this Option<T> option1, in Option<T> option2) => option1.TryValue(out var value1) ? value1 : option2;
         public static Option<T> Or<T>(in this Option<T> option1, in Option<T> option2, in Option<T> option3) => option1.Or(option2).Or(option3);
         public static Option<T> Or<T>(in this Option<T> option1, in Option<T> option2, in Option<T> option3, in Option<T> option4) => option1.Or(option2).Or(option3).Or(option4);
@@ -290,9 +250,7 @@ namespace Entia.Core
 
         public static T OrThrow<T>(in this Option<T> option) => option.Or(() => throw new NullReferenceException());
         public static T OrDefault<T>(in this Option<T> option) => option.Or(default(T));
-        public static Some<Unit> Ignore<T>(in this Some<T> _) => Some();
         public static Option<Unit> Ignore<T>(in this Option<T> option) => option.Map(_ => default(Unit));
-        public static Some<object> Box<T>(in this Some<T> some) => some.Value;
         public static Option<object> Box<T>(in this Option<T> option) => option.Map(value => (object)value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -340,13 +298,6 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TOut Match<TIn, TOut>(in this Option<TIn> option, Func<TIn, TOut> some, Func<TOut> none) =>
             option.TryValue(out var value) ? some(value) : none();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Match<T>(in this Option<T> option, Action<T> some, Action none)
-        {
-            if (option.TryValue(out var value)) some(value);
-            else none();
-        }
 
         public static Option<(T1, T2)> And<T1, T2>(in this Option<T1> left, in T2 right)
         {

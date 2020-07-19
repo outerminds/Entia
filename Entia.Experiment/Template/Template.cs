@@ -41,7 +41,7 @@ namespace Entia
                 {
                     var (_, initializer) = pairs[i];
                     var result = initializer.Initialize(_instances[i], _instances);
-                    if (result.TryFailure(out var failure)) return failure;
+                    if (result.IsFailure()) return result;
                 }
 
                 return Result.Success();
