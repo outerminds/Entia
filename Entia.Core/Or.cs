@@ -28,6 +28,7 @@ namespace Entia.Core
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Right<T>(in T value) => new Right<T>(value);
+
         public readonly T Value;
         Or.Tags IOr.Tag => Or.Tags.Right;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

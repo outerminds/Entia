@@ -415,6 +415,15 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Recover<T>(in this Option<T> option, Func<Option<T>> recover) => option.IsNone() ? recover() : option;
 
+        public static bool TryTake<T>(ref this Option<T> option, out T value) => option.Take().TryValue(out value);
+
+        public static Option<T> Take<T>(ref this Option<T> option)
+        {
+            var copy = option;
+            option = None();
+            return copy;
+        }
+
         public static Option<T[]> All<T>(this Option<T>[] options)
         {
             var values = new T[options.Length];
