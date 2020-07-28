@@ -19,7 +19,7 @@ namespace Entia.Json
             public Members(object field, object property) { Field = field; Property = property; Method(); }
         }
 
-        public enum Types { Array = 1, Pointer = 2, Generic = 3 }
+        enum Types { Array = 1, Pointer = 2, Generic = 3 }
 
         static readonly (int identifier, Type type)[] _types =
         {
