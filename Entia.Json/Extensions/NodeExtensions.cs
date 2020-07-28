@@ -237,7 +237,7 @@ namespace Entia.Json
             {
                 value =
                     node.Value is long integer ? (char)integer :
-                    node.Value is double floating ? (char)floating :
+                    node.Value is double rational ? (char)rational :
                     Convert.ToChar(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -254,7 +254,7 @@ namespace Entia.Json
             {
                 value =
                     node.Value is long integer ? (sbyte)integer :
-                    node.Value is double floating ? (sbyte)floating :
+                    node.Value is double rational ? (sbyte)rational :
                     Convert.ToSByte(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -269,7 +269,7 @@ namespace Entia.Json
             {
                 value =
                     node.Value is long integer ? (byte)integer :
-                    node.Value is double floating ? (byte)floating :
+                    node.Value is double rational ? (byte)rational :
                     Convert.ToByte(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -284,7 +284,7 @@ namespace Entia.Json
             {
                 value =
                     node.Value is long integer ? (short)integer :
-                    node.Value is double floating ? (short)floating :
+                    node.Value is double rational ? (short)rational :
                     Convert.ToInt16(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -299,7 +299,7 @@ namespace Entia.Json
             {
                 value =
                     node.Value is long integer ? (ushort)integer :
-                    node.Value is double floating ? (ushort)floating :
+                    node.Value is double rational ? (ushort)rational :
                     Convert.ToUInt16(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -314,7 +314,7 @@ namespace Entia.Json
             {
                 value =
                     node.Value is long integer ? (int)integer :
-                    node.Value is double floating ? (int)floating :
+                    node.Value is double rational ? (int)rational :
                     Convert.ToInt32(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -329,7 +329,7 @@ namespace Entia.Json
             {
                 value =
                     node.Value is long integer ? (uint)integer :
-                    node.Value is double floating ? (uint)floating :
+                    node.Value is double rational ? (uint)rational :
                     Convert.ToUInt32(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -344,7 +344,7 @@ namespace Entia.Json
             {
                 value =
                     node.Value is long integer ? integer :
-                    node.Value is double floating ? (long)floating :
+                    node.Value is double rational ? (long)rational :
                     Convert.ToInt64(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -373,7 +373,7 @@ namespace Entia.Json
             {
                 value =
                     node.Value is long integer ? (float)integer :
-                    node.Value is double floating ? (float)floating :
+                    node.Value is double rational ? (float)rational :
                     Convert.ToSingle(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -388,7 +388,7 @@ namespace Entia.Json
             {
                 value =
                     node.Value is long integer ? (double)integer :
-                    node.Value is double floating ? floating :
+                    node.Value is double rational ? rational :
                     Convert.ToDouble(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -403,7 +403,7 @@ namespace Entia.Json
             {
                 value =
                     node.Value is long integer ? (decimal)integer :
-                    node.Value is double floating ? (decimal)floating :
+                    node.Value is double rational ? (decimal)rational :
                     Convert.ToDecimal(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
