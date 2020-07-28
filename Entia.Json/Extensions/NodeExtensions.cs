@@ -236,7 +236,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long number ? (char)number :
+                    node.Value is long integer ? (char)integer :
+                    node.Value is double floating ? (char)floating :
                     Convert.ToChar(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -252,7 +253,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long number ? (sbyte)number :
+                    node.Value is long integer ? (sbyte)integer :
+                    node.Value is double floating ? (sbyte)floating :
                     Convert.ToSByte(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -266,7 +268,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long number ? (byte)number :
+                    node.Value is long integer ? (byte)integer :
+                    node.Value is double floating ? (byte)floating :
                     Convert.ToByte(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -280,7 +283,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long number ? (short)number :
+                    node.Value is long integer ? (short)integer :
+                    node.Value is double floating ? (short)floating :
                     Convert.ToInt16(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -294,7 +298,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long number ? (ushort)number :
+                    node.Value is long integer ? (ushort)integer :
+                    node.Value is double floating ? (ushort)floating :
                     Convert.ToUInt16(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -308,7 +313,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long number ? (int)number :
+                    node.Value is long integer ? (int)integer :
+                    node.Value is double floating ? (int)floating :
                     Convert.ToInt32(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -322,7 +328,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long number ? (uint)number :
+                    node.Value is long integer ? (uint)integer :
+                    node.Value is double floating ? (uint)floating :
                     Convert.ToUInt32(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -336,7 +343,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long number ? number :
+                    node.Value is long integer ? integer :
+                    node.Value is double floating ? (long)floating :
                     Convert.ToInt64(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -350,7 +358,7 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is ulong number ? number :
+                    node.Value is long integer ? (ulong)integer :
                     Convert.ToUInt64(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -364,7 +372,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is float number ? number :
+                    node.Value is long integer ? (float)integer :
+                    node.Value is double floating ? (float)floating :
                     Convert.ToSingle(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -378,7 +387,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is double number ? number :
+                    node.Value is long integer ? (double)integer :
+                    node.Value is double floating ? floating :
                     Convert.ToDouble(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -392,7 +402,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is decimal number ? number :
+                    node.Value is long integer ? (decimal)integer :
+                    node.Value is double floating ? (decimal)floating :
                     Convert.ToDecimal(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -406,7 +417,7 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long number ? (T)Enum.ToObject(typeof(T), number) :
+                    node.Value is long integer ? (T)Enum.ToObject(typeof(T), integer) :
                     (T)Enum.ToObject(typeof(T), node.Value);
                 return true;
             }
@@ -422,7 +433,7 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long number ? (Enum)Enum.ToObject(type, number) :
+                    node.Value is long integer ? (Enum)Enum.ToObject(type, integer) :
                     (Enum)Enum.ToObject(type, node.Value);
                 return true;
             }
