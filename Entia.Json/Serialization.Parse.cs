@@ -152,17 +152,17 @@ namespace Entia.Json
                             else
                                 return Result.Failure($"Expected 'false' at index '{Index(pointer, head) - 1}'.");
                             break;
-                        case _minus: Push(Node.Number(ParseNumber(ref head, tail, 0, -1))); break;
-                        case _0: Push(Node.Number(ParseNumber(ref head, tail, 0, 1))); break;
-                        case _1: Push(Node.Number(ParseNumber(ref head, tail, 1, 1))); break;
-                        case _2: Push(Node.Number(ParseNumber(ref head, tail, 2, 1))); break;
-                        case _3: Push(Node.Number(ParseNumber(ref head, tail, 3, 1))); break;
-                        case _4: Push(Node.Number(ParseNumber(ref head, tail, 4, 1))); break;
-                        case _5: Push(Node.Number(ParseNumber(ref head, tail, 5, 1))); break;
-                        case _6: Push(Node.Number(ParseNumber(ref head, tail, 6, 1))); break;
-                        case _7: Push(Node.Number(ParseNumber(ref head, tail, 7, 1))); break;
-                        case _8: Push(Node.Number(ParseNumber(ref head, tail, 8, 1))); break;
-                        case _9: Push(Node.Number(ParseNumber(ref head, tail, 9, 1))); break;
+                        case _minus: Push(ParseNumber(ref head, tail, 0, -1)); break;
+                        case _0: Push(ParseNumber(ref head, tail, 0, 1)); break;
+                        case _1: Push(ParseNumber(ref head, tail, 1, 1)); break;
+                        case _2: Push(ParseNumber(ref head, tail, 2, 1)); break;
+                        case _3: Push(ParseNumber(ref head, tail, 3, 1)); break;
+                        case _4: Push(ParseNumber(ref head, tail, 4, 1)); break;
+                        case _5: Push(ParseNumber(ref head, tail, 5, 1)); break;
+                        case _6: Push(ParseNumber(ref head, tail, 6, 1)); break;
+                        case _7: Push(ParseNumber(ref head, tail, 7, 1)); break;
+                        case _8: Push(ParseNumber(ref head, tail, 8, 1)); break;
+                        case _9: Push(ParseNumber(ref head, tail, 9, 1)); break;
                         case _quote:
                             {
                                 var start = head;
@@ -274,6 +274,23 @@ namespace Entia.Json
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static unsafe Node ParseNumber(ref char* head, char* tail, long value, long sign)
+        {
+            var character = ParseInteger(ref head, tail, ref value);
+            if (character == _dot)
+            {
+                head++;
+                return Node.Number(ParseFraction(ref head, tail, value) * sign);
+            }
+            else if (character == _e || character == _E)
+            {
+                head++;
+                return Node.Number(ParseExponent(ref head, tail, value) * sign);
+            }
+            else return Node.Number(value * sign);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static unsafe char ParseInteger(ref char* head, char* tail, ref long value)
         {
             while (head != tail)
@@ -287,23 +304,6 @@ namespace Entia.Json
                 else return character;
             }
             return default;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe object ParseNumber(ref char* head, char* tail, long value, long sign)
-        {
-            var character = ParseInteger(ref head, tail, ref value);
-            if (character == _dot)
-            {
-                head++;
-                return ParseFraction(ref head, tail, value) * sign;
-            }
-            else if (character == _e || character == _E)
-            {
-                head++;
-                return ParseExponent(ref head, tail, value) * sign;
-            }
-            else return value * sign;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

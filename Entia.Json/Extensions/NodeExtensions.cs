@@ -188,6 +188,10 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasPlain(this Node node) => node.Has(Node.Tags.Plain);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HasInteger(this Node node) => node.Has(Node.Tags.Integer);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HasRational(this Node node) => node.Has(Node.Tags.Rational);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNull(this Node node) => node.Is(Node.Kinds.Null);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsString(this Node node) => node.Is(Node.Kinds.String);
@@ -236,8 +240,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (char)integer :
-                    node.Value is double rational ? (char)rational :
+                    node.HasInteger() ? (char)(long)node.Value :
+                    node.HasRational() ? (char)(double)node.Value :
                     Convert.ToChar(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -253,8 +257,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (sbyte)integer :
-                    node.Value is double rational ? (sbyte)rational :
+                    node.HasInteger() ? (sbyte)(long)node.Value :
+                    node.HasRational() ? (sbyte)(double)node.Value :
                     Convert.ToSByte(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -268,8 +272,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (byte)integer :
-                    node.Value is double rational ? (byte)rational :
+                    node.HasInteger() ? (byte)(long)node.Value :
+                    node.HasRational() ? (byte)(double)node.Value :
                     Convert.ToByte(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -283,8 +287,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (short)integer :
-                    node.Value is double rational ? (short)rational :
+                    node.HasInteger() ? (short)(long)node.Value :
+                    node.HasRational() ? (short)(double)node.Value :
                     Convert.ToInt16(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -298,8 +302,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (ushort)integer :
-                    node.Value is double rational ? (ushort)rational :
+                    node.HasInteger() ? (ushort)(long)node.Value :
+                    node.HasRational() ? (ushort)(double)node.Value :
                     Convert.ToUInt16(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -313,8 +317,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (int)integer :
-                    node.Value is double rational ? (int)rational :
+                    node.HasInteger() ? (int)(long)node.Value :
+                    node.HasRational() ? (int)(double)node.Value :
                     Convert.ToInt32(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -328,8 +332,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (uint)integer :
-                    node.Value is double rational ? (uint)rational :
+                    node.HasInteger() ? (uint)(long)node.Value :
+                    node.HasRational() ? (uint)(double)node.Value :
                     Convert.ToUInt32(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -343,8 +347,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? integer :
-                    node.Value is double rational ? (long)rational :
+                    node.HasInteger() ? (long)node.Value :
+                    node.HasRational() ? (long)(double)node.Value :
                     Convert.ToInt64(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -358,7 +362,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (ulong)integer :
+                    node.HasInteger() ? (ulong)(long)node.Value :
+                    node.HasRational() ? (ulong)(double)node.Value :
                     Convert.ToUInt64(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -372,8 +377,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (float)integer :
-                    node.Value is double rational ? (float)rational :
+                    node.HasInteger() ? (float)(long)node.Value :
+                    node.HasRational() ? (float)(double)node.Value :
                     Convert.ToSingle(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -387,8 +392,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (double)integer :
-                    node.Value is double rational ? rational :
+                    node.HasInteger() ? (double)(long)node.Value :
+                    node.HasRational() ? (double)node.Value :
                     Convert.ToDouble(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -402,8 +407,8 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (decimal)integer :
-                    node.Value is double rational ? (decimal)rational :
+                    node.HasInteger() ? (decimal)(long)node.Value :
+                    node.HasRational() ? (decimal)(double)node.Value :
                     Convert.ToDecimal(node.Value, CultureInfo.InvariantCulture);
                 return true;
             }
@@ -417,7 +422,7 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (T)Enum.ToObject(typeof(T), integer) :
+                    node.HasInteger() ? (T)Enum.ToObject(typeof(T), (long)node.Value) :
                     (T)Enum.ToObject(typeof(T), node.Value);
                 return true;
             }
@@ -433,7 +438,7 @@ namespace Entia.Json
             if (node.IsNumber())
             {
                 value =
-                    node.Value is long integer ? (Enum)Enum.ToObject(type, integer) :
+                    node.HasInteger() ? (Enum)Enum.ToObject(type, (long)node.Value) :
                     (Enum)Enum.ToObject(type, node.Value);
                 return true;
             }

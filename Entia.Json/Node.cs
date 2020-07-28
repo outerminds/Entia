@@ -7,7 +7,7 @@ namespace Entia.Json
     public sealed class Node
     {
         public enum Kinds : byte { Null, Boolean, Number, String, Object, Array, Type, Reference, Abstract }
-        public enum Tags : byte { None, Plain = 1 << 0 }
+        public enum Tags : byte { None, Plain = 1 << 0, Integer = 1 << 1, Rational = 1 << 2 }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Node(bool value) => Boolean(value);
@@ -75,19 +75,17 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(uint value) => Number((long)value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(long value) => Number((object)value);
+        public static Node Number(long value) => new Node(Kinds.Number, Tags.Integer, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(ulong value) => Number((object)value);
+        public static Node Number(ulong value) => new Node(Kinds.Number, Tags.None, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(float value) => Number((object)value);
+        public static Node Number(float value) => Number((double)value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(double value) => Number((object)value);
+        public static Node Number(double value) => new Node(Kinds.Number, Tags.Rational, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(decimal value) => Number((object)value);
+        public static Node Number(decimal value) => new Node(Kinds.Number, Tags.None, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(Enum value) => Number(Convert.ToInt64(value));
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Node Number(object value) => new Node(Kinds.Number, Tags.None, value, _empty);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node String(char value) => String(value.ToString(), Tags.None);
