@@ -92,11 +92,11 @@ namespace Entia.Json
             1e-300, 1e-301, 1e-302, 1e-303, 1e-304, 1e-305, 1e-306, 1e-307, 1e-308,
         };
 
-        public static Result<Node> Parse(string text) => Parse(text, out _, out _);
+        public static Result<Node> Parse(string text, Features features = Features.None) =>
+            Parse(text, features, out _);
 
-        static unsafe Result<Node> Parse(string text, out Dictionary<int, uint> identifiers, out Dictionary<uint, object> references)
+        static unsafe Result<Node> Parse(string text, Features features, out Dictionary<uint, object> references)
         {
-            identifiers = new Dictionary<int, uint>();
             references = new Dictionary<uint, object>();
             var index = 0;
             var nodes = new Node[64];
@@ -174,10 +174,10 @@ namespace Entia.Json
                                             if (builder == null) builder = new StringBuilder(256);
                                             else builder.Clear();
                                             // NOTE: this string is not plain since at least 1 character was unescaped
-                                            Push(Node.String(builder.Unescape(ref head, tail, ref start), false));
+                                            Push(Node.String(builder.Unescape(ref head, tail, ref start), Node.Tags.None));
                                             break;
                                         case _quote:
-                                            Push(Node.String(new string(start, 0, Index(start, head) - 1), true));
+                                            Push(Node.String(new string(start, 0, Index(start, head) - 1), Node.Tags.Plain));
                                             break;
                                         default: continue;
                                     }
@@ -209,10 +209,13 @@ namespace Entia.Json
                 }
             }
 
-            if (index == 0) return Result.Failure("Expected valid json.");
-            var node = nodes[0];
-            Unwrap(ref node, identifiers, references);
-            return node;
+            if (nodes.TryFirst(out var root))
+            {
+                Unwrap(ref root, features, references);
+                return root;
+            }
+            else
+                return Result.Failure("Expected valid json.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -344,72 +347,63 @@ namespace Entia.Json
             return value * powers[exponent];
         }
 
-        static void Unwrap(ref Node node, Dictionary<int, uint> identifiers, Dictionary<uint, object> references)
+        static void Unwrap(ref Node node, Features features, Dictionary<uint, object> references)
         {
-            static bool TryIdentifier(Node node, out int index, out Node value)
+            if (features.HasAll(Features.Reference))
             {
-                if (node.Children.Length == 4 &&
-                    node.Children[0].AsString() == "$i" &&
-                    node.Children[1].TryInt(out index) &&
-                    node.Children[2].AsString() == "$v")
+                var identifiers = new uint?[8];
+                UnwrapIdentified(ref node, ref identifiers);
+                UnwrapReferences(ref node, identifiers);
+            }
+            if (features.HasAll(Features.Abstract)) ConvertType(ref node, references);
+
+            static void UnwrapIdentified(ref Node node, ref uint?[] identifiers)
+            {
+                if (node.Children.Length == 4 && node.Children[0].AsString() == "$i" && node.Children[2].AsString() == "$v")
                 {
-                    value = node.Children[3];
-                    return true;
+                    var index = node.Children[1].AsInt();
+                    var value = node.Children[3];
+                    UnwrapIdentified(ref value, ref identifiers);
+                    ArrayUtility.Ensure(ref identifiers, index + 1);
+                    identifiers[index] = node.Identifier;
+                    node = value.With(node.Identifier);
                 }
-                index = default;
-                value = default;
-                return false;
+                else
+                    for (int i = 0; i < node.Children.Length; i++) UnwrapIdentified(ref node.Children[i], ref identifiers);
             }
 
-            static bool TryReference(Node node, out int reference)
+            static void UnwrapReferences(ref Node node, uint?[] identifiers)
             {
                 if (node.Children.Length == 2 && node.Children[0].AsString() == "$r")
-                    return node.Children[1].TryInt(out reference);
-                reference = default;
-                return false;
+                {
+                    var index = node.Children[1].AsInt();
+                    var reference =
+                        index < identifiers.Length && identifiers[index] is uint identifier ?
+                        Node.Reference(identifier) : Node.Null;
+                    node = reference.With(node.Identifier);
+                }
+                else
+                    for (int i = 0; i < node.Children.Length; i++) UnwrapReferences(ref node.Children[i], identifiers);
             }
 
-            static bool TryType(Node node, Dictionary<uint, object> references, out Node type)
+            static void ConvertType(ref Node node, Dictionary<uint, object> references)
             {
                 if (node.Children.Length == 2 && node.Children[0].AsString() == "$t")
                 {
-                    type = Node.Type(JsonUtility.NodeToType(node.Children[1], references)).With(node.Identifier);
-                    return true;
+                    var type = Node.Type(JsonUtility.NodeToType(node.Children[1], references));
+                    node = type.With(node.Identifier);
                 }
-                type = default;
-                return false;
-            }
-
-            static bool TryAbstract(Node node, Dictionary<uint, object> references, out Node @abstract)
-            {
-                if (node.Children.Length == 4 &&
-                    node.Children[0].AsString() == "$a" &&
-                    node.Children[2].AsString() == "$v")
+                else if (node.Children.Length == 4 && node.Children[0].AsString() == "$a" && node.Children[2].AsString() == "$v")
                 {
-                    var value = node.Children[1];
-                    @abstract = Node.Abstract(
-                        Node.Type(JsonUtility.NodeToType(value, references)).With(value.Identifier),
-                        node.Children[3]).With(node.Identifier);
-                    return true;
+                    var type = node.Children[1];
+                    var value = node.Children[3];
+                    ConvertType(ref value, references);
+                    var @abstract = Node.Abstract(Node.Type(JsonUtility.NodeToType(type, references)).With(type.Identifier), value);
+                    node = @abstract.With(node.Identifier);
                 }
-                @abstract = default;
-                return false;
+                else
+                    for (int i = 0; i < node.Children.Length; i++) ConvertType(ref node.Children[i], references);
             }
-
-            if (TryIdentifier(node, out var index, out var value))
-            {
-                identifiers[index] = value.Identifier;
-                node = value;
-            }
-
-            if (TryReference(node, out index))
-                node = identifiers.TryGetValue(index, out var reference) ?
-                    Node.Reference(reference) : Node.Null;
-
-            for (int i = 0; i < node.Children.Length; i++) Unwrap(ref node.Children[i], identifiers, references);
-
-            if (TryType(node, references, out var type)) node = type;
-            else if (TryAbstract(node, references, out var @abstract)) node = @abstract;
         }
     }
 }

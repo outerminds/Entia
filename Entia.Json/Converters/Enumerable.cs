@@ -23,7 +23,7 @@ namespace Entia.Json.Converters
                             parameters.TryFirst(out var parameter) &&
                             element.Array.Type.Is(parameter.ParameterType), out var constructor))
                     {
-                        if (Option.Try(() => Activator.CreateInstance(typeof(Enumerable<>).MakeGenericType(element), constructor))
+                        if (Core.Option.Try(() => Activator.CreateInstance(typeof(Enumerable<>).MakeGenericType(element), constructor))
                             .Cast<IConverter>()
                             .TryValue(out var converter))
                             yield return converter;

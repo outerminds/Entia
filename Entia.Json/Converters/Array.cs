@@ -31,7 +31,7 @@ namespace Entia.Json.Converters
                         case TypeCode.String: yield return new PrimitiveArray<string>(_ => _, node => node.AsString()); break;
                     }
 
-                    if (Option.Try(() => Activator.CreateInstance(typeof(ConcreteArray<>).MakeGenericType(element)))
+                    if (Core.Option.Try(() => Activator.CreateInstance(typeof(ConcreteArray<>).MakeGenericType(element)))
                         .Cast<IConverter>()
                         .TryValue(out var converter))
                         yield return converter;

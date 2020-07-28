@@ -8,6 +8,7 @@ namespace Entia.Core
     public interface IOption
     {
         Option.Tags Tag { get; }
+        object Value { get; }
         Option<T> Cast<T>();
     }
 
@@ -22,6 +23,7 @@ namespace Entia.Core
         public static implicit operator Some<T>(in T value) => new Some<T>(value);
 
         Option.Tags IOption.Tag => Option.Tags.Some;
+        object IOption.Value => Value;
 
         public readonly T Value;
         public Some(in T value) { Value = value; }
@@ -43,6 +45,7 @@ namespace Entia.Core
         public static bool operator !=(None left, None right) => !(left == right);
 
         Option.Tags IOption.Tag => Option.Tags.None;
+        object IOption.Value => null;
         Option<T> IOption.Cast<T>() => Option.None();
 
         public bool Equals(None other) => this == other;
@@ -86,6 +89,7 @@ namespace Entia.Core
         public static bool operator !=(None left, in Option<T> right) => !(left == right);
 
         public Option.Tags Tag { get; }
+        object IOption.Value => this.IsSome() ? (object)_value : null;
 
         readonly T _value;
 
@@ -145,9 +149,15 @@ namespace Entia.Core
         public static Option<T> From<T>(in T? value) where T : struct => value.HasValue ? From(value.Value) : None();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Is<T>(this T option, Tags tag) where T : IOption => option.Tag == tag;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Is<T>(in this Option<T> option, Tags tag) => option.Tag == tag;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsSome<T>(this T option) where T : IOption => option.Is(Tags.Some);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsSome<T>(in this Option<T> option) => option.Is(Tags.Some);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNone<T>(this T option) where T : IOption => option.Is(Tags.None);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNone<T>(in this Option<T> option) => option.Is(Tags.None);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

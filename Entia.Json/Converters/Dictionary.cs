@@ -19,13 +19,13 @@ namespace Entia.Json.Converters
                         arguments.Length == 2)
                     {
                         if (type.Definition == typeof(Dictionary<,>) &&
-                            Option.Try(() => Activator.CreateInstance(typeof(ConcreteDictionary<,>).MakeGenericType(arguments)))
+                            Core.Option.Try(() => Activator.CreateInstance(typeof(ConcreteDictionary<,>).MakeGenericType(arguments)))
                             .Cast<IConverter>()
                             .TryValue(out var converter))
                             yield return converter;
                         if (type.DefaultConstructor is ConstructorInfo constructor)
                         {
-                            if (Option.Try(() => Activator.CreateInstance(typeof(AbstractDictionary<,>).MakeGenericType(arguments), constructor))
+                            if (Core.Option.Try(() => Activator.CreateInstance(typeof(AbstractDictionary<,>).MakeGenericType(arguments), constructor))
                                 .Cast<IConverter>()
                                 .TryValue(out converter))
                                 yield return converter;

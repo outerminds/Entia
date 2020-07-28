@@ -339,9 +339,9 @@ namespace Entia.Experiment
 
             var json1 = File.ReadAllText(@"C:\Projects\Ululab\Numbers\Assets\Resources\Creative\Levels\ARCHIVE~11_KIDS_OEP_A.json");
             var node1 = Json.Serialization.Parse(json1).Or(Node.Null);
-            var json2 = Json.Serialization.Generate(node1, Formats.Indented);
+            var json2 = Json.Serialization.Generate(node1, format: Formats.Indented);
             var node2 = Json.Serialization.Parse(json2).Or(Node.Null);
-            var json3 = Json.Serialization.Generate(node1, Formats.Compact);
+            var json3 = Json.Serialization.Generate(node1, format: Formats.Compact);
             var node3 = Json.Serialization.Parse(json3);
             var node31 = Json.Serialization.Parse(@"""<a href=\""http://twitter.com\"" rel=\""nofollow\"">Twitter Web Client</a>""");
 
@@ -361,7 +361,7 @@ namespace Entia.Experiment
             void Test<T>(in T value, out string json, out Node node, out T instance, Features features = Features.None)
             {
                 json = Json.Serialization.Serialize(value, features, container: container);
-                node = Json.Serialization.Parse(json).Or(Node.Null);
+                node = Json.Serialization.Parse(json, features).Or(Node.Null);
                 instance = Json.Serialization.Instantiate<T>(node, container);
             }
 
@@ -393,13 +393,24 @@ namespace Entia.Experiment
             Test(new SortedDictionary<int, int> { { 1, 2 }, { 3, 4 } }, out var json14, out var node14, out var value14);
             Test(new ConcurrentDictionary<int, int>(new[] { new KeyValuePair<int, int>(1, 2), new KeyValuePair<int, int>(3, 4) }), out var json15, out var node15, out var value15);
             Test(Features.Abstract, out var json16, out var node16, out var value16);
-            Test<Features?>(Features.Abstract, out var json17, out var node17, out var value17);
-            Test<Features?>(null, out var json18, out var node18, out var value18);
+            Test(Null.Some(Features.Abstract), out var json17, out var node17, out var value17);
+            Test(Null.None<Features>(), out var json18, out var node18, out var value18);
+            Test<Option<int>>(Option.None(), out var json19, out var node19, out var value19);
+            Test<Option<int>>(Option.Some(32), out var json20, out var node20, out var value20);
+
+            var anonymous = new
+            {
+                a = Option.Some(32).AsOption(),
+                b = Null.None<Features>(),
+                c = Features.Abstract,
+            };
+            Test(anonymous, out var json21, out var node21, out var value21);
+            Test<object>(anonymous, out var json22, out var node22, out var value22, Features.All);
 
             void SerializeA<T>(T value)
             {
                 var json = Json.Serialization.Serialize(new Wrapper<T> { Value = value }, Features.All, Formats.Compact, container);
-                value = Json.Serialization.Deserialize<Wrapper<T>>(json, container).OrDefault().Value;
+                value = Json.Serialization.Deserialize<Wrapper<T>>(json, Features.All, container).OrDefault().Value;
             }
 
             void SerializeB<T>(T value)

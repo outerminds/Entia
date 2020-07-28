@@ -37,7 +37,7 @@ namespace Entia.Json.Converters
                                 case TypeCode.Boolean: yield return new PrimitiveList<bool>(_ => _, node => node.AsBool()); break;
                                 case TypeCode.String: yield return new PrimitiveList<string>(_ => _, node => node.AsString()); break;
                             }
-                            if (Option.Try(() => Activator.CreateInstance(typeof(ConcreteList<>).MakeGenericType(argument)))
+                            if (Core.Option.Try(() => Activator.CreateInstance(typeof(ConcreteList<>).MakeGenericType(argument)))
                                 .Cast<IConverter>()
                                 .TryValue(out var converter))
                                 yield return converter;

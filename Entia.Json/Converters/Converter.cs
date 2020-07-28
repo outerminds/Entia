@@ -11,6 +11,8 @@ namespace Entia.Json.Converters
     [Implementation(typeof(DateTime), typeof(ConcreteDateTime))]
     [Implementation(typeof(TimeSpan), typeof(ConcreteTimeSpan))]
     [Implementation(typeof(Guid), typeof(ConcreteGuid))]
+    [Implementation(typeof(Nullable<>), typeof(Providers.Nullable))]
+    [Implementation(typeof(Option<>), typeof(Providers.Option))]
     [Implementation(typeof(Array), typeof(Providers.Array))]
     [Implementation(typeof(IList), typeof(Providers.List))]
     [Implementation(typeof(IDictionary), typeof(Providers.Dictionary))]

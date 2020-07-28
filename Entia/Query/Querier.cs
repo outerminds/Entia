@@ -192,7 +192,7 @@ namespace Entia.Queriers
         static States? Include(params ICustomAttributeProvider[] providers) => providers
             .SelectMany(provider => provider.GetCustomAttributes(true))
             .OfType<IncludeAttribute>()
-            .Select(attribute => Core.Nullable.Value(attribute.States))
+            .Select(attribute => Null.Some(attribute.States))
             .FirstOrDefault();
     }
 

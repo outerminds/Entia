@@ -141,7 +141,7 @@ namespace Entia.Json
             for (int i = 0; i < fields.Length; i++)
             {
                 var field = fields[i];
-                members[i * 2] = Node.String(field.Name, true);
+                members[i * 2] = Node.String(field.Name, Node.Tags.Plain);
                 members[i * 2 + 1] = Convert(field.GetValue(instance), field.FieldType);
             }
             return Node.Object(members).With(identifier);

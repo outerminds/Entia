@@ -6,16 +6,16 @@ namespace Entia.Json
 {
     public static partial class Serialization
     {
-        public static Result<T> Deserialize<T>(string json, Container container = null)
+        public static Result<T> Deserialize<T>(string json, Features features = Features.None, Container container = null)
         {
-            var result = Parse(json, out _, out var references);
+            var result = Parse(json, features, out var references);
             if (result.TryValue(out var node)) return FromContext(references, container).Convert<T>(node);
             return result.AsFailure();
         }
 
-        public static Result<object> Deserialize(string json, Type type, Container container = null)
+        public static Result<object> Deserialize(string json, Type type, Features features = Features.None, Container container = null)
         {
-            var result = Parse(json, out _, out var references);
+            var result = Parse(json, features, out var references);
             if (result.TryValue(out var node)) return FromContext(references, container).Convert(node, type);
             return result.AsFailure();
         }

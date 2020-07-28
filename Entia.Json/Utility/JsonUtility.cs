@@ -127,22 +127,23 @@ namespace Entia.Json
 
         public static Node TypeToNode(Type type, Dictionary<object, uint> references)
         {
-            var node = Create(type, references);
-            references[type] = node.Identifier;
+            var (node, store) = Create(type, references);
+            if (store) references[type] = node.Identifier;
             return node;
 
-            static Node Create(Type type, Dictionary<object, uint> references)
+            static (Node node, bool store) Create(Type type, Dictionary<object, uint> references)
             {
                 if (type == null)
-                    return Node.Null;
+                    return (Node.Null, false);
                 else if (_typeToIdentifier.TryGetValue(type, out var identifier))
-                    return Node.Number(identifier);
+                    return (Node.Number(identifier), true);
                 else if (references.TryGetValue(type, out var reference))
-                    return Node.Reference(reference);
+                    // NOTE: do not store since it would override the original reference
+                    return (Node.Reference(reference), false);
                 else if (type.IsArray)
-                    return Node.Array((int)Types.Array, type.GetArrayRank(), TypeToNode(type.GetElementType(), references));
+                    return (Node.Array((int)Types.Array, type.GetArrayRank(), TypeToNode(type.GetElementType(), references)), true);
                 else if (type.IsPointer)
-                    return Node.Array((int)Types.Pointer, TypeToNode(type.GetElementType(), references));
+                    return (Node.Array((int)Types.Pointer, TypeToNode(type.GetElementType(), references)), true);
                 else if (type.IsConstructedGenericType)
                 {
                     var definition = type.GetGenericTypeDefinition();
@@ -152,10 +153,10 @@ namespace Entia.Json
                     items[1] = TypeToNode(definition, references);
                     for (int i = 0; i < arguments.Length; i++)
                         items[i + 2] = TypeToNode(arguments[i], references);
-                    return Node.Array(items);
+                    return (Node.Array(items), true);
                 }
-                else if (TypeUtility.TryGetGuid(type, out var guid)) return guid.ToString();
-                else return type.FullName;
+                else if (TypeUtility.TryGetGuid(type, out var guid)) return (Node.String(guid.ToString()), true);
+                else return (Node.String(type.FullName), true);
             }
         }
     }

@@ -10,26 +10,12 @@ namespace Entia.Json
 
     public static partial class Serialization
     {
-        public static string Serialize<T>(in T instance, Features features = Features.None, Formats format = Formats.Compact, Container container = null)
-        {
-            var context = ToContext(features, container);
-            var node = context.Convert(instance);
-            return Generate(node, format, new Dictionary<uint, int>(), context.References);
-        }
+        public static string Generate(Node node, Features features = Features.None, Formats format = Formats.Compact) =>
+            Generate(node, format, new Dictionary<object, uint>(), features);
 
-        public static string Serialize(object instance, Type type, Features features = Features.None, Formats format = Formats.Compact, Container container = null)
+        static string Generate(Node node, Formats format, Dictionary<object, uint> references, Features features)
         {
-            var context = ToContext(features, container);
-            var node = context.Convert(instance, type);
-            return Generate(node, format, new Dictionary<uint, int>(), context.References);
-        }
-
-        public static string Generate(Node node, Formats format = Formats.Compact) =>
-            Generate(node, format, new Dictionary<uint, int>(), new Dictionary<object, uint>());
-
-        static string Generate(Node node, Formats format, Dictionary<uint, int> identifiers, Dictionary<object, uint> references)
-        {
-            node = Wrap(node, identifiers, references);
+            Wrap(ref node, references, features);
             var builder = new StringBuilder(1024);
             switch (format)
             {
@@ -245,40 +231,81 @@ namespace Entia.Json
             _ => '\0',
         };
 
-        static Node Wrap(Node node, Dictionary<uint, int> identifiers, Dictionary<object, uint> references)
+        static void Wrap(ref Node node, Dictionary<object, uint> references, Features features)
         {
-            switch (node.Kind)
+            if (features.HasAll(Features.Abstract)) node = ConvertTypes(node, references);
+            if (features.HasAll(Features.Reference))
             {
-                case Node.Kinds.Reference:
-                    var reference = node.AsReference();
+                var identifiers = new Dictionary<uint, int>();
+                // NOTE: it cannot be assumed in what order references appear relative to their referenced node;
+                // as such, all references must be identified before wrapping identified nodes
+                node = WrapReferences(node, identifiers);
+                var count = 0;
+                node = WrapIdentified(node, ref count, identifiers);
+            }
+
+            static Node ConvertTypes(Node node, Dictionary<object, uint> references)
+            {
+                if (node.TryAbstract(out var type, out var value))
+                    return Node.Object("$a", JsonUtility.TypeToNode(type, references), "$v", ConvertTypes(value, references));
+                else if (node.TryType(out type))
+                    return Node.Object("$t", JsonUtility.TypeToNode(type, references));
+
+                var children = default(Node[]);
+                for (int i = 0; i < node.Children.Length; i++)
+                {
+                    var child = node.Children[i];
+                    var wrapped = ConvertTypes(child, references);
+                    if (ReferenceEquals(child, wrapped)) continue;
+                    children ??= (Node[])node.Children.Clone();
+                    children[i] = wrapped;
+                }
+                return children == null ? node : node.With(children);
+            }
+
+            static Node WrapReferences(Node node, Dictionary<uint, int> identifiers)
+            {
+                if (node.TryReference(out var reference))
+                {
                     // NOTE: no need to visit children
                     return Node.Object("$r",
                         identifiers.TryGetValue(reference, out var index) ?
                         index : identifiers[reference] = identifiers.Count);
-                case Node.Kinds.Abstract:
-                    if (node.TryAbstract(out var type, out var value))
-                        node = Node.Object("$a", JsonUtility.TypeToNode(type, references), "$v", value);
-                    break;
-                case Node.Kinds.Type:
-                    node = Node.Object("$t", JsonUtility.TypeToNode(node.AsType(), references));
-                    break;
+                }
+
+                var children = default(Node[]);
+                for (int i = 0; i < node.Children.Length; i++)
+                {
+                    var child = node.Children[i];
+                    var wrapped = WrapReferences(child, identifiers);
+                    if (ReferenceEquals(child, wrapped)) continue;
+                    children ??= (Node[])node.Children.Clone();
+                    children[i] = wrapped;
+                }
+                return children == null ? node : node.With(children);
             }
 
-            var children = default(Node[]);
-            for (int i = 0; i < node.Children.Length; i++)
+            static Node WrapIdentified(Node node, ref int count, Dictionary<uint, int> identifiers)
             {
-                var child = node.Children[i];
-                var wrapped = Wrap(child, identifiers, references);
-                if (child == wrapped) continue;
-                children ??= (Node[])node.Children.Clone();
-                children[i] = wrapped;
+                // NOTE: return early if all referenced nodes have been wrapped
+                if (count == identifiers.Count) return node;
+                else if (identifiers.TryGetValue(node.Identifier, out var identifier))
+                {
+                    count++;
+                    return Node.Object("$i", identifier, "$v", WrapIdentified(node, ref count, identifiers));
+                }
+
+                var children = default(Node[]);
+                for (int i = 0; i < node.Children.Length; i++)
+                {
+                    var child = node.Children[i];
+                    var wrapped = WrapIdentified(child, ref count, identifiers);
+                    if (ReferenceEquals(child, wrapped)) continue;
+                    children ??= (Node[])node.Children.Clone();
+                    children[i] = wrapped;
+                }
+                return children == null ? node : node.With(children);
             }
-            if (children != null) node = node.With(children);
-
-            if (identifiers.TryGetValue(node.Identifier, out var identifier))
-                return Node.Object("$i", identifier, "$v", node);
-
-            return node;
         }
     }
 }
