@@ -170,7 +170,7 @@ namespace Entia.Json
                             if (brackets.TryPop(out var memberCount))
                             {
                                 var count = index - memberCount;
-                                Push(count == 0 ? Node.EmptyObject : Node.Object(Pop(count)));
+                                Push(count == 0 ? Node.EmptyObject : Node.Object(Pop(count), Node.Tags.None));
                                 break;
                             }
                             else
@@ -179,7 +179,7 @@ namespace Entia.Json
                             if (brackets.TryPop(out var itemCount))
                             {
                                 var count = index - itemCount;
-                                Push(count == 0 ? Node.EmptyArray : Node.Array(Pop(count)));
+                                Push(count == 0 ? Node.EmptyArray : Node.Array(Pop(count), Node.Tags.None));
                                 break;
                             }
                             else

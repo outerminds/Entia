@@ -83,8 +83,6 @@ namespace Entia.Json.Converters
         {
             if (converters.Length == 0) return Cache<T>.Default;
 
-            var versionKey = Node.DollarKString.AsString();
-            var valueKey = Node.DollarVString.AsString();
             var versionToConverter = converters.ToDictionary(pair => pair.version, pair => pair.converter);
             var defaultConverter = versionToConverter[@default];
             var latestConverter = versionToConverter[latest];
@@ -93,7 +91,7 @@ namespace Entia.Json.Converters
             {
                 var pair =
                     node.IsObject() && node.Children.Length == 4 &&
-                    node.Children[0].AsString() == versionKey && node.Children[2].AsString() == valueKey ?
+                    node.Children[0] == Node.DollarKString && node.Children[2] == Node.DollarVString ?
                     (version: node.Children[1].AsInt(), value: node.Children[3]) : (version: @default, value: node);
                 value = pair.value;
                 return versionToConverter.TryGetValue(pair.version, out var converter) ? converter : defaultConverter;

@@ -154,11 +154,11 @@ namespace Entia.Json
                     items[1] = TypeToNode(definition, settings, references);
                     for (int i = 0; i < arguments.Length; i++)
                         items[i + 2] = TypeToNode(arguments[i], settings, references);
-                    return (Node.Array(items), true);
+                    return (Node.Array(items, Node.Tags.None), true);
                 }
                 else if (TypeUtility.TryGetGuid(type, out var guid))
-                    return (Node.String(guid.ToString()), true);
-                else return (Node.String(type.FullName), true);
+                    return (Node.String(guid.ToString(), Node.Tags.Plain), true);
+                else return (Node.String(type.FullName, Node.Tags.Plain), true);
             }
         }
     }

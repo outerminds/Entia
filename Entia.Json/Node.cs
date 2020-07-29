@@ -95,11 +95,29 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(Enum value) => value == null ? Null : Number(Convert.ToInt64(value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node String(char value) => String(value.ToString(), Tags.None);
+        public static Node String(char value) => value == '$' ? DollarString : String(value.ToString(), Tags.None);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node String(Enum value) => value == null ? Null : String(value.ToString(), Tags.Plain);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node String(string value) => value == null ? Null : value.Length == 0 ? EmptyString : String(value, Tags.None);
+        public static Node String(string value)
+        {
+            if (value == null) return Null;
+            else if (value.Length == 0) return EmptyString;
+            else if (value.Length == 1 && value[0] == '$') return DollarString;
+            else if (value.Length == 2 && value[0] == '$')
+            {
+                switch (value[1])
+                {
+                    case 't': return DollarTString;
+                    case 'i': return DollarIString;
+                    case 'v': return DollarVString;
+                    case 'r': return DollarRString;
+                    case 'k': return DollarKString;
+                }
+            }
+            return String(value, Tags.None);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Array(params Node[] items) => items.Length == 0 ? EmptyArray : Array(items, Tags.None);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -107,7 +125,7 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Type(Type type) => type == null ? Null : new Node(Kinds.Type, Tags.None, type, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Abstract(Node type, Node value) => type == null ? Null : new Node(Kinds.Abstract, Tags.None, null, type, value);
+        public static Node Abstract(Node type, Node value) => new Node(Kinds.Abstract, Tags.None, null, type, value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Reference(uint identifier) => new Node(Kinds.Reference, Tags.None, identifier, _empty);
 
