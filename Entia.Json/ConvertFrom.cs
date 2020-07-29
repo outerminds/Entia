@@ -15,16 +15,16 @@ namespace Entia.Json
 
         public readonly Node Node;
         public readonly TypeData Type;
+        public readonly Settings Settings;
         public readonly Dictionary<uint, object> References;
-        public readonly Container Container;
 
-        public ConvertFromContext(Dictionary<uint, object> references, Container container)
-            : this(null, null, references, container) { }
-        ConvertFromContext(Node node, TypeData type, Dictionary<uint, object> references, Container container)
+        public ConvertFromContext(Settings settings, Dictionary<uint, object> references)
+            : this(null, null, settings, references) { }
+        ConvertFromContext(Node node, TypeData type, Settings settings, Dictionary<uint, object> references)
         {
             Node = node;
             Type = type;
-            Container = container;
+            Settings = settings;
             References = references;
         }
 
@@ -59,52 +59,68 @@ namespace Entia.Json
         }
 
         public ConvertFromContext With(Node node = null, TypeData type = null) =>
-            new ConvertFromContext(node ?? Node, type ?? Type, References, Container);
+            new ConvertFromContext(node ?? Node, type ?? Type, Settings, References);
 
         bool TrySpecial(Node node, TypeData type, out object instance)
         {
             switch (node.Kind)
             {
-                case Node.Kinds.Null:
-                    instance = null;
-                    return true;
-                case Node.Kinds.Type:
-                    instance = node.AsType();
-                    return true;
-                case Node.Kinds.Reference:
-                    References.TryGetValue(node.AsReference(), out instance);
-                    return true;
+                case Node.Kinds.Null: instance = null; return true;
+                case Node.Kinds.Type: instance = node.AsType(); return true;
+                case Node.Kinds.Reference: instance = GetReference(node); return true;
                 case Node.Kinds.Abstract:
-                    instance = node.TryAbstract(out var concrete, out var value) ? Convert(value, concrete) : null;
+                    instance =
+                        Settings.Features.HasAll(Features.Abstract) &&
+                        node.TryAbstract(out var concrete, out var value) ?
+                        Convert(value, concrete) : null;
                     return true;
                 default:
+                    if (type.Type.IsEnum)
+                    {
+                        instance = node.AsEnum(type);
+                        return true;
+                    }
+                    else if (type.Definition == typeof(Nullable<>))
+                    {
+                        instance = Convert(node, type.Element);
+                        return true;
+                    }
+
                     switch (type.Code)
                     {
-                        case TypeCode.Byte: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsByte()) : node.AsByte(); return true;
-                        case TypeCode.SByte: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsSByte()) : node.AsSByte(); return true;
-                        case TypeCode.Int16: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsShort()) : node.AsShort(); return true;
-                        case TypeCode.Int32: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsInt()) : node.AsInt(); return true;
-                        case TypeCode.Int64: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsLong()) : node.AsLong(); return true;
-                        case TypeCode.UInt16: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsUShort()) : node.AsUShort(); return true;
-                        case TypeCode.UInt32: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsUInt()) : node.AsUInt(); return true;
-                        case TypeCode.UInt64: instance = type.Type.IsEnum ? Enum.ToObject(type, node.AsULong()) : node.AsULong(); return true;
+                        case TypeCode.Byte: instance = node.AsByte(); return true;
+                        case TypeCode.SByte: instance = node.AsSByte(); return true;
+                        case TypeCode.Int16: instance = node.AsShort(); return true;
+                        case TypeCode.Int32: instance = node.AsInt(); return true;
+                        case TypeCode.Int64: instance = node.AsLong(); return true;
+                        case TypeCode.UInt16: instance = node.AsUShort(); return true;
+                        case TypeCode.UInt32: instance = node.AsUInt(); return true;
+                        case TypeCode.UInt64: instance = node.AsULong(); return true;
                         case TypeCode.Single: instance = node.AsFloat(); return true;
                         case TypeCode.Double: instance = node.AsDouble(); return true;
                         case TypeCode.Decimal: instance = node.AsDecimal(); return true;
                         case TypeCode.Boolean: instance = node.AsBool(); return true;
                         case TypeCode.Char: instance = node.AsChar(); return true;
                         case TypeCode.String: instance = node.AsString(); return true;
-                        case TypeCode.Object when type.Definition == typeof(Nullable<>):
-                            instance = Convert(node, type.Element);
-                            return true;
                         default: instance = default; return false;
                     }
             }
         }
 
+        object GetReference(Node node) =>
+            Settings.Features.HasAll(Features.Reference) &&
+            References.TryGetValue(node.AsReference(), out var instance) ?
+            instance : null;
+
+        void UpdateReference(Node node, object instance)
+        {
+            if (Settings.Features.HasAll(Features.Reference))
+                References[node.Identifier] = instance;
+        }
+
         bool TryConverter<T>(Node node, TypeData type, out object instance)
         {
-            if (Container.TryGet<T, IConverter>(out var converter))
+            if (Settings.Container.TryGet<T, IConverter>(out var converter))
             {
                 instance = Instantiate(node, type, converter);
                 return true;
@@ -116,7 +132,7 @@ namespace Entia.Json
 
         bool TryConverter(Node node, TypeData type, out object instance)
         {
-            if (Container.TryGet<IConverter>(type, out var converter))
+            if (Settings.Container.TryGet<IConverter>(type, out var converter))
             {
                 instance = Instantiate(node, type, converter);
                 return true;
@@ -129,24 +145,27 @@ namespace Entia.Json
         object Instantiate(Node node, TypeData type, IConverter converter)
         {
             var context = With(node, type);
-            var instance = References[node.Identifier] = converter.Instantiate(context);
+            var instance = converter.Instantiate(context);
+            UpdateReference(node, instance);
             converter.Initialize(ref instance, context);
             // NOTE: must be set again in the case where the boxed instance is unboxed and reboxed
-            References[node.Identifier] = instance;
+            if (type.Type.IsValueType) UpdateReference(node, instance);
             return instance;
         }
 
         T Default<T>(Node node, TypeData type)
         {
             // NOTE: instance must be boxed to ensure it is not copied around if it is a struct
-            var instance = References[node.Identifier] = Instantiate<T>(type);
+            var instance = Instantiate<T>(type);
+            UpdateReference(node, instance);
             Initialize(instance, node, type);
             return Cast<T>(instance);
         }
 
         object Default(Node node, TypeData type)
         {
-            var instance = References[node.Identifier] = Instantiate(type);
+            var instance = Instantiate(type);
+            UpdateReference(node, instance);
             Initialize(instance, node, type);
             return instance;
         }

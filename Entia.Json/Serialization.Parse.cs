@@ -8,11 +8,11 @@ namespace Entia.Json
 {
     public static partial class Serialization
     {
-        const char _a = 'a', _b = 'b', _c = 'c', _d = 'd', _e = 'e', _f = 'f';
+        const char _a = 'a', _b = 'b', _c = 'c', _d = 'd', _e = 'e', _f = 'f', _i = 'i';
         const char _A = 'A', _B = 'B', _C = 'C', _D = 'D', _E = 'E', _F = 'F', _N = 'N', _T = 'T';
-        const char _l = 'l', _n = 'n', _r = 'r', _s = 's', _t = 't', _u = 'u';
+        const char _l = 'l', _n = 'n', _r = 'r', _s = 's', _t = 't', _u = 'u', _v = 'v';
         const char _0 = '0', _1 = '1', _2 = '2', _3 = '3', _4 = '4', _5 = '5', _6 = '6', _7 = '7', _8 = '8', _9 = '9';
-        const char _plus = '+', _minus = '-', _comma = ',', _dot = '.', _colon = ':', _quote = '"', _backSlash = '\\', _frontSlash = '/';
+        const char _plus = '+', _minus = '-', _comma = ',', _dot = '.', _colon = ':', _quote = '"', _backSlash = '\\', _frontSlash = '/', _dollar = '$';
         const char _openCurly = '{', _closeCurly = '}', _openSquare = '[', _closeSquare = ']';
         const char _tab = '\t', _space = ' ', _line = '\n', _return = '\r', _back = '\b', _feed = '\f';
 
@@ -92,10 +92,10 @@ namespace Entia.Json
             1e-300, 1e-301, 1e-302, 1e-303, 1e-304, 1e-305, 1e-306, 1e-307, 1e-308,
         };
 
-        public static Result<Node> Parse(string text, Features features = Features.None) =>
-            Parse(text, features, out _);
+        public static Result<Node> Parse(string text, Settings settings = null) =>
+            Parse(text, settings ?? Settings.Default, out _);
 
-        static unsafe Result<Node> Parse(string text, Features features, out Dictionary<uint, object> references)
+        static unsafe Result<Node> Parse(string text, Settings settings, out Dictionary<uint, object> references)
         {
             references = new Dictionary<uint, object>();
             var index = 0;
@@ -163,34 +163,14 @@ namespace Entia.Json
                         case _7: Push(ParseNumber(ref head, tail, 7, 1)); break;
                         case _8: Push(ParseNumber(ref head, tail, 8, 1)); break;
                         case _9: Push(ParseNumber(ref head, tail, 9, 1)); break;
-                        case _quote:
-                            {
-                                var start = head;
-                                while (head != tail)
-                                {
-                                    switch (*head++)
-                                    {
-                                        case _backSlash:
-                                            if (builder == null) builder = new StringBuilder(256);
-                                            else builder.Clear();
-                                            // NOTE: this string is not plain since at least 1 character was unescaped
-                                            Push(Node.String(builder.Unescape(ref head, tail, ref start), Node.Tags.None));
-                                            break;
-                                        case _quote:
-                                            Push(Node.String(new string(start, 0, Index(start, head) - 1), Node.Tags.Plain));
-                                            break;
-                                        default: continue;
-                                    }
-                                    break;
-                                }
-                                break;
-                            }
+                        case _quote: Push(ParseString(ref builder, ref head, tail)); break;
                         case _openCurly:
                         case _openSquare: brackets.Push(index); break;
                         case _closeCurly:
                             if (brackets.TryPop(out var memberCount))
                             {
-                                Push(Node.Object(Pop(index - memberCount)));
+                                var count = index - memberCount;
+                                Push(count == 0 ? Node.EmptyObject : Node.Object(Pop(count)));
                                 break;
                             }
                             else
@@ -198,7 +178,8 @@ namespace Entia.Json
                         case _closeSquare:
                             if (brackets.TryPop(out var itemCount))
                             {
-                                Push(Node.Array(Pop(index - itemCount)));
+                                var count = index - itemCount;
+                                Push(count == 0 ? Node.EmptyArray : Node.Array(Pop(count)));
                                 break;
                             }
                             else
@@ -211,7 +192,7 @@ namespace Entia.Json
 
             if (nodes.TryFirst(out var root))
             {
-                Unwrap(ref root, features, references);
+                Unwrap(ref root, settings, references);
                 return root;
             }
             else
@@ -222,8 +203,45 @@ namespace Entia.Json
         static unsafe int Index(char* head, char* tail) => (int)(tail - head);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe string Unescape(this StringBuilder builder, ref char* head, char* tail, ref char* start)
+        static unsafe Node ParseString(ref StringBuilder builder, ref char* head, char* tail)
         {
+            var start = head;
+            switch (*head++)
+            {
+                case _quote: return Node.EmptyString;
+                case _backSlash: return ParseEscapedString(ref builder, ref head, tail, ref start);
+                case _dollar:
+                    switch (*head++)
+                    {
+                        case _t when *head == _quote: head++; return Node.DollarTString;
+                        case _i when *head == _quote: head++; return Node.DollarIString;
+                        case _v when *head == _quote: head++; return Node.DollarVString;
+                        case _r when *head == _quote: head++; return Node.DollarRString;
+                        case _quote: return Node.DollarString;
+                        case _backSlash: return ParseEscapedString(ref builder, ref head, tail, ref start);
+                    }
+                    break;
+            }
+
+            while (head != tail)
+            {
+                switch (*head++)
+                {
+                    case _backSlash: return ParseEscapedString(ref builder, ref head, tail, ref start);
+                    case _quote: break;
+                    default: continue;
+                }
+                break;
+            }
+            return Node.String(new string(start, 0, Index(start, head) - 1), Node.Tags.Plain);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static unsafe Node ParseEscapedString(ref StringBuilder builder, ref char* head, char* tail, ref char* start)
+        {
+            if (builder == null) builder = new StringBuilder(256);
+            else builder.Clear();
+
             builder.AppendUnescaped(ref head, tail, ref start);
             while (head != tail)
             {
@@ -232,7 +250,7 @@ namespace Entia.Json
                 else if (current == _quote) break;
             }
             builder.Append(start, Index(start, head) - 1);
-            return builder.ToString();
+            return Node.String(builder.ToString(), Node.Tags.None);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -347,19 +365,19 @@ namespace Entia.Json
             return value * powers[exponent];
         }
 
-        static void Unwrap(ref Node node, Features features, Dictionary<uint, object> references)
+        static void Unwrap(ref Node node, Settings settings, Dictionary<uint, object> references)
         {
-            if (features.HasAll(Features.Reference))
+            if (settings.Features.HasAll(Features.Reference))
             {
                 var identifiers = new uint?[8];
                 UnwrapIdentified(ref node, ref identifiers);
                 UnwrapReferences(ref node, identifiers);
             }
-            if (features.HasAll(Features.Abstract)) ConvertType(ref node, references);
+            if (settings.Features.HasAll(Features.Abstract)) ConvertType(ref node, settings, references);
 
             static void UnwrapIdentified(ref Node node, ref uint?[] identifiers)
             {
-                if (node.Children.Length == 4 && node.Children[0].AsString() == "$i" && node.Children[2].AsString() == "$v")
+                if (node.Children.Length == 4 && node.Children[0] == Node.DollarIString && node.Children[2] == Node.DollarVString)
                 {
                     var index = node.Children[1].AsInt();
                     var value = node.Children[3];
@@ -374,7 +392,7 @@ namespace Entia.Json
 
             static void UnwrapReferences(ref Node node, uint?[] identifiers)
             {
-                if (node.Children.Length == 2 && node.Children[0].AsString() == "$r")
+                if (node.Children.Length == 2 && node.Children[0] == Node.DollarRString)
                 {
                     var index = node.Children[1].AsInt();
                     var reference =
@@ -386,23 +404,23 @@ namespace Entia.Json
                     for (int i = 0; i < node.Children.Length; i++) UnwrapReferences(ref node.Children[i], identifiers);
             }
 
-            static void ConvertType(ref Node node, Dictionary<uint, object> references)
+            static void ConvertType(ref Node node, Settings settings, Dictionary<uint, object> references)
             {
-                if (node.Children.Length == 2 && node.Children[0].AsString() == "$t")
+                if (node.Children.Length == 2 && node.Children[0] == Node.DollarTString)
                 {
-                    var type = Node.Type(JsonUtility.NodeToType(node.Children[1], references));
+                    var type = Node.Type(JsonUtility.NodeToType(node.Children[1], settings, references));
                     node = type.With(node.Identifier);
                 }
-                else if (node.Children.Length == 4 && node.Children[0].AsString() == "$a" && node.Children[2].AsString() == "$v")
+                else if (node.Children.Length == 4 && node.Children[0] == Node.DollarTString && node.Children[2] == Node.DollarVString)
                 {
                     var type = node.Children[1];
                     var value = node.Children[3];
-                    ConvertType(ref value, references);
-                    var @abstract = Node.Abstract(Node.Type(JsonUtility.NodeToType(type, references)).With(type.Identifier), value);
+                    ConvertType(ref value, settings, references);
+                    var @abstract = Node.Abstract(Node.Type(JsonUtility.NodeToType(type, settings, references)).With(type.Identifier), value);
                     node = @abstract.With(node.Identifier);
                 }
                 else
-                    for (int i = 0; i < node.Children.Length; i++) ConvertType(ref node.Children[i], references);
+                    for (int i = 0; i < node.Children.Length; i++) ConvertType(ref node.Children[i], settings, references);
             }
         }
     }

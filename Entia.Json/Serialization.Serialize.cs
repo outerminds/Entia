@@ -8,26 +8,23 @@ namespace Entia.Json
     {
         static readonly IEqualityComparer<object> _comparer = Equality.Comparer<object>(ReferenceEquals);
 
-        public static string Serialize<T>(in T instance, Features features = Features.None, Formats format = Formats.Compact, Container container = null)
+        public static string Serialize<T>(in T instance, Settings settings = null)
         {
-            var context = ToContext(features, container);
+            var context = new ConvertToContext(settings ?? Settings.Default);
             var node = context.Convert(instance);
-            return Generate(node, format, context.References, features);
+            return Generate(node, context.Settings, context.References);
         }
 
-        public static string Serialize(object instance, Type type, Features features = Features.None, Formats format = Formats.Compact, Container container = null)
+        public static string Serialize(object instance, Type type, Settings settings = null)
         {
-            var context = ToContext(features, container);
+            var context = new ConvertToContext(settings ?? Settings.Default);
             var node = context.Convert(instance, type);
-            return Generate(node, format, context.References, features);
+            return Generate(node, context.Settings, context.References);
         }
 
-        public static Node Convert<T>(in T instance, Features features = Features.None, Container container = null) =>
-            ToContext(features, container).Convert(instance);
-        public static Node Convert(object instance, Type type, Features features = Features.None, Container container = null) =>
-            ToContext(features, container).Convert(instance, type);
-
-        static ConvertToContext ToContext(Features features, Container container = null) =>
-            new ConvertToContext(features, container ?? new Container());
+        public static Node Convert<T>(in T instance, Settings settings = null) =>
+            new ConvertToContext(settings ?? Settings.Default).Convert(instance);
+        public static Node Convert(object instance, Type type, Settings settings = null) =>
+            new ConvertToContext(settings ?? Settings.Default).Convert(instance, type);
     }
 }

@@ -6,7 +6,7 @@ using Entia.Core;
 
 namespace Entia.Json
 {
-    public static class JsonUtility
+    static class JsonUtility
     {
         [Preserve]
         readonly struct Members
@@ -68,19 +68,21 @@ namespace Entia.Json
         static readonly Dictionary<int, Type> _identifierToType = _types.ToDictionary(pair => pair.identifier, pair => pair.type);
         static readonly Dictionary<Type, int> _typeToIdentifier = _types.ToDictionary(pair => pair.type, pair => pair.identifier);
 
-        public static Type NodeToType(Node node, Dictionary<uint, object> references)
+        public static Type NodeToType(Node node, Settings settings, Dictionary<uint, object> references)
         {
-            var type = Convert(node, references);
-            references[node.Identifier] = type;
+            var type = Convert(node, settings, references);
+            if (settings.Features.HasAll(Features.Reference)) references[node.Identifier] = type;
             return type;
 
-            static Type Convert(Node node, Dictionary<uint, object> references)
+            static Type Convert(Node node, Settings settings, Dictionary<uint, object> references)
             {
                 switch (node.Kind)
                 {
                     case Node.Kinds.Null: break;
                     case Node.Kinds.Reference:
-                        if (references.TryGetValue(node.AsReference(), out var reference)) return reference as Type;
+                        if (settings.Features.HasAll(Features.Reference) &&
+                            references.TryGetValue(node.AsReference(), out var reference))
+                            return reference as Type;
                         break;
                     case Node.Kinds.Number:
                         if (_identifierToType.TryGetValue(node.AsInt(), out var type)) return type;
@@ -97,20 +99,20 @@ namespace Entia.Json
                         {
                             case Types.Array:
                                 var rank = node.Children[1].AsInt();
-                                if (NodeToType(node.Children[2], references) is Type element)
+                                if (NodeToType(node.Children[2], settings, references) is Type element)
                                     return rank > 1 ? element.MakeArrayType(rank) : element.MakeArrayType();
                                 break;
                             case Types.Pointer:
-                                if (NodeToType(node.Children[1], references) is Type pointer)
+                                if (NodeToType(node.Children[1], settings, references) is Type pointer)
                                     return pointer.MakePointerType();
                                 break;
                             case Types.Generic:
-                                if (NodeToType(node.Children[1], references) is Type definition)
+                                if (NodeToType(node.Children[1], settings, references) is Type definition)
                                 {
                                     var arguments = new Type[node.Children.Length - 2];
                                     for (int i = 0; i < arguments.Length; i++)
                                     {
-                                        if (NodeToType(node.Children[i + 2], references) is Type argument)
+                                        if (NodeToType(node.Children[i + 2], settings, references) is Type argument)
                                             arguments[i] = argument;
                                         else
                                             return default;
@@ -125,37 +127,37 @@ namespace Entia.Json
             }
         }
 
-        public static Node TypeToNode(Type type, Dictionary<object, uint> references)
+        public static Node TypeToNode(Type type, Settings settings, Dictionary<object, uint> references)
         {
-            var (node, store) = Create(type, references);
-            if (store) references[type] = node.Identifier;
+            var (node, store) = Create(type, settings, references);
+            if (store && settings.Features.HasAll(Features.Reference)) references[type] = node.Identifier;
             return node;
 
-            static (Node node, bool store) Create(Type type, Dictionary<object, uint> references)
+            static (Node node, bool store) Create(Type type, Settings settings, Dictionary<object, uint> references)
             {
-                if (type == null)
-                    return (Node.Null, false);
+                if (type == null) return (Node.Null, false);
                 else if (_typeToIdentifier.TryGetValue(type, out var identifier))
                     return (Node.Number(identifier), true);
-                else if (references.TryGetValue(type, out var reference))
+                else if (settings.Features.HasAll(Features.Reference) && references.TryGetValue(type, out var reference))
                     // NOTE: do not store since it would override the original reference
                     return (Node.Reference(reference), false);
                 else if (type.IsArray)
-                    return (Node.Array((int)Types.Array, type.GetArrayRank(), TypeToNode(type.GetElementType(), references)), true);
+                    return (Node.Array((int)Types.Array, type.GetArrayRank(), TypeToNode(type.GetElementType(), settings, references)), true);
                 else if (type.IsPointer)
-                    return (Node.Array((int)Types.Pointer, TypeToNode(type.GetElementType(), references)), true);
+                    return (Node.Array((int)Types.Pointer, TypeToNode(type.GetElementType(), settings, references)), true);
                 else if (type.IsConstructedGenericType)
                 {
                     var definition = type.GetGenericTypeDefinition();
                     var arguments = type.GetGenericArguments();
                     var items = new Node[arguments.Length + 2];
                     items[0] = (int)Types.Generic;
-                    items[1] = TypeToNode(definition, references);
+                    items[1] = TypeToNode(definition, settings, references);
                     for (int i = 0; i < arguments.Length; i++)
-                        items[i + 2] = TypeToNode(arguments[i], references);
+                        items[i + 2] = TypeToNode(arguments[i], settings, references);
                     return (Node.Array(items), true);
                 }
-                else if (TypeUtility.TryGetGuid(type, out var guid)) return (Node.String(guid.ToString()), true);
+                else if (TypeUtility.TryGetGuid(type, out var guid))
+                    return (Node.String(guid.ToString()), true);
                 else return (Node.String(type.FullName), true);
             }
         }

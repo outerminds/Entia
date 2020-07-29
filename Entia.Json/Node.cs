@@ -7,7 +7,7 @@ namespace Entia.Json
     public sealed class Node
     {
         public enum Kinds : byte { Null, Boolean, Number, String, Object, Array, Type, Reference, Abstract }
-        public enum Tags : byte { None, Plain = 1 << 0, Integer = 1 << 1, Rational = 1 << 2 }
+        public enum Tags : byte { None, Plain = 1 << 0, Integer = 1 << 1, Rational = 1 << 2, Empty = 1 << 3 }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Node(bool value) => Boolean(value);
@@ -46,20 +46,22 @@ namespace Entia.Json
         static readonly Node[] _empty = { };
         static int _counter;
 
-        public static readonly Node Null = new Node(Kinds.Null, Tags.None, null, _empty);
+        public static readonly Node Null = new Node(Kinds.Null, Tags.Empty, null, _empty);
         public static readonly Node True = new Node(Kinds.Boolean, Tags.None, true, _empty);
-        public static readonly Node False = new Node(Kinds.Boolean, Tags.None, false, _empty);
-        public static readonly Node Zero = new Node(Kinds.Number, Tags.None, 0L, _empty);
-        public static readonly Node EmptyString = new Node(Kinds.String, Tags.Plain, "", _empty);
-        public static readonly Node EmptyObject = new Node(Kinds.Object, Tags.None, null, _empty);
-        public static readonly Node EmptyArray = new Node(Kinds.Array, Tags.None, null, _empty);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint Reserve() => (uint)Interlocked.Increment(ref _counter);
+        public static readonly Node False = new Node(Kinds.Boolean, Tags.Empty, false, _empty);
+        public static readonly Node ZeroInteger = new Node(Kinds.Number, Tags.Integer | Tags.Empty, 0L, _empty);
+        public static readonly Node ZeroRational = new Node(Kinds.Number, Tags.Rational | Tags.Empty, 0d, _empty);
+        public static readonly Node EmptyObject = new Node(Kinds.Object, Tags.Empty, null, _empty);
+        public static readonly Node EmptyArray = new Node(Kinds.Array, Tags.Empty, null, _empty);
+        public static readonly Node EmptyString = new Node(Kinds.String, Tags.Plain | Tags.Empty, "", _empty);
+        public static readonly Node DollarString = new Node(Kinds.String, Tags.Plain, "$", _empty);
+        public static readonly Node DollarTString = new Node(Kinds.String, Tags.Plain, "$t", _empty);
+        public static readonly Node DollarIString = new Node(Kinds.String, Tags.Plain, "$i", _empty);
+        public static readonly Node DollarVString = new Node(Kinds.String, Tags.Plain, "$v", _empty);
+        public static readonly Node DollarRString = new Node(Kinds.String, Tags.Plain, "$r", _empty);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Boolean(bool value) => value ? True : False;
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(char value) => Number((long)value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -75,42 +77,42 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(uint value) => Number((long)value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(long value) => new Node(Kinds.Number, Tags.Integer, value, _empty);
+        public static Node Number(long value) => value == 0 ? ZeroInteger : new Node(Kinds.Number, Tags.Integer, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(ulong value) => new Node(Kinds.Number, Tags.None, value, _empty);
+        public static Node Number(ulong value) => value == 0 ? ZeroInteger : new Node(Kinds.Number, Tags.None, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(float value) => Number((double)value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(double value) => new Node(Kinds.Number, Tags.Rational, value, _empty);
+        public static Node Number(double value) => value == 0 ? ZeroRational : new Node(Kinds.Number, Tags.Rational, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(decimal value) => new Node(Kinds.Number, Tags.None, value, _empty);
+        public static Node Number(decimal value) => value == 0 ? ZeroRational : new Node(Kinds.Number, Tags.None, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(Enum value) => Number(Convert.ToInt64(value));
-
+        public static Node Number(Enum value) => value == null ? Null : Number(Convert.ToInt64(value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node String(char value) => String(value.ToString(), Tags.None);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node String(Enum value) => String(value.ToString(), Tags.None);
+        public static Node String(Enum value) => value == null ? Null : String(value.ToString(), Tags.Plain);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node String(string value) => String(value, Tags.None);
+        public static Node String(string value) => value == null ? Null : value.Length == 0 ? EmptyString : String(value, Tags.None);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Node String(string value, Tags tags) =>
-            value.Length == 0 ? EmptyString : new Node(Kinds.String, tags, value, _empty);
-
+        public static Node Array(params Node[] items) => items.Length == 0 ? EmptyArray : Array(items, Tags.None);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Array(params Node[] items) =>
-            items.Length == 0 ? EmptyArray : new Node(Kinds.Array, Tags.None, null, items);
+        public static Node Object(params Node[] members) => members.Length == 0 ? EmptyObject : Object(members, Tags.None);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Object(params Node[] members) =>
-            members.Length == 0 ? EmptyObject : new Node(Kinds.Object, Tags.None, null, members);
+        public static Node Type(Type type) => type == null ? Null : new Node(Kinds.Type, Tags.None, type, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Type(Type type) =>
-            type == null ? Null : new Node(Kinds.Type, Tags.None, type, _empty);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Abstract(Node type, Node value) =>
-            type == null ? Null : new Node(Kinds.Abstract, Tags.None, null, type, value);
+        public static Node Abstract(Node type, Node value) => type == null ? Null : new Node(Kinds.Abstract, Tags.None, null, type, value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Reference(uint identifier) => new Node(Kinds.Reference, Tags.None, identifier, _empty);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static uint Reserve() => (uint)Interlocked.Increment(ref _counter);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static Node String(string value, Tags tags) => new Node(Kinds.String, tags, value, _empty);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static Node Array(Node[] items, Tags tags) => new Node(Kinds.Array, tags, null, items);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static Node Object(Node[] members, Tags tags) => new Node(Kinds.Object, tags, null, members);
 
         public Node this[string key] => this.TryMember(key, out var value) ? value : throw new ArgumentException(nameof(key));
         public Node this[int index] => this.TryItem(index, out var item) ? item : throw new ArgumentException(nameof(index));

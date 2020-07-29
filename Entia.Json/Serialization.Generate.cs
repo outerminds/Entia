@@ -6,18 +6,16 @@ using Entia.Core;
 
 namespace Entia.Json
 {
-    public enum Formats { Compact, Indented }
-
     public static partial class Serialization
     {
-        public static string Generate(Node node, Features features = Features.None, Formats format = Formats.Compact) =>
-            Generate(node, format, new Dictionary<object, uint>(), features);
+        public static string Generate(Node node, Settings settings = null) =>
+            Generate(node, settings ?? Settings.Default, new Dictionary<object, uint>());
 
-        static string Generate(Node node, Formats format, Dictionary<object, uint> references, Features features)
+        static string Generate(Node node, Settings settings, Dictionary<object, uint> references)
         {
-            Wrap(ref node, references, features);
+            Wrap(ref node, settings, references);
             var builder = new StringBuilder(1024);
-            switch (format)
+            switch (settings.Format)
             {
                 case Formats.Compact: GenerateCompact(node, builder); break;
                 case Formats.Indented: GenerateIndented(node, builder, 0); break;
@@ -231,10 +229,10 @@ namespace Entia.Json
             _ => '\0',
         };
 
-        static void Wrap(ref Node node, Dictionary<object, uint> references, Features features)
+        static void Wrap(ref Node node, Settings settings, Dictionary<object, uint> references)
         {
-            if (features.HasAll(Features.Abstract)) node = ConvertTypes(node, references);
-            if (features.HasAll(Features.Reference))
+            if (settings.Features.HasAll(Features.Abstract)) node = ConvertTypes(node, settings, references);
+            if (settings.Features.HasAll(Features.Reference))
             {
                 var identifiers = new Dictionary<uint, int>();
                 // NOTE: it cannot be assumed in what order references appear relative to their referenced node;
@@ -244,18 +242,20 @@ namespace Entia.Json
                 node = WrapIdentified(node, ref count, identifiers);
             }
 
-            static Node ConvertTypes(Node node, Dictionary<object, uint> references)
+            static Node ConvertTypes(Node node, Settings settings, Dictionary<object, uint> references)
             {
                 if (node.TryAbstract(out var type, out var value))
-                    return Node.Object("$a", JsonUtility.TypeToNode(type, references), "$v", ConvertTypes(value, references));
+                    return Node.Object(
+                        Node.DollarTString, JsonUtility.TypeToNode(type, settings, references),
+                        Node.DollarVString, ConvertTypes(value, settings, references));
                 else if (node.TryType(out type))
-                    return Node.Object("$t", JsonUtility.TypeToNode(type, references));
+                    return Node.Object(Node.DollarTString, JsonUtility.TypeToNode(type, settings, references));
 
                 var children = default(Node[]);
                 for (int i = 0; i < node.Children.Length; i++)
                 {
                     var child = node.Children[i];
-                    var wrapped = ConvertTypes(child, references);
+                    var wrapped = ConvertTypes(child, settings, references);
                     if (ReferenceEquals(child, wrapped)) continue;
                     children ??= (Node[])node.Children.Clone();
                     children[i] = wrapped;
@@ -268,7 +268,7 @@ namespace Entia.Json
                 if (node.TryReference(out var reference))
                 {
                     // NOTE: no need to visit children
-                    return Node.Object("$r",
+                    return Node.Object(Node.DollarRString,
                         identifiers.TryGetValue(reference, out var index) ?
                         index : identifiers[reference] = identifiers.Count);
                 }
@@ -292,7 +292,9 @@ namespace Entia.Json
                 else if (identifiers.TryGetValue(node.Identifier, out var identifier))
                 {
                     count++;
-                    return Node.Object("$i", identifier, "$v", WrapIdentified(node, ref count, identifiers));
+                    return Node.Object(
+                        Node.DollarIString, identifier,
+                        Node.DollarVString, WrapIdentified(node, ref count, identifiers));
                 }
 
                 var children = default(Node[]);
