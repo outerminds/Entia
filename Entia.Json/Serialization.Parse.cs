@@ -8,8 +8,8 @@ namespace Entia.Json
 {
     public static partial class Serialization
     {
-        const char _a = 'a', _b = 'b', _c = 'c', _d = 'd', _e = 'e', _f = 'f', _i = 'i';
         const char _A = 'A', _B = 'B', _C = 'C', _D = 'D', _E = 'E', _F = 'F', _N = 'N', _T = 'T';
+        const char _a = 'a', _b = 'b', _c = 'c', _d = 'd', _e = 'e', _f = 'f', _i = 'i', _k = 'k';
         const char _l = 'l', _n = 'n', _r = 'r', _s = 's', _t = 't', _u = 'u', _v = 'v';
         const char _0 = '0', _1 = '1', _2 = '2', _3 = '3', _4 = '4', _5 = '5', _6 = '6', _7 = '7', _8 = '8', _9 = '9';
         const char _plus = '+', _minus = '-', _comma = ',', _dot = '.', _colon = ':', _quote = '"', _backSlash = '\\', _frontSlash = '/', _dollar = '$';
@@ -217,6 +217,7 @@ namespace Entia.Json
                         case _i when *head == _quote: head++; return Node.DollarIString;
                         case _v when *head == _quote: head++; return Node.DollarVString;
                         case _r when *head == _quote: head++; return Node.DollarRString;
+                        case _k when *head == _quote: head++; return Node.DollarKString;
                         case _quote: return Node.DollarString;
                         case _backSlash: return ParseEscapedString(ref builder, ref head, tail, ref start);
                     }

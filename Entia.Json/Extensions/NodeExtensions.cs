@@ -185,13 +185,17 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Is(this Node node, Node.Kinds kind) => node.Kind == kind;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Has(this Node node, Node.Tags tag) => (node.Tag & tag) == tag;
+        public static bool Has(this Node node, Node.Tags tags) => (node.Tag & tags) == tags;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasPlain(this Node node) => node.Has(Node.Tags.Plain);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasInteger(this Node node) => node.Has(Node.Tags.Integer);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasRational(this Node node) => node.Has(Node.Tags.Rational);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HasEmpty(this Node node) => node.Has(Node.Tags.Empty);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HasDollar(this Node node) => node.Has(Node.Tags.Dollar);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNull(this Node node) => node.Is(Node.Kinds.Null);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -81,10 +81,10 @@ namespace Entia.Json.Converters
             Version(converters.Min(pair => pair.version), converters.Max(pair => pair.version), converters);
         public static Converter<T> Version<T>(int @default, int latest, params (int version, Converter<T> converter)[] converters)
         {
-            const string versionKey = "$k";
-            const string valueKey = "$v";
-
             if (converters.Length == 0) return Cache<T>.Default;
+
+            var versionKey = Node.DollarKString.AsString();
+            var valueKey = Node.DollarVString.AsString();
             var versionToConverter = converters.ToDictionary(pair => pair.version, pair => pair.converter);
             var defaultConverter = versionToConverter[@default];
             var latestConverter = versionToConverter[latest];
@@ -101,7 +101,7 @@ namespace Entia.Json.Converters
 
             return Create(
                 (in T instance, in ConvertToContext context) =>
-                    Node.Object(versionKey, latest, valueKey, latestConverter.Convert(instance, context)),
+                    Node.Object(Node.DollarKString, latest, Node.DollarVString, latestConverter.Convert(instance, context)),
                 (in ConvertFromContext context) =>
                     Converter(context.Node, out var value).Instantiate(context.With(value)),
                 (ref T instance, in ConvertFromContext context) =>

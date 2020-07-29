@@ -6,8 +6,11 @@ namespace Entia.Json
 {
     public sealed class Node
     {
+        // NOTE: these enums are kept as 'byte' to keep the size of nodes small;
+        // current size is 22 bytes on x64 (24 with padding) and should not go over 24 bytes since
+        // it will significantly increase the size of parse trees
         public enum Kinds : byte { Null, Boolean, Number, String, Object, Array, Type, Reference, Abstract }
-        public enum Tags : byte { None, Plain = 1 << 0, Integer = 1 << 1, Rational = 1 << 2, Empty = 1 << 3 }
+        public enum Tags : byte { None, Plain = 1 << 0, Integer = 1 << 1, Rational = 1 << 2, Empty = 1 << 3, Dollar = 1 << 4 }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Node(bool value) => Boolean(value);
@@ -54,11 +57,12 @@ namespace Entia.Json
         public static readonly Node EmptyObject = new Node(Kinds.Object, Tags.Empty, null, _empty);
         public static readonly Node EmptyArray = new Node(Kinds.Array, Tags.Empty, null, _empty);
         public static readonly Node EmptyString = new Node(Kinds.String, Tags.Plain | Tags.Empty, "", _empty);
-        public static readonly Node DollarString = new Node(Kinds.String, Tags.Plain, "$", _empty);
-        public static readonly Node DollarTString = new Node(Kinds.String, Tags.Plain, "$t", _empty);
-        public static readonly Node DollarIString = new Node(Kinds.String, Tags.Plain, "$i", _empty);
-        public static readonly Node DollarVString = new Node(Kinds.String, Tags.Plain, "$v", _empty);
-        public static readonly Node DollarRString = new Node(Kinds.String, Tags.Plain, "$r", _empty);
+        public static readonly Node DollarString = new Node(Kinds.String, Tags.Plain | Tags.Dollar, "$", _empty);
+        public static readonly Node DollarTString = new Node(Kinds.String, Tags.Plain | Tags.Dollar, "$t", _empty);
+        public static readonly Node DollarIString = new Node(Kinds.String, Tags.Plain | Tags.Dollar, "$i", _empty);
+        public static readonly Node DollarVString = new Node(Kinds.String, Tags.Plain | Tags.Dollar, "$v", _empty);
+        public static readonly Node DollarRString = new Node(Kinds.String, Tags.Plain | Tags.Dollar, "$r", _empty);
+        public static readonly Node DollarKString = new Node(Kinds.String, Tags.Plain | Tags.Dollar, "$k", _empty);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Boolean(bool value) => value ? True : False;
