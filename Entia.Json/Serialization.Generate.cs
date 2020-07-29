@@ -265,12 +265,12 @@ namespace Entia.Json
 
             static Node WrapReferences(Node node, Dictionary<uint, int> identifiers)
             {
-                if (node.TryReference(out var reference))
+                if (node.TryReference(out var identifier))
                 {
                     // NOTE: no need to visit children
                     return Node.Object(Node.DollarRString,
-                        identifiers.TryGetValue(reference, out var index) ?
-                        index : identifiers[reference] = identifiers.Count);
+                        identifiers.TryGetValue(identifier, out var index) ?
+                        index : identifiers[identifier] = identifiers.Count);
                 }
 
                 var children = default(Node[]);
@@ -287,15 +287,8 @@ namespace Entia.Json
 
             static Node WrapIdentified(Node node, ref int count, Dictionary<uint, int> identifiers)
             {
-                // NOTE: return early if all referenced nodes have been wrapped
+                // NOTE: return early if all identified nodes have been wrapped
                 if (count == identifiers.Count) return node;
-                else if (identifiers.TryGetValue(node.Identifier, out var identifier))
-                {
-                    count++;
-                    return Node.Object(
-                        Node.DollarIString, identifier,
-                        Node.DollarVString, WrapIdentified(node, ref count, identifiers));
-                }
 
                 var children = default(Node[]);
                 for (int i = 0; i < node.Children.Length; i++)
@@ -306,7 +299,15 @@ namespace Entia.Json
                     children ??= (Node[])node.Children.Clone();
                     children[i] = wrapped;
                 }
-                return children == null ? node : node.With(children);
+                node = children == null ? node : node.With(children);
+
+                if (identifiers.TryGetValue(node.Identifier, out var index))
+                {
+                    count++;
+                    return Node.Object(Node.DollarIString, index, Node.DollarVString, node);
+                }
+
+                return node;
             }
         }
     }

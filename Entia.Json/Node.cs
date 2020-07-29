@@ -80,8 +80,10 @@ namespace Entia.Json
         public static Node Number(long value) => value == 0 ? ZeroInteger : new Node(Kinds.Number, Tags.Integer, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(ulong value) => value == 0 ? ZeroInteger : new Node(Kinds.Number, Tags.None, value, _empty);
+        // NOTE: since conversion from 'float' to 'double' isn't perfect, it is best to allow to keep the
+        // 'float' as is to prevent adding fractional digits
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(float value) => Number((double)value);
+        public static Node Number(float value) => value == 0 ? ZeroRational : new Node(Kinds.Number, Tags.None, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(double value) => value == 0 ? ZeroRational : new Node(Kinds.Number, Tags.Rational, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

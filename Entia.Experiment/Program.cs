@@ -404,7 +404,9 @@ namespace Entia.Experiment
             var anonymous = new
             {
                 a = Option.Some(32).AsOption(),
-                b = Null.None<Features>(),
+                b1 = Null.None<Features>(),
+                b2 = Null.None<Features>(),
+                b3 = Null.None<Features>(),
                 c = Features.Abstract,
             };
             Test(anonymous, out var json21, out var node21, out var value21);
