@@ -148,6 +148,7 @@ namespace Entia.Json
         }
 
         public static MemberEnumerable Members(this Node node) => new MemberEnumerable(node);
+        public static bool HasMember(this Node node, string key) => node.TryMember(key, out _, out _);
         public static bool TryMember(this Node node, string key, out Node value) => node.TryMember(key, out value, out _);
         public static bool TryMember(this Node node, string key, out Node value, out int index)
         {

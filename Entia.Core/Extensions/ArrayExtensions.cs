@@ -259,25 +259,33 @@ namespace Entia.Core
 
         public static T[] Take<T>(this T[] source, int count)
         {
+            if (count >= source.Length) return source;
             if (count <= 0) return Array.Empty<T>();
-            else if (count >= source.Length) return source;
-            else
-            {
-                var target = new T[count];
-                Array.Copy(source, 0, target, 0, count);
-                return target;
-            }
+
+            var results = new T[count];
+            Array.Copy(source, 0, results, 0, results.Length);
+            return results;
         }
 
-        public static void Shuffle<T>(this T[] array, Random random = null)
+        public static T[] TakeLast<T>(this T[] source, int count)
+        {
+            if (count >= source.Length) return source;
+            if (count <= 0) return Array.Empty<T>();
+
+            var results = new T[count];
+            Array.Copy(source, source.Length - count, results, 0, results.Length);
+            return results;
+        }
+
+        public static void Shuffle<T>(this T[] source, Random random = null)
         {
             random ??= new Random();
-            for (int i = 0; i < array.Length; i++)
+            for (int i = 0; i < source.Length; i++)
             {
-                var index = random.Next(array.Length);
-                var item = array[i];
-                array[i] = array[index];
-                array[index] = item;
+                var index = random.Next(source.Length);
+                var item = source[i];
+                source[i] = source[index];
+                source[index] = item;
             }
         }
 
