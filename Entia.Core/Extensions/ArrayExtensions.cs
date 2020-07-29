@@ -79,7 +79,7 @@ namespace Entia.Core
 
         public static bool TryAt<T>(this T[] array, int index, out T item)
         {
-            if (index > 0 && index < array.Length)
+            if (index >= 0 && index < array.Length)
             {
                 item = array[index];
                 return true;

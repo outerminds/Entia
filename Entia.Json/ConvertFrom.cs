@@ -156,7 +156,7 @@ namespace Entia.Json
         T Default<T>(Node node, TypeData type)
         {
             // NOTE: instance must be boxed to ensure it is not copied around if it is a struct
-            var instance = Instantiate<T>(type);
+            var instance = (object)Instantiate<T>(type);
             UpdateReference(node, instance);
             Initialize(instance, node, type);
             return Cast<T>(instance);
