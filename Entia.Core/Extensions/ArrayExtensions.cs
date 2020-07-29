@@ -136,10 +136,11 @@ namespace Entia.Core
             return target;
         }
 
-        public static bool Any<T>(this T[] array) => array.Length > 0;
-        public static bool Any(this Array array) => array.Length > 0;
-        public static bool None<T>(this T[] array) => !array.Any();
-        public static bool None(this Array array) => !array.Any();
+        public static TState Aggregate<TSource, TState>(this TSource[] source, TState state, Func<TState, TSource, TState> aggregator)
+        {
+            foreach (var item in source) state = aggregator(state, item);
+            return state;
+        }
 
         public static T[] Flatten<T>(this T[][] array) => ArrayUtility.Concatenate(array);
 
@@ -211,6 +212,44 @@ namespace Entia.Core
         {
             ArrayUtility.Overwrite(ref source, index, items);
             return source;
+        }
+
+        public static bool All<T>(this T[] source, Func<T, bool> predicate)
+        {
+            for (int i = 0; i < source.Length; i++) if (!predicate(source[i])) return false;
+            return true;
+        }
+
+        public static bool All<T>(this T[] source, Func<T, int, bool> predicate)
+        {
+            for (int i = 0; i < source.Length; i++) if (!predicate(source[i], i)) return false;
+            return true;
+        }
+
+        public static bool Any<T>(this T[] array) => array.Length > 0;
+        public static bool Any(this Array array) => array.Length > 0;
+
+        public static bool Any<T>(this T[] source, Func<T, bool> predicate)
+        {
+            for (int i = 0; i < source.Length; i++) if (predicate(source[i])) return true;
+            return false;
+        }
+
+        public static bool Any<T>(this T[] source, Func<T, int, bool> predicate)
+        {
+            for (int i = 0; i < source.Length; i++) if (predicate(source[i], i)) return true;
+            return false;
+        }
+
+        public static bool None<T>(this T[] array) => !array.Any();
+        public static bool None(this Array array) => !array.Any();
+        public static bool None<T>(this T[] source, Func<T, bool> predicate) => !source.Any(predicate);
+        public static bool None<T>(this T[] source, Func<T, int, bool> predicate) => !source.Any(predicate);
+
+        public static bool Contains<T>(this T[] source, T item, int? start = null, int? count = null)
+        {
+            var index = start ?? 0;
+            return Array.IndexOf(source, item, index, count ?? (source.Length - index)) >= 0;
         }
 
         public static T[] Insert<T>(this T[] source, int index, params T[] items)
