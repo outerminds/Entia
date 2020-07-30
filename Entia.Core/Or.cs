@@ -15,9 +15,10 @@ namespace Entia.Core
         public static implicit operator Left<T>(in T value) => new Left<T>(value);
 
         public readonly T Value;
-        Or.Tags IOr.Tag => Or.Tags.Left;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Left(T value) { Value = value; }
+
+        Or.Tags IOr.Tag => Or.Tags.Left;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Or<T, TRight> AsOr<TRight>() => this;
         public override string ToString() => $"{GetType().Format()}({Value})";
@@ -41,19 +42,29 @@ namespace Entia.Core
 
     public readonly struct Or<TLeft, TRight> : IOr, IEquatable<Or<TLeft, TRight>>, IEquatable<Left<TLeft>>, IEquatable<Right<TRight>>
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in Or<TLeft, TRight> or, in TLeft left) =>
             or.TryLeft(out var value) && EqualityComparer<TLeft>.Default.Equals(value, left);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in Or<TLeft, TRight> or, in TRight right) =>
             or.TryRight(out var value) && EqualityComparer<TRight>.Default.Equals(value, right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in Or<TLeft, TRight> left, in Or<TLeft, TRight> right) =>
             (left.TryLeft(out var leftValue) && right == leftValue) ||
             (left.TryRight(out var rightValue) && right == rightValue);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in TLeft left, in Or<TLeft, TRight> or) => or == left;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in TRight right, in Or<TLeft, TRight> or) => or == right;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in Or<TLeft, TRight> or, in TLeft left) => !(or == left);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in Or<TLeft, TRight> or, in TRight right) => !(or == right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in Or<TLeft, TRight> left, in Or<TLeft, TRight> right) => !(left == right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in TLeft left, in Or<TLeft, TRight> or) => !(left == or);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in TRight right, in Or<TLeft, TRight> or) => !(right == or);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Or<TLeft, TRight>(in Left<TLeft> left) => left.Value;
@@ -142,18 +153,6 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Or<TRight, TLeft> Flip<TLeft, TRight>(in this Or<TLeft, TRight> or) =>
             or.Match(left => Right(left).AsOr<TRight>(), right => Left(right));
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Or<T, Unit> AsOr<T>(in this Option<T> option) =>
-            option.Match(value => Left(value).AsOr<Unit>(), () => Right(default(Unit)));
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T> AsOption<T>(in this Or<T, Unit> or) =>
-            or.Match(value => Option.From(value), _ => Option.None());
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Or<T, string[]> AsOr<T>(in this Result<T> result) =>
-            result.Match(value => Left(value).AsOr<string[]>(), messages => Right(messages));
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> AsResult<T>(in this Or<T, string[]> or) =>
-            or.Match(value => Result.Success(value).AsResult(), messages => Result.Failure(messages));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TOut Match<TLeft, TRight, TOut>(in this Or<TLeft, TRight> or, Func<TLeft, TOut> left, Func<TRight, TOut> right) =>

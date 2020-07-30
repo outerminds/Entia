@@ -398,12 +398,12 @@ namespace Entia.Experiment
             Test(Features.Abstract, out var json16, out var node16, out var value16);
             Test(Null.Some(Features.Abstract), out var json17, out var node17, out var value17);
             Test(Null.None<Features>(), out var json18, out var node18, out var value18);
-            Test<Option<int>>(Option.None(), out var json19, out var node19, out var value19);
-            Test<Option<int>>(Option.Some(32), out var json20, out var node20, out var value20);
+            Test(Option.None().AsOption<int>(), out var json19, out var node19, out var value19);
+            Test(Option.Some(32), out var json20, out var node20, out var value20);
 
             var anonymous = new
             {
-                a = Option.Some(32).AsOption(),
+                a = Option.Some(32),
                 b1 = Null.None<Features>(),
                 b2 = Null.None<Features>(),
                 b3 = Null.None<Features>(),
