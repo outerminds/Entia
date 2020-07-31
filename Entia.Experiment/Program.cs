@@ -340,13 +340,7 @@ namespace Entia.Experiment
             var valueC = Json.Serialization.Parse(jsonC).Or(Node.Null);
             var jsonD = Json.Serialization.Generate(valueC);
 
-            var json1 = File.ReadAllText(@"C:\Projects\Ululab\Numbers\Assets\Resources\Creative\Levels\ARCHIVE~11_KIDS_OEP_A.json");
-            var node1 = Json.Serialization.Parse(json1).Or(Node.Null);
-            var json2 = Json.Serialization.Generate(node1, Settings.Default.With(format: Formats.Indented));
-            var node2 = Json.Serialization.Parse(json2).Or(Node.Null);
-            var json3 = Json.Serialization.Generate(node1);
-            var node3 = Json.Serialization.Parse(json3);
-            var node31 = Json.Serialization.Parse(@"""<a href=\""http://twitter.com\"" rel=\""nofollow\"">Twitter Web Client</a>""");
+            var node1 = Json.Serialization.Parse(@"""<a href=\""http://twitter.com\"" rel=\""nofollow\"">Twitter Web Client</a>""");
 
             var settings = new JsonSerializerSettings
             {

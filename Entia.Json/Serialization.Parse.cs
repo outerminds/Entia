@@ -206,33 +206,25 @@ namespace Entia.Json
         static unsafe Node ParseString(ref StringBuilder builder, ref char* head, char* tail)
         {
             var start = head;
-            switch (*head++)
+            var first = *head++;
+            if (first == _quote) return Node.EmptyString;
+            if (first == _backSlash) return ParseEscapedString(ref builder, ref head, tail, ref start);
+
+            var second = *head++;
+            if (second == _quote) return Node.String(first);
+            if (second == _backSlash) return ParseEscapedString(ref builder, ref head, tail, ref start);
+            if (first == _dollar)
             {
-                case _quote: return Node.EmptyString;
-                case _backSlash: return ParseEscapedString(ref builder, ref head, tail, ref start);
-                case _dollar:
-                    switch (*head++)
-                    {
-                        case _t when *head == _quote: head++; return Node.DollarTString;
-                        case _i when *head == _quote: head++; return Node.DollarIString;
-                        case _v when *head == _quote: head++; return Node.DollarVString;
-                        case _r when *head == _quote: head++; return Node.DollarRString;
-                        case _k when *head == _quote: head++; return Node.DollarKString;
-                        case _quote: return Node.DollarString;
-                        case _backSlash: return ParseEscapedString(ref builder, ref head, tail, ref start);
-                    }
-                    break;
+                var third = *head++;
+                if (third == _quote) return Node.Dollar(second);
+                if (third == _backSlash) return ParseEscapedString(ref builder, ref head, tail, ref start);
             }
 
             while (head != tail)
             {
-                switch (*head++)
-                {
-                    case _backSlash: return ParseEscapedString(ref builder, ref head, tail, ref start);
-                    case _quote: break;
-                    default: continue;
-                }
-                break;
+                var current = *head++;
+                if (current == _quote) break;
+                if (current == _backSlash) return ParseEscapedString(ref builder, ref head, tail, ref start);
             }
             return Node.String(new string(start, 0, Index(start, head) - 1), Node.Tags.Plain);
         }
@@ -299,7 +291,7 @@ namespace Entia.Json
             if (character == _dot)
             {
                 head++;
-                return Node.Number(ParseFraction(ref head, tail, value) * sign);
+                return Node.Rational(ParseFraction(ref head, tail, value) * sign);
             }
             else if (character == _e || character == _E)
             {
