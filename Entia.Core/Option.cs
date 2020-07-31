@@ -80,6 +80,8 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Some<T>(in T value) where T : struct => value;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<Unit> Some() => Some(default(Unit));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static None None() => new None();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> From<T>(in T value) => value;
@@ -126,6 +128,22 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<Unit> Try(Action @try, Action @finally = null)
+        {
+            try { @try(); return default(Unit); }
+            catch { return None(); }
+            finally { @finally?.Invoke(); }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<Unit> Try<TState>(in TState state, Action<TState> @try, Action<TState> @finally = null)
+        {
+            try { @try(state); return default(Unit); }
+            catch { return None(); }
+            finally { @finally?.Invoke(state); }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Do<T>(in this Option<T> option, Action<T> @do)
         {
             if (option.TryValue(out var value)) @do(value);
@@ -154,6 +172,7 @@ namespace Entia.Core
 
         public static T OrThrow<T>(in this Option<T> option) => option.Or(() => throw new NullReferenceException());
         public static T OrDefault<T>(in this Option<T> option) => option.Or(default(T));
+        public static Option<Unit> Ignore<T>(in this Option<T> option) => option.Map(_ => default(Unit));
         public static Option<object> Box<T>(in this Option<T> option) => option.Map(value => (object)value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
