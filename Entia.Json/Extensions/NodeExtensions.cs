@@ -57,13 +57,6 @@ namespace Entia.Json
             public void Dispose() => this = default;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node With(this Node node, uint identifier) =>
-            new Node(identifier, node.Kind, node.Tag, node.Value, node.Children);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node With(this Node node, params Node[] children) =>
-            new Node(node.Identifier, node.Kind, node.Tag, node.Value, children);
-
         public static Node Map(this Node node, Func<Node, Node> map)
         {
             if (node.Children.Length > 0) node.With(node.Children.Select(map));

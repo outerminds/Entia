@@ -203,12 +203,12 @@ namespace Entia.Json
         public readonly Node[] Children;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal Node(Kinds kind, Tags tag, object value, params Node[] children) :
+        Node(Kinds kind, Tags tag, object value, params Node[] children) :
             this(Reserve(), kind, tag, value, children)
         { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal Node(uint identifier, Kinds kind, Tags tag, object value, params Node[] children)
+        Node(uint identifier, Kinds kind, Tags tag, object value, params Node[] children)
         {
             Identifier = identifier;
             Kind = kind;
@@ -216,6 +216,11 @@ namespace Entia.Json
             Value = value;
             Children = children;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Node With(params Node[] children) => new Node(Identifier, Kind, Tag, Value, children);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Node With(uint identifier) => new Node(identifier, Kind, Tag, Value, Children);
 
         public override string ToString() => Serialization.Generate(this);
     }
