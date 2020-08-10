@@ -127,10 +127,9 @@ namespace Entia.Json
             if (value < _singles.Length)
                 return _singles[value] ?? (_singles[value] = String(value.ToString(), GetTags(value)));
             else
-                return String(value.ToString(), Tags.Plain);
+                return String(value.ToString(), DefaultTags(value));
         }
 
-        // public static Node String(char value) => value == '$' ? DollarString : String(value.ToString(), Tags.None);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node String(Enum value) => value == null ? Null : String(value.ToString(), Tags.Plain);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -144,9 +143,9 @@ namespace Entia.Json
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Array(params Node[] items) => items.Length == 0 ? EmptyArray : Array(items, Tags.None);
+        public static Node Array(params Node[] items) => items.Length == 0 ? EmptyArray : new Node(Kinds.Array, Tags.None, null, items);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Object(params Node[] members) => members.Length == 0 ? EmptyObject : Object(members, Tags.None);
+        public static Node Object(params Node[] members) => members.Length == 0 ? EmptyObject : new Node(Kinds.Object, Tags.None, null, members);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Type(Type type) => type == null ? Null : new Node(Kinds.Type, Tags.None, type, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -159,10 +158,6 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static Node String(string value, Tags tags) => new Node(Kinds.String, tags, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Node Array(Node[] items, Tags tags) => new Node(Kinds.Array, tags, null, items);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Node Object(Node[] members, Tags tags) => new Node(Kinds.Object, tags, null, members);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static Node Rational(float value) => new Node(Kinds.Number, Tags.None, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static Node Rational(double value) => new Node(Kinds.Number, Tags.Rational, value, _empty);
@@ -174,7 +169,7 @@ namespace Entia.Json
             if (value < _dollars.Length)
                 return _dollars[value] ?? (_dollars[value] = String("$" + value, GetTags(value) | Tags.Dollar));
             else
-                return String("$" + value, Tags.Plain | Tags.Dollar);
+                return String("$" + value, Tags.Dollar | DefaultTags(value));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -191,9 +186,12 @@ namespace Entia.Json
                 case '\\': return Tags.None;
                 case '$': return Tags.Dollar | Tags.Plain;
                 case '\0': return Tags.Zero;
-                default: return Tags.Plain;
+                default: return DefaultTags(value);
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Tags DefaultTags(char value) => value <= byte.MaxValue ? Tags.Plain : Tags.None;
 
         public Node this[string key] => this.TryMember(key, out var value) ? value : throw new ArgumentException(nameof(key));
         public Node this[int index] => this.TryItem(index, out var item) ? item : throw new ArgumentException(nameof(index));
@@ -205,12 +203,12 @@ namespace Entia.Json
         public readonly Node[] Children;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Node(Kinds kind, Tags tag, object value, params Node[] children) :
+        internal Node(Kinds kind, Tags tag, object value, params Node[] children) :
             this(Reserve(), kind, tag, value, children)
         { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Node(uint identifier, Kinds kind, Tags tag, object value, params Node[] children)
+        internal Node(uint identifier, Kinds kind, Tags tag, object value, params Node[] children)
         {
             Identifier = identifier;
             Kind = kind;

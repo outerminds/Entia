@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -44,18 +45,17 @@ namespace Entia.Modules.Component
             public TypeMap<IComponent, Metadata> ConcreteToMetadata;
             public TypeMap<IComponent, BitMask> AbstractToMask;
             public TypeMap<IComponent, Metadata[]> AbstractToMetadata;
-            public Dictionary<BitMask, Metadata[]> MaskToMetadata;
         }
 
         public static int Count => _state.Read((in State state) => state.Concretes.count);
 
+        static readonly ConcurrentDictionary<BitMask, Metadata[]> _maskToMetadata = new ConcurrentDictionary<BitMask, Metadata[]>();
         static readonly Concurrent<State> _state = new State
         {
             Concretes = (new Metadata[8], 0),
             ConcreteToMetadata = new TypeMap<IComponent, Metadata>(),
             AbstractToMask = new TypeMap<IComponent, BitMask>(),
             AbstractToMetadata = new TypeMap<IComponent, Metadata[]>(),
-            MaskToMetadata = new Dictionary<BitMask, Metadata[]>()
         };
 
         public static bool TryGetMetadata(Type type, bool create, out Metadata data)
@@ -102,18 +102,7 @@ namespace Entia.Modules.Component
             return read.Value.AbstractToMask.TryGet(type, out mask) & read.Value.AbstractToMetadata.TryGet(type, out types);
         }
 
-        public static Metadata[] GetConcreteTypes(BitMask mask)
-        {
-            using var read = _state.Read(true);
-            return read.Value.MaskToMetadata.TryGetValue(mask, out var types) ? types : CreateConcreteTypes(mask);
-        }
-
-        public static Metadata GetMetadata<T>() where T : struct, IComponent
-        {
-            using var read = _state.Read(true);
-            if (read.Value.ConcreteToMetadata.TryGet<T>(out var data)) return data;
-            return CreateMetadata(typeof(T));
-        }
+        public static Metadata[] GetConcreteTypes(BitMask mask) => _maskToMetadata.GetOrAdd(mask, key => CreateConcreteTypes(key));
 
         public static Metadata GetMetadata(Type type)
         {
@@ -202,11 +191,7 @@ namespace Entia.Modules.Component
         {
             var list = new List<Metadata>(mask.Capacity);
             foreach (var index in mask) if (TryGetMetadata(index, out var metadata)) list.Add(metadata);
-
-            using var write = _state.Write();
-            return
-                write.Value.MaskToMetadata.TryGetValue(mask, out var types) ? types :
-                write.Value.MaskToMetadata[new BitMask(mask)] = list.ToArray();
+            return list.ToArray();
         }
     }
 }

@@ -33,10 +33,10 @@ namespace Entia.Json
                     if (value.Length == 0) builder.Append(@"""""");
                     else
                     {
-                        builder.Append(@"""");
+                        builder.Append('"');
                         if (node.HasPlain()) builder.Append(value);
                         else builder.AppendEscaped(value);
-                        builder.Append(@"""");
+                        builder.Append('"');
                     }
                     break;
                 case Node.Kinds.Array:
@@ -44,9 +44,10 @@ namespace Entia.Json
                     else
                     {
                         builder.Append('[');
-                        for (int i = 0; i < node.Children.Length; i++)
+                        GenerateCompact(node.Children[0], builder);
+                        for (int i = 1; i < node.Children.Length; i++)
                         {
-                            if (i > 0) builder.Append(',');
+                            builder.Append(',');
                             GenerateCompact(node.Children[i], builder);
                         }
                         builder.Append(']');
@@ -57,9 +58,12 @@ namespace Entia.Json
                     else
                     {
                         builder.Append('{');
-                        for (int i = 0; i < node.Children.Length; i += 2)
+                        GenerateCompact(node.Children[0], builder);
+                        builder.Append(':');
+                        GenerateCompact(node.Children[1], builder);
+                        for (int i = 2; i < node.Children.Length; i += 2)
                         {
-                            if (i > 0) builder.Append(',');
+                            builder.Append(',');
                             GenerateCompact(node.Children[i], builder);
                             builder.Append(':');
                             GenerateCompact(node.Children[i + 1], builder);
@@ -82,10 +86,10 @@ namespace Entia.Json
                     if (value.Length == 0) builder.Append(@"""""");
                     else
                     {
-                        builder.Append(@"""");
+                        builder.Append('"');
                         if (node.HasPlain()) builder.Append(value);
                         else builder.AppendEscaped(value);
-                        builder.Append(@"""");
+                        builder.Append('"');
                     }
                     break;
                 case Node.Kinds.Array:

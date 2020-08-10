@@ -222,21 +222,20 @@ namespace Entia.Core
 
             IEnumerable<Option<ITrait>> Create()
             {
-                var typeData = TypeUtility.GetData(type);
                 foreach (var attribute in type.Type.GetCustomAttributes<ImplementationAttribute>(true))
                 {
                     if (Is(attribute.Implementation.Type, trait))
-                        yield return GetInstance(Concrete(typeData, attribute), attribute.Arguments);
+                        yield return GetInstance(Concrete(type, attribute), attribute.Arguments);
                 }
 
-                foreach (var member in typeData.StaticMembers.Values)
+                foreach (var member in type.StaticMembers.Values)
                 {
                     foreach (var attribute in member.GetCustomAttributes<ImplementationAttribute>(true))
                     {
                         switch (member)
                         {
                             case Type nested when Is(nested, trait):
-                                var generic = nested.IsGenericTypeDefinition ? nested.MakeGenericType(typeData.Arguments) : nested;
+                                var generic = nested.IsGenericTypeDefinition ? nested.MakeGenericType(type.Arguments) : nested;
                                 yield return GetInstance(generic, attribute.Arguments);
                                 break;
                             case FieldInfo field when Is(field.FieldType, trait):
@@ -252,7 +251,7 @@ namespace Entia.Core
                     }
                 }
 
-                foreach (var @interface in typeData.Interfaces)
+                foreach (var @interface in type.Interfaces)
                 {
                     if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IImplementation<>))
                     {
@@ -261,14 +260,13 @@ namespace Entia.Core
                     }
                 }
 
-                var traitData = TypeUtility.GetData(trait);
                 foreach (var attribute in trait.Type.GetCustomAttributes<ImplementationAttribute>(true))
                 {
                     if (type.Type.Is(attribute.Type.Type, true, true) && Is(attribute.Implementation.Type, trait))
-                        yield return GetInstance(Concrete(typeData, attribute), attribute.Arguments);
+                        yield return GetInstance(Concrete(type, attribute), attribute.Arguments);
                 }
 
-                foreach (var @interface in traitData.Interfaces)
+                foreach (var @interface in trait.Interfaces)
                 {
                     if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IImplementation<,>))
                     {

@@ -435,9 +435,9 @@ namespace Entia.Experiment
             void LargeArrayA() => SerializeA(new ulong[256]);
 
             void IntNumberB() => SerializeB(1);
-            void ObjectNumberB() => SerializeB(1);
+            void ObjectNumberB() => SerializeB<object>(1);
             void CyclicB() => SerializeB(new Cyclic());
-            void ObjectCyclicB() => SerializeB(new Cyclic());
+            void ObjectCyclicB() => SerializeB<object>(new Cyclic());
             void IntDictionaryB() => SerializeB(new Dictionary<int, int> { { 1, -1 }, { 2, -2 }, { 3, -3 } });
             void IntObjectDictionaryB() => SerializeB(new Dictionary<int, object> { { 1, TimeSpan.MaxValue }, { 2, TimeSpan.MaxValue }, { 3, TimeSpan.MaxValue } });
             void ObjectIntDictionaryB() => SerializeB(new Dictionary<object, int> { { 1, -1 }, { 2, -2 }, { 3, -3 } });
@@ -451,7 +451,7 @@ namespace Entia.Experiment
                 {
                     ParseB,
                     GenerateA,
-                    GenerateB
+                    GenerateB,
                 }, 100, 1);
 
                 Console.WriteLine();
