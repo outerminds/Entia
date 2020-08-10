@@ -98,6 +98,8 @@ namespace Entia.Json
         static unsafe Result<Node> Parse(string text, Settings settings, out Dictionary<uint, object> references)
         {
             references = new Dictionary<uint, object>();
+            if (string.IsNullOrWhiteSpace(text)) return Result.Failure("Expected valid json.");
+
             var index = 0;
             var nodes = new Node[64];
             var brackets = new Stack<int>(8);
@@ -188,7 +190,7 @@ namespace Entia.Json
                 }
             }
 
-            if (nodes.TryFirst(out var root))
+            if (nodes[0] is Node root)
             {
                 Unwrap(ref root, settings, references);
                 return root;
