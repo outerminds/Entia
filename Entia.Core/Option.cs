@@ -189,6 +189,8 @@ namespace Entia.Core
             return None();
         }
 
+        public static Option<T> Filter<T>(in this Option<T> option, bool filter) => filter ? option : None();
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Filter<T>(in this Option<T> option, Func<T, bool> filter)
         {

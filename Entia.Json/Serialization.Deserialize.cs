@@ -12,7 +12,7 @@ namespace Entia.Json
             var result = Parse(json, settings, out var references);
             if (result.TryValue(out var node))
                 return new ConvertFromContext(settings, references).Convert<T>(node);
-            return result.AsFailure();
+            return result.Fail();
         }
 
         public static Result<object> Deserialize(string json, Type type, Settings settings)
@@ -21,7 +21,7 @@ namespace Entia.Json
             var result = Parse(json, settings, out var references);
             if (result.TryValue(out var node))
                 return new ConvertFromContext(settings, references).Convert(node, type);
-            return result.AsFailure();
+            return result.Fail();
         }
 
         public static T Instantiate<T>(Node node, Settings settings = null) =>

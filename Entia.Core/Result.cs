@@ -139,7 +139,7 @@ namespace Entia.Core
         public static Result<TOut> Use<TIn, TOut>(in this Result<TIn> result, Func<TIn, TOut> use) where TIn : IDisposable
         {
             if (result.TryValue(out var value)) using (value) return Try(value, use);
-            return result.AsFailure();
+            return result.Fail();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -169,8 +169,6 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> AsOption<T>(in this Result<T> result) => result;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Failure AsFailure<T>(in this Result<T> result) => Failure(result.Messages());
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T? AsNullable<T>(in this Result<T> result) where T : struct => result.TryValue(out var value) ? (T?)value : null;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> AsResult<T>(in this Or<T, string[]> or) => or.Match(value => Success(value), messages => Failure(messages));
@@ -181,6 +179,8 @@ namespace Entia.Core
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string[] Messages<T>(in this Result<T> result) => result.TryMessages(out var messages) ? messages : Array.Empty<string>();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Failure Fail<T>(in this Result<T> result, params string[] messages) => Failure(result.Messages().Append(messages));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> Do<T>(in this Result<T> result, Action<T> @do)
@@ -218,28 +218,30 @@ namespace Entia.Core
         public static Result<TOut> Map<TIn, TOut>(in this Result<TIn> result, Func<TIn, TOut> map)
         {
             if (result.TryValue(out var value)) return map(value);
-            return result.AsFailure();
+            return result.Fail();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<TOut> Map<TIn, TOut, TState>(in this Result<TIn> result, in TState state, Func<TIn, TState, TOut> map)
         {
             if (result.TryValue(out var value)) return map(value, state);
-            return result.AsFailure();
+            return result.Fail();
         }
+
+        public static Result<T> Filter<T>(in this Result<T> result, bool filter) => filter ? result : result.Fail();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> Filter<T>(in this Result<T> result, Func<T, bool> filter)
         {
             if (result.TryValue(out var value)) return filter(value) ? result : Failure();
-            return result.AsFailure();
+            return result.Fail();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> Filter<T, TState>(in this Result<T> result, in TState state, Func<T, TState, bool> filter)
         {
             if (result.TryValue(out var value)) return filter(value, state) ? result : Failure();
-            return result.AsFailure();
+            return result.Fail();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -271,7 +273,7 @@ namespace Entia.Core
         public static Result<(T1, T2)> And<T1, T2>(in this Result<T1> left, in T2 right)
         {
             if (left.TryValue(out var value1)) return (value1, right);
-            return left.AsFailure();
+            return left.Fail();
         }
 
         public static Result<(T1, T2)> And<T1, T2>(in this Result<T1> left, in Result<T2> right)
@@ -283,7 +285,7 @@ namespace Entia.Core
         public static Result<(T1, T2, T3)> And<T1, T2, T3>(in this Result<(T1, T2)> left, in T3 right)
         {
             if (left.TryValue(out var value1)) return (value1.Item1, value1.Item2, right);
-            return left.AsFailure();
+            return left.Fail();
         }
 
         public static Result<(T1, T2, T3)> And<T1, T2, T3>(in this Result<(T1, T2)> left, in Result<T3> right)
@@ -295,7 +297,7 @@ namespace Entia.Core
         public static Result<(T1, T2, T3, T4)> And<T1, T2, T3, T4>(in this Result<(T1, T2, T3)> left, in T4 right)
         {
             if (left.TryValue(out var value1)) return (value1.Item1, value1.Item2, value1.Item3, right);
-            return left.AsFailure();
+            return left.Fail();
         }
 
         public static Result<(T1, T2, T3, T4)> And<T1, T2, T3, T4>(in this Result<(T1, T2, T3)> left, in Result<T4> right)
@@ -307,7 +309,7 @@ namespace Entia.Core
         public static Result<(T1, T2, T3, T4, T5)> And<T1, T2, T3, T4, T5>(in this Result<(T1, T2, T3, T4)> left, in T5 right)
         {
             if (left.TryValue(out var value1)) return (value1.Item1, value1.Item2, value1.Item3, value1.Item4, right);
-            return left.AsFailure();
+            return left.Fail();
         }
 
         public static Result<(T1, T2, T3, T4, T5)> And<T1, T2, T3, T4, T5>(in this Result<(T1, T2, T3, T4)> left, in Result<T5> right)
@@ -337,33 +339,33 @@ namespace Entia.Core
         public static Result<TOut> Return<TIn, TOut>(in this Result<TIn> result, TOut value)
         {
             if (result.IsSuccess()) return value;
-            return result.AsFailure();
+            return result.Fail();
         }
 
         public static Result<T> Flatten<T>(in this Result<Result<T>> result)
         {
             if (result.TryValue(out var value)) return value;
-            return result.AsFailure();
+            return result.Fail();
         }
 
         public static IResult Flatten<T>(in this Result<T> result) where T : IResult
         {
             if (result.TryValue(out var value)) return value;
-            return result.AsFailure();
+            return result.Fail();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<TOut> Bind<TIn, TOut>(in this Result<TIn> result, Func<TIn, Result<TOut>> bind)
         {
             if (result.TryValue(out var value)) return bind(value);
-            return result.AsFailure();
+            return result.Fail();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<TOut> Bind<TIn, TOut, TState>(in this Result<TIn> result, in TState state, Func<TIn, TState, Result<TOut>> bind)
         {
             if (result.TryValue(out var value)) return bind(value, state);
-            return result.AsFailure();
+            return result.Fail();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

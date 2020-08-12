@@ -40,7 +40,7 @@ namespace Entia.Templaters
                         if (TypeUtility.IsPrimitive(value)) continue;
 
                         var result = templaters.Template(new Context(value, elementType.Type, context));
-                        if (result.IsFailure()) return result.AsFailure();
+                        if (result.IsFailure()) return result.Fail();
                         if (result.TryValue(out var reference)) items.Add((i, reference.Index));
                     }
 
@@ -62,7 +62,7 @@ namespace Entia.Templaters
                         if (TypeUtility.IsPrimitive(value)) continue;
 
                         var result = templaters.Template(new Context(value, fieldType.Type, context));
-                        if (result.IsFailure()) return result.AsFailure();
+                        if (result.IsFailure()) return result.Fail();
                         if (result.TryValue(out var reference)) fields.Add((field, reference.Index));
                     }
 

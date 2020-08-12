@@ -28,7 +28,7 @@ namespace Entia
                     var (instantiator, _) = pairs[i];
                     var result = instantiator.Instantiate(_instances);
                     if (result.TryValue(out var instance)) _instances[i] = instance;
-                    else return result.AsFailure();
+                    else return result.Fail();
                 }
 
                 return Result.Success();

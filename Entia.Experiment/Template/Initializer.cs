@@ -16,7 +16,7 @@ namespace Entia.Initializers
         {
             var result = Result.Cast<T>(instance);
             if (result.TryValue(out var casted)) return Initialize(casted, instances);
-            return result.AsFailure();
+            return result.Fail();
         }
     }
 

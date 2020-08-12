@@ -54,7 +54,7 @@ namespace Entia.Templaters.E
                 foreach (var component in world.Components().Get(entity))
                 {
                     var result = templaters.Template(new Context(component, component.GetType(), context));
-                    if (result.IsFailure()) return result.AsFailure();
+                    if (result.IsFailure()) return result.Fail();
                     if (result.TryValue(out var reference)) indices.Add(reference.Index);
                 }
                 return (new Instantiator(world.Entities()), new Initializer(indices.ToArray(), world));
