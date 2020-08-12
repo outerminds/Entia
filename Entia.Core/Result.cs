@@ -228,20 +228,21 @@ namespace Entia.Core
             return result.Fail();
         }
 
-        public static Result<T> Filter<T>(in this Result<T> result, bool filter) => filter ? result : result.Fail();
+        public static Result<T> Filter<T>(in this Result<T> result, bool filter, params string[] messages) =>
+            filter ? result : result.Fail(messages);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> Filter<T>(in this Result<T> result, Func<T, bool> filter)
+        public static Result<T> Filter<T>(in this Result<T> result, Func<T, bool> filter, params string[] messages)
         {
-            if (result.TryValue(out var value)) return filter(value) ? result : Failure();
-            return result.Fail();
+            if (result.TryValue(out var value)) return filter(value) ? result : Failure(messages);
+            return result.Fail(messages);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> Filter<T, TState>(in this Result<T> result, in TState state, Func<T, TState, bool> filter)
+        public static Result<T> Filter<T, TState>(in this Result<T> result, in TState state, Func<T, TState, bool> filter, params string[] messages)
         {
-            if (result.TryValue(out var value)) return filter(value, state) ? result : Failure();
-            return result.Fail();
+            if (result.TryValue(out var value)) return filter(value, state) ? result : Failure(messages);
+            return result.Fail(messages);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
