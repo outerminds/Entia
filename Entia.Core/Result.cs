@@ -101,13 +101,13 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Failure Failure(IEnumerable<string> messages) => Failure(messages.ToArray());
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Failure Exception(Exception exception) => Failure(exception.ToString());
+        public static Failure Failure(Exception exception) => Failure(exception.ToString());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Result<T> Try<T>(Func<T> @try, Action @finally = null)
         {
             try { return @try(); }
-            catch (Exception exception) { return Exception(exception); }
+            catch (Exception exception) { return Failure(exception); }
             finally { @finally?.Invoke(); }
         }
 
@@ -115,7 +115,7 @@ namespace Entia.Core
         public static Result<T> Try<TState, T>(in TState state, Func<TState, T> @try, Action<TState> @finally = null)
         {
             try { return @try(state); }
-            catch (Exception exception) { return Exception(exception); }
+            catch (Exception exception) { return Failure(exception); }
             finally { @finally?.Invoke(state); }
         }
 
@@ -123,7 +123,7 @@ namespace Entia.Core
         public static Result<Unit> Try(Action @try, Action @finally = null)
         {
             try { @try(); return default(Unit); }
-            catch (Exception exception) { return Exception(exception); }
+            catch (Exception exception) { return Failure(exception); }
             finally { @finally?.Invoke(); }
         }
 
@@ -131,7 +131,7 @@ namespace Entia.Core
         public static Result<Unit> Try<TState>(in TState state, Action<TState> @try, Action<TState> @finally = null)
         {
             try { @try(state); return default(Unit); }
-            catch (Exception exception) { return Exception(exception); }
+            catch (Exception exception) { return Failure(exception); }
             finally { @finally?.Invoke(state); }
         }
 
@@ -171,11 +171,13 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T? AsNullable<T>(in this Result<T> result) where T : struct => result.TryValue(out var value) ? (T?)value : null;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> AsResult<T>(in this Or<T, string[]> or) => or.Match(value => Success(value), messages => Failure(messages));
+        public static Result<T> AsResult<T>(in this Or<T, string[]> or) => or.MapRight(messages => Failure(messages)).AsResult();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> AsResult<T>(in this Or<T, Unit> or) => or.Match(value => Success(value), _ => Failure());
+        public static Result<T> AsResult<T>(in this Or<T, string> or) => or.MapRight(message => Failure(message)).AsResult();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Or<T, string[]> AsOr<T>(in this Result<T> result) => result.Match(value => Core.Or.Left(value).AsOr<string[]>(), messages => Core.Or.Right(messages));
+        public static Result<T> AsResult<T>(in this Or<T, Failure> or) => or.Match(value => Success(value), failure => failure);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Or<T, Failure> AsOr<T>(in this Result<T> result) => result.Match(value => Core.Or.Left(value).AsOr<Failure>(), messages => Failure(messages));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string[] Messages<T>(in this Result<T> result) => result.TryMessages(out var messages) ? messages : Array.Empty<string>();

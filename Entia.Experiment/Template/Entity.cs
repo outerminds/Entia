@@ -39,7 +39,7 @@ namespace Entia.Templaters.E
                 }
                 return Result.Success();
             }
-            catch (Exception exception) { return Result.Exception(exception); }
+            catch (Exception exception) { return Result.Failure(exception); }
         }
     }
 

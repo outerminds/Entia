@@ -107,9 +107,11 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T? AsNullable<T>(in this Option<T> option) where T : struct => option.TryValue(out var value) ? (T?)value : null;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Or<T, Unit> AsOr<T>(in this Option<T> option) => option.Match(value => Core.Or.Left(value).AsOr<Unit>(), () => Core.Or.Right(default(Unit)));
+        public static Or<T, None> AsOr<T>(in this Option<T> option) => option.Match(value => Core.Or.Left(value).AsOr<None>(), () => None());
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T> AsOption<T>(in this Or<T, Unit> or) => or.Match(value => From(value), _ => None());
+        public static Option<T> AsOption<T>(in this Or<T, Unit> or) => or.MapRight(_ => None()).AsOption();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Option<T> AsOption<T>(in this Or<T, None> or) => or.Match(value => From(value), none => none);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Option<T> Try<T>(Func<T> @try, Action @finally = null)

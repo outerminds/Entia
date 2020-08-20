@@ -155,48 +155,85 @@ namespace Entia.Core
             or.Match(left => Right(left).AsOr<TRight>(), right => Left(right));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TOut Match<TLeft, TRight, TOut>(in this Or<TLeft, TRight> or, Func<TLeft, TOut> left, Func<TRight, TOut> right) =>
-            or.TryLeft(out var leftValue) ? left(leftValue) :
-            or.TryRight(out var rightValue) ? right(rightValue) :
+        public static TOut Match<TLeft, TRight, TOut>(in this Or<TLeft, TRight> or, Func<TLeft, TOut> matchLeft, Func<TRight, TOut> matchRight) =>
+            or.TryLeft(out var left) ? matchLeft(left) :
+            or.TryRight(out var right) ? matchRight(right) :
             throw new InvalidOperationException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TOut Match<TLeft, TRight, TState, TOut>(in this Or<TLeft, TRight> or, in TState state, Func<TLeft, TState, TOut> left, Func<TRight, TState, TOut> right) =>
-            or.TryLeft(out var leftValue) ? left(leftValue, state) :
-            or.TryRight(out var rightValue) ? right(rightValue, state) :
+        public static TOut Match<TLeft, TRight, TState, TOut>(in this Or<TLeft, TRight> or, in TState state, Func<TLeft, TState, TOut> matchLeft, Func<TRight, TState, TOut> matchRight) =>
+            or.TryLeft(out var left) ? matchLeft(left, state) :
+            or.TryRight(out var right) ? matchRight(right, state) :
+            throw new InvalidOperationException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Or<TTargetLeft, TTargetRight> Map<TSourceLeft, TTargetLeft, TSourceRight, TTargetRight, TState>(in this Or<TSourceLeft, TSourceRight> or, in TState state, Func<TSourceLeft, TState, TTargetLeft> mapLeft, Func<TSourceRight, TState, TTargetRight> mapRight) =>
+            or.TryLeft(out var left) ? Left(mapLeft(left, state)).AsOr<TTargetRight>() :
+            or.TryRight(out var right) ? Right(mapRight(right, state)).AsOr<TTargetLeft>() :
+            throw new InvalidOperationException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Or<TTargetLeft, TTargetRight> Map<TSourceLeft, TTargetLeft, TSourceRight, TTargetRight>(in this Or<TSourceLeft, TSourceRight> or, Func<TSourceLeft, TTargetLeft> mapLeft, Func<TSourceRight, TTargetRight> mapRight) =>
+            or.TryLeft(out var left) ? Left(mapLeft(left)).AsOr<TTargetRight>() :
+            or.TryRight(out var right) ? Right(mapRight(right)).AsOr<TTargetLeft>() :
             throw new InvalidOperationException();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Or<TTarget, TRight> MapLeft<TSource, TTarget, TRight, TState>(in this Or<TSource, TRight> or, in TState state, Func<TSource, TState, TTarget> map) =>
-            or.Match((map, state), (value, state) => Left(state.map(value, state.state)).AsOr<TRight>(), (value, _) => Right(value));
+            or.Map(state, map, (value, _) => value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Or<TTarget, TRight> MapLeft<TSource, TTarget, TRight>(in this Or<TSource, TRight> or, Func<TSource, TTarget> map) =>
-            or.Match(map, (value, state) => Left(state(value)).AsOr<TRight>(), (value, _) => Right(value));
+            or.Map(map, value => value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Or<TLeft, TTarget> MapRight<TLeft, TSource, TTarget, TState>(in this Or<TLeft, TSource> or, in TState state, Func<TSource, TState, TTarget> map) =>
-            or.Match((map, state), (value, _) => Left(value).AsOr<TTarget>(), (value, state) => Right(state.map(value, state.state)));
+            or.Map(state, (value, _) => value, map);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Or<TLeft, TTarget> MapRight<TLeft, TSource, TTarget>(in this Or<TLeft, TSource> or, Func<TSource, TTarget> map) =>
-            or.Match(map, (value, _) => Left(value).AsOr<TTarget>(), (value, state) => Right(state(value)));
+            or.Map(value => value, map);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Or<TLeft, TRight> Do<TLeft, TRight, TState>(in this Or<TLeft, TRight> or, in TState state, Action<TLeft, TState> doLeft, Action<TRight, TState> doRight)
+        {
+            if (or.TryLeft(out var left)) doLeft(left, state);
+            else if (or.TryRight(out var right)) doRight(right, state);
+            else throw new InvalidOperationException();
+            return or;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Or<TLeft, TRight> Do<TLeft, TRight>(in this Or<TLeft, TRight> or, Action<TLeft> doLeft, Action<TRight> doRight)
+        {
+            if (or.TryLeft(out var left)) doLeft(left);
+            else if (or.TryRight(out var right)) doRight(right);
+            else throw new InvalidOperationException();
+            return or;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Or<TLeft, TRight> DoLeft<TLeft, TRight, TState>(in this Or<TLeft, TRight> or, in TState state, Action<TLeft, TState> @do) =>
-            or.MapLeft((@do, state), (value, state) => { state.@do(value, state.state); return value; });
-
+            or.Do(state, @do, (_, __) => { });
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Or<TLeft, TRight> DoLeft<TLeft, TRight>(in this Or<TLeft, TRight> or, Action<TLeft> @do) =>
-            or.MapLeft(@do, (value, state) => { state(value); return value; });
-
+            or.Do(@do, _ => { });
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Or<TLeft, TRight> DoRight<TLeft, TRight, TState>(in this Or<TLeft, TRight> or, in TState state, Action<TRight, TState> @do) =>
-            or.MapRight((@do, state), (value, state) => { state.@do(value, state.state); return value; });
-
+            or.Do(state, (_, __) => { }, @do);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Or<TLeft, TRight> DoRight<TLeft, TRight>(in this Or<TLeft, TRight> or, Action<TRight> @do) =>
-            or.MapRight(@do, (value, state) => { state(value); return value; });
+            or.Do(_ => { }, @do);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Or<Unit, Unit> Ignore<TLeft, TRight>(in this Or<TLeft, TRight> or) =>
+            or.Map(_ => default(Unit), _ => default(Unit));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Or<Unit, TRight> IgnoreLeft<TLeft, TRight>(in this Or<TLeft, TRight> or) =>
+            or.MapLeft(_ => default(Unit));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Or<TLeft, Unit> IgnoreRight<TLeft, TRight>(in this Or<TLeft, TRight> or) =>
+            or.MapRight(_ => default(Unit));
 
         public static IEnumerable<TLeft> Lefts<TLeft, TRight>(this IEnumerable<Or<TLeft, TRight>> ors)
         {
