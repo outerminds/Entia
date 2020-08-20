@@ -43,7 +43,7 @@ namespace Entia.Core
         public static bool operator !=(in Option<T> left, in Option<T> right) => !(left == right);
 
         public Option.Tags Tag { get; }
-        object IOption.Value => this.IsSome() ? (object)_value : null;
+        object IOption.Value => this.Match(value => (object)value, () => null);
 
         readonly T _value;
 
