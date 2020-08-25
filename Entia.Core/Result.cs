@@ -35,8 +35,6 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Option<T>(in Result<T> result) => result.TryValue(out var value) ? Option.From(value) : Option.None();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Result<T>(in Option<T> option) => option.TryValue(out var value) ? Result.Success(value) : Result.Failure();
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in Result<T> left, in T right) => left.TryValue(out var value) && EqualityComparer<T>.Default.Equals(value, right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in Result<T> left, in T right) => !(left == right);
@@ -435,62 +433,62 @@ namespace Entia.Core
             foreach (var result in results) if (result.TryValue(out var value)) yield return value;
         }
 
-        public static Result<T> FirstOrFailure<T>(this IEnumerable<T> source)
+        public static Result<T> FirstOrFailure<T>(this IEnumerable<T> source, params string[] messages)
         {
             foreach (var item in source) return item;
-            return Failure();
+            return Failure(messages);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> FirstOrFailure<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+        public static Result<T> FirstOrFailure<T>(this IEnumerable<T> source, Func<T, bool> predicate, params string[] messages)
         {
             foreach (var item in source) if (predicate(item)) return item;
-            return Failure();
+            return Failure(messages);
         }
 
-        public static Result<T> FirstOrFailure<T>(this T[] source)
+        public static Result<T> FirstOrFailure<T>(this T[] source, params string[] messages)
         {
             if (source.Length > 0) return source[0];
-            return Failure();
+            return Failure(messages);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> FirstOrFailure<T>(this T[] source, Func<T, bool> predicate)
+        public static Result<T> FirstOrFailure<T>(this T[] source, Func<T, bool> predicate, params string[] messages)
         {
             foreach (var item in source) if (predicate(item)) return item;
-            return Failure();
+            return Failure(messages);
         }
 
-        public static Result<T> LastOrFailure<T>(this IEnumerable<T> source)
+        public static Result<T> LastOrFailure<T>(this IEnumerable<T> source, params string[] messages)
         {
-            var result = Failure().AsResult<T>();
+            var result = Failure(messages).AsResult<T>();
             foreach (var item in source) result = item;
             return result;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> LastOrFailure<T>(this IEnumerable<T> source, Func<T, bool> predicate)
+        public static Result<T> LastOrFailure<T>(this IEnumerable<T> source, Func<T, bool> predicate, params string[] messages)
         {
-            var result = Failure().AsResult<T>();
+            var result = Failure(messages).AsResult<T>();
             foreach (var item in source) if (predicate(item)) result = item;
             return result;
         }
 
-        public static Result<T> LastOrFailure<T>(this T[] source)
+        public static Result<T> LastOrFailure<T>(this T[] source, params string[] messages)
         {
             if (source.Length > 0) return source[source.Length - 1];
-            return Failure();
+            return Failure(messages);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Result<T> LastOrFailure<T>(this T[] source, Func<T, bool> predicate)
+        public static Result<T> LastOrFailure<T>(this T[] source, Func<T, bool> predicate, params string[] messages)
         {
             for (int i = source.Length - 1; i >= 0; i--)
             {
                 var item = source[i];
                 if (predicate(item)) return item;
             }
-            return Failure();
+            return Failure(messages);
         }
 
         public static Result<T> Cast<T>(object value) => Success(value).Cast<T>();
