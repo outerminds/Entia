@@ -14,16 +14,16 @@ namespace Entia.Json.Converters
             public override IEnumerable<IConverter> Provide(TypeData type)
             {
                 {
-                    if (type.Interfaces.TryFirst(@interface => @interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IDictionary<,>), out var @interface) &&
-                        @interface.GetGenericArguments() is Type[] arguments &&
-                        arguments.Length == 2)
+                    if (type.Interfaces.TryFirst(@interface => @interface.Definition == typeof(IDictionary<,>), out var @interface) &&
+                        @interface.Arguments.Length == 2)
                     {
+                        var arguments = @interface.Arguments.Select(argument => argument.Type);
                         if (type.Definition == typeof(Dictionary<,>) &&
                             Core.Option.Try(() => Activator.CreateInstance(typeof(ConcreteDictionary<,>).MakeGenericType(arguments)))
                             .Cast<IConverter>()
                             .TryValue(out var converter))
                             yield return converter;
-                        if (type.DefaultConstructor is ConstructorInfo constructor)
+                        if (type.DefaultConstructor.TryValue(out var constructor))
                         {
                             if (Core.Option.Try(() => Activator.CreateInstance(typeof(AbstractDictionary<,>).MakeGenericType(arguments), constructor))
                                 .Cast<IConverter>()
@@ -34,8 +34,8 @@ namespace Entia.Json.Converters
                     };
                 }
                 {
-                    if (type.Interfaces.Contains(typeof(IDictionary)) &&
-                        type.DefaultConstructor is ConstructorInfo constructor)
+                    if (type.Interfaces.Any(@interface => @interface == typeof(IDictionary)) &&
+                        type.DefaultConstructor.TryValue(out var constructor))
                         yield return new AbstractDictionary(typeof(object), typeof(object), constructor);
                 }
             }
@@ -69,9 +69,9 @@ namespace Entia.Json.Converters
 
     public sealed class AbstractDictionary<TKey, TValue> : Converter<IDictionary<TKey, TValue>>
     {
-        readonly ConstructorInfo _constructor;
+        readonly ConstructorData _constructor;
 
-        public AbstractDictionary(ConstructorInfo constructor) { _constructor = constructor; }
+        public AbstractDictionary(ConstructorData constructor) { _constructor = constructor; }
 
         public override Node Convert(in IDictionary<TKey, TValue> instance, in ConvertToContext context)
         {
@@ -86,7 +86,7 @@ namespace Entia.Json.Converters
         }
 
         public override IDictionary<TKey, TValue> Instantiate(in ConvertFromContext context) =>
-            _constructor.Invoke(Array.Empty<object>()) as IDictionary<TKey, TValue>;
+            _constructor.Constructor.Invoke(Array.Empty<object>()) as IDictionary<TKey, TValue>;
 
         public override void Initialize(ref IDictionary<TKey, TValue> instance, in ConvertFromContext context)
         {
@@ -100,9 +100,9 @@ namespace Entia.Json.Converters
     {
         readonly TypeData _key;
         readonly TypeData _value;
-        readonly ConstructorInfo _constructor;
+        readonly ConstructorData _constructor;
 
-        public AbstractDictionary(TypeData key, TypeData value, ConstructorInfo constructor)
+        public AbstractDictionary(TypeData key, TypeData value, ConstructorData constructor)
         {
             _key = key;
             _value = value;
@@ -122,7 +122,7 @@ namespace Entia.Json.Converters
         }
 
         public override IDictionary Instantiate(in ConvertFromContext context) =>
-            _constructor.Invoke(Array.Empty<object>()) as IDictionary;
+            _constructor.Constructor.Invoke(Array.Empty<object>()) as IDictionary;
 
         public override void Initialize(ref IDictionary instance, in ConvertFromContext context)
         {

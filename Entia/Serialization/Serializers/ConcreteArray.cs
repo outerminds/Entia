@@ -16,7 +16,7 @@ namespace Entia.Experimental.Serializers
         public override bool Serialize(in Array instance, in SerializeContext context)
         {
             context.Writer.Write(instance.Length);
-            if (context.Options.Has(Options.Blittable) && _data.Size is int size)
+            if (context.Options.Has(Options.Blittable) && _data.Size.TryValue(out var size))
             {
                 var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
                 try
@@ -51,7 +51,7 @@ namespace Entia.Experimental.Serializers
 
         public override bool Initialize(ref Array instance, in DeserializeContext context)
         {
-            if (context.Options.Has(Options.Blittable) && _data.Size is int size)
+            if (context.Options.Has(Options.Blittable) && _data.Size.TryValue(out var size))
             {
                 var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
                 try

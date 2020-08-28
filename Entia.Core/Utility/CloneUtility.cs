@@ -12,7 +12,7 @@ namespace Entia.Core
         }
 
         static readonly Func<object, object> _clone = typeof(object)
-            .GetMethod("MemberwiseClone", TypeUtility.Instance)
+            .GetMethod("MemberwiseClone", ReflectionUtility.Instance)
             .CreateDelegate<Func<object, object>>();
 
         public static object Shallow(object value) => value is null ? null : _clone(value);

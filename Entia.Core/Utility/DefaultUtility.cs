@@ -35,14 +35,14 @@ namespace Entia.Core
 
         static Func<T> CreateProvider<T>()
         {
-            var data = TypeUtility.GetData<T>();
-            foreach (var member in data.StaticMembers.Values)
+            var data = ReflectionUtility.GetData<T>();
+            foreach (var member in data.StaticMembers)
             {
                 try
                 {
-                    if (member.IsDefined(typeof(DefaultAttribute), true))
+                    if (member.Member.IsDefined(typeof(DefaultAttribute), true))
                     {
-                        switch (member)
+                        switch (member.Member)
                         {
                             case FieldInfo field when field.FieldType.Is<T>():
                                 var value = (T)field.GetValue(null);
@@ -61,14 +61,14 @@ namespace Entia.Core
 
         static Func<object> CreateProvider(Type type)
         {
-            var data = TypeUtility.GetData(type);
-            foreach (var member in data.StaticMembers.Values)
+            var data = ReflectionUtility.GetData(type);
+            foreach (var member in data.StaticMembers)
             {
                 try
                 {
-                    if (member.IsDefined(typeof(DefaultAttribute), true))
+                    if (member.Member.IsDefined(typeof(DefaultAttribute), true))
                     {
-                        switch (member)
+                        switch (member.Member)
                         {
                             case FieldInfo field when field.FieldType.Is(type):
                                 var value = field.GetValue(null);
@@ -88,7 +88,9 @@ namespace Entia.Core
         static Func<T> CreateDefaultProvider<T>(TypeData data)
         {
             if (typeof(T).IsValueType) return () => default;
-            else if (data.Default == null) return () => (T)data.DefaultConstructor?.Invoke(Array.Empty<object>());
+            else if (data.Default == null) return () => data.DefaultConstructor
+                .Map(constructor => (T)constructor.Constructor.Invoke(Array.Empty<object>()))
+                .OrDefault();
             else return () => (T)CloneUtility.Shallow(data.Default);
         }
     }

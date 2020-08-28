@@ -23,11 +23,14 @@ namespace Entia.Injectors
         public Result<object> Inject(in Context context) => context.Member switch
         {
             Type type => Result.Cast<object>(DefaultUtility.Default(type))
-                .Bind(context, (instance, state) => Result.And(
-                    type.InstanceFields().Select(field => state.Inject(field).Do(value => field.SetValue(instance, value))).All(),
-                    type.InstanceProperties()
-                        .Where(property => property.CanWrite)
-                        .Select(property => state.Inject(property).Do(value => property.SetValue(instance, value))).All())
+                .Bind((type: type.GetData(), context), (instance, state) => Result.And(
+                    state.type.InstanceFields
+                        .Select(field => state.context.Inject(field).Do(value => field.Field.SetValue(instance, value)))
+                        .All(),
+                    state.type.InstanceProperties
+                        .Where(property => property.Property.CanWrite)
+                        .Select(property => state.context.Inject(property).Do(value => property.Property.SetValue(instance, value)))
+                        .All())
                     .Return(instance)),
             FieldInfo field => context.Inject(field.FieldType),
             PropertyInfo property => context.Inject(property.PropertyType),

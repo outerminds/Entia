@@ -101,8 +101,9 @@ namespace Entia.Experimental.Serializers
     {
         public override IEnumerable<ISerializer> Provide(TypeData type)
         {
-            var data = TypeUtility.GetData(type);
-            if (type.Type.IsArray) yield return Array(data.Element);
+            var data = ReflectionUtility.GetData(type);
+            if (type.Type.IsArray && data.Element.TryValue(out var element))
+                yield return Array(element);
             else yield return Object(type);
         }
     }

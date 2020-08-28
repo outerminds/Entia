@@ -7,6 +7,11 @@ using Entia.Core.Documentation;
 
 namespace Entia.Core
 {
+    /// <summary>
+    /// A key value store where the key is a type.
+    /// Allows to retrieve values faster that a regular dictionary when using the generic getters.
+    /// When retrieving a value, the sub or super types of the key used can be considered.
+    /// </summary>
     public sealed class TypeMap<TBase, TValue> : IEnumerable<TypeMap<TBase, TValue>.Enumerator, (Type type, TValue value)>
     {
         public struct Enumerator : IEnumerator<(Type type, TValue value)>
@@ -168,11 +173,13 @@ namespace Entia.Core
                 lock (_lock)
                 {
                     if (_typeToEntry.TryGetValue(type, out var entry)) return entry;
-                    var data = TypeUtility.GetData(type);
+                    var data = ReflectionUtility.GetData(type);
                     var super = data.Bases
                         .Concat(data.Interfaces)
-                        .SelectMany(ancestor => ancestor.IsGenericType ? new[] { ancestor, ancestor.GetGenericTypeDefinition() } : new[] { ancestor })
-                        .Where(TypeUtility.Is<TBase>)
+                        .SelectMany(@base => @base.Definition.Match(
+                            definition => new[] { @base.Type, definition.Type },
+                            () => new[] { @base.Type }))
+                        .Where(ReflectionUtility.Is<TBase>)
                         .Select(GetEntry)
                         .ToArray();
                     var sub = _entries.Where(current => current.Type.Is(type, true, true)).ToArray();

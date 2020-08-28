@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.Serialization;
 using Entia.Core;
 using Entia.Json.Converters;
@@ -28,8 +27,8 @@ namespace Entia.Json
             References = references;
         }
 
-        public T Convert<T>(Node node) => Convert<T>(node, TypeUtility.GetData<T>());
-        public object Convert(Node node, Type type) => Convert(node, TypeUtility.GetData(type));
+        public T Convert<T>(Node node) => Convert<T>(node, ReflectionUtility.GetData<T>());
+        public object Convert(Node node, Type type) => Convert(node, ReflectionUtility.GetData(type));
         public T Convert<T>(Node node, TypeData type) =>
             TrySpecial(node, type, out var instance) ? Cast<T>(instance) :
             TryConverter<T>(node, type, out instance) ? Cast<T>(instance) :
@@ -39,9 +38,9 @@ namespace Entia.Json
             TryConverter(node, type, out instance) ? instance :
             Default(node, type);
 
-        public T Instantiate<T>() => Instantiate<T>(TypeUtility.GetData<T>());
+        public T Instantiate<T>() => Instantiate<T>(ReflectionUtility.GetData<T>());
 
-        public object Instantiate(Type type) => Instantiate(TypeUtility.GetData(type));
+        public object Instantiate(Type type) => Instantiate(ReflectionUtility.GetData(type));
 
         public T Instantiate<T>(TypeData type)
         {
@@ -54,8 +53,9 @@ namespace Entia.Json
             if (type.Type.IsAbstract) return type.Default;
             return
                 CloneUtility.Shallow(type.Default) ??
-                type.DefaultConstructor?.Invoke(Array.Empty<object>()) ??
-                FormatterServices.GetUninitializedObject(type);
+                type.DefaultConstructor
+                    .Map(constructor => constructor.Constructor.Invoke(Array.Empty<object>()))
+                    .Or(type, state => FormatterServices.GetUninitializedObject(state));
         }
 
         public ConvertFromContext With(Node node = null, TypeData type = null) =>
@@ -80,9 +80,9 @@ namespace Entia.Json
                         instance = node.AsEnum(type);
                         return true;
                     }
-                    else if (type.Definition == typeof(Nullable<>))
+                    else if (type.Definition == typeof(Nullable<>) && type.Element.TryValue(out var element))
                     {
-                        instance = Convert(node, type.Element);
+                        instance = Convert(node, element);
                         return true;
                     }
 
@@ -174,15 +174,18 @@ namespace Entia.Json
         {
             if (instance == null) return;
 
-            var members = type.InstanceMembers;
+            var fields = type.Fields;
+            var properties = type.Properties;
             foreach (var (key, value) in node.Members())
             {
-                if (members.TryGetValue(key, out var member))
+                if (fields.TryGetValue(key, out var field) && field.Field.IsInstance())
+                    field.Field.SetValue(instance, Convert(value, field.Type));
+                else if (properties.TryGetValue(key, out var property) && property.Property.IsInstance())
                 {
-                    if (member is FieldInfo field)
-                        field.SetValue(instance, Convert(value, field.FieldType));
-                    else if (member is PropertyInfo property && property.CanWrite)
-                        property.SetValue(instance, Convert(value, property.PropertyType));
+                    if (property.BackingField.TryValue(out field))
+                        field.Field.SetValue(instance, Convert(value, field.Type));
+                    else
+                        property.Property.SetValue(instance, Convert(value, property.Type));
                 }
             }
         }

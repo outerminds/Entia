@@ -90,8 +90,8 @@ namespace Entia.Json
                     case Node.Kinds.String:
                         {
                             var value = node.AsString();
-                            if (TypeUtility.TryGetType(value, out type)) return type;
-                            if (Guid.TryParse(value, out var guid) && TypeUtility.TryGetType(guid, out type)) return type;
+                            if (ReflectionUtility.TryGetType(value, out type)) return type;
+                            if (Guid.TryParse(value, out var guid) && ReflectionUtility.TryGetType(guid, out type)) return type;
                             break;
                         }
                     case Node.Kinds.Array:
@@ -156,7 +156,7 @@ namespace Entia.Json
                         items[i + 2] = TypeToNode(arguments[i], settings, references);
                     return (Node.Array(items), true);
                 }
-                else if (TypeUtility.TryGetGuid(type, out var guid))
+                else if (ReflectionUtility.TryGetGuid(type, out var guid))
                     return (Node.String(guid.ToString(), Node.Tags.Plain), true);
                 else return (Node.String(type.FullName, Node.Tags.Plain), true);
             }

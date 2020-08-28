@@ -115,7 +115,9 @@ namespace Entia.Modules
 
         [ThreadSafe]
         static Delegates CreateDelegates(in Metadata metadata, Messages messages) => (Delegates)typeof(Components)
-            .StaticMethods()
+            .GetData()
+            .StaticMembers.OfType<MethodData>()
+            .Select(method => method.Method)
             .First(method => method.Name == nameof(CreateDelegates) && method.IsGenericMethod)
             .MakeGenericMethod(metadata.Type)
             .Invoke(null, new object[] { messages });

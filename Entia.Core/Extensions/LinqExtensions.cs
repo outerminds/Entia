@@ -302,7 +302,7 @@ namespace Entia.Core
             source.Except(values.AsEnumerable());
 
         public static IEnumerable<T> OfType<T>(this IEnumerable<T> source, Type type, bool hierarchy = false, bool definition = false) =>
-            source.Where(item => TypeUtility.Is(item, type, hierarchy, definition));
+            source.Where(item => ReflectionUtility.Is(item, type, hierarchy, definition));
 
         public static bool Same<T>(this IEnumerable<T> source, Func<T, T, bool> equals)
         {

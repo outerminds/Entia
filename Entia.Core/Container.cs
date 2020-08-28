@@ -150,14 +150,14 @@ namespace Entia.Core
         public static ITrait[] Defaults<T, TTrait>() where TTrait : ITrait
         {
             var traits = GetTraits(_defaults.Index<T>());
-            return GetDefaults(traits, TypeUtility.GetData<T>(), (TypeUtility.GetData<TTrait>(), traits.Index<TTrait>()));
+            return GetDefaults(traits, ReflectionUtility.GetData<T>(), (ReflectionUtility.GetData<TTrait>(), traits.Index<TTrait>()));
         }
 
         [ThreadSafe]
         public static ITrait[] Defaults<TTrait>(Type type) where TTrait : ITrait
         {
             if (_defaults.TryIndex(type, out var typeIndex) && GetTraits(typeIndex) is var traits)
-                return GetDefaults(traits, type, (TypeUtility.GetData<TTrait>(), traits.Index<TTrait>()));
+                return GetDefaults(traits, type, (ReflectionUtility.GetData<TTrait>(), traits.Index<TTrait>()));
             return Array.Empty<ITrait>();
         }
 
@@ -200,7 +200,7 @@ namespace Entia.Core
         {
             static bool Is(Type current, Type other) => current.Is<IProvider>() || current.Is(other, true, true);
 
-            static Type Concrete(TypeData data, ImplementationAttribute attribute)
+            static Type Concrete(TypeData type, ImplementationAttribute attribute)
             {
                 var implementation = attribute.Implementation;
                 if (implementation.Type.IsGenericTypeDefinition)
@@ -209,13 +209,13 @@ namespace Entia.Core
                     {
                         if (attribute.Type.Type.IsGenericTypeDefinition &&
                             attribute.Type.Arguments.Length == implementation.Arguments.Length &&
-                            data.Type.Hierarchy().TryFirst(child =>
+                            type.Type.Hierarchy().TryFirst(child =>
                                 child.IsGenericType && child.GetGenericTypeDefinition() == attribute.Type, out var definition))
                             return implementation.Type.MakeGenericType(definition.GetGenericArguments());
-                        return implementation.Type.MakeGenericType(data);
+                        return implementation.Type.MakeGenericType(type);
                     }
-                    else if (data.Arguments.Length == implementation.Arguments.Length)
-                        return implementation.Type.MakeGenericType(data.Arguments);
+                    else if (type.Arguments.Length == implementation.Arguments.Length)
+                        return implementation.Type.MakeGenericType(type.Arguments.Select(argument => argument.Type));
                 }
                 return implementation.Type;
             }
@@ -228,14 +228,16 @@ namespace Entia.Core
                         yield return GetInstance(Concrete(type, attribute), attribute.Arguments);
                 }
 
-                foreach (var member in type.StaticMembers.Values)
+                foreach (var member in type.StaticMembers)
                 {
-                    foreach (var attribute in member.GetCustomAttributes<ImplementationAttribute>(true))
+                    foreach (var attribute in member.Member.GetCustomAttributes<ImplementationAttribute>(true))
                     {
-                        switch (member)
+                        switch (member.Member)
                         {
                             case Type nested when Is(nested, trait):
-                                var generic = nested.IsGenericTypeDefinition ? nested.MakeGenericType(type.Arguments) : nested;
+                                var generic = nested.IsGenericTypeDefinition ?
+                                    nested.MakeGenericType(type.Arguments.Select(argument => argument.Type)) :
+                                    nested;
                                 yield return GetInstance(generic, attribute.Arguments);
                                 break;
                             case FieldInfo field when Is(field.FieldType, trait):
@@ -253,11 +255,10 @@ namespace Entia.Core
 
                 foreach (var @interface in type.Interfaces)
                 {
-                    if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IImplementation<>))
-                    {
-                        var arguments = @interface.GetGenericArguments();
-                        if (Is(arguments[0], trait)) yield return GetInstance(arguments[0]);
-                    }
+                    if (@interface.Definition == typeof(IImplementation<>) &&
+                        @interface.Arguments.TryAt(0, out var argument) &&
+                        Is(argument, trait))
+                        yield return GetInstance(argument);
                 }
 
                 foreach (var attribute in trait.Type.GetCustomAttributes<ImplementationAttribute>(true))
@@ -268,12 +269,12 @@ namespace Entia.Core
 
                 foreach (var @interface in trait.Interfaces)
                 {
-                    if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IImplementation<,>))
-                    {
-                        var arguments = @interface.GetGenericArguments();
-                        if (type.Type.Is(arguments[0], true, true) && Is(arguments[1], trait))
-                            yield return GetInstance(arguments[1]);
-                    }
+                    if (@interface.Definition == typeof(IImplementation<,>) &&
+                        @interface.Arguments.TryAt(0, out var argument0) &&
+                        @interface.Arguments.TryAt(1, out var argument1) &&
+                        type.Type.Is(argument0, true, true) &&
+                        Is(argument1, trait))
+                        yield return GetInstance(argument1);
                 }
             }
 

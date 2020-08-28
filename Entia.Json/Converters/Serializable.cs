@@ -12,12 +12,11 @@ namespace Entia.Json.Converters
         {
             public override IEnumerable<IConverter> Provide(TypeData type)
             {
-                if (type.Interfaces.Contains(typeof(ISerializable)) &&
+                if (type.Interfaces.Any(@interface => @interface == typeof(ISerializable)) &&
                     type.InstanceConstructors.TryFirst(constructor =>
-                        constructor.GetParameters() is ParameterInfo[] parameters &&
-                        parameters.Length == 2 &&
-                        parameters[0].ParameterType == typeof(SerializationInfo) &&
-                        parameters[1].ParameterType == typeof(StreamingContext), out var constructor))
+                        constructor.Parameters.Length == 2 &&
+                        constructor.Parameters[0].ParameterType == typeof(SerializationInfo) &&
+                        constructor.Parameters[1].ParameterType == typeof(StreamingContext), out var constructor))
                     yield return new AbstractSerializable(constructor);
             }
         }

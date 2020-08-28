@@ -16,7 +16,7 @@ namespace Entia.Experimental.Serializers
 
         public bool Serialize(object instance, in SerializeContext context)
         {
-            if (context.Options.Has(Options.Blittable) && _data.Size is int size)
+            if (context.Options.Has(Options.Blittable) && _data.Size.TryValue(out var size))
             {
                 var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
                 try
@@ -29,12 +29,10 @@ namespace Entia.Experimental.Serializers
             }
             else
             {
-                var fields = _data.InstanceFields;
-                for (int i = 0; i < fields.Length; i++)
+                foreach (var field in _data.InstanceFields)
                 {
-                    var field = fields[i];
                     var next = context.Writer.Reserve<int>();
-                    if (context.Serialize(field.GetValue(instance), field.FieldType))
+                    if (context.Serialize(field.Field.GetValue(instance), field.Field.FieldType))
                         next.Value = context.Writer.Position;
                     else return false;
                 }
@@ -50,7 +48,7 @@ namespace Entia.Experimental.Serializers
 
         public bool Initialize(ref object instance, in DeserializeContext context)
         {
-            if (context.Options.Has(Options.Blittable) && _data.Size is int size)
+            if (context.Options.Has(Options.Blittable) && _data.Size.TryValue(out var size))
             {
                 var handle = GCHandle.Alloc(instance, GCHandleType.Pinned);
                 try
@@ -62,13 +60,11 @@ namespace Entia.Experimental.Serializers
             }
             else
             {
-                var fields = _data.InstanceFields;
-                for (int i = 0; i < fields.Length; i++)
+                foreach (var field in _data.InstanceFields)
                 {
                     if (context.Reader.Read(out int next))
                     {
-                        var field = fields[i];
-                        if (context.Deserialize(out var value, field.FieldType)) field.SetValue(instance, value);
+                        if (context.Deserialize(out var value, field.Field.FieldType)) field.Field.SetValue(instance, value);
                         context.Reader.Position = next;
                     }
                     else return false;

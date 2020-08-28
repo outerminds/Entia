@@ -169,7 +169,7 @@ namespace Entia.Modules.Component
                 if (write.Value.ConcreteToMetadata.TryGet(type, out var data)) return data;
 
                 var index = write.Value.Concretes.count;
-                data = new Metadata(TypeUtility.GetData(type), index);
+                data = new Metadata(ReflectionUtility.GetData(type), index);
                 write.Value.ConcreteToMetadata[type] = data;
                 write.Value.Concretes.Push(data);
                 foreach (var @abstract in abstracts)

@@ -11,9 +11,9 @@ namespace Entia.Injectors
     {
         public override Result<ISystem> Inject(in Context context) => context.Member switch
         {
-            Type type when DefaultUtility.Default(type) is ISystem instance => type.InstanceFields()
-                .Where(field => field.IsPublic)
-                .Select(context, (field, state) => state.Inject(field).Do(value => field.SetValue(instance, value)))
+            Type type when DefaultUtility.Default(type) is ISystem instance => type.GetData().InstanceFields
+                .Where(field => field.Field.IsPublic)
+                .Select(context, (field, state) => state.Inject(field).Do(value => field.Field.SetValue(instance, value)))
                 .All()
                 .Return(instance),
             FieldInfo field => context.Inject<ISystem>(field.FieldType),

@@ -14,7 +14,7 @@ namespace Entia.Experimental.Serializers
 
         public override bool Instantiate(out Assembly instance, in DeserializeContext context)
         {
-            if (context.Reader.Read(out string name) && TypeUtility.TryGetAssembly(name, out instance))
+            if (context.Reader.Read(out string name) && ReflectionUtility.TryGetAssembly(name, out instance))
                 return true;
             instance = default;
             return false;

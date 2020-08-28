@@ -24,8 +24,8 @@ namespace Entia.Json
             References = references;
         }
 
-        public Node Convert<T>(in T instance) => Convert(instance, TypeUtility.GetData<T>());
-        public Node Convert(object instance, Type type) => Convert(instance, TypeUtility.GetData(type));
+        public Node Convert<T>(in T instance) => Convert(instance, ReflectionUtility.GetData<T>());
+        public Node Convert(object instance, Type type) => Convert(instance, ReflectionUtility.GetData(type));
         public Node Convert<T>(in T instance, TypeData type) =>
             TrySpecial(instance, type, out var node) ? node : Abstract<T>(instance, type);
         public Node Convert(object instance, TypeData type) =>
@@ -59,9 +59,9 @@ namespace Entia.Json
                 case TypeCode.Char: node = (char)instance; return true;
                 case TypeCode.String: node = (string)instance; return true;
                 default:
-                    if (type.Definition == typeof(Nullable<>))
+                    if (type.Definition == typeof(Nullable<>) && type.Element.TryValue(out var element))
                     {
-                        node = Convert(instance, type.Element);
+                        node = Convert(instance, element);
                         return true;
                     }
                     else if (TryReference(instance, out var identifier))
@@ -141,8 +141,9 @@ namespace Entia.Json
             for (int i = 0; i < fields.Length; i++)
             {
                 var field = fields[i];
-                members[i * 2] = Node.String(field.Name, Node.Tags.Plain);
-                members[i * 2 + 1] = Convert(field.GetValue(instance), field.FieldType);
+                var name = field.AutoProperty.TryValue(out var property) ? property.Property.Name : field.Field.Name;
+                members[i * 2] = Node.String(name, Node.Tags.Plain);
+                members[i * 2 + 1] = Convert(field.Field.GetValue(instance), field.Type);
             }
             return Node.Object(members).With(identifier);
         }

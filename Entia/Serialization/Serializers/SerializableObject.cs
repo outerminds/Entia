@@ -36,7 +36,7 @@ namespace Entia.Experimental.Serializers
                         info.AddValue(name, value);
                 }
                 var arguments = new object[] { info, _context };
-                instance = (ISerializable)Activator.CreateInstance(context.Type, TypeUtility.Instance, null, arguments, null);
+                instance = (ISerializable)Activator.CreateInstance(context.Type, ReflectionUtility.Instance, null, arguments, null);
                 return true;
             }
             instance = default;

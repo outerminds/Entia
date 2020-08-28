@@ -201,7 +201,7 @@ namespace Entia.Experimental.Serialization
             var context = With(type);
             if ((serializer is ISerializer || World.Container.TryGet<ISerializer>(type, out serializer)) &&
                 serializer.Instantiate(out instance, context) &&
-                TypeUtility.Is(instance, type))
+                ReflectionUtility.Is(instance, type))
             {
                 References[reference] = instance;
                 if (serializer.Initialize(ref instance, context))

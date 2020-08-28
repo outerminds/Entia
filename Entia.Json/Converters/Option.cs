@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Entia.Core;
 using Entia.Core.Providers;
 
@@ -19,8 +18,7 @@ namespace Entia.Json.Converters
                         .TryValue(out var converter))
                         yield return converter;
                     if (type.InstanceConstructors.TryFirst(current =>
-                        current.GetParameters() is ParameterInfo[] parameters &&
-                        parameters.Length == 2, out var constructor))
+                        current.Parameters.Length == 2, out var constructor))
                         yield return new AbstractOption(constructor, argument);
                 }
             }
@@ -44,10 +42,10 @@ namespace Entia.Json.Converters
 
     public sealed class AbstractOption : Converter<IOption>
     {
-        readonly ConstructorInfo _constructor;
+        readonly ConstructorData _constructor;
         readonly TypeData _argument;
 
-        public AbstractOption(ConstructorInfo constructor, TypeData argument)
+        public AbstractOption(ConstructorData constructor, TypeData argument)
         {
             _constructor = constructor;
             _argument = argument;
@@ -65,7 +63,7 @@ namespace Entia.Json.Converters
             if (context.Node.IsNull()) return default;
             var value = context.Convert(context.Node, _argument);
             if (value is null) return default;
-            return _constructor.Invoke(new object[] { Option.Tags.Some, value }) as IOption;
+            return _constructor.Constructor.Invoke(new object[] { Option.Tags.Some, value }) as IOption;
         }
     }
 }

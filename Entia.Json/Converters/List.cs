@@ -14,9 +14,8 @@ namespace Entia.Json.Converters
             public override IEnumerable<IConverter> Provide(TypeData type)
             {
                 {
-                    if (type.Interfaces.TryFirst(@interface => @interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IList<>), out var @interface) &&
-                        @interface.GetGenericArguments() is Type[] arguments &&
-                        arguments.TryFirst(out var argument))
+                    if (type.Interfaces.TryFirst(@interface => @interface.Definition == typeof(IList<>), out var @interface) &&
+                        @interface.Arguments.TryFirst(out var argument))
                     {
                         if (type.Definition == typeof(List<>))
                         {
@@ -42,14 +41,14 @@ namespace Entia.Json.Converters
                                 .TryValue(out var converter))
                                 yield return converter;
                         }
-                        if (type.DefaultConstructor is ConstructorInfo constructor)
+                        if (type.DefaultConstructor.TryValue(out var constructor))
                             yield return new AbstractList(argument, constructor);
                     }
                 }
                 {
-                    if (type.Interfaces.Contains(typeof(IList)) &&
-                        type.DefaultConstructor is ConstructorInfo constructor)
-                        yield return new AbstractList(TypeUtility.GetData<object>(), constructor);
+                    if (type.Interfaces.Any(@interface => @interface == typeof(IList)) &&
+                        type.DefaultConstructor.TryValue(out var constructor))
+                        yield return new AbstractList(ReflectionUtility.GetData<object>(), constructor);
                 }
             }
         }

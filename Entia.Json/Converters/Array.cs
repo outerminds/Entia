@@ -11,7 +11,7 @@ namespace Entia.Json.Converters
         {
             public override IEnumerable<IConverter> Provide(TypeData type)
             {
-                if (type.Type.IsArray && type.Element is TypeData element)
+                if (type.Type.IsArray && type.Element.TryValue(out var element))
                 {
                     switch (element.Code)
                     {

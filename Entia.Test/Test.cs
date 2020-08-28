@@ -24,7 +24,7 @@ namespace Entia.Test
             var components = new List<Type>();
             var resources = new List<Type>();
 
-            foreach (var type in TypeUtility.AllTypes.Where(type => !type.IsAbstract && !type.IsGenericType))
+            foreach (var type in ReflectionUtility.AllTypes.Where(type => !type.IsAbstract && !type.IsGenericType))
             {
                 if (type.Is<IInjectable>()) injectables.Add(type);
                 if (type.Is<Queryables.IQueryable>()) queryables.Add(type);

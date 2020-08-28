@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using Entia.Core;
 using Entia.Experimental.Serialization;
@@ -32,9 +33,11 @@ namespace Entia.Experimental.Serializers
         {
             if (context.Reader.Read(out int token) &&
                 context.Deserialize(out Type declaring) &&
-                declaring.Method(token) is MethodInfo method)
+                declaring.GetData().Members.Values
+                    .OfType<MethodData>()
+                    .Select(current => current.Method)
+                    .TryFirst(current => current.MetadataToken == token, out instance))
             {
-                instance = method;
                 if (instance.IsGenericMethodDefinition)
                 {
                     if (context.Reader.Read(out int count))

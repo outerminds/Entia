@@ -15,13 +15,12 @@ namespace Entia.Json.Converters
             public override IEnumerable<IConverter> Provide(TypeData type)
             {
                 {
-                    if (type.Interfaces.TryFirst(@interface => @interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IEnumerable<>), out var @interface) &&
-                        @interface.GetGenericArguments() is Type[] arguments &&
-                        arguments.Select(TypeUtility.GetData).TryFirst(out var element) &&
+                    if (type.Interfaces.TryFirst(@interface => @interface.Definition == typeof(IEnumerable<>), out var @interface) &&
+                        @interface.Arguments.TryFirst(out var element) &&
+                        element.Array.TryValue(out var array) &&
                         type.InstanceConstructors.TryFirst(constructor =>
-                            constructor.GetParameters() is ParameterInfo[] parameters &&
-                            parameters.TryFirst(out var parameter) &&
-                            element.Array.Type.Is(parameter.ParameterType), out var constructor))
+                            constructor.Parameters.TryFirst(out var parameter) &&
+                            array.Type.Is(parameter.ParameterType), out var constructor))
                     {
                         if (Core.Option.Try(() => Activator.CreateInstance(typeof(Enumerable<>).MakeGenericType(element), constructor))
                             .Cast<IConverter>()
@@ -31,10 +30,9 @@ namespace Entia.Json.Converters
                     }
                 }
                 {
-                    if (type.Interfaces.Contains(typeof(IEnumerable)) &&
+                    if (type.Interfaces.Any(@interface => @interface == typeof(IEnumerable)) &&
                         type.InstanceConstructors.TryFirst(constructor =>
-                            constructor.GetParameters() is ParameterInfo[] parameters &&
-                            parameters.TryFirst(out var parameter) &&
+                            constructor.Parameters.TryFirst(out var parameter) &&
                             typeof(object[]).Is(parameter.ParameterType), out var constructor))
                         yield return new Converters.Enumerable(typeof(object), constructor);
                 }

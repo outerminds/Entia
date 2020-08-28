@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using Entia.Core;
 using Entia.Experimental.Serialization;
@@ -17,11 +18,10 @@ namespace Entia.Experimental.Serializers
         {
             if (context.Reader.Read(out int token) &&
                 context.Deserialize(out Type declaring) &&
-                declaring.Member(token) is MemberInfo member)
-            {
-                instance = member;
+                declaring.GetData().Members.Values
+                    .Select(current => current.Member)
+                    .TryFirst(current => current.MetadataToken == token, out instance))
                 return true;
-            }
             instance = default;
             return false;
         }

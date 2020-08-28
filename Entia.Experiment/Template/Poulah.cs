@@ -241,19 +241,18 @@ namespace Entia.Experimental.Templaters
         public IValue Template(in Context context)
         {
             var value = context.Value;
-            if (Utility.IsPrimitive(value)) return new Values.Primitive(value);
+            if (Utility.IsPrimitive(value)) return new Primitive(value);
 
             var clone = CloneUtility.Shallow(value);
-            var fields = clone.GetType().InstanceFields();
+            var fields = clone.GetType().GetData().InstanceFields;
             var members = new List<(FieldInfo, int)>(fields.Length);
-            for (int i = 0; i < fields.Length; i++)
+            foreach (var field in fields)
             {
-                var field = fields[i];
-                var member = field.GetValue(clone);
+                var member = field.Field.GetValue(clone);
                 if (Utility.IsPrimitive(member)) continue;
                 members.Add((field, context.Template(member)));
                 // NOTE: don't keep references to values that will be overritten
-                field.SetValue(clone, null);
+                field.Field.SetValue(clone, null);
             }
             return new Values.Object(clone, members.ToArray(), System.Array.Empty<(PropertyInfo, int)>());
         }

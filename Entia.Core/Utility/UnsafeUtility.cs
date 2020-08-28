@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -34,7 +35,7 @@ namespace Entia.Core
             public static readonly ReferenceReturn<T> As = _ => throw new NotImplementedException();
             public static readonly PointerReturn<T> AsPointer = (in T _) => throw new NotImplementedException();
             public static readonly ReferenceOffset<T> Offset = (in T _, int __) => throw new NotImplementedException();
-            public static readonly FieldInfo[] Fields = typeof(T).InstanceFields();
+            public static readonly FieldData[] Fields = typeof(T).GetData().InstanceFields;
 
             public static readonly int Size = IntPtr.Size;
             public static readonly (FieldInfo field, int offset)[] Layout = { };
@@ -59,8 +60,8 @@ namespace Entia.Core
                     for (int i = 0; i < Fields.Length; i++)
                     {
                         var field = Fields[i];
-                        object box = UnsafeUtility.As<byte, T>(ref bytes[0]);
-                        field.SetValue(box, default);
+                        object box = As<byte, T>(ref bytes[0]);
+                        field.Field.SetValue(box, default);
                         var unbox = (T)box;
                         var offset = IndexOf(UnsafeUtility.AsPointer(ref unbox), Size);
                         Layout[i] = (field, offset);
@@ -87,7 +88,7 @@ namespace Entia.Core
 
         static readonly PointerReturn _return = _ => _;
         static readonly PointerOffset _offset = (pointer, offset) => pointer + offset;
-        static readonly FieldInfo[] _fields = typeof(Delegate).InstanceFields();
+        static readonly FieldData[] _fields = typeof(Delegate).GetData().InstanceFields;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Set<T>(in T reference, in T value) => AsReference(reference) = value;
@@ -128,7 +129,7 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Copy(Delegate source, Delegate target)
         {
-            foreach (var field in _fields) field.SetValue(target, field.GetValue(source));
+            foreach (var field in _fields) field.Field.SetValue(target, field.Field.GetValue(source));
         }
     }
 }

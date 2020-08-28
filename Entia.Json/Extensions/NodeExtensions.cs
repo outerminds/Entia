@@ -63,12 +63,6 @@ namespace Entia.Json
             return node;
         }
 
-        public static Node Map<TState>(this Node node, in TState state, Func<Node, TState, Node> map)
-        {
-            if (node.Children.Length > 0) node.With(node.Children.Select(state, map));
-            return node;
-        }
-
         public static Node Add(this Node node, Node child) => node.With(node.Children.Append(child));
         public static Node Add(this Node node, params Node[] children) => node.With(node.Children.Append(children));
         public static Node AddAt(this Node node, int index, Node child) => node.With(node.Children.Insert(index, child));
@@ -96,11 +90,36 @@ namespace Entia.Json
 
         public static Node Replace(this Node node, Node child, Node replacement) =>
             node.ReplaceAt(Array.IndexOf(node.Children, child), replacement);
+
         public static Node ReplaceAt(this Node node, int index, Node replacement)
         {
-            if (index < 0 || index >= node.Children.Length) return node;
+            if (index < 0 || index >= node.Children.Length ||
+                ReferenceEquals(node.Children[index], replacement))
+                return node;
+
             var children = node.Children.Clone() as Node[];
             children[index] = replacement;
+            return node.With(children);
+        }
+
+        public static Node ReplaceAt(this Node node, int index, params Node[] replacements)
+        {
+            static bool AreEqual(Node[] source, Node[] target, int index)
+            {
+                for (int i = 0; i < target.Length; i++)
+                {
+                    if (ReferenceEquals(source[index + i], target[i])) continue;
+                    return false;
+                }
+                return true;
+            }
+
+            if (index < 0 || index + replacements.Length >= node.Children.Length ||
+                AreEqual(node.Children, replacements, index))
+                return node;
+
+            var children = node.Children.Clone() as Node[];
+            Array.Copy(replacements, 0, children, index, replacements.Length);
             return node.With(children);
         }
 
@@ -119,14 +138,56 @@ namespace Entia.Json
             }
         }
 
+        public static Node MapItem(this Node node, int index, Func<Node, Node> map) =>
+            node.TryItem(index, out var item) ? node.ReplaceAt(index, map(item)) : node;
+        public static Node MapItems(this Node node, Func<Node, Node> map) =>
+            node.MapItems((_, item) => map(item));
+        public static Node MapItems(this Node node, Func<int, Node, Node> map)
+        {
+            if (node.IsArray() && node.Children.Length > 0)
+            {
+                var children = new Node[node.Children.Length];
+                for (int i = 0; i < node.Children.Length; i++)
+                    children[i] = map(i, node.Children[i]);
+                return node.With(children);
+            }
+            else return node;
+        }
+
+        public static Node MapMember(this Node node, string key, Func<Node, Node> map) =>
+            node.MapMember(key, value => (key, map(value)));
+        public static Node MapMember(this Node node, string key, Func<Node, (string key, Node value)> map)
+        {
+            if (node.TryMember(key, out var value, out var index))
+            {
+                (key, value) = map(value);
+                return node.ReplaceAt(index, key, value);
+            }
+            else return node;
+        }
+
+        public static Node MapMembers(this Node node, Func<string, Node, Node> map) =>
+            node.MapMembers((key, value) => (key, map(key, value)));
+        public static Node MapMembers(this Node node, Func<string, Node, (string key, Node value)> map)
+        {
+            if (node.IsObject() && node.Children.Length > 0)
+            {
+                var children = new Node[node.Children.Length];
+                for (int i = 0; i < children.Length; i += 2)
+                    (children[i], children[i + 1]) = map(node.Children[i].AsString(), node.Children[i + 1]);
+                return node.With(children);
+            }
+            else return node;
+        }
+
         public static Node AddMember(this Node node, string key, Node value) =>
-            node.TryMember(key, out _, out var index) ? node.ReplaceAt(index, value) : node.Add(Node.String(key), value);
+            node.TryMember(key, out _, out var index) ? node.ReplaceAt(index, key, value) : node.Add(key, value);
         public static Node RemoveMember(this Node node, string key) =>
             node.TryMember(key, out _, out var index) ? node.RemoveAt(index, 2) : node;
 
         public static Node RemoveMembers(this Node node, Func<string, Node, bool> match)
         {
-            if (node.IsObject())
+            if (node.IsObject() && node.Children.Length > 0)
             {
                 var children = new List<Node>(node.Children.Length);
                 foreach (var (key, value) in node.Members())
@@ -145,7 +206,7 @@ namespace Entia.Json
         public static bool TryMember(this Node node, string key, out Node value) => node.TryMember(key, out value, out _);
         public static bool TryMember(this Node node, string key, out Node value, out int index)
         {
-            if (node.IsObject())
+            if (node.IsObject() && node.Children.Length > 0)
             {
                 for (index = 0; index < node.Children.Length; index += 2)
                 {

@@ -20,8 +20,9 @@ namespace Entia.Dependers
     public sealed class Fields : IDepender
     {
         public IEnumerable<IDependency> Depend(in Context context) =>
-            context.Member is Type type ? type.InstanceFields().SelectMany(context.Dependencies) :
-            Array.Empty<IDependency>();
+            context.Member is Type type ?
+                type.GetData().InstanceFields.SelectMany(context, (field, state) => state.Dependencies(field.Field)) :
+                Array.Empty<IDependency>();
     }
 
     public sealed class Provider : IDepender

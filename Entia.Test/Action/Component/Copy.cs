@@ -147,7 +147,7 @@ namespace Entia.Test
         }
         public override string ToString() => $"{GetType().Format()}({_source}, {_target}, {_include}, {_success})";
 
-        bool Is(IComponent component) => TypeUtility.Is(component, _type, true, true);
+        bool Is(IComponent component) => ReflectionUtility.Is(component, _type, true, true);
     }
 
     public sealed class CopyComponents : Action<World, Model>
