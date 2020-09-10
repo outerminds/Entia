@@ -375,6 +375,9 @@ namespace Entia.Core
 
         public static Result<T[]> All<T>(this Result<T>[] results)
         {
+            if (results.Length == 0) return Success(Array.Empty<T>());
+            if (results.Length == 1) return results[0].Map(value => new[] { value });
+
             var values = new T[results.Length];
             var messages = new List<string>(results.Length);
             var success = true;
@@ -393,6 +396,9 @@ namespace Entia.Core
 
         public static Result<Unit> All(this Result<Unit>[] results)
         {
+            if (results.Length == 0) return Success();
+            if (results.Length == 1) return results[0];
+
             var messages = new List<string>(results.Length);
             var success = true;
             for (var i = 0; i < results.Length; i++)
@@ -410,6 +416,9 @@ namespace Entia.Core
 
         public static Result<T> Any<T>(this Result<T>[] results)
         {
+            if (results.Length == 0) return Failure();
+            if (results.Length == 1) return results[0];
+
             var messages = new List<string>(results.Length);
             foreach (var result in results)
             {

@@ -30,16 +30,8 @@ namespace Entia.Json
             public MemberEnumerator(Node node)
             {
                 Current = default;
-                if (node.IsObject())
-                {
-                    _nodes = node.Children;
-                    _index = 0;
-                }
-                else
-                {
-                    _nodes = Array.Empty<Node>();
-                    _index = 0;
-                }
+                _nodes = node.Children;
+                _index = 0;
             }
 
             public bool MoveNext()
@@ -144,11 +136,10 @@ namespace Entia.Json
             node.MapItems((_, item) => map(item));
         public static Node MapItems(this Node node, Func<int, Node, Node> map)
         {
-            if (node.IsArray() && node.Children.Length > 0)
+            if (node.TryItems(out var items) && items.Length > 0)
             {
-                var children = new Node[node.Children.Length];
-                for (int i = 0; i < node.Children.Length; i++)
-                    children[i] = map(i, node.Children[i]);
+                var children = new Node[items.Length];
+                for (int i = 0; i < items.Length; i++) children[i] = map(i, items[i]);
                 return node.With(children);
             }
             else return node;
@@ -200,8 +191,6 @@ namespace Entia.Json
             }
             else return node;
         }
-
-        public static MemberEnumerable Members(this Node node) => new MemberEnumerable(node);
         public static bool HasMember(this Node node, string key) => node.TryMember(key, out _, out _);
         public static bool TryMember(this Node node, string key, out Node value) => node.TryMember(key, out value, out _);
         public static bool TryMember(this Node node, string key, out Node value, out int index)
@@ -225,7 +214,7 @@ namespace Entia.Json
 
         public static bool TryItem(this Node node, int index, out Node item)
         {
-            if (node.IsArray() && index >= 0 && index < node.Children.Length)
+            if (node.TryItems(out var items) && index >= 0 && index < items.Length)
             {
                 item = node.Children[index];
                 return true;
@@ -234,8 +223,25 @@ namespace Entia.Json
             return false;
         }
 
-        public static Node[] Items(this Node node) => node.IsArray() ? node.Children : Array.Empty<Node>();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryMembers(this Node node, out MemberEnumerable members)
+        {
+            members = node.Members();
+            return node.IsObject();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryItems(this Node node, out Node[] items)
+        {
+            items = node.Children;
+            return node.IsArray();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static MemberEnumerable Members(this Node node) => node.TryMembers(out var members) ? members : new MemberEnumerable(Node.Null);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Node[] Items(this Node node) => node.TryItems(out var items) ? items : Array.Empty<Node>();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Is(this Node node, Node.Kinds kind) => node.Kind == kind;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -355,11 +355,12 @@ namespace Entia.Core
 
         public static Option<T[]> All<T>(this Option<T>[] options)
         {
+            if (options.Length == 0) return From(Array.Empty<T>());
+
             var values = new T[options.Length];
             for (var i = 0; i < options.Length; i++)
             {
-                var option = options[i];
-                if (option.TryValue(out var value)) values[i] = value;
+                if (options[i].TryValue(out values[i])) continue;
                 else return None();
             }
             return values;

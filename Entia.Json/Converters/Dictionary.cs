@@ -53,7 +53,7 @@ namespace Entia.Json.Converters
                 items[index++] = context.Convert(pair.Key);
                 items[index++] = context.Convert(pair.Value);
             }
-            return Node.Array(items);
+            return typeof(TKey) == typeof(string) ? Node.Object(items) : Node.Array(items);
         }
 
         public override Dictionary<TKey, TValue> Instantiate(in ConvertFromContext context) =>
@@ -82,7 +82,7 @@ namespace Entia.Json.Converters
                 items[index++] = context.Convert(pair.Key);
                 items[index++] = context.Convert(pair.Value);
             }
-            return Node.Array(items);
+            return typeof(TKey) == typeof(string) ? Node.Object(items) : Node.Array(items);
         }
 
         public override IDictionary<TKey, TValue> Instantiate(in ConvertFromContext context) =>
@@ -118,7 +118,7 @@ namespace Entia.Json.Converters
                 items[index++] = context.Convert(key, _key);
                 items[index++] = context.Convert(instance[key], _value);
             }
-            return Node.Array(items);
+            return _key.Type == typeof(string) ? Node.Object(items) : Node.Array(items);
         }
 
         public override IDictionary Instantiate(in ConvertFromContext context) =>
