@@ -223,11 +223,10 @@ namespace Entia.Json
             return false;
         }
 
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryMembers(this Node node, out MemberEnumerable members)
         {
-            members = node.Members();
+            members = new MemberEnumerable(node);
             return node.IsObject();
         }
 

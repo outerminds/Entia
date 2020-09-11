@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -27,7 +28,7 @@ namespace Entia.Json
             {
                 case Node.Kinds.Null: builder.Append("null"); break;
                 case Node.Kinds.Boolean: builder.Append((bool)node.Value ? "true" : "false"); break;
-                case Node.Kinds.Number: builder.Append(node.Value); break;
+                case Node.Kinds.Number: builder.Append(NumberToString(node)); break;
                 case Node.Kinds.String:
                     var value = (string)node.Value;
                     if (value.Length == 0) builder.Append(@"""""");
@@ -80,7 +81,7 @@ namespace Entia.Json
             {
                 case Node.Kinds.Null: builder.Append("null"); break;
                 case Node.Kinds.Boolean: builder.Append((bool)node.Value ? "true" : "false"); break;
-                case Node.Kinds.Number: builder.Append(node.Value); break;
+                case Node.Kinds.Number: builder.Append(NumberToString(node)); break;
                 case Node.Kinds.String:
                     var value = (string)node.Value;
                     if (value.Length == 0) builder.Append(@"""""");
@@ -143,6 +144,13 @@ namespace Entia.Json
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static string NumberToString(Node node) =>
+            node.HasInteger() ? ((long)node.Value).ToString(CultureInfo.InvariantCulture) :
+            node.HasRational() ? ((double)node.Value).ToString(CultureInfo.InvariantCulture) :
+            System.Convert.ToString(node.Value, CultureInfo.InvariantCulture);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void Indent(int indent, StringBuilder builder) => builder.Append(new string(' ', indent * 2));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -210,6 +218,7 @@ namespace Entia.Json
             builder.Append(value, index, count - index);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static char ToHex(int value) => value switch
         {
             0 => '0',
