@@ -77,9 +77,10 @@ namespace Entia.Json.Converters
         public static IConverter Default(Type type) => _converters.GetOrAdd(type, key => CreateConverter(key));
         public static IConverter Default<T>() => Cache<T>.Default;
 
-        public static Converter<TSource> Create<TSource, TTarget>(InFunc<TSource, TTarget> to, InFunc<TTarget, TSource> from) => Create(
-            (in TSource instance, in ToContext context) => context.Convert(to(instance)),
-            (in FromContext context) => from(context.Convert<TTarget>(context.Node)));
+        public static Converter<TSource> Create<TSource, TTarget>(InFunc<TSource, TTarget> to, InFunc<TTarget, TSource> from, Converter<TTarget> converter = null) =>
+            Create(
+                (in TSource instance, in ToContext context) => context.Convert(to(instance), converter, converter),
+                (in FromContext context) => from(context.Convert<TTarget>(context.Node, converter, converter)));
 
         public static Converter<T> Create<T>(InFunc<T, Node> to, Func<Node, T> from) => Create(
             (in T instance, in ToContext context) => to(instance),

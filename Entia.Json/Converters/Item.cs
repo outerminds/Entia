@@ -26,25 +26,19 @@ namespace Entia.Json.Converters
         public delegate Node To<T>(in T instance, in ToContext context);
         public delegate T From<T>(Node node, in FromContext context);
 
-        static class Cache<T>
+        public static Item<T> Field<T, TValue>(uint index, Get<T, TValue> get, To<TValue> to = null, From<TValue> from = null, Converter<TValue> converter = null)
         {
-            public static readonly To<T> To = (in T value, in ToContext context) => context.Convert(value);
-            public static readonly From<T> From = (Node node, in FromContext context) => context.Convert<T>(node);
-        }
-
-        public static Item<T> Field<T, TValue>(uint index, Get<T, TValue> get, To<TValue> to = null, From<TValue> from = null)
-        {
-            to ??= Cache<TValue>.To;
-            from ??= Cache<TValue>.From;
+            to ??= (in TValue value, in ToContext context) => context.Convert(value, converter, converter);
+            from ??= (Node node, in FromContext context) => context.Convert<TValue>(node, converter, converter);
             return new Item<T>(index,
                 (in T instance, in ToContext context) => to(get(instance), context),
                 (ref T instance, in FromContext context) => UnsafeUtility.Set(get(instance), from(context.Node, context)));
         }
 
-        public static Item<T> Property<T, TValue>(uint index, Getter<T, TValue> get, Setter<T, TValue> set, To<TValue> to = null, From<TValue> from = null)
+        public static Item<T> Property<T, TValue>(uint index, Getter<T, TValue> get, Setter<T, TValue> set, To<TValue> to = null, From<TValue> from = null, Converter<TValue> converter = null)
         {
-            to ??= Cache<TValue>.To;
-            from ??= Cache<TValue>.From;
+            to ??= (in TValue value, in ToContext context) => context.Convert(value, converter, converter);
+            from ??= (Node node, in FromContext context) => context.Convert<TValue>(node, converter, converter);
             return new Item<T>(index,
                 (in T instance, in ToContext context) => to(get(instance), context),
                 (ref T instance, in FromContext context) => set(ref instance, from(context.Node, context)));

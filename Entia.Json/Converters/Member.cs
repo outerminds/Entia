@@ -30,18 +30,11 @@ namespace Entia.Json.Converters
         public delegate Node To<T>(in T instance, in ToContext context);
         public delegate T From<T>(Node node, in FromContext context);
 
-        static class Cache<T>
+        public static Member<T> Field<T, TValue>(string name, Get<T, TValue> get, To<TValue> to = null, From<TValue> from = null, Validate<TValue> validate = null, string[] aliases = null, Converter<TValue> converter = null)
         {
-            public static readonly To<T> To = (in T value, in ToContext context) => context.Convert(value);
-            public static readonly From<T> From = (Node node, in FromContext context) => context.Convert<T>(node);
-            public static readonly Validate<T> Validate = (in T _) => true;
-        }
-
-        public static Member<T> Field<T, TValue>(string name, Get<T, TValue> get, To<TValue> to = null, From<TValue> from = null, Validate<TValue> validate = null, string[] aliases = null)
-        {
-            to ??= Cache<TValue>.To;
-            from ??= Cache<TValue>.From;
-            validate ??= Cache<TValue>.Validate;
+            to ??= (in TValue value, in ToContext context) => context.Convert(value, converter, converter);
+            from ??= (Node node, in FromContext context) => context.Convert<TValue>(node, converter, converter);
+            validate ??= (in TValue _) => true;
             aliases ??= Array.Empty<string>();
             return new Member<T>(name, aliases,
                 (in T instance, in ToContext context) =>
@@ -57,11 +50,11 @@ namespace Entia.Json.Converters
                 });
         }
 
-        public static Member<T> Property<T, TValue>(string name, Getter<T, TValue> get, Setter<T, TValue> set, To<TValue> to = null, From<TValue> from = null, Validate<TValue> validate = null, string[] aliases = null)
+        public static Member<T> Property<T, TValue>(string name, Getter<T, TValue> get, Setter<T, TValue> set, To<TValue> to = null, From<TValue> from = null, Validate<TValue> validate = null, string[] aliases = null, Converter<TValue> converter = null)
         {
-            to ??= Cache<TValue>.To;
-            from ??= Cache<TValue>.From;
-            validate ??= Cache<TValue>.Validate;
+            to ??= (in TValue value, in ToContext context) => context.Convert(value, converter, converter);
+            from ??= (Node node, in FromContext context) => context.Convert<TValue>(node, converter, converter);
+            validate ??= (in TValue _) => true;
             aliases ??= Array.Empty<string>();
             return new Member<T>(name, aliases,
                 (in T instance, in ToContext context) =>
