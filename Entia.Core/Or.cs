@@ -209,6 +209,30 @@ namespace Entia.Core
             or.Map(value => value, map);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TLeft LeftOr<TLeft, TRight>(in this Or<TLeft, TRight> or, in TLeft value) =>
+            or.TryLeft(out var left) ? left : value;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TLeft LeftOr<TLeft, TRight, TState>(in this Or<TLeft, TRight> or, in TState state, Func<TRight, TState, TLeft> provide) =>
+            or.Match(state, (left, _) => left, provide);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TLeft LeftOr<TLeft, TRight>(in this Or<TLeft, TRight> or, Func<TRight, TLeft> provide) =>
+            or.Match(left => left, provide);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TRight RightOr<TLeft, TRight>(in this Or<TLeft, TRight> or, in TRight value) =>
+            or.TryRight(out var right) ? right : value;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TRight RightOr<TLeft, TRight, TState>(in this Or<TLeft, TRight> or, in TState state, Func<TLeft, TState, TRight> provide) =>
+            or.Match(state, provide, (right, _) => right);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TRight RightOr<TLeft, TRight>(in this Or<TLeft, TRight> or, Func<TLeft, TRight> provide) =>
+            or.Match(provide, right => right);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Or<TLeft, TRight> Do<TLeft, TRight, TState>(in this Or<TLeft, TRight> or, in TState state, Action<TLeft, TState> doLeft, Action<TRight, TState> doRight)
         {
             if (or.TryLeft(out var left)) doLeft(left, state);

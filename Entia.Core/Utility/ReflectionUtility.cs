@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 
 namespace Entia.Core
 {
@@ -109,7 +111,7 @@ namespace Entia.Core
             if (type == other) return true;
             else if (hierarchy) return type.Hierarchy().Any(child => child.Is(other, false, definition));
             else if (other.IsAssignableFrom(type)) return true;
-            else if (definition) return type.IsGenericType && other.IsGenericTypeDefinition && type.GetGenericTypeDefinition() == other;
+            else if (definition) return type.GenericDefinition() == other;
             else return false;
         }
 
@@ -145,10 +147,112 @@ namespace Entia.Core
 
         public static IEnumerable<Type> Hierarchy(this Type type)
         {
-            var data = GetData(type);
             yield return type;
-            foreach (var @base in data.Bases) yield return @base;
-            foreach (var @interface in data.Interfaces) yield return @interface;
+            foreach (var @base in type.Bases()) yield return @base;
+            foreach (var @interface in type.GetInterfaces()) yield return @interface;
         }
+
+        public static IEnumerable<Type> Bases(this Type type)
+        {
+            type = type.BaseType;
+            while (type != null)
+            {
+                yield return type;
+                type = type.BaseType;
+            }
+        }
+
+        public static Option<Type> GenericDefinition(this Type type) =>
+            type.IsGenericType ? type.GetGenericTypeDefinition() : default;
+
+        public static Option<object> DefaultInstance(this Type type)
+        {
+            try { return Array.CreateInstance(type, 1).GetValue(0); }
+            catch { return default; }
+        }
+
+        public static Option<Type> DictionaryInterface(this Type type, bool generic) => generic ?
+            type.GetInterfaces().FirstOrNone(@interface => @interface.GenericDefinition() == typeof(IDictionary<,>)) :
+            type.GetInterfaces().FirstOrNone(@interface => @interface == typeof(IDictionary));
+
+        public static Option<(Type key, Type value)> DictionaryArguments(this Type type, bool generic) => generic ?
+            type.DictionaryInterface(true).Bind(enumerable => enumerable.GetGenericArguments().Two()) :
+            type.DictionaryInterface(false).Return((typeof(object), typeof(object)));
+
+        public static Option<Type> EnumerableInterface(this Type type, bool generic) => generic ?
+            type.GetInterfaces().FirstOrNone(@interface => @interface.GenericDefinition() == typeof(IEnumerable<>)) :
+            type.GetInterfaces().FirstOrNone(@interface => @interface == typeof(IEnumerable));
+
+        public static Option<Type> EnumerableArgument(this Type type, bool generic) => generic ?
+            type.EnumerableInterface(generic).Bind(enumerable => enumerable.GetGenericArguments().FirstOrNone()) :
+            type.EnumerableInterface(generic).Return(typeof(object));
+
+        public static Option<ConstructorInfo> EnumerableConstructor(this Type type, bool generic) =>
+            type.EnumerableArgument(generic)
+                .Bind(argument => argument.ArrayType())
+                .Bind(array => type.Constructors(true, false).FirstOrNone(constructor =>
+                    constructor.GetParameters().TryFirst(out var parameter) &&
+                    array.Is(parameter.ParameterType)));
+
+        public static Option<Type> ArrayType(this Type type) => Option.Try(() => type.MakeArrayType());
+
+        public static Option<ConstructorInfo> SerializableConstructor(this Type type) =>
+            type.Is<ISerializable>() ?
+            type.Constructors(true, false).FirstOrNone(constructor =>
+                constructor.GetParameters() is var parameters &&
+                parameters.Length == 2 &&
+                parameters[0].ParameterType == typeof(SerializationInfo) &&
+                parameters[1].ParameterType == typeof(StreamingContext)) :
+            Option.None();
+
+        public static IEnumerable<FieldInfo> Fields(this Type type, bool instance = true, bool @static = true)
+        {
+            var flags = default(BindingFlags);
+            if (instance) flags |= Instance;
+            if (@static) flags |= Static;
+            if (flags == default) return Array.Empty<FieldInfo>();
+            return type.Hierarchy().SelectMany(@base => @base.GetFields(flags));
+        }
+
+        public static IEnumerable<PropertyInfo> Properties(this Type type, bool instance = true, bool @static = true, bool concrete = true)
+        {
+            var flags = default(BindingFlags);
+            if (instance) flags |= Instance;
+            if (@static) flags |= Static;
+            if (flags == default) return Array.Empty<PropertyInfo>();
+            var properties = type.Hierarchy().SelectMany(@base => @base.GetProperties(flags));
+            if (concrete) properties = properties.Where(property => property.IsConcrete());
+            return properties;
+        }
+
+        public static IEnumerable<ConstructorInfo> Constructors(this Type type, bool instance = true, bool @static = true)
+        {
+            var flags = default(BindingFlags);
+            if (instance) flags |= Instance;
+            if (@static) flags |= Static;
+            if (flags == default) return Array.Empty<ConstructorInfo>();
+            return type.GetConstructors(flags);
+        }
+
+        public static Option<ConstructorInfo> DefaultConstructor(this Type type) =>
+            type.Constructors(true, false).FirstOrNone(constructor => constructor.GetParameters().None());
+
+        public static Option<PropertyInfo> AutoProperty(this FieldInfo field)
+        {
+            if (field.IsPrivate && field.Name[0] == '<' &&
+                field.Name.IndexOf('>') is var index && index > 0 &&
+                field.Name.Substring(1, index - 1) is var name &&
+                field.DeclaringType.GetProperty(name, All) is PropertyInfo property &&
+                field.FieldType == property.PropertyType)
+                return property;
+            return Option.None();
+        }
+
+        public static Option<FieldInfo> BackingField(this PropertyInfo property) =>
+            property.DeclaringType.Fields().FirstOrNone(field => field.AutoProperty() == property);
+
+        public static bool IsAbstract(this PropertyInfo property) =>
+            (property.GetMethod?.IsAbstract ?? false) || (property.SetMethod?.IsAbstract ?? false);
+        public static bool IsConcrete(this PropertyInfo property) => !property.IsAbstract();
     }
 }

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Entia.Core.Documentation;
 
 namespace Entia.Core
@@ -148,8 +149,8 @@ namespace Entia.Core
         }
 
         static Entry[] _entries = { };
-        static readonly ConcurrentDictionary<Type, Entry> _typeToEntry = new ConcurrentDictionary<Type, Entry>();
         static readonly object _lock = new object();
+        static readonly ConcurrentDictionary<Type, Entry> _typeToEntry = new ConcurrentDictionary<Type, Entry>();
 
         [ThreadSafe]
         static bool TryGetEntry(Type type, out Entry entry)
@@ -161,35 +162,40 @@ namespace Entia.Core
         [ThreadSafe]
         static Entry GetEntry(Type type)
         {
-            if (_typeToEntry.TryGetValue(type, out var entry)) return entry;
-            return CreateEntry(type);
-        }
-
-        [ThreadSafe]
-        static Entry CreateEntry(Type type)
-        {
-            if (type.Is<TBase>())
+            static Entry CreateEntry(Type type)
             {
-                lock (_lock)
+                if (type.Is<TBase>())
                 {
-                    if (_typeToEntry.TryGetValue(type, out var entry)) return entry;
                     var data = ReflectionUtility.GetData(type);
                     var super = data.Bases
                         .Concat(data.Interfaces)
                         .SelectMany(@base => @base.Definition.Match(
                             definition => new[] { @base.Type, definition.Type },
                             () => new[] { @base.Type }))
-                        .Where(ReflectionUtility.Is<TBase>)
+                        .Where(@base => @base.Is<TBase>())
                         .Select(GetEntry)
                         .ToArray();
                     var sub = _entries.Where(current => current.Type.Is(type, true, true)).ToArray();
-                    entry = new Entry(type, _entries.Length, super, sub);
-                    ArrayUtility.Append(ref _entries, entry);
-                    for (int i = 0; i < super.Length; i++) ArrayUtility.Append(ref super[i].Sub, entry);
-                    return _typeToEntry[type] = entry;
+                    var entry = new Entry(type, _entries.Length, super, sub);
+
+                    // This lock prevents the race condition that would occur if 2 threads were creating an entry
+                    // at the same time. A thread may update the '_entries' field between the read and the write of
+                    // another thread.
+                    // Note that the 'ConcurrentDictionary' garantees that this function will be only called once
+                    // per key.
+                    // 'Interlocked.CompareExchange' could be used here but a lock seemed like the simpler option.
+                    lock (_lock)
+                    {
+                        Interlocked.Exchange(ref _entries, _entries.Append(entry));
+                        foreach (var current in super) Interlocked.Exchange(ref current.Sub, current.Sub.Append(entry));
+                    }
+
+                    return entry;
                 }
+                return default;
             }
-            return default;
+
+            return _typeToEntry.GetOrAdd(type, key => CreateEntry(key));
         }
 
         [ThreadSafe]

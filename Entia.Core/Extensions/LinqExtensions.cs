@@ -215,7 +215,7 @@ namespace Entia.Core
             return false;
         }
 
-        public static (T first, T second)? Two<T>(this IEnumerable<T> source)
+        public static Option<(T first, T second)> Two<T>(this IEnumerable<T> source)
         {
             var index = 0;
             var pair = default((T, T));
@@ -229,7 +229,7 @@ namespace Entia.Core
                 }
             }
 
-            return null;
+            return Option.None();
         }
 
         public static IEnumerable<T> Append<T>(this IEnumerable<T> source, params T[] values)
@@ -273,19 +273,21 @@ namespace Entia.Core
         public static IEnumerable<T[]> Combinations<T>(this IEnumerable<T> source, int size)
         {
             if (size <= 0) yield break;
-            if (size == 1) foreach (var item in source) yield return new T[] { item };
+            if (size == 1)
+            {
+                foreach (var item in source) yield return new T[] { item };
+                yield break;
+            }
+
+            var items = source.ToArray();
+            if (items.Length < size) yield break;
+            if (items.Length == size) yield return items;
             else
             {
-                var items = source.ToArray();
-                if (items.Length < size) yield break;
-                if (items.Length == size) yield return items;
-                else
+                for (var i = 0; i < items.Length; i++)
                 {
-                    for (var i = 0; i < items.Length; i++)
-                    {
-                        foreach (var combination in items.Skip(i + 1).Combinations(size - 1))
-                            yield return combination.Prepend(items[i]);
-                    }
+                    foreach (var combination in items.Skip(i + 1).Combinations(size - 1))
+                        yield return combination.Prepend(items[i]);
                 }
             }
         }
@@ -366,15 +368,42 @@ namespace Entia.Core
             foreach (var item in source) if (selector(item, state, out var value)) yield return value;
         }
 
+        public static IEnumerable<(T, T)> Tuples<T>(this IEnumerable<T> source)
+        {
+            var enumerator = source.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                var first = enumerator.Current;
+                if (enumerator.MoveNext()) yield return (first, enumerator.Current);
+            }
+        }
+
+        public static IEnumerable<(T, T, T)> Triples<T>(this IEnumerable<T> source)
+        {
+            var enumerator = source.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                var first = enumerator.Current;
+                if (enumerator.MoveNext())
+                {
+                    var second = enumerator.Current;
+                    if (enumerator.MoveNext()) yield return (first, second, enumerator.Current);
+                }
+            }
+        }
+
         public static IEnumerable<T[]> Window<T>(this IEnumerable<T> source, int size)
         {
-            if (size <= 0) yield break;
-
-            var items = source.ToArray();
-            for (var i = 0; i <= items.Length - size; i++)
+            var enumerator = source.GetEnumerator();
+            while (enumerator.MoveNext())
             {
                 var window = new T[size];
-                Array.Copy(items, i, window, 0, size);
+                window[0] = enumerator.Current;
+                for (int i = 1; i < size; i++)
+                {
+                    if (enumerator.MoveNext()) window[i] = enumerator.Current;
+                    else yield break;
+                }
                 yield return window;
             }
         }
@@ -383,5 +412,14 @@ namespace Entia.Core
         {
             foreach (var item in source) if (predicate(item, state)) yield return item;
         }
+
+        public static IEnumerable<T[]> Zip<T>(params IEnumerable<T>[] sources)
+        {
+            var enumerators = sources.Select(enumerable => enumerable.GetEnumerator());
+            while (enumerators.All(enumerator => enumerator.MoveNext()))
+                yield return enumerators.Select(enumerator => enumerator.Current);
+        }
+
+        public static IEnumerable<T[]> Zip<T>(this IEnumerable<IEnumerable<T>> sources) => Zip(sources.ToArray());
     }
 }

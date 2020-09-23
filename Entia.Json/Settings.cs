@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Entia.Core;
+using Entia.Json.Converters;
 
 namespace Entia.Json
 {
@@ -27,20 +29,31 @@ namespace Entia.Json
 
     public sealed class Settings
     {
-        public static readonly Settings Default = new Settings(Features.None, Formats.Compact, new Container());
+        public static readonly Settings Default = new Settings(Features.None, Formats.Compact);
 
         public readonly Features Features;
         public readonly Formats Format;
-        public readonly Container Container;
+        public readonly TypeMap<object, IConverter> Converters;
 
-        Settings(Features features, Formats formats, Container container)
+        Settings(Features features, Formats formats, params IConverter[] converters)
         {
             Features = features;
             Format = formats;
-            Container = container;
+            Converters = new TypeMap<object, IConverter>(converters.Select(converter => (converter.Type, converter)));
         }
 
-        public Settings With(Features? features = null, Formats? format = null, Container container = null) =>
-            new Settings(features ?? Features, format ?? Format, container ?? Container);
+        public IConverter Converter(Type type, IConverter @default = null, IConverter @override = null) =>
+            @override ??
+            (Converters.TryGet(type, out var converter) ? converter : default) ??
+            @default ??
+            Json.Converters.Converter.Default(type);
+        public IConverter Converter<T>(IConverter @default = null, IConverter @override = null) =>
+            @override ??
+            (Converters.TryGet<T>(out var converter) ? converter : default) ??
+            @default ??
+            Json.Converters.Converter.Default<T>();
+
+        public Settings With(Features? features = null, Formats? format = null, IConverter[] converters = null) =>
+            new Settings(features ?? Features, format ?? Format, converters ?? Converters.Values.ToArray());
     }
 }

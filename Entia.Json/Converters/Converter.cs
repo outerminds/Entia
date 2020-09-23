@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -7,33 +8,27 @@ using Entia.Core;
 
 namespace Entia.Json.Converters
 {
-    [Implementation(typeof(Node), typeof(ConcreteNode))]
-    [Implementation(typeof(DateTime), typeof(ConcreteDateTime))]
-    [Implementation(typeof(TimeSpan), typeof(ConcreteTimeSpan))]
-    [Implementation(typeof(Guid), typeof(ConcreteGuid))]
-    [Implementation(typeof(Option<>), typeof(Providers.Option))]
-    [Implementation(typeof(Array), typeof(Providers.Array))]
-    [Implementation(typeof(IList), typeof(Providers.List))]
-    [Implementation(typeof(IDictionary), typeof(Providers.Dictionary))]
-    [Implementation(typeof(IEnumerable), typeof(Providers.Enumerable))]
-    [Implementation(typeof(ISerializable), typeof(Providers.Serializable))]
+    public sealed class ConverterAttribute : PreserveAttribute { }
+
     public interface IConverter : ITrait
     {
-        Node Convert(in ConvertToContext context);
-        object Instantiate(in ConvertFromContext context);
-        void Initialize(ref object instance, in ConvertFromContext context);
+        Type Type { get; }
+        Node Convert(in ToContext context);
+        object Instantiate(in FromContext context);
+        void Initialize(ref object instance, in FromContext context);
     }
 
     public abstract class Converter<T> : IConverter
     {
-        public abstract Node Convert(in T instance, in ConvertToContext context);
-        public abstract T Instantiate(in ConvertFromContext context);
-        public virtual void Initialize(ref T instance, in ConvertFromContext context) { }
+        public virtual Type Type => typeof(T);
+        public abstract Node Convert(in T instance, in ToContext context);
+        public abstract T Instantiate(in FromContext context);
+        public virtual void Initialize(ref T instance, in FromContext context) { }
 
-        Node IConverter.Convert(in ConvertToContext context) =>
+        Node IConverter.Convert(in ToContext context) =>
             context.Instance is T casted ? Convert(casted, context) : Node.Null;
-        object IConverter.Instantiate(in ConvertFromContext context) => Instantiate(context);
-        void IConverter.Initialize(ref object instance, in ConvertFromContext context)
+        object IConverter.Instantiate(in FromContext context) => Instantiate(context);
+        void IConverter.Initialize(ref object instance, in FromContext context)
         {
             if (instance is T casted)
             {
@@ -46,10 +41,10 @@ namespace Entia.Json.Converters
     public static class Converter
     {
         public delegate Option<(int version, Node node)> Upgrade(Node node);
-        public delegate bool Validate(TypeData type);
-        public delegate Node Convert<T>(in T instance, in ConvertToContext context);
-        public delegate T Instantiate<T>(in ConvertFromContext context);
-        public delegate void Initialize<T>(ref T instance, in ConvertFromContext context);
+        public delegate bool Validate(Type type);
+        public delegate Node Convert<T>(in T instance, in ToContext context);
+        public delegate T Instantiate<T>(in FromContext context);
+        public delegate void Initialize<T>(ref T instance, in FromContext context);
 
         sealed class Function<T> : Converter<T>
         {
@@ -64,25 +59,39 @@ namespace Entia.Json.Converters
                 _initialize = initialize;
             }
 
-            public override Node Convert(in T instance, in ConvertToContext context) => _convert(instance, context);
-            public override T Instantiate(in ConvertFromContext context) => _instantiate(context);
-            public override void Initialize(ref T instance, in ConvertFromContext context) => _initialize(ref instance, context);
+            public override Node Convert(in T instance, in ToContext context) => _convert(instance, context);
+            public override T Instantiate(in FromContext context) => _instantiate(context);
+            public override void Initialize(ref T instance, in FromContext context) => _initialize(ref instance, context);
         }
 
         static class Cache<T>
         {
-            public static readonly Convert<T> Convert = (in T instance, in ConvertToContext context) => context.Convert(instance);
-            public static readonly Instantiate<T> Instantiate = (in ConvertFromContext context) => context.Instantiate<T>();
-            public static readonly Initialize<T> Initialize = (ref T _, in ConvertFromContext __) => { };
-            public static readonly Converter<T> Default = Create<T>();
+            public static readonly Convert<T> Convert = (in T instance, in ToContext context) => context.Convert(instance);
+            public static readonly Instantiate<T> Instantiate = (in FromContext context) => context.Instantiate<T>();
+            public static readonly Initialize<T> Initialize = (ref T _, in FromContext __) => { };
+            public static readonly IConverter Default = Converter.Default(typeof(T));
         }
+
+        static readonly ConcurrentDictionary<Type, IConverter> _converters = new ConcurrentDictionary<Type, IConverter>();
+
+        public static IConverter Default(Type type) => _converters.GetOrAdd(type, key => CreateConverter(key));
+        public static IConverter Default<T>() => Cache<T>.Default;
+
+        public static Converter<TSource> Create<TSource, TTarget>(InFunc<TSource, TTarget> to, InFunc<TTarget, TSource> from) => Create(
+            (in TSource instance, in ToContext context) => context.Convert(to(instance)),
+            (in FromContext context) => from(context.Convert<TTarget>(context.Node)));
+
+        public static Converter<T> Create<T>(InFunc<T, Node> to, Func<Node, T> from) => Create(
+            (in T instance, in ToContext context) => to(instance),
+            (in FromContext context) => from(context.Node));
+
+        public static Converter<T> Create<T>(Convert<T> convert = null, Instantiate<T> instantiate = null, Initialize<T> initialize = null) =>
+            new Function<T>(convert ?? Cache<T>.Convert, instantiate ?? Cache<T>.Instantiate, initialize ?? Cache<T>.Initialize);
 
         public static Converter<T> Version<T>(params (int version, Converter<T> converter)[] converters) =>
             Version(converters.Min(pair => pair.version), converters.Max(pair => pair.version), converters);
         public static Converter<T> Version<T>(int @default, int latest, params (int version, Converter<T> converter)[] converters)
         {
-            if (converters.Length == 0) return Cache<T>.Default;
-
             var versionToConverter = converters.ToDictionary(pair => pair.version, pair => pair.converter);
             var defaultConverter = versionToConverter[@default];
             var latestConverter = versionToConverter[latest];
@@ -98,26 +107,24 @@ namespace Entia.Json.Converters
             }
 
             return Create(
-                (in T instance, in ConvertToContext context) =>
+                (in T instance, in ToContext context) =>
                     Node.Object(Node.DollarKString, latest, Node.DollarVString, latestConverter.Convert(instance, context)),
-                (in ConvertFromContext context) =>
+                (in FromContext context) =>
                     Converter(context.Node, out var value).Instantiate(context.With(value)),
-                (ref T instance, in ConvertFromContext context) =>
+                (ref T instance, in FromContext context) =>
                     Converter(context.Node, out var value).Initialize(ref instance, context.With(value)));
         }
-
-        public static Converter<T> Default<T>() => Cache<T>.Default;
 
         public static Converter<T> If<T>((InFunc<T, bool> to, Func<Node, bool> from) condition, Converter<T> @true, Converter<T> @false)
         {
             condition.to ??= (in T _) => true;
             condition.from ??= _ => true;
             return Create(
-                (in T instance, in ConvertToContext context) =>
+                (in T instance, in ToContext context) =>
                     condition.to(instance) ? @true.Convert(instance, context) : @false.Convert(instance, context),
-                (in ConvertFromContext context) =>
+                (in FromContext context) =>
                     condition.from(context.Node) ? @true.Instantiate(context) : @false.Instantiate(context),
-                (ref T instance, in ConvertFromContext context) =>
+                (ref T instance, in FromContext context) =>
                 {
                     if (condition.from(context.Node))
                         @true.Initialize(ref instance, context);
@@ -134,7 +141,7 @@ namespace Entia.Json.Converters
                 .Flatten()
                 .ToDictionary(pair => pair.name, pair => pair.member);
             return Create(
-                (in T instance, in ConvertToContext context) =>
+                (in T instance, in ToContext context) =>
                 {
                     var children = new List<Node>(members.Length * 2);
                     for (int i = 0; i < members.Length; i++)
@@ -149,7 +156,7 @@ namespace Entia.Json.Converters
                     return Node.Object(children.ToArray());
                 },
                 instantiate,
-                (ref T instance, in ConvertFromContext context) =>
+                (ref T instance, in FromContext context) =>
                 {
                     foreach (var (key, value) in context.Node.Members())
                     {
@@ -162,14 +169,14 @@ namespace Entia.Json.Converters
 
         public static Converter<T> Array<T>(Instantiate<T> instantiate = null, params Item<T>[] items)
         {
-            var map = new Item<T>[items.Max(item => item.Index + 1)];
+            var map = new Item<T>[items.Length == 0 ? 0 : items.Max(item => item.Index + 1)];
             for (int i = 0; i < items.Length; i++)
             {
                 var item = items[i];
                 map[item.Index] = item;
             }
             return Create(
-                (in T instance, in ConvertToContext context) =>
+                (in T instance, in ToContext context) =>
                 {
                     var children = new Node[map.Length];
                     for (int i = 0; i < map.Length; i++)
@@ -177,7 +184,7 @@ namespace Entia.Json.Converters
                     return Node.Array(children.ToArray());
                 },
                 instantiate,
-                (ref T instance, in ConvertFromContext context) =>
+                (ref T instance, in FromContext context) =>
                 {
                     var children = context.Node.Children;
                     for (int i = 0; i < children.Length && i < map.Length; i++)
@@ -186,15 +193,190 @@ namespace Entia.Json.Converters
             );
         }
 
-        public static Converter<TSource> Create<TSource, TTarget>(InFunc<TSource, TTarget> to, InFunc<TTarget, TSource> from) => Create(
-            (in TSource instance, in ConvertToContext context) => context.Convert(to(instance)),
-            (in ConvertFromContext context) => from(context.Convert<TTarget>(context.Node)));
+        static IConverter CreateConverter(Type type)
+        {
+            if (type.GetFields(ReflectionUtility.Static)
+                .Where(field => field.IsDefined(typeof(ConverterAttribute), true))
+                .Select(field => field.GetValue(null))
+                .OfType<IConverter>()
+                .TryFirst(out var converter))
+                return converter;
 
-        public static Converter<T> Create<T>(InFunc<T, Node> to, Func<Node, T> from) => Create(
-            (in T instance, in ConvertToContext context) => to(instance),
-            (in ConvertFromContext context) => from(context.Node));
+            if (type.GetProperties(ReflectionUtility.Static)
+                .Where(property => property.IsDefined(typeof(ConverterAttribute), true))
+                .Select(property => property.GetValue(null))
+                .OfType<IConverter>()
+                .TryFirst(out converter))
+                return converter;
 
-        public static Converter<T> Create<T>(Convert<T> convert = null, Instantiate<T> instantiate = null, Initialize<T> initialize = null) =>
-            new Function<T>(convert ?? Cache<T>.Convert, instantiate ?? Cache<T>.Instantiate, initialize ?? Cache<T>.Initialize);
+            if (type.IsArray) return CreateArray(type);
+            if (type == typeof(DateTime)) return new ConcreteDateTime();
+            if (type == typeof(TimeSpan)) return new ConcreteTimeSpan();
+            if (type == typeof(Guid)) return new ConcreteGuid();
+            if (type == typeof(Node)) return new ConcreteNode();
+            if (type.GenericDefinition().TryValue(out var definition))
+            {
+                var arguments = type.GetGenericArguments();
+                if (definition == typeof(Nullable<>)) return CreateNullable(type, arguments[0]);
+                if (definition == typeof(Option<>)) return CreateOption(type, arguments[0]);
+            }
+            if (type.Is<Type>()) return new ConcreteType();
+            if (type.Is<IList>()) return CreateList(type);
+            if (type.Is<IDictionary>()) return CreateDictionary(type);
+            if (type.Is<IEnumerable>()) return CreateEnumerable(type);
+            if (type.Is<ISerializable>()) return CreateSerializable(type);
+
+            return CreateDefault(type);
+        }
+
+        static IConverter CreateDefault(Type type) => new DefaultObject(type);
+
+        static IConverter CreateOption(Type type, Type argument)
+        {
+            if (Option.Try(argument, state => Activator.CreateInstance(typeof(ConcreteOption<>).MakeGenericType(state)))
+                .Cast<IConverter>()
+                .TryValue(out var converter))
+                return converter;
+            if (type.Constructors(true, false).TryFirst(current =>
+                current.GetParameters().Length == 2, out var constructor))
+                return new AbstractOption(constructor, argument);
+
+            return CreateDefault(type);
+        }
+
+        static IConverter CreateNullable(Type type, Type argument)
+        {
+            if (Option.Try(argument, state => Activator.CreateInstance(typeof(ConcreteNullable<>).MakeGenericType(state)))
+                .Cast<IConverter>()
+                .TryValue(out var converter))
+                return converter;
+            return new AbstractNullable(type, argument);
+        }
+
+        static IConverter CreateArray(Type type)
+        {
+            var element = type.GetElementType();
+            switch (Type.GetTypeCode(element))
+            {
+                case TypeCode.Char: return new PrimitiveArray<char>(_ => _, node => node.AsChar());
+                case TypeCode.Byte: return new PrimitiveArray<byte>(_ => _, node => node.AsByte());
+                case TypeCode.SByte: return new PrimitiveArray<sbyte>(_ => _, node => node.AsSByte());
+                case TypeCode.Int16: return new PrimitiveArray<short>(_ => _, node => node.AsShort());
+                case TypeCode.Int32: return new PrimitiveArray<int>(_ => _, node => node.AsInt());
+                case TypeCode.Int64: return new PrimitiveArray<long>(_ => _, node => node.AsLong());
+                case TypeCode.UInt16: return new PrimitiveArray<ushort>(_ => _, node => node.AsUShort());
+                case TypeCode.UInt32: return new PrimitiveArray<uint>(_ => _, node => node.AsUInt());
+                case TypeCode.UInt64: return new PrimitiveArray<ulong>(_ => _, node => node.AsULong());
+                case TypeCode.Single: return new PrimitiveArray<float>(_ => _, node => node.AsFloat());
+                case TypeCode.Double: return new PrimitiveArray<double>(_ => _, node => node.AsDouble());
+                case TypeCode.Decimal: return new PrimitiveArray<decimal>(_ => _, node => node.AsDecimal());
+                case TypeCode.Boolean: return new PrimitiveArray<bool>(_ => _, node => node.AsBool());
+                case TypeCode.String: return new PrimitiveArray<string>(_ => _, node => node.AsString());
+                default:
+                    return Option.Try(() => Activator.CreateInstance(typeof(ConcreteArray<>).MakeGenericType(element)))
+                        .Cast<IConverter>()
+                        .Or(() => new AbstractArray(element));
+            }
+        }
+
+        static IConverter CreateList(Type type)
+        {
+            if (type.GenericDefinition() == typeof(List<>) && type.GetGenericArguments().TryFirst(out var argument))
+            {
+                switch (Type.GetTypeCode(argument))
+                {
+                    case TypeCode.Char: return new PrimitiveList<char>(_ => _, node => node.AsChar());
+                    case TypeCode.Byte: return new PrimitiveList<byte>(_ => _, node => node.AsByte());
+                    case TypeCode.SByte: return new PrimitiveList<sbyte>(_ => _, node => node.AsSByte());
+                    case TypeCode.Int16: return new PrimitiveList<short>(_ => _, node => node.AsShort());
+                    case TypeCode.Int32: return new PrimitiveList<int>(_ => _, node => node.AsInt());
+                    case TypeCode.Int64: return new PrimitiveList<long>(_ => _, node => node.AsLong());
+                    case TypeCode.UInt16: return new PrimitiveList<ushort>(_ => _, node => node.AsUShort());
+                    case TypeCode.UInt32: return new PrimitiveList<uint>(_ => _, node => node.AsUInt());
+                    case TypeCode.UInt64: return new PrimitiveList<ulong>(_ => _, node => node.AsULong());
+                    case TypeCode.Single: return new PrimitiveList<float>(_ => _, node => node.AsFloat());
+                    case TypeCode.Double: return new PrimitiveList<double>(_ => _, node => node.AsDouble());
+                    case TypeCode.Decimal: return new PrimitiveList<decimal>(_ => _, node => node.AsDecimal());
+                    case TypeCode.Boolean: return new PrimitiveList<bool>(_ => _, node => node.AsBool());
+                    case TypeCode.String: return new PrimitiveList<string>(_ => _, node => node.AsString());
+                    default:
+                        if (Option.Try(() => Activator.CreateInstance(typeof(ConcreteList<>).MakeGenericType(argument)))
+                            .Cast<IConverter>()
+                            .TryValue(out var converter))
+                            return converter;
+                        break;
+                }
+            }
+
+            return CreateEnumerable(type);
+        }
+
+        static IConverter CreateEnumerable(Type type)
+        {
+            if (type.EnumerableArgument(true).TryValue(out var argument) &&
+                type.EnumerableConstructor(true).TryValue(out var constructor))
+            {
+                switch (Type.GetTypeCode(argument))
+                {
+                    case TypeCode.Char: return new PrimitiveEnumerable<char>(_ => _, node => node.AsChar(), constructor);
+                    case TypeCode.Byte: return new PrimitiveEnumerable<byte>(_ => _, node => node.AsByte(), constructor);
+                    case TypeCode.SByte: return new PrimitiveEnumerable<sbyte>(_ => _, node => node.AsSByte(), constructor);
+                    case TypeCode.Int16: return new PrimitiveEnumerable<short>(_ => _, node => node.AsShort(), constructor);
+                    case TypeCode.Int32: return new PrimitiveEnumerable<int>(_ => _, node => node.AsInt(), constructor);
+                    case TypeCode.Int64: return new PrimitiveEnumerable<long>(_ => _, node => node.AsLong(), constructor);
+                    case TypeCode.UInt16: return new PrimitiveEnumerable<ushort>(_ => _, node => node.AsUShort(), constructor);
+                    case TypeCode.UInt32: return new PrimitiveEnumerable<uint>(_ => _, node => node.AsUInt(), constructor);
+                    case TypeCode.UInt64: return new PrimitiveEnumerable<ulong>(_ => _, node => node.AsULong(), constructor);
+                    case TypeCode.Single: return new PrimitiveEnumerable<float>(_ => _, node => node.AsFloat(), constructor);
+                    case TypeCode.Double: return new PrimitiveEnumerable<double>(_ => _, node => node.AsDouble(), constructor);
+                    case TypeCode.Decimal: return new PrimitiveEnumerable<decimal>(_ => _, node => node.AsDecimal(), constructor);
+                    case TypeCode.Boolean: return new PrimitiveEnumerable<bool>(_ => _, node => node.AsBool(), constructor);
+                    case TypeCode.String: return new PrimitiveEnumerable<string>(_ => _, node => node.AsString(), constructor);
+                    default:
+                        if (Option.Try(() => Activator.CreateInstance(typeof(AbstractEnumerable<>).MakeGenericType(argument), constructor))
+                            .Cast<IConverter>()
+                            .TryValue(out var converter))
+                            return converter;
+                        return new AbstractEnumerable(argument, constructor);
+                }
+            }
+
+            if (type.EnumerableArgument(false).TryValue(out argument) &&
+                type.EnumerableConstructor(false).TryValue(out constructor))
+                return new AbstractEnumerable(argument, constructor);
+
+            return CreateDefault(type);
+        }
+
+        static IConverter CreateDictionary(Type type)
+        {
+            if (type.GenericDefinition() == typeof(Dictionary<,>) &&
+                Option.Try(() => Activator.CreateInstance(typeof(ConcreteDictionary<,>).MakeGenericType(type.GetGenericArguments())))
+                .Cast<IConverter>()
+                .TryValue(out var converter))
+                return converter;
+
+            if (type.DefaultConstructor().TryValue(out var constructor))
+            {
+                if (type.DictionaryArguments(true).TryValue(out var types))
+                {
+                    if (Option.Try(() => Activator.CreateInstance(typeof(AbstractDictionary<,>).MakeGenericType(types.key, types.value)))
+                        .Cast<IConverter>()
+                        .TryValue(out converter))
+                        return converter;
+                    return new AbstractDictionary(types.key, types.value, constructor);
+                }
+
+                if (type.DictionaryArguments(false).TryValue(out types))
+                    return new AbstractDictionary(types.key, types.value, constructor);
+            }
+
+            return CreateEnumerable(type);
+        }
+
+        static IConverter CreateSerializable(Type type) =>
+            type.SerializableConstructor().TryValue(out var constructor) ?
+            new AbstractSerializable(constructor) :
+            CreateDefault(type);
     }
 }

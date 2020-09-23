@@ -172,7 +172,8 @@ namespace Entia.Core
         public static Option<T> Or<T>(in this Option<T> option1, in Option<T> option2, in Option<T> option3, in Option<T> option4) => option1.Or(option2).Or(option3).Or(option4);
         public static Option<T> Or<T>(in this Option<T> option1, in Option<T> option2, in Option<T> option3, in Option<T> option4, in Option<T> option5) => option1.Or(option2).Or(option3).Or(option4).Or(option5);
 
-        public static T OrThrow<T>(in this Option<T> option) => option.Or(() => throw new NullReferenceException());
+        public static T OrThrow<T>(in this Option<T> option, string message) => option.Or(message, state => throw new InvalidOperationException(state));
+        public static T OrThrow<T>(in this Option<T> option) => option.Or(() => throw new InvalidOperationException());
         public static T OrDefault<T>(in this Option<T> option) => option.Or(default(T));
         public static Option<Unit> Ignore<T>(in this Option<T> option) => option.Map(_ => default(Unit));
         public static Option<object> Box<T>(in this Option<T> option) => option.Map(value => (object)value);

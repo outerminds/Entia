@@ -1,6 +1,9 @@
 using System;
+using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Entia.Core;
 
 namespace Entia.Json
 {
@@ -222,6 +225,17 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Node With(uint identifier) => new Node(identifier, Kind, Tag, Value, Children);
 
-        public override string ToString() => Serialization.Generate(this);
+        public override string ToString() => Kind switch
+        {
+            Kinds.Null => "null",
+            Kinds.Boolean => (bool)Value ? "true" : "false",
+            Kinds.String => @$"""{Value}""",
+            Kinds.Type => ((Type)Value).FullFormat(),
+            Kinds.Array => $"[{string.Join(", ", Children.AsEnumerable())}]",
+            Kinds.Object => $"{{{string.Join(", ", Children.Tuples().Select(tuple => $"{tuple.Item1}: {tuple.Item2}"))}}}",
+            Kinds.Abstract => $"{Children[1]} ({Children[0]})",
+            Kinds.Reference => $"${Value}",
+            _ => Convert.ToString(Value, CultureInfo.InvariantCulture)
+        };
     }
 }

@@ -227,16 +227,7 @@ namespace Entia.Core
             Field = field;
             _type = new Lazy<TypeData>(() => field.FieldType);
             _declaring = new Lazy<TypeData>(() => field.DeclaringType);
-            _autoProperty = new Lazy<Option<PropertyData>>(() =>
-            {
-                if (Field.IsPrivate && Field.Name[0] == '<' &&
-                    Field.Name.IndexOf('>') is var index && index > 0 &&
-                    Field.Name.Substring(1, index - 1) is var name &&
-                    Declaring.Properties.TryGetValue(name, out var property) &&
-                    Field.FieldType == property.Property.PropertyType)
-                    return property;
-                return Option.None();
-            });
+            _autoProperty = new Lazy<Option<PropertyData>>(() => field.AutoProperty().Map(ReflectionUtility.GetData));
         }
     }
 
@@ -268,7 +259,7 @@ namespace Entia.Core
             _declaring = new Lazy<TypeData>(() => Property.DeclaringType);
             _get = new Lazy<Option<MethodData>>(() => Property.GetMethod.GetData());
             _set = new Lazy<Option<MethodData>>(() => Property.SetMethod.GetData());
-            _backingField = new Lazy<Option<FieldData>>(() => Declaring.Fields.Values.FirstOrNone(field => field.AutoProperty == this));
+            _backingField = new Lazy<Option<FieldData>>(() => Property.BackingField().Map(ReflectionUtility.GetData));
         }
     }
 

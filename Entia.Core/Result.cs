@@ -197,11 +197,11 @@ namespace Entia.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T Or<T, TState>(in this Result<T> result, in TState state, Func<TState, T> provide) =>
-            result.TryValue(out var current) ? current : provide(state);
+        public static T Or<T, TState>(in this Result<T> result, in TState state, Func<string[], TState, T> provide) =>
+            result.TryValue(out var current) ? current : provide(result.Messages(), state);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T Or<T>(in this Result<T> result, Func<T> provide) =>
-            result.TryValue(out var current) ? current : provide();
+        public static T Or<T>(in this Result<T> result, Func<string[], T> provide) =>
+            result.TryValue(out var current) ? current : provide(result.Messages());
 
         public static T Or<T>(in this Result<T> result, in T value) => result.TryValue(out var current) ? current : value;
         public static Result<T> Or<T>(in this Result<T> result1, in Result<T> result2) => result1.TryValue(out var value1) ? value1 : result2;
@@ -209,7 +209,7 @@ namespace Entia.Core
         public static Result<T> Or<T>(in this Result<T> result1, in Result<T> result2, in Result<T> result3, in Result<T> result4) => result1.Or(result2).Or(result3).Or(result4);
         public static Result<T> Or<T>(in this Result<T> result1, in Result<T> result2, in Result<T> result3, in Result<T> result4, in Result<T> result5) => result1.Or(result2).Or(result3).Or(result4).Or(result5);
 
-        public static T OrThrow<T>(in this Result<T> result) => result.Or(() => throw new NullReferenceException());
+        public static T OrThrow<T>(in this Result<T> result) => result.Or(messages => throw new InvalidOperationException(string.Join(", ", messages)));
         public static T OrDefault<T>(in this Result<T> result) => result.Or(default(T));
         public static Result<Unit> Ignore<T>(in this Result<T> result) => result.Map(_ => default(Unit));
         public static Result<object> Box<T>(in this Result<T> result) => result.Map(value => (object)value);

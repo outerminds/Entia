@@ -1,20 +1,22 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Entia.Json.Converters;
 
 namespace Entia.Json
 {
     public static partial class Serialization
     {
         public static string Generate(Node node, Settings settings = null) =>
-            Generate(node, settings ?? Settings.Default, new Dictionary<object, uint>());
+            Generate(node, new ToContext(settings ?? Settings.Default));
 
-        static string Generate(Node node, Settings settings, Dictionary<object, uint> references)
+        static string Generate(Node node, in ToContext context)
         {
-            Wrap(ref node, settings, references);
+            Wrap(ref node, context);
             var builder = new StringBuilder(1024);
-            switch (settings.Format)
+            switch (context.Settings.Format)
             {
                 case Formats.Compact: GenerateCompact(node, builder); break;
                 case Formats.Indented: GenerateIndented(node, builder, 0); break;
@@ -240,10 +242,14 @@ namespace Entia.Json
             _ => '\0',
         };
 
-        static void Wrap(ref Node node, Settings settings, Dictionary<object, uint> references)
+        static void Wrap(ref Node node, in ToContext context)
         {
-            if (settings.Features.HasAll(Features.Abstract)) node = ConvertTypes(node, settings, references);
-            if (settings.Features.HasAll(Features.Reference))
+            if (context.Settings.Features.HasAll(Features.Abstract))
+            {
+                context.References.Clear();
+                node = ConvertTypes(node, context);
+            }
+            if (context.Settings.Features.HasAll(Features.Reference))
             {
                 var identifiers = new Dictionary<uint, int>();
                 // NOTE: it cannot be assumed in what order references appear relative to their referenced node;
@@ -253,20 +259,23 @@ namespace Entia.Json
                 node = WrapIdentified(node, ref count, identifiers);
             }
 
-            static Node ConvertTypes(Node node, Settings settings, Dictionary<object, uint> references)
+            static Node ConvertType(Type type, in ToContext context) =>
+                context.Convert(type, JsonType.Instance, JsonType.Instance);
+
+            static Node ConvertTypes(Node node, in ToContext context)
             {
                 if (node.TryAbstract(out var type, out var value))
                     return Node.Object(
-                        Node.DollarTString, JsonUtility.TypeToNode(type, settings, references),
-                        Node.DollarVString, ConvertTypes(value, settings, references));
+                        Node.DollarTString, ConvertType(type, context),
+                        Node.DollarVString, ConvertTypes(value, context));
                 else if (node.TryType(out type))
-                    return Node.Object(Node.DollarTString, JsonUtility.TypeToNode(type, settings, references));
+                    return Node.Object(Node.DollarTString, ConvertType(type, context));
 
                 var children = default(Node[]);
                 for (int i = 0; i < node.Children.Length; i++)
                 {
                     var child = node.Children[i];
-                    var wrapped = ConvertTypes(child, settings, references);
+                    var wrapped = ConvertTypes(child, context);
                     if (ReferenceEquals(child, wrapped)) continue;
                     children ??= (Node[])node.Children.Clone();
                     children[i] = wrapped;

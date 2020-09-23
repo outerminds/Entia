@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Entia.Core;
+using Entia.Json.Converters;
 
 namespace Entia.Json
 {
@@ -93,11 +94,10 @@ namespace Entia.Json
         };
 
         public static Result<Node> Parse(string text, Settings settings = null) =>
-            Parse(text, settings ?? Settings.Default, out _);
+            Parse(text, new FromContext(settings ?? Settings.Default, new Dictionary<uint, object>()));
 
-        static unsafe Result<Node> Parse(string text, Settings settings, out Dictionary<uint, object> references)
+        static unsafe Result<Node> Parse(string text, in FromContext context)
         {
-            references = new Dictionary<uint, object>();
             if (string.IsNullOrWhiteSpace(text)) return Result.Failure("Expected valid json.");
 
             var index = 0;
@@ -192,7 +192,7 @@ namespace Entia.Json
 
             if (nodes[0] is Node root)
             {
-                Unwrap(ref root, settings, references);
+                Unwrap(ref root, context);
                 return root;
             }
             else
@@ -358,15 +358,15 @@ namespace Entia.Json
             return value * powers[exponent];
         }
 
-        static void Unwrap(ref Node node, Settings settings, Dictionary<uint, object> references)
+        static void Unwrap(ref Node node, in FromContext context)
         {
-            if (settings.Features.HasAll(Features.Reference))
+            if (context.Settings.Features.HasAll(Features.Reference))
             {
                 var identifiers = new uint?[8];
                 UnwrapIdentified(ref node, ref identifiers);
                 UnwrapReferences(ref node, identifiers);
             }
-            if (settings.Features.HasAll(Features.Abstract)) ConvertType(ref node, settings, references);
+            if (context.Settings.Features.HasAll(Features.Abstract)) ConvertTypes(ref node, context);
 
             static void UnwrapIdentified(ref Node node, ref uint?[] identifiers)
             {
@@ -397,23 +397,25 @@ namespace Entia.Json
                     for (int i = 0; i < node.Children.Length; i++) UnwrapReferences(ref node.Children[i], identifiers);
             }
 
-            static void ConvertType(ref Node node, Settings settings, Dictionary<uint, object> references)
+            static Node ConvertType(Node node, in FromContext context) =>
+                Node.Type(context.Convert<Type>(node, JsonType.Instance, JsonType.Instance));
+
+            static void ConvertTypes(ref Node node, in FromContext context)
             {
                 if (node.Children.Length == 2 && node.Children[0] == Node.DollarTString)
-                {
-                    var type = Node.Type(JsonUtility.NodeToType(node.Children[1], settings, references));
-                    node = type.With(node.Identifier);
-                }
+                    node = ConvertType(node.Children[1], context).With(node.Identifier);
                 else if (node.Children.Length == 4 && node.Children[0] == Node.DollarTString && node.Children[2] == Node.DollarVString)
                 {
                     var type = node.Children[1];
                     var value = node.Children[3];
-                    ConvertType(ref value, settings, references);
-                    var @abstract = Node.Abstract(Node.Type(JsonUtility.NodeToType(type, settings, references)).With(type.Identifier), value);
-                    node = @abstract.With(node.Identifier);
+                    ConvertTypes(ref value, context);
+                    node = Node.Abstract(ConvertType(type, context).With(type.Identifier), value).With(node.Identifier);
                 }
                 else
-                    for (int i = 0; i < node.Children.Length; i++) ConvertType(ref node.Children[i], settings, references);
+                {
+                    for (int i = 0; i < node.Children.Length; i++)
+                        ConvertTypes(ref node.Children[i], context);
+                }
             }
         }
     }

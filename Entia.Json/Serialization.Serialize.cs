@@ -10,21 +10,21 @@ namespace Entia.Json
 
         public static string Serialize<T>(in T instance, Settings settings = null)
         {
-            var context = new ConvertToContext(settings ?? Settings.Default);
+            var context = new ToContext(settings ?? Settings.Default);
             var node = context.Convert(instance);
-            return Generate(node, context.Settings, context.References);
+            return Generate(node, context);
         }
 
         public static string Serialize(object instance, Type type, Settings settings = null)
         {
-            var context = new ConvertToContext(settings ?? Settings.Default);
+            var context = new ToContext(settings ?? Settings.Default);
             var node = context.Convert(instance, type);
-            return Generate(node, context.Settings, context.References);
+            return Generate(node, context);
         }
 
         public static Node Convert<T>(in T instance, Settings settings = null) =>
-            new ConvertToContext(settings ?? Settings.Default).Convert(instance);
+            new ToContext(settings ?? Settings.Default).Convert(instance);
         public static Node Convert(object instance, Type type, Settings settings = null) =>
-            new ConvertToContext(settings ?? Settings.Default).Convert(instance, type);
+            new ToContext(settings ?? Settings.Default).Convert(instance, type);
     }
 }
