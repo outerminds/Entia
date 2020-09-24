@@ -138,8 +138,7 @@ namespace Entia.Json.Converters
         public static Converter<T> Object<T>(Instantiate<T> instantiate = null, params Member<T>[] members)
         {
             var map = members
-                .Select(member => member.Aliases.Prepend(member.Name).Select(name => (member, name)))
-                .Flatten()
+                .SelectMany(member => member.Aliases.Prepend(member.Name).Select(name => (member, name)))
                 .ToDictionary(pair => pair.name, pair => pair.member);
             return Create(
                 (in T instance, in ToContext context) =>
@@ -150,7 +149,7 @@ namespace Entia.Json.Converters
                         var member = members[i];
                         if (member.Convert(instance, context) is Node node)
                         {
-                            children.Add(member.Name);
+                            children.Add(member.Key);
                             children.Add(node);
                         }
                     }

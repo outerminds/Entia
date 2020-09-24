@@ -7,8 +7,6 @@ namespace Entia.Json
 {
     public readonly struct ToContext
     {
-        static readonly IConverter _typeConverter = Converter.Default<Type>();
-
         public readonly object Instance;
         public readonly Type Type;
         public readonly Settings Settings;
@@ -76,13 +74,6 @@ namespace Entia.Json
                 return Node.Null;
         }
 
-        // public Node Convert<T>(in T instance) => Convert(instance, ReflectionUtility.GetData<T>());
-        // public Node Convert(object instance, Type type) => Convert(instance, ReflectionUtility.GetData(type));
-        // public Node Convert<T>(in T instance, TypeData type) =>
-        //     TrySpecial(instance, type, out var node) ? node : Abstract<T>(instance, type);
-        // public Node Convert(object instance, TypeData type) =>
-        //     TrySpecial(instance, type, out var node) ? node : Abstract(instance, type);
-
         public ToContext With(object instance, Type type) =>
             new ToContext(instance, type, Settings, References);
 
@@ -106,105 +97,5 @@ namespace Entia.Json
             UpdateReference(instance, identifier);
             return identifier;
         }
-
-        // bool TrySpecial(object instance, TypeData type, out Node node)
-        // {
-        //     if (instance == null)
-        //     {
-        //         node = Node.Null;
-        //         return true;
-        //     }
-
-        //     switch (type.Code)
-        //     {
-        //         case TypeCode.Byte: node = (byte)instance; return true;
-        //         case TypeCode.SByte: node = (sbyte)instance; return true;
-        //         case TypeCode.Int16: node = (short)instance; return true;
-        //         case TypeCode.Int32: node = (int)instance; return true;
-        //         case TypeCode.Int64: node = (long)instance; return true;
-        //         case TypeCode.UInt16: node = (ushort)instance; return true;
-        //         case TypeCode.UInt32: node = (uint)instance; return true;
-        //         case TypeCode.UInt64: node = (ulong)instance; return true;
-        //         case TypeCode.Single: node = (float)instance; return true;
-        //         case TypeCode.Double: node = (double)instance; return true;
-        //         case TypeCode.Decimal: node = (decimal)instance; return true;
-        //         case TypeCode.Boolean: node = (bool)instance; return true;
-        //         case TypeCode.Char: node = (char)instance; return true;
-        //         case TypeCode.String: node = (string)instance; return true;
-        //         default:
-        //             if (type.Definition == typeof(Nullable<>) && type.Element.TryValue(out var element))
-        //             {
-        //                 node = Convert(instance, element);
-        //                 return true;
-        //             }
-        //             else if (TryReference(instance, out var identifier))
-        //             {
-        //                 node = Node.Reference(identifier);
-        //                 return true;
-        //             }
-        //             else if (instance is Type value)
-        //             {
-        //                 node = Node.Type(value);
-        //                 UpdateReference(value, node.Identifier);
-        //                 return true;
-        //             }
-        //             else
-        //             {
-        //                 node = default;
-        //                 return false;
-        //             }
-        //     }
-        // }
-
-        // Node Abstract<T>(object instance, TypeData type)
-        // {
-        //     var concrete = instance.GetType();
-        //     if (type.Type == concrete)
-        //         return Concrete<T>(instance, type);
-        //     else if (Settings.Features.HasAll(Features.Abstract))
-        //         return Node.Abstract(concrete, Convert(instance, concrete));
-        //     else
-        //         return Node.Null;
-        // }
-
-        // Node Abstract(object instance, TypeData type)
-        // {
-        //     var concrete = instance.GetType();
-        //     if (type.Type == concrete)
-        //         return Concrete(instance, type);
-        //     else if (Settings.Features.HasAll(Features.Abstract))
-        //         return Node.Abstract(concrete, Convert(instance, concrete));
-        //     else
-        //         return Node.Null;
-        // }
-
-        // Node Concrete<T>(object instance, TypeData type) =>
-        //     Settings.Container.TryGet<T, IConverter>(out var converter) ?
-        //     ConvertWith(instance, type, converter) : Default(instance, type);
-
-        // Node Concrete(object instance, TypeData type) =>
-        //     Settings.Container.TryGet<IConverter>(type, out var converter) ?
-        //     ConvertWith(instance, type, converter) : Default(instance, type);
-
-        // Node ConvertWith(object instance, TypeData type, IConverter converter)
-        // {
-        //     var identifier = Reserve(instance);
-        //     return converter.Convert(With(instance, type)).With(identifier);
-        // }
-
-        // Node Default(object instance, TypeData type)
-        // {
-        //     var identifier = Reserve(instance);
-        //     var fields = type.InstanceFields;
-        //     var members = new Node[fields.Length * 2];
-        //     for (int i = 0; i < fields.Length; i++)
-        //     {
-        //         var field = fields[i];
-        //         var name = field.AutoProperty.TryValue(out var property) ? property.Property.Name : field.Field.Name;
-        //         members[i * 2] = Node.String(name, Node.Tags.Plain);
-        //         members[i * 2 + 1] = Convert(field.Field.GetValue(instance), field.Type);
-        //     }
-        //     return Node.Object(members).With(identifier);
-        // }
     }
 }

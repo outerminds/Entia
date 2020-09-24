@@ -25,8 +25,8 @@ namespace Entia.Json.Converters
 
         public override void Initialize(ref List<T> instance, in FromContext context)
         {
-            for (int i = 0; i < context.Node.Children.Length; i++)
-                instance.Add(_from(context.Node.Children[i]));
+            var children = context.Node.Children;
+            for (int i = 0; i < children.Length; i++) instance.Add(_from(children[i]));
         }
     }
 
@@ -45,8 +45,8 @@ namespace Entia.Json.Converters
 
         public override void Initialize(ref List<T> instance, in FromContext context)
         {
-            for (int i = 0; i < context.Node.Children.Length; i++)
-                instance.Add(context.Convert<T>(context.Node.Children[i], _converter));
+            var children = context.Node.Children;
+            for (int i = 0; i < children.Length; i++) instance.Add(context.Convert<T>(children[i], _converter));
         }
     }
 }

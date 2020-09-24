@@ -9,6 +9,7 @@ namespace Entia.Json.Converters
         public readonly string[] Aliases;
         public readonly Member.Convert<T> Convert;
         public readonly Member.Initialize<T> Initialize;
+        public readonly Node Key;
 
         public Member(string name, string[] aliases, Member.Convert<T> convert, Member.Initialize<T> initialize)
         {
@@ -16,6 +17,7 @@ namespace Entia.Json.Converters
             Aliases = aliases;
             Convert = convert;
             Initialize = initialize;
+            Key = name;
         }
     }
 
