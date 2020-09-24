@@ -258,14 +258,14 @@ namespace Entia.Core
         [ThreadSafe]
         public ref TValue Get(Type type, out bool success)
         {
-            if (TryGetEntry(type, out var entry)) return ref Get(entry, out success);
+            if (TryEntry(type, out var entry)) return ref Get(entry, out success);
             success = false;
             return ref Dummy<TValue>.Value;
         }
         [ThreadSafe]
         public ref TValue Get(Type type, out bool success, bool super, bool sub)
         {
-            if (TryGetEntry(type, out var entry)) return ref Get(entry, out success, super, sub);
+            if (TryEntry(type, out var entry)) return ref Get(entry, out success, super, sub);
             success = false;
             return ref Dummy<TValue>.Value;
         }
@@ -281,14 +281,14 @@ namespace Entia.Core
         [ThreadSafe]
         public bool TryGet(Type type, out TValue value)
         {
-            if (TryGetEntry(type, out var entry)) return TryGet(entry, out value);
+            if (TryEntry(type, out var entry)) return TryGet(entry, out value);
             value = default;
             return false;
         }
         [ThreadSafe]
         public bool TryGet(Type type, out TValue value, bool super, bool sub)
         {
-            if (TryGetEntry(type, out var entry)) return TryGet(entry, out value, super, sub);
+            if (TryEntry(type, out var entry)) return TryGet(entry, out value, super, sub);
             value = default;
             return false;
         }
@@ -302,9 +302,9 @@ namespace Entia.Core
         public bool TryGet(int index, out TValue value, bool super, bool sub) => TryGet(_entries[index], out value, super, sub);
 
         [ThreadSafe]
-        public bool Has(Type type) => TryGetEntry(type, out var entry) && Has(entry);
+        public bool Has(Type type) => TryEntry(type, out var entry) && Has(entry);
         [ThreadSafe]
-        public bool Has(Type type, bool super, bool sub) => TryGetEntry(type, out var entry) && Has(entry, super, sub);
+        public bool Has(Type type, bool super, bool sub) => TryEntry(type, out var entry) && Has(entry, super, sub);
         [ThreadSafe]
         public bool Has<T>() where T : TBase => Has(Cache<T>.Entry);
         [ThreadSafe]
@@ -320,14 +320,14 @@ namespace Entia.Core
 
         public bool Remove<T>() where T : TBase => Remove(Cache<T>.Entry);
         public bool Remove<T>(bool super, bool sub) where T : TBase => Remove(Cache<T>.Entry, super, sub);
-        public bool Remove(Type type) => TryGetEntry(type, out var entry) && Remove(entry);
-        public bool Remove(Type type, bool super, bool sub) => TryGetEntry(type, out var entry) && Remove(entry, super, sub);
+        public bool Remove(Type type) => TryEntry(type, out var entry) && Remove(entry);
+        public bool Remove(Type type, bool super, bool sub) => TryEntry(type, out var entry) && Remove(entry, super, sub);
         public bool Remove(int index) => Remove(_entries[index]);
         public bool Remove(int index, bool super, bool sub) => Remove(_entries[index], super, sub);
 
         public bool Clear()
         {
-            if (_count > 0)
+            if (_count.Change(0))
             {
                 _values.Clear();
                 return true;
@@ -409,7 +409,7 @@ namespace Entia.Core
         }
 
         bool Has(Entry entry, bool super, bool sub) =>
-            Has(entry) || (super && Has(entry.Super) || (sub && Has(entry.Sub)));
+            Has(entry) || (super && Has(entry.Super)) || (sub && Has(entry.Sub));
 
         bool Has(Entry entry) => entry.Index < _values.Length && _values[entry.Index].allocated;
 
@@ -458,6 +458,13 @@ namespace Entia.Core
             yield return entry.Index;
             if (super) for (int i = 0; i < entry.Super.Length; i++) yield return entry.Super[i].Index;
             if (sub) for (int i = 0; i < entry.Sub.Length; i++) yield return entry.Sub[i].Index;
+        }
+
+        bool TryEntry(Type type, out Entry entry)
+        {
+            if (_count > 0) return TryGetEntry(type, out entry);
+            entry = default;
+            return false;
         }
     }
 }

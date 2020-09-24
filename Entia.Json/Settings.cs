@@ -43,15 +43,9 @@ namespace Entia.Json
         }
 
         public IConverter Converter(Type type, IConverter @default = null, IConverter @override = null) =>
-            @override ??
-            (Converters.TryGet(type, out var converter) ? converter : default) ??
-            @default ??
-            Json.Converters.Converter.Default(type);
+            @override ?? Converters.Get(type, out _, true, false) ?? @default ?? Json.Converters.Converter.Default(type);
         public IConverter Converter<T>(IConverter @default = null, IConverter @override = null) =>
-            @override ??
-            (Converters.TryGet<T>(out var converter) ? converter : default) ??
-            @default ??
-            Json.Converters.Converter.Default<T>();
+            @override ?? Converters.Get<T>(out _, true, false) ?? @default ?? Json.Converters.Converter.Default<T>();
 
         public Settings With(Features? features = null, Formats? format = null, IConverter[] converters = null) =>
             new Settings(features ?? Features, format ?? Format, converters ?? Converters.Values.ToArray());
