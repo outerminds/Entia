@@ -8,6 +8,7 @@ using Entia.Core;
 
 namespace Entia.Json.Converters
 {
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
     public sealed class ConverterAttribute : PreserveAttribute { }
 
     public interface IConverter : ITrait
@@ -195,37 +196,37 @@ namespace Entia.Json.Converters
 
         static IConverter CreateConverter(Type type)
         {
-            if (type.GetFields(ReflectionUtility.Static)
-                .Where(field => field.IsDefined(typeof(ConverterAttribute), true))
-                .Select(field => field.GetValue(null))
-                .OfType<IConverter>()
-                .TryFirst(out var converter))
-                return converter;
-
-            if (type.GetProperties(ReflectionUtility.Static)
-                .Where(property => property.IsDefined(typeof(ConverterAttribute), true))
-                .Select(property => property.GetValue(null))
-                .OfType<IConverter>()
-                .TryFirst(out converter))
-                return converter;
-
             if (type.IsArray) return CreateArray(type);
             if (type == typeof(DateTime)) return new ConcreteDateTime();
             if (type == typeof(TimeSpan)) return new ConcreteTimeSpan();
             if (type == typeof(Guid)) return new ConcreteGuid();
             if (type == typeof(Node)) return new ConcreteNode();
+            if (type.Is<Type>()) return new ConcreteType();
             if (type.GenericDefinition().TryValue(out var definition))
             {
                 var arguments = type.GetGenericArguments();
                 if (definition == typeof(Nullable<>)) return CreateNullable(type, arguments[0]);
                 if (definition == typeof(Option<>)) return CreateOption(type, arguments[0]);
+                if (definition == typeof(List<>)) return CreateList(type, arguments[0]);
+                if (definition == typeof(Dictionary<,>)) return CreateDictionary(type, arguments[0], arguments[1]);
             }
-            if (type.Is<Type>()) return new ConcreteType();
-            if (type.Is<IList>()) return CreateList(type);
-            if (type.Is<IDictionary>()) return CreateDictionary(type);
-            if (type.Is<IEnumerable>()) return CreateEnumerable(type);
-            if (type.Is<ISerializable>()) return CreateSerializable(type);
 
+            if (type.Hierarchy()
+                .SelectMany(@base => Enumerable.Concat(
+                    @base.GetFields(ReflectionUtility.Static)
+                        .Where(field => field.IsDefined(typeof(ConverterAttribute), true))
+                        .Select(field => field.GetValue(null)),
+                    @base.GetProperties(ReflectionUtility.Static)
+                        .Where(property => property.IsDefined(typeof(ConverterAttribute), true) && property.CanRead)
+                        .Select(property => property.GetValue(null))))
+                .OfType<IConverter>()
+                .TryFirst(converter => type.Is(converter.Type, true, true), out var converter))
+                return converter;
+
+            if (type.Is<IList>()) return CreateIList(type);
+            if (type.Is<IDictionary>()) return CreateIDictionary(type);
+            if (type.Is<IEnumerable>()) return CreateIEnumerable(type);
+            if (type.Is<ISerializable>()) return CreateISerializable(type);
             return CreateDefault(type);
         }
 
@@ -244,14 +245,10 @@ namespace Entia.Json.Converters
             return CreateDefault(type);
         }
 
-        static IConverter CreateNullable(Type type, Type argument)
-        {
-            if (Option.Try(argument, state => Activator.CreateInstance(typeof(ConcreteNullable<>).MakeGenericType(state)))
+        static IConverter CreateNullable(Type type, Type argument) =>
+            Option.Try(argument, state => Activator.CreateInstance(typeof(ConcreteNullable<>).MakeGenericType(state)))
                 .Cast<IConverter>()
-                .TryValue(out var converter))
-                return converter;
-            return new AbstractNullable(type, argument);
-        }
+                .Or(() => new AbstractNullable(type, argument));
 
         static IConverter CreateArray(Type type)
         {
@@ -279,39 +276,34 @@ namespace Entia.Json.Converters
             }
         }
 
-        static IConverter CreateList(Type type)
+        static IConverter CreateList(Type type, Type argument)
         {
-            if (type.GenericDefinition() == typeof(List<>) && type.GetGenericArguments().TryFirst(out var argument))
+            switch (Type.GetTypeCode(argument))
             {
-                switch (Type.GetTypeCode(argument))
-                {
-                    case TypeCode.Char: return new PrimitiveList<char>(_ => _, node => node.AsChar());
-                    case TypeCode.Byte: return new PrimitiveList<byte>(_ => _, node => node.AsByte());
-                    case TypeCode.SByte: return new PrimitiveList<sbyte>(_ => _, node => node.AsSByte());
-                    case TypeCode.Int16: return new PrimitiveList<short>(_ => _, node => node.AsShort());
-                    case TypeCode.Int32: return new PrimitiveList<int>(_ => _, node => node.AsInt());
-                    case TypeCode.Int64: return new PrimitiveList<long>(_ => _, node => node.AsLong());
-                    case TypeCode.UInt16: return new PrimitiveList<ushort>(_ => _, node => node.AsUShort());
-                    case TypeCode.UInt32: return new PrimitiveList<uint>(_ => _, node => node.AsUInt());
-                    case TypeCode.UInt64: return new PrimitiveList<ulong>(_ => _, node => node.AsULong());
-                    case TypeCode.Single: return new PrimitiveList<float>(_ => _, node => node.AsFloat());
-                    case TypeCode.Double: return new PrimitiveList<double>(_ => _, node => node.AsDouble());
-                    case TypeCode.Decimal: return new PrimitiveList<decimal>(_ => _, node => node.AsDecimal());
-                    case TypeCode.Boolean: return new PrimitiveList<bool>(_ => _, node => node.AsBool());
-                    case TypeCode.String: return new PrimitiveList<string>(_ => _, node => node.AsString());
-                    default:
-                        if (Option.Try(() => Activator.CreateInstance(typeof(ConcreteList<>).MakeGenericType(argument)))
-                            .Cast<IConverter>()
-                            .TryValue(out var converter))
-                            return converter;
-                        break;
-                }
+                case TypeCode.Char: return new PrimitiveList<char>(_ => _, node => node.AsChar());
+                case TypeCode.Byte: return new PrimitiveList<byte>(_ => _, node => node.AsByte());
+                case TypeCode.SByte: return new PrimitiveList<sbyte>(_ => _, node => node.AsSByte());
+                case TypeCode.Int16: return new PrimitiveList<short>(_ => _, node => node.AsShort());
+                case TypeCode.Int32: return new PrimitiveList<int>(_ => _, node => node.AsInt());
+                case TypeCode.Int64: return new PrimitiveList<long>(_ => _, node => node.AsLong());
+                case TypeCode.UInt16: return new PrimitiveList<ushort>(_ => _, node => node.AsUShort());
+                case TypeCode.UInt32: return new PrimitiveList<uint>(_ => _, node => node.AsUInt());
+                case TypeCode.UInt64: return new PrimitiveList<ulong>(_ => _, node => node.AsULong());
+                case TypeCode.Single: return new PrimitiveList<float>(_ => _, node => node.AsFloat());
+                case TypeCode.Double: return new PrimitiveList<double>(_ => _, node => node.AsDouble());
+                case TypeCode.Decimal: return new PrimitiveList<decimal>(_ => _, node => node.AsDecimal());
+                case TypeCode.Boolean: return new PrimitiveList<bool>(_ => _, node => node.AsBool());
+                case TypeCode.String: return new PrimitiveList<string>(_ => _, node => node.AsString());
+                default:
+                    return Option.Try(() => Activator.CreateInstance(typeof(ConcreteList<>).MakeGenericType(argument)))
+                        .Cast<IConverter>()
+                        .Or(() => CreateIList(type));
             }
-
-            return CreateEnumerable(type);
         }
 
-        static IConverter CreateEnumerable(Type type)
+        static IConverter CreateIList(Type type) => CreateIEnumerable(type);
+
+        static IConverter CreateIEnumerable(Type type)
         {
             if (type.EnumerableArgument(true).TryValue(out var argument) &&
                 type.EnumerableConstructor(true).TryValue(out var constructor))
@@ -333,50 +325,44 @@ namespace Entia.Json.Converters
                     case TypeCode.Boolean: return new PrimitiveEnumerable<bool>(_ => _, node => node.AsBool(), constructor);
                     case TypeCode.String: return new PrimitiveEnumerable<string>(_ => _, node => node.AsString(), constructor);
                     default:
-                        if (Option.Try(() => Activator.CreateInstance(typeof(AbstractEnumerable<>).MakeGenericType(argument), constructor))
+                        return Option.Try(() => Activator.CreateInstance(typeof(AbstractEnumerable<>).MakeGenericType(argument), constructor))
                             .Cast<IConverter>()
-                            .TryValue(out var converter))
-                            return converter;
-                        return new AbstractEnumerable(argument, constructor);
+                            .Or(() => new AbstractEnumerable(argument, constructor));
                 }
             }
 
-            if (type.EnumerableArgument(false).TryValue(out argument) &&
-                type.EnumerableConstructor(false).TryValue(out constructor))
-                return new AbstractEnumerable(argument, constructor);
-
-            return CreateDefault(type);
+            return Option.And(type.EnumerableArgument(false), type.EnumerableConstructor(false))
+                .Map(pair => new AbstractEnumerable(pair.Item1, pair.Item2))
+                .Cast<IConverter>()
+                .Or(() => CreateDefault(type));
         }
 
-        static IConverter CreateDictionary(Type type)
-        {
-            if (type.GenericDefinition() == typeof(Dictionary<,>) &&
-                Option.Try(() => Activator.CreateInstance(typeof(ConcreteDictionary<,>).MakeGenericType(type.GetGenericArguments())))
+        static IConverter CreateDictionary(Type type, Type key, Type value) =>
+            Option.Try(() => Activator.CreateInstance(typeof(ConcreteDictionary<,>).MakeGenericType(key, value)))
                 .Cast<IConverter>()
-                .TryValue(out var converter))
-                return converter;
+                .Or(() => CreateIDictionary(type));
 
+        static IConverter CreateIDictionary(Type type)
+        {
             if (type.DefaultConstructor().TryValue(out var constructor))
             {
                 if (type.DictionaryArguments(true).TryValue(out var types))
                 {
-                    if (Option.Try(() => Activator.CreateInstance(typeof(AbstractDictionary<,>).MakeGenericType(types.key, types.value)))
+                    return Option.Try(() => Activator.CreateInstance(typeof(AbstractDictionary<,>).MakeGenericType(types.key, types.value)))
                         .Cast<IConverter>()
-                        .TryValue(out converter))
-                        return converter;
-                    return new AbstractDictionary(types.key, types.value, constructor);
+                        .Or(() => new AbstractDictionary(types.key, types.value, constructor));
                 }
 
                 if (type.DictionaryArguments(false).TryValue(out types))
                     return new AbstractDictionary(types.key, types.value, constructor);
             }
 
-            return CreateEnumerable(type);
+            return CreateIEnumerable(type);
         }
 
-        static IConverter CreateSerializable(Type type) =>
-            type.SerializableConstructor().TryValue(out var constructor) ?
-            new AbstractSerializable(constructor) :
-            CreateDefault(type);
+        static IConverter CreateISerializable(Type type) => type.SerializableConstructor()
+            .Map(constructor => new AbstractSerializable(constructor))
+            .Cast<IConverter>()
+            .Or(() => CreateDefault(type));
     }
 }

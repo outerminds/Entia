@@ -166,31 +166,32 @@ namespace Entia.Core
             {
                 if (type.Is<TBase>())
                 {
-                    var data = ReflectionUtility.GetData(type);
-                    var super = data.Bases
-                        .Concat(data.Interfaces)
-                        .SelectMany(@base => @base.Definition.Match(
-                            definition => new[] { @base.Type, definition.Type },
-                            () => new[] { @base.Type }))
-                        .Where(@base => @base.Is<TBase>())
+                    // 'super' can stay out of the lock since it does not access any unsynchronized shared state.
+                    //  It's access to state is done through the thread-safe 'ConcurrentDictionary'.
+                    var super = type.Bases()
+                        .Concat(type.GetInterfaces())
+                        .SelectMany(@base => @base.GenericDefinition().Match(
+                            definition => new[] { @base, definition },
+                            () => new[] { @base }))
                         .Select(GetEntry)
+                        .Some()
                         .ToArray();
-                    var sub = _entries.Where(current => current.Type.Is(type, true, true)).ToArray();
-                    var entry = new Entry(type, _entries.Length, super, sub);
 
                     // This lock prevents the race condition that would occur if 2 threads were creating an entry
                     // at the same time. A thread may update the '_entries' field between the read and the write of
                     // another thread.
                     // Note that the 'ConcurrentDictionary' garantees that this function will be only called once
-                    // per key.
-                    // 'Interlocked.CompareExchange' could be used here but a lock seemed like the simpler option.
+                    // per key (since keys are never removed from it).
                     lock (_lock)
                     {
+                        // 'sub' and 'entry' must stay within the lock since they access '_entries' which can be
+                        // modified by other threads and could otherwise lead to race conditions
+                        var sub = _entries.Where(current => current.Type.Is(type, true, true)).ToArray();
+                        var entry = new Entry(type, _entries.Length, super, sub);
                         Interlocked.Exchange(ref _entries, _entries.Append(entry));
                         foreach (var current in super) Interlocked.Exchange(ref current.Sub, current.Sub.Append(entry));
+                        return entry;
                     }
-
-                    return entry;
                 }
                 return default;
             }
