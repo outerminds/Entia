@@ -31,10 +31,6 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Result<T>(Failure failure) => new Result<T>(Result.Tags.Failure, default, failure.Messages);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator bool(in Result<T> result) => result.Tag == Result.Tags.Success;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Option<T>(in Result<T> result) => result.TryValue(out var value) ? Option.From(value) : Option.None();
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in Result<T> left, in T right) => left.TryValue(out var value) && EqualityComparer<T>.Default.Equals(value, right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in Result<T> left, in T right) => !(left == right);
@@ -165,7 +161,7 @@ namespace Entia.Core
         public static Result<T> AsResult<T>(in this Option<T> option, params string[] messages) =>
             option.TryValue(out var value) ? Success(value) : Failure(messages);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Option<T> AsOption<T>(in this Result<T> result) => result;
+        public static Option<T> AsOption<T>(in this Result<T> result) => result.Match(value => Option.From(value), _ => Option.None());
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T? AsNullable<T>(in this Result<T> result) where T : struct => result.TryValue(out var value) ? (T?)value : null;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

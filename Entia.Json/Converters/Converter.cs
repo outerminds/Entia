@@ -11,7 +11,7 @@ namespace Entia.Json.Converters
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
     public sealed class ConverterAttribute : PreserveAttribute { }
 
-    public interface IConverter : ITrait
+    public interface IConverter
     {
         Type Type { get; }
         Node Convert(in ToContext context);
@@ -67,10 +67,15 @@ namespace Entia.Json.Converters
 
         static class Cache<T>
         {
-            public static readonly Convert<T> Convert = (in T instance, in ToContext context) => context.Convert(instance);
-            public static readonly Instantiate<T> Instantiate = (in FromContext context) => context.Instantiate<T>();
-            public static readonly Initialize<T> Initialize = (ref T _, in FromContext __) => { };
             public static readonly IConverter Default = Converter.Default(typeof(T));
+            public static readonly Convert<T> Convert = (in T instance, in ToContext context) => Default.Convert(context);
+            public static readonly Instantiate<T> Instantiate = (in FromContext context) => (T)Default.Instantiate(context);
+            public static readonly Initialize<T> Initialize = (ref T instance, in FromContext context) =>
+            {
+                var box = (object)instance;
+                Default.Initialize(ref box, context);
+                instance = (T)box;
+            };
         }
 
         static readonly ConcurrentDictionary<Type, IConverter> _converters = new ConcurrentDictionary<Type, IConverter>();

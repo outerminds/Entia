@@ -13,6 +13,51 @@ namespace Entia.Core
             public static Comparison<T> Compare = Comparer<T>.Default.Compare;
         }
 
+        public static TimeSpan Average<T>(this IEnumerable<T> source, Func<T, TimeSpan> selector) => source.Select(selector).Average();
+        public static TimeSpan? Average<T>(this IEnumerable<T> source, Func<T, TimeSpan?> selector) => source.Select(selector).Average();
+        public static TimeSpan Average(this IEnumerable<TimeSpan> source) => new TimeSpan((long)source.Average(span => span.Ticks));
+        public static TimeSpan? Average(this IEnumerable<TimeSpan?> source)
+        {
+            if (source.Average(span => span?.Ticks) is double ticks)
+                return new TimeSpan((long)ticks);
+            else
+                return null;
+        }
+
+        public static int Count<T, TState>(this IEnumerable<T> source, in TState state, Func<T, TState, bool> predicate)
+        {
+            var count = 0;
+            foreach (var item in source) if (predicate(item, state)) count++;
+            return count;
+        }
+
+        public static void Do<T>(this IEnumerable<T> source, Action<T> @do)
+        {
+            foreach (var item in source) @do(item);
+        }
+
+        public static void Do<T>(this IEnumerable<T> source, Action<T, int> @do)
+        {
+            var index = 0;
+            foreach (var item in source) @do(item, index++);
+        }
+
+        public static void Do<T, TState>(this IEnumerable<T> source, in TState state, Action<T, TState> @do)
+        {
+            foreach (var item in source) @do(item, state);
+        }
+
+        public static void Do<T, TState>(this IEnumerable<T> source, in TState state, Action<T, int, TState> @do)
+        {
+            var index = 0;
+            foreach (var item in source) @do(item, index++, state);
+        }
+
+        public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> source)
+        {
+            foreach (var enumerable in source) foreach (var item in enumerable) yield return item;
+        }
+
         public static bool All<T>(this IEnumerable<T> source, Func<T, int, bool> predicate)
         {
             var index = 0;
@@ -354,6 +399,18 @@ namespace Entia.Core
             }
 
             return (@true.ToArray(), @false.ToArray());
+        }
+
+        public static (T1[] left, T2[] right) Unzip<T1, T2>(this IEnumerable<(T1, T2)> source)
+        {
+            var left = new List<T1>();
+            var right = new List<T2>();
+            foreach (var item in source)
+            {
+                left.Add(item.Item1);
+                right.Add(item.Item2);
+            }
+            return (left.ToArray(), right.ToArray());
         }
 
         public static HashSet<T> ToSet<T>(this IEnumerable<T> source) => new HashSet<T>(source);

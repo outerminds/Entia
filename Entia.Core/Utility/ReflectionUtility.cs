@@ -75,7 +75,11 @@ namespace Entia.Core
         public static bool TryGetAssembly(string name, out Assembly assembly) => _assemblies.TryGetValue(name, out assembly);
         public static bool TryGetType(string name, out Type type) => _types.TryGetValue(name, out type);
         public static bool TryGetType(Guid guid, out Type type) => _guidToType.TryGetValue(guid, out type);
-        public static bool TryGetGuid(Type type, out Guid guid) => type.GetData().Guid.TryValue(out guid);
+        public static bool TryGetGuid(Type type, out Guid guid)
+        {
+            guid = type.GUID;
+            return type.HasGuid();
+        }
 
         public static bool HasGuid(this Type type) => type.IsDefined(typeof(GuidAttribute));
 
@@ -92,10 +96,7 @@ namespace Entia.Core
                 name = $"{type.Trimmed()}<{arguments}>";
             }
 
-            return string.Join(".", GetData(type).Declaring
-                .Reverse()
-                .Select(declaring => Trimmed(declaring.Type))
-                .Append(name));
+            return string.Join(".", type.Declaring().Reverse().Select(Trimmed).Append(name));
         }
 
         public static string FullFormat(this Type type) =>
@@ -159,6 +160,16 @@ namespace Entia.Core
             {
                 yield return type;
                 type = type.BaseType;
+            }
+        }
+
+        public static IEnumerable<Type> Declaring(this Type type)
+        {
+            type = type.DeclaringType;
+            while (type != null)
+            {
+                yield return type;
+                type = type.DeclaringType;
             }
         }
 

@@ -72,7 +72,7 @@ namespace Entia.Core
 
         public TypeData(Type type)
         {
-            static IMemberData[] GetMembers(Type current, BindingFlags flags) => GetBases(current)
+            static IMemberData[] GetMembers(Type current, BindingFlags flags) => current.Bases()
                 .Prepend(current)
                 .SelectMany(@base => @base.GetMembers(flags))
                 .DistinctBy(member => member.MetadataToken)
@@ -94,26 +94,6 @@ namespace Entia.Core
             {
                 try { return System.Array.CreateInstance(current, 1).GetValue(0); }
                 catch { return null; }
-            }
-
-            static IEnumerable<Type> GetBases(Type current)
-            {
-                current = current.BaseType;
-                while (current != null)
-                {
-                    yield return current;
-                    current = current.BaseType;
-                }
-            }
-
-            static IEnumerable<Type> GetDeclaring(Type current)
-            {
-                current = current.DeclaringType;
-                while (current != null)
-                {
-                    yield return current;
-                    current = current.DeclaringType;
-                }
             }
 
             static bool GetIsPlain(TypeData current)
@@ -180,7 +160,7 @@ namespace Entia.Core
             _guid = new Lazy<Option<Guid>>(() => Option.Some(Type.GUID).Filter(Type.HasGuid()));
             _code = new Lazy<TypeCode>(() => Type.GetTypeCode(type));
             _interfaces = new Lazy<TypeData[]>(() => Type.GetInterfaces().Select(@interface => @interface.GetData()));
-            _bases = new Lazy<TypeData[]>(() => GetBases(Type).Select(@base => @base.GetData()).ToArray());
+            _bases = new Lazy<TypeData[]>(() => Type.Bases().Select(@base => @base.GetData()).ToArray());
             _element = new Lazy<Option<TypeData>>(() => GetElement(Type).GetData());
             _definition = new Lazy<Option<TypeData>>(() => (Type.IsGenericType ? Type.GetGenericTypeDefinition() : default).GetData());
             _members = new Lazy<Dictionary<int, IMemberData>>(() => GetMembers(Type, ReflectionUtility.All).ToDictionary(member => member.Member.MetadataToken));
@@ -194,7 +174,7 @@ namespace Entia.Core
             // NOTE: do not use 'InstanceMembers' such that base class constructors are not included
             _instanceConstructors = new Lazy<ConstructorData[]>(() => Type.GetConstructors(ReflectionUtility.Instance).Select(constructor => constructor.GetData()));
             _defaultConstructor = new Lazy<Option<ConstructorData>>(() => InstanceConstructors.FirstOrNone(constructor => constructor.Parameters.None()));
-            _declaring = new Lazy<TypeData[]>(() => GetDeclaring(Type).Select(declaring => declaring.GetData()).ToArray());
+            _declaring = new Lazy<TypeData[]>(() => Type.Declaring().Select(declaring => declaring.GetData()).ToArray());
             _arguments = new Lazy<TypeData[]>(() => Type.GetGenericArguments().Select(argument => argument.GetData()));
             _isPlain = new Lazy<bool>(() => GetIsPlain(this));
             _isBlittable = new Lazy<bool>(() => GetIsBlittable(Element.Filter(Type.IsArray).Or(this)));

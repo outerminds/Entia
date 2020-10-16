@@ -28,8 +28,6 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Option<T>(None _) => new Option<T>(Option.Tags.None, default);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator bool(in Option<T> option) => option.IsSome();
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in Option<T> left, in T right) => left.TryValue(out var value) && EqualityComparer<T>.Default.Equals(value, right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in Option<T> left, in T right) => !(left == right);

@@ -88,7 +88,7 @@ namespace Entia.Core
 
         static readonly PointerReturn _return = _ => _;
         static readonly PointerOffset _offset = (pointer, offset) => pointer + offset;
-        static readonly FieldData[] _fields = typeof(Delegate).GetData().InstanceFields;
+        static readonly FieldInfo[] _fields = typeof(Delegate).Fields(true, false).ToArray();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Set<T>(in T reference, in T value) => AsReference(reference) = value;
@@ -129,7 +129,7 @@ namespace Entia.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Copy(Delegate source, Delegate target)
         {
-            foreach (var field in _fields) field.Field.SetValue(target, field.Field.GetValue(source));
+            foreach (var field in _fields) field.SetValue(target, field.GetValue(source));
         }
     }
 }

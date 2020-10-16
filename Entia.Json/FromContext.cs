@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
-using Entia.Core;
 using Entia.Json.Converters;
 
 namespace Entia.Json
@@ -75,26 +73,6 @@ namespace Entia.Json
             // Must be set again in the case where the boxed instance is unboxed and reboxed
             if (type.IsValueType) UpdateReference(node, instance);
             return instance;
-        }
-
-        public T Instantiate<T>() => Instantiate<T>(ReflectionUtility.GetData<T>());
-
-        public object Instantiate(Type type) => Instantiate(ReflectionUtility.GetData(type));
-
-        public T Instantiate<T>(TypeData type)
-        {
-            if (type.Type.IsValueType) return default;
-            return Cast<T>(Instantiate(type));
-        }
-
-        public object Instantiate(TypeData type)
-        {
-            if (type.Type.IsAbstract) return type.Default;
-            return
-                CloneUtility.Shallow(type.Default) ??
-                type.DefaultConstructor
-                    .Map(constructor => constructor.Constructor.Invoke(Array.Empty<object>()))
-                    .Or(type, state => FormatterServices.GetUninitializedObject(state));
         }
 
         public FromContext With(Node node = null, Type type = null) =>
