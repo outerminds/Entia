@@ -123,7 +123,7 @@ namespace Entia.Json
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(Enum value) => value == null ? Null : Number(Convert.ToInt64(value));
+        public static Node Number(Enum value) => value == null ? Null : Number(Convert.ToInt64(value, CultureInfo.InvariantCulture));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node String(char value)
         {
