@@ -9,9 +9,9 @@ using Entia.Core.Documentation;
 namespace Entia.Core
 {
     /// <summary>
-    /// A key value store where the key is a type.
-    /// Allows to retrieve values faster that a regular dictionary when using the generic getters.
-    /// When retrieving a value, the sub or super types of the key used can be considered.
+    /// Efficient map implementation where the key is a type.
+    /// Supports retrieving a value using the sub or super types of the key, including
+    /// generic definitions.
     /// </summary>
     public sealed class TypeMap<TBase, TValue> : IEnumerable<TypeMap<TBase, TValue>.Enumerator, (Type type, TValue value)>
     {
@@ -166,7 +166,7 @@ namespace Entia.Core
             {
                 if (type.Is<TBase>())
                 {
-                    // 'super' can stay out of the lock since it does not access any unsynchronized shared state.
+                    // 'super' can stay out of the lock since it does not access any un-synchronized shared state.
                     //  It's access to state is done through the thread-safe 'ConcurrentDictionary'.
                     var super = type.Bases()
                         .Concat(type.GetInterfaces())
@@ -180,7 +180,7 @@ namespace Entia.Core
                     // This lock prevents the race condition that would occur if 2 threads were creating an entry
                     // at the same time. A thread may update the '_entries' field between the read and the write of
                     // another thread.
-                    // Note that the 'ConcurrentDictionary' garantees that this function will be only called once
+                    // Note that the 'ConcurrentDictionary' guarantees that this function will be only called once
                     // per key (since keys are never removed from it).
                     lock (_lock)
                     {
