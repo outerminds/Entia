@@ -326,6 +326,8 @@ namespace Entia.Experiment
             var ancestors = families.Ancestors(child).ToArray();
         }
 
+
+
         struct Wrapper<T> { public T Value; }
 
         static unsafe void TestJson()
@@ -486,10 +488,11 @@ namespace Entia.Experiment
 
         static void Main()
         {
+            // LockTests.Test();
             // SuperDuperUnsafe();
             // VeryUnsafe();
             TestJson();
-            GeneratorTests.Test();
+            // GeneratorTests.Test();
             // TestFamilies();
             // Serializer();
             // TypeMapTest.Benchmark();

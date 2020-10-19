@@ -54,7 +54,7 @@ namespace Entia.Experiment
             string Format((string name, Action test, long total, long minimum, long maximum) result, double baseTotal)
             {
                 var column = 20;
-                var name = Justify(result.name, column * 2);
+                var name = Justify(result.name, column);
                 var total = Justify(TimeSpan.FromTicks(result.total), column);
                 var ratio = Justify((result.total / baseTotal).ToString("0.000"), column / 2);
                 var average = Justify(TimeSpan.FromTicks(result.total / iterations), column);
@@ -73,6 +73,7 @@ namespace Entia.Experiment
             Array.Sort(results, (a, b) => a.name.CompareTo(b.name));
             var reference = results.FirstOrDefault(result => result.test == @base).total;
             foreach (var result in results) Console.WriteLine(Format(result, reference));
+            Console.WriteLine();
         }
 
         public static void Measure(string name, Action test, int iterations)
