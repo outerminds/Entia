@@ -93,9 +93,6 @@ namespace Entia.Json
             1e-300, 1e-301, 1e-302, 1e-303, 1e-304, 1e-305, 1e-306, 1e-307, 1e-308,
         };
 
-        public static Result<Node> Parse(string text, Settings settings = null) =>
-            Parse(text, new FromContext(settings ?? Settings.Default, new Dictionary<uint, object>()));
-
         static unsafe Result<Node> Parse(string text, in FromContext context)
         {
             if (string.IsNullOrWhiteSpace(text)) return Result.Failure("Expected valid json.");
@@ -105,6 +102,7 @@ namespace Entia.Json
             var brackets = new Stack<int>(8);
             var builder = default(StringBuilder);
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             void Push(Node node)
             {
                 if (index >= nodes.Length)
@@ -116,6 +114,7 @@ namespace Entia.Json
                 nodes[index++] = node;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             Node[] Pop(int count)
             {
                 if (count == 0) return _empty;

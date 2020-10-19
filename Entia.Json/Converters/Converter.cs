@@ -8,9 +8,41 @@ using Entia.Core;
 
 namespace Entia.Json.Converters
 {
+    /// <summary>
+    /// Attribute that can be used to provide default implementations of an <see cref="IConverter"/>
+    /// to the library statically without having to pass them explicitly through <see cref="Settings"/>.
+    /// <para>
+    /// The attribute can be applied to a static field or property that provides a <see cref="IConverter"/>
+    /// instance that covers the declaring type such that this type is assignable from the
+    /// <see cref="IConverter.Type"/> property (works with generic definitions).
+    /// </para>
+    /// </summary>
+    /// /// <remarks>
+    /// This attribute can only be used for types that are defined by the user. To handle other types,
+    /// see <see cref="IConverter"/>.
+    /// </remarks>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
     public sealed class ConverterAttribute : PreserveAttribute { }
 
+    /// <summary>
+    /// Interface that can be implemented to to provide custom conversion from and to a
+    /// <see cref="Node"/>. Instances of this interface must be passed to calls to the
+    /// library through the <see cref="Settings"/> parameter. This is the main point of extensibility
+    /// of the library.
+    /// <para>
+    /// When converting from or to a <see cref="Node"/>, the <see cref="IConverter.Type"/> property will be used
+    /// to find the proper converter for a given value. The <see cref="IConverter.Type"/> property
+    /// may provide an abtract type or a generic definition to signify that all derived concrete
+    /// types are supported.
+    /// Note that certain exceptions apply. Primitives, enums, strings and null values will
+    /// never make it to a converter, thus their conversion cannot be overridden. For any other type,
+    /// including the ones for which a default converter is provided by the library, the conversion
+    /// can be overridden by using <see cref="Settings"/>.
+    /// </para>
+    /// </summary>
+    /// <remarks>
+    /// When possible, it is recommended to use the more type safe alternative <see cref="Converter{T}"/>.
+    /// </remarks>
     public interface IConverter
     {
         Type Type { get; }
@@ -19,11 +51,19 @@ namespace Entia.Json.Converters
         void Initialize(ref object instance, in FromContext context);
     }
 
+    /// <summary>
+    /// A type safe alternative to <see cref="IConverter"/>.
+    /// </summary>
+    /// <typeparam name="T">The type to convert from and to a <see cref="Node"/>.</typeparam>
     public abstract class Converter<T> : IConverter
     {
+        /// <inheritdoc/>
         public virtual Type Type => typeof(T);
+        /// <inheritdoc cref="IConverter.Convert"/>
         public abstract Node Convert(in T instance, in ToContext context);
+        /// <inheritdoc cref="IConverter.Instantiate"/>
         public abstract T Instantiate(in FromContext context);
+        /// <inheritdoc cref="IConverter.Initialize"/>
         public virtual void Initialize(ref T instance, in FromContext context) { }
 
         Node IConverter.Convert(in ToContext context) =>
@@ -39,6 +79,10 @@ namespace Entia.Json.Converters
         }
     }
 
+    /// <summary>
+    /// Type safe API to retrieve default <see cref="IConverter"/> instances or to construct
+    /// one procedurally.
+    /// </summary>
     public static class Converter
     {
         public delegate Option<(int version, Node node)> Upgrade(Node node);
@@ -80,23 +124,64 @@ namespace Entia.Json.Converters
 
         static readonly ConcurrentDictionary<Type, IConverter> _converters = new ConcurrentDictionary<Type, IConverter>();
 
+        /// <summary>
+        /// Provides a default <see cref="IConverter"/> instance for the provided type.
+        /// This instance may be a library built-in one or one that has been linked with the
+        /// <see cref="ConverterAttribute"/> attribute.
+        /// </summary>
         public static IConverter Default(Type type) => _converters.GetOrAdd(type, key => CreateConverter(key));
+        /// <inheritdoc cref="Default(Type)"/>
         public static IConverter Default<T>() => Cache<T>.Default;
 
+        /// <summary>
+        /// Creates a <see cref="Converter{T}"/> instance for type <typeparamref name="TSource"/> that
+        /// wraps a conversion from <typeparamref name="TSource"/> to <typeparamref name="TTarget"/>.
+        /// If no <see cref="Converter{T}"/> instance for type <typeparamref name="TTarget"/> is provided,
+        /// the default one will be used.
+        /// </summary>
         public static Converter<TSource> Create<TSource, TTarget>(InFunc<TSource, TTarget> to, InFunc<TTarget, TSource> from, Converter<TTarget> converter = null) =>
             Create(
                 (in TSource instance, in ToContext context) => context.Convert(to(instance), converter, converter),
                 (in FromContext context) => from(context.Convert<TTarget>(context.Node, converter, converter)));
 
+        /// <summary>
+        /// Creates a <see cref="Converter{T}"/> instance with the provided conversions from and to
+        /// a <see cref="Node"/>.
+        /// </summary>
         public static Converter<T> Create<T>(InFunc<T, Node> to, Func<Node, T> from) => Create(
             (in T instance, in ToContext context) => to(instance),
             (in FromContext context) => from(context.Node));
 
+        /// <summary>
+        /// Creates a <see cref="Converter{T}"/> instance with the provided conversions from and to
+        /// a <see cref="Node"/>.
+        /// </summary>
         public static Converter<T> Create<T>(Convert<T> convert = null, Instantiate<T> instantiate = null, Initialize<T> initialize = null) =>
             new Function<T>(convert ?? Cache<T>.Convert, instantiate ?? Cache<T>.Instantiate, initialize ?? Cache<T>.Initialize);
 
+        /// <inheritdoc cref="Version{T}(int, int, ValueTuple{int, Converter{T}}[])"/>
+        /// <remarks>
+        /// The lowest version is considered to be the default version and the largest version
+        /// is considered to be the latest.
+        /// </remarks>
         public static Converter<T> Version<T>(params (int version, Converter<T> converter)[] converters) =>
             Version(converters.Min(pair => pair.version), converters.Max(pair => pair.version), converters);
+        /// <summary>
+        /// Creates a <see cref="Converter{T}"/> instance that selects one of the given converters
+        /// based on a version. This converter also wraps the json in an object that holds the version
+        /// in the following format: <code>{ $k: version, $v: json }</code>
+        /// <list type="bullet">
+        /// <item>
+        /// When converting to a <see cref="Node"/>, the converter with the <paramref name="latest"/>
+        /// version will be used.
+        /// <item>
+        /// </item>
+        /// When converting from a <see cref="Node"/>, the converter with the corresponding version
+        /// will be used. If the version does not match any converter or is absent, the converter
+        /// with the <paramref name="default"/> version will be used.
+        /// </item>
+        /// </list>
+        /// </summary>
         public static Converter<T> Version<T>(int @default, int latest, params (int version, Converter<T> converter)[] converters)
         {
             var versionToConverter = converters.ToDictionary(pair => pair.version, pair => pair.converter);
@@ -108,7 +193,8 @@ namespace Entia.Json.Converters
                 var pair =
                     node.IsObject() && node.Children.Length == 4 &&
                     node.Children[0] == Node.DollarKString && node.Children[2] == Node.DollarVString ?
-                    (version: node.Children[1].AsInt(), value: node.Children[3]) : (version: @default, value: node);
+                    (version: node.Children[1].AsInt(), value: node.Children[3]) :
+                    (version: @default, value: node);
                 value = pair.value;
                 return versionToConverter.TryGetValue(pair.version, out var converter) ? converter : defaultConverter;
             }
@@ -122,6 +208,19 @@ namespace Entia.Json.Converters
                     Converter(context.Node, out var value).Initialize(ref instance, context.With(value)));
         }
 
+        /// <summary>
+        /// Creates a <see cref="Converter{T}"/> instance that selects either the
+        /// <paramref name="true"/> or <paramref name="false"/> converter based on the provided
+        /// <paramref name="condition"/>.
+        /// <para>
+        /// For example, this is especially useful for cases where the same value may have different
+        /// json representations. A value of type 'Vector2' may be converted to an object with format:
+        /// <code>{ "X": 1, "Y": 2 }</code> or may be converted to an array with format:
+        /// <code>[1, 2]</code>
+        /// In this case, the condition allows to select
+        /// a converter based on wether the a <see cref="Node"/> is an object or an array.
+        /// </para>
+        /// </summary>
         public static Converter<T> If<T>((InFunc<T, bool> to, Func<Node, bool> from) condition, Converter<T> @true, Converter<T> @false)
         {
             condition.to ??= (in T _) => true;
@@ -141,6 +240,28 @@ namespace Entia.Json.Converters
             );
         }
 
+        /// <summary>
+        /// Creates a <see cref="Converter{T}"/> instance that will convert values of type
+        /// <typeparam name="T"/> to an object representation described by the provided
+        /// <paramref name="members"/>.
+        /// <para>
+        /// <example>
+        /// For example, the converter:
+        /// <code>
+        /// Object(
+        ///     (in FromContext _) => new Vector2()),
+        ///     Member.Field(nameof(Vector2.X), (in Vector2 value) => ref value.X),
+        ///     Member.Field(nameof(Vector2.Y), (in Vector2 value) => ref value.Y));
+        /// </code>
+        /// will convert a value of type 'Vector2' to an object with format:
+        /// <code>{ "X": 1, "Y": 2 }</code>
+        /// </example>
+        /// </para>
+        /// </summary>
+        /// <remarks>
+        /// An explicit converter implementation like one returned by this function should be
+        /// much more performant than the default reflection-based converter.
+        /// </remarks>
         public static Converter<T> Object<T>(Instantiate<T> instantiate = null, params Member<T>[] members)
         {
             var map = members
@@ -173,6 +294,28 @@ namespace Entia.Json.Converters
             );
         }
 
+        /// <summary>
+        /// Creates a <see cref="Converter{T}"/> instance that will convert values of type
+        /// <typeparam name="T"/> to an array representation described by the provided
+        /// <paramref name="items"/>.
+        /// <para>
+        /// <example>
+        /// For example, the converter:
+        /// <code>
+        /// Array(
+        ///     (in FromContext _) => new Vector2()),
+        ///     Item.Field(nameof(Vector2.X), (in Vector2 value) => ref value.X),
+        ///     Item.Field(nameof(Vector2.Y), (in Vector2 value) => ref value.Y));
+        /// </code>
+        /// will convert a value of type 'Vector2' to an array with format:
+        /// <code>[1, 2]</code>
+        /// </example>
+        /// </para>
+        /// </summary>
+        /// <remarks>
+        /// An explicit converter implementation like one returned by this function should be
+        /// much more performant than the default reflection-based converter.
+        /// </remarks>
         public static Converter<T> Array<T>(Instantiate<T> instantiate = null, params Item<T>[] items)
         {
             var map = new Item<T>[items.Length == 0 ? 0 : items.Max(item => item.Index + 1)];
@@ -239,6 +382,7 @@ namespace Entia.Json.Converters
 
         static IConverter CreateOption(Type type, Type argument)
         {
+            // This may fail for targets that do not support JIT compilation.
             if (Option.Try(argument, state => Activator.CreateInstance(typeof(ConcreteOption<>).MakeGenericType(state)))
                 .Cast<IConverter>()
                 .TryValue(out var converter))
@@ -251,6 +395,7 @@ namespace Entia.Json.Converters
         }
 
         static IConverter CreateNullable(Type type, Type argument) =>
+            // This may fail for targets that do not support JIT compilation.
             Option.Try(argument, state => Activator.CreateInstance(typeof(ConcreteNullable<>).MakeGenericType(state)))
                 .Cast<IConverter>()
                 .Or(() => new AbstractNullable(type, argument));
@@ -275,6 +420,7 @@ namespace Entia.Json.Converters
                 case TypeCode.Boolean: return new PrimitiveArray<bool>(_ => _, node => node.AsBool());
                 case TypeCode.String: return new PrimitiveArray<string>(_ => _, node => node.AsString());
                 default:
+                    // This may fail for targets that do not support JIT compilation.
                     return Option.Try(() => Activator.CreateInstance(typeof(ConcreteArray<>).MakeGenericType(element)))
                         .Cast<IConverter>()
                         .Or(() => new AbstractArray(element));
@@ -300,6 +446,7 @@ namespace Entia.Json.Converters
                 case TypeCode.Boolean: return new PrimitiveList<bool>(_ => _, node => node.AsBool());
                 case TypeCode.String: return new PrimitiveList<string>(_ => _, node => node.AsString());
                 default:
+                    // This may fail for targets that do not support JIT compilation.
                     return Option.Try(() => Activator.CreateInstance(typeof(ConcreteList<>).MakeGenericType(argument)))
                         .Cast<IConverter>()
                         .Or(() => CreateIList(type));
@@ -330,6 +477,7 @@ namespace Entia.Json.Converters
                     case TypeCode.Boolean: return new PrimitiveEnumerable<bool>(_ => _, node => node.AsBool(), constructor);
                     case TypeCode.String: return new PrimitiveEnumerable<string>(_ => _, node => node.AsString(), constructor);
                     default:
+                        // This may fail for targets that do not support JIT compilation.
                         return Option.Try(() => Activator.CreateInstance(typeof(AbstractEnumerable<>).MakeGenericType(argument), constructor))
                             .Cast<IConverter>()
                             .Or(() => new AbstractEnumerable(argument, constructor));
@@ -343,6 +491,7 @@ namespace Entia.Json.Converters
         }
 
         static IConverter CreateDictionary(Type type, Type key, Type value) =>
+            // This may fail for targets that do not support JIT compilation.
             Option.Try(() => Activator.CreateInstance(typeof(ConcreteDictionary<,>).MakeGenericType(key, value)))
                 .Cast<IConverter>()
                 .Or(() => CreateIDictionary(type));
@@ -353,6 +502,7 @@ namespace Entia.Json.Converters
             {
                 if (type.DictionaryArguments(true).TryValue(out var types))
                 {
+                    // This may fail for targets that do not support JIT compilation.
                     return Option.Try(() => Activator.CreateInstance(typeof(AbstractDictionary<,>).MakeGenericType(types.key, types.value)))
                         .Cast<IConverter>()
                         .Or(() => new AbstractDictionary(types.key, types.value, constructor));

@@ -7,12 +7,31 @@ using Entia.Core;
 
 namespace Entia.Json
 {
+    /// <summary>
+    /// Data structure that represents a json parse tree.
+    /// <para>
+    /// Many constructors, operators and extensions are provided for this type to make it easy
+    /// to manipulate it.
+    /// </para>
+    /// </summary>
     public sealed class Node
     {
-        // NOTE: these enums are kept as 'byte' to keep the size of nodes small;
-        // current size is 22 bytes on x64 (24 with padding) and should not go over 24 bytes since
-        // it will significantly increase the size of parse trees
-        public enum Kinds : byte { Null, Boolean, Number, String, Object, Array, Type, Reference, Abstract }
+        // These enums are kept as 'byte' to keep the size of nodes small.
+        // Current size is 22 bytes on x64 (24 with padding) and should not go over 24 bytes since
+        // it will significantly increase the size of parse trees.
+        public enum Kinds : byte
+        {
+            Null,
+            Boolean,
+            Number,
+            String,
+            Object,
+            Array,
+            Type,
+            Reference,
+            Abstract
+        }
+
         public enum Tags : byte
         {
             None,
@@ -57,12 +76,12 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Node(Type value) => Type(value);
 
-        // NOTE: must be placed before calling the 'Node' constructors
+        // Must be placed before calling the 'Node' constructors.
         static readonly Node[] _empty = { };
         static readonly Node[] _singles = new Node[128];
         static readonly Node[] _dollars = new Node[128];
-        // NOTE: it has been estimated to be very improbable that this counter would overflow and cause
-        // identifier collisions within the same node tree
+        // It has been estimated to be very improbable that this counter would overflow and cause
+        // identifier collisions within the same node tree.
         static int _counter;
 
         public static readonly Node Null = new Node(Kinds.Null, Tags.Empty, null, _empty);
@@ -102,7 +121,7 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(float value)
         {
-            // NOTE: since conversion from 'float' to 'double' isn't perfect, it is best to allow to keep the
+            // Since conversion from 'float' to 'double' isn't perfect, it is best to allow to keep the
             // 'float' as is to prevent adding fractional digits
             var integer = (long)value;
             return value == integer ? Number(integer) : new Node(Kinds.Number, Tags.None, value, _empty);

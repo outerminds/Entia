@@ -11,11 +11,45 @@ namespace Entia.Json
     {
         None = 0,
         All = ~0,
+        /// <summary>
+        /// Enables <see cref="Node"/>s to refer to another <see cref="Node"/> that represents the same
+        /// value rather than converting it for each of its occurrence using the format:
+        /// <code>{ "$i": identifier, "$v": value }</code> for the referee
+        /// <code>{ "$r": identifier }</code> for the reference.
+        /// </summary>
+        /// <remarks>
+        /// This feature also makes it possible to convert values with circular references.
+        /// Note that this can make the json output to be incompatible with other json parsers.
+        /// </remarks>
         Reference = 1 << 0,
+        /// <summary>
+        /// Enables <see cref="Node"/>s to represent abstract values such as interfaces or base
+        /// classes using the format:
+        /// <code>{ "$t": type, "$v": value }</code>
+        /// Without this feature, any value that has a visible type that differs from it actual type
+        /// will be converted to <see cref="Node.Null"/>.
+        /// </summary>
+        /// <remarks>
+        /// Note that this can make the json output to be incompatible with other json parsers.
+        /// </remarks>
         Abstract = 1 << 1,
     }
 
-    public enum Formats { Compact = 0, Indented = 1 }
+    /// <summary>
+    /// Instructs the json generator to generate in a given style.
+    /// </summary>
+    public enum Formats
+    {
+        /// <summary>
+        /// Generates json in the most compact way possible, stripping all unnecessary characters
+        /// such as spaces.
+        /// </summary>
+        Compact = 0,
+        /// <summary>
+        /// Generates json in a human readable way by adding spaces and indentation.
+        /// </summary>
+        Indented = 1
+    }
 
     public static class FeaturesExtensions
     {
@@ -27,6 +61,12 @@ namespace Entia.Json
         public static bool HasNone(this Features features, Features others) => !features.HasAny(others);
     }
 
+    /// <summary>
+    /// Data structure that allows to alter the parsing, conversion and generation behaviors
+    /// of the library.
+    /// Specifically, this is where <see cref="IConverter"/> instances can be registered to
+    /// be used during conversion.
+    /// </summary>
     public sealed class Settings
     {
         public static readonly Settings Default = new Settings(Features.None, Formats.Compact);
@@ -35,7 +75,7 @@ namespace Entia.Json
         public readonly Formats Format;
         public readonly TypeMap<object, IConverter> Converters;
 
-        Settings(Features features, Formats formats, params IConverter[] converters)
+        public Settings(Features features, Formats formats, params IConverter[] converters)
         {
             Features = features;
             Format = formats;

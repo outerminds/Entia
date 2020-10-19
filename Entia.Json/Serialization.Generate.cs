@@ -9,9 +9,6 @@ namespace Entia.Json
 {
     public static partial class Serialization
     {
-        public static string Generate(Node node, Settings settings = null) =>
-            Generate(node, new ToContext(settings ?? Settings.Default));
-
         static string Generate(Node node, in ToContext context)
         {
             Wrap(ref node, context);
