@@ -5,7 +5,7 @@ using Entia.Core;
 namespace Entia.Json
 {
     /// <summary>
-    /// Main library API. Defines parsing, conversion and generation operations.
+    /// Main module. Defines parsing, conversion and generation operations.
     /// </summary>
     public static partial class Serialization
     {

@@ -9,7 +9,7 @@ namespace Entia.Json.Converters
 {
     public sealed class DefaultObject : IConverter
     {
-        public sealed class Member
+        sealed class Member
         {
             public readonly Node Name;
             public readonly Type Type;

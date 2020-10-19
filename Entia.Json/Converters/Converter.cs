@@ -80,8 +80,7 @@ namespace Entia.Json.Converters
     }
 
     /// <summary>
-    /// Type safe API to retrieve default <see cref="IConverter"/> instances or to construct
-    /// one procedurally.
+    /// Module that exposes default <see cref="IConverter"/> instances and converter constructors.
     /// </summary>
     public static class Converter
     {
