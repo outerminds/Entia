@@ -5,6 +5,9 @@ namespace Entia.Json.Converters
     /// <summary>
     /// Data structure that represents an item of an array converter.
     /// </summary>
+    /// <remarks>
+    /// See <see cref="Converter.Array{T}"/>.
+    /// </remarks>
     public sealed class Item<T>
     {
         public readonly uint Index;
@@ -22,6 +25,9 @@ namespace Entia.Json.Converters
     /// <summary>
     /// Module that exposes constructors for <see cref="Item{T}"/>.
     /// </summary>
+    /// <remarks>
+    /// See <see cref="Converter.Array{T}"/>.
+    /// </remarks>
     public static class Item
     {
         public delegate Node Convert<T>(in T instance, in ToContext context);

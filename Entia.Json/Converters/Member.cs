@@ -6,6 +6,9 @@ namespace Entia.Json.Converters
     /// <summary>
     /// Data structure that represents a member of an object converter.
     /// </summary>
+    /// <remarks>
+    /// See <see cref="Converter.Object{T}"/>.
+    /// </remarks>
     public sealed class Member<T>
     {
         public readonly string Name;
@@ -27,6 +30,9 @@ namespace Entia.Json.Converters
     /// <summary>
     /// Module that exposes constructors for <see cref="Member{T}"/>.
     /// </summary>
+    /// <remarks>
+    /// See <see cref="Converter.Object{T}"/>.
+    /// </remarks>
     public static class Member
     {
         public delegate bool Validate<T>(in T instance);

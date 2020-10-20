@@ -79,7 +79,7 @@ namespace Entia.Experiment.V2
 
 
     Systems:
-        Systems should have on of the following format:
+        Systems should have one of the following format:
         - 'run' (systems that have no dependencies; these are meant to synchronize side effects
         on non ECS modules)
         - 'inject => run' (systems that don't require automatic access to entities)
@@ -107,6 +107,66 @@ namespace Entia.Experiment.V2
         - Entity's index/generation may vary but components must be identical.
     - Sequential and automatic system scheduling must produce the same changes.
     */
+
+    public sealed class Node
+    {
+        public static class System
+        {
+            public static Node Run(Action run) => throw null;
+
+            public unsafe static Node Run<T>(delegate*<in T, void> query)
+            {
+                static void Poulah(in int value) { }
+                Run<int>(&Poulah);
+
+                query(default);
+                throw null;
+            }
+        }
+
+        public static Node Inject<T>(InFunc<T, Node> provide) => throw null;
+        public static Node Inject<T1, T2>(InFunc<T1, T2, Node> provide) => throw null;
+        public static Node Sequence(params Node[] nodes) => throw null;
+    }
+
+    public static class NodeExtensions
+    {
+        public static Runner Schedule(this Node node, World world) => new Systems(world).Schedule(node);
+    }
+
+    public delegate void Runner();
+
+    public readonly struct Systems
+    {
+        public Systems(World world)
+        {
+
+        }
+
+        public Runner Schedule(Node node) => throw null;
+    }
+
+    public static class Boba
+    {
+        public static void Fett(Func<bool> @continue)
+        {
+            var world = new World();
+            var initialize = Node.Sequence().Schedule(world);
+            var preRun = Node.Sequence().Schedule(world);
+            var run = Node.Sequence().Schedule(world);
+            var postRun = Node.Sequence().Schedule(world);
+            var finalize = Node.Sequence().Schedule(world);
+
+            initialize();
+            while (@continue())
+            {
+                preRun();
+                run();
+                postRun();
+            }
+            finalize();
+        }
+    }
 
     public sealed class World
     {
