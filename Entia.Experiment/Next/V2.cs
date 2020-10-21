@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Entia.Core;
@@ -65,7 +63,7 @@ namespace Entia.Experiment.V2
     - must divide stores in chunks to preserve pointer validity
     - there might be tearing/race conditions if the Read<T> and Add<T> act on the same entity
     - since a system would have to prove that it cannot Read<T> and Add<T> act on the same entity to be safe and
-    that this proof will most lifely make the Add<T> useless, this will remains invalid.
+    that this proof will most likely make the Add<T> useless, this will remains invalid.
 
     Read<T> (or Write<T>) - Remove<T>
     - may invalidate pointer if Read<T> and Remove<T> act on the same entity and cause it to move
@@ -333,7 +331,7 @@ namespace Entia.Experiment.V2
     /*
     The 'Defer' module defers structural changes to entities to a synchronization point.
     - Structural changes include 'Add<T>', 'Remove<T>' and 'Destroy'.
-    - Parallel systems will resolve their deferred actions sequentialy, based on their declaration order.
+    - Parallel systems will resolve their deferred actions sequentially, based on their declaration order.
     - Some actions may be ignored if they are made redundant by a later action.
         - Example: 'Add<T> -> Remove<T> -> Destroy' for the same entity can simply enact the 'Destroy' (what about messages?).
     - Resolving deferred actions may be done in parallel of a further system if dependency analysis allows it.
