@@ -4,6 +4,9 @@ using System.Runtime.CompilerServices;
 
 namespace Entia.Core
 {
+    /// <summary>
+    /// Interface that allows to interact with an instance of <see cref="Or{TLeft, TRight}"/> abstractly.
+    /// </summary>
     public interface IOr
     {
         Or.Tags Tag { get; }
@@ -142,6 +145,9 @@ namespace Entia.Core
             obj is Right<TRight> right && this == right;
     }
 
+    /// <summary>
+    /// Module that exposes many common <see cref="Or{TLeft, TRight}"/> constructors and utility functions.
+    /// </summary>
     public static class Or
     {
         public enum Tags { None, Left, Right }

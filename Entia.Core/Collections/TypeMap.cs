@@ -11,9 +11,9 @@ namespace Entia.Core
     /// <summary>
     /// Efficient map implementation where the key is a type.
     /// Supports retrieving a value using the sub or super types of the key, including
-    /// generic definitions.
+    /// interfaces and generic definitions.
     /// </summary>
-    public sealed class TypeMap<TBase, TValue> : IEnumerable<TypeMap<TBase, TValue>.Enumerator, (Type type, TValue value)>
+    public sealed class TypeMap<TBase, TValue> : IEnumerable<TypeMap<TBase, TValue>.Enumerator, (Type type, TValue value)>, ICloneable
     {
         public struct Enumerator : IEnumerator<(Type type, TValue value)>
         {
@@ -335,6 +335,14 @@ namespace Entia.Core
             }
             return false;
         }
+
+        public TypeMap<TBase, TValue> Clone()
+        {
+            var clone = CloneUtility.Shallow(this);
+            clone._values = CloneUtility.Shallow(clone._values);
+            return clone;
+        }
+        object ICloneable.Clone() => Clone();
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         [ThreadSafe]

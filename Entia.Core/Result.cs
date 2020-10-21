@@ -5,12 +5,18 @@ using System.Runtime.CompilerServices;
 
 namespace Entia.Core
 {
+    /// <summary>
+    /// Interface that allows to interact with an instance of <see cref="Result{T}"/> abstractly.
+    /// </summary>
     public interface IResult
     {
         Result.Tags Tag { get; }
         Result<T> Cast<T>();
     }
 
+    /// <summary>
+    /// Type that represents the failure to produce a value. Can be implicitly converted to any <see cref="Result{T}"/> type.
+    /// </summary>
     public readonly struct Failure : IResult
     {
         public readonly string[] Messages;
@@ -24,6 +30,10 @@ namespace Entia.Core
         public override string ToString() => $"{nameof(Result.Tags.Failure)}({string.Join(", ", Messages)})";
     }
 
+    /// <summary>
+    /// Monadic structure that represents the possibility of failing to produce a value of type <typeparamref name="T"/>.
+    /// In the case of a failure, explanatory messages can be inspected.
+    /// </summary>
     public readonly struct Result<T> : IResult, IEquatable<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,6 +92,9 @@ namespace Entia.Core
             Result.Failure(_messages).ToString();
     }
 
+    /// <summary>
+    /// Module that exposes many common <see cref="Result{T}"/> constructors and utility functions.
+    /// </summary>
     public static class Result
     {
         public enum Tags : byte { Failure, Success }

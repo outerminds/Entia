@@ -5,6 +5,9 @@ using System.Runtime.CompilerServices;
 
 namespace Entia.Core
 {
+    /// <summary>
+    /// Interface that allows to interact with an instance of <see cref="Option{T}"/> abstractly.
+    /// </summary>
     public interface IOption
     {
         Option.Tags Tag { get; }
@@ -12,6 +15,9 @@ namespace Entia.Core
         Option<T> Cast<T>();
     }
 
+    /// <summary>
+    /// Unit type that represents the absence of a value. Can be implicitly converted to any <see cref="Option{T}"/> type.
+    /// </summary>
     public readonly struct None : IOption
     {
         Option.Tags IOption.Tag => Option.Tags.None;
@@ -21,6 +27,11 @@ namespace Entia.Core
         public override string ToString() => nameof(Option.Tags.None);
     }
 
+    /// <summary>
+    /// Monadic structure that represents the possibility of an absent value of type <typeparamref name="T"/>.
+    /// This differs from the <see cref="Nullable{T}"/> type since it covers all type <typeparamref name="T"/>, not just
+    /// value types.
+    /// </summary>
     public readonly struct Option<T> : IOption, IEquatable<Option<T>>, IEquatable<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -71,6 +82,9 @@ namespace Entia.Core
         public override string ToString() => Tag == Option.Tags.Some ? $"{nameof(Option.Tags.Some)}({_value})" : Option.None().ToString();
     }
 
+    /// <summary>
+    /// Module that exposes many common <see cref="Option{T}"/> constructors and utility functions.
+    /// </summary>
     public static class Option
     {
         public enum Tags : byte { None, Some }

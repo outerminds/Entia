@@ -113,15 +113,6 @@ namespace Entia.Experiment.V2
         public static class System
         {
             public static Node Run(Action run) => throw null;
-
-            public unsafe static Node Run<T>(delegate*<in T, void> query)
-            {
-                static void Poulah(in int value) { }
-                Run<int>(&Poulah);
-
-                query(default);
-                throw null;
-            }
         }
 
         public static Node Inject<T>(InFunc<T, Node> provide) => throw null;
@@ -170,11 +161,11 @@ namespace Entia.Experiment.V2
 
     public sealed class World
     {
-        readonly ConcurrentDictionary<Type, object> _state = new ConcurrentDictionary<Type, object>();
+        TypeMap<object, object> _state = new();
 
         public bool TryGet<T>(out T state)
         {
-            if (_state.TryGetValue(typeof(T), out var value))
+            if (_state.TryGet<T>(out var value, false, true))
             {
                 state = (T)value;
                 return true;
@@ -184,7 +175,19 @@ namespace Entia.Experiment.V2
         }
 
         public T Get<T>() where T : new() => Get(() => new T());
-        public T Get<T>(Func<T> initialize) => (T)_state.GetOrAdd(typeof(T), _ => initialize());
+        public T Get<T>(Func<T> initialize)
+        {
+            if (TryGet<T>(out var state)) return state;
+            lock (_state)
+            {
+                if (TryGet<T>(out state)) return state;
+                state = initialize();
+                var clone = _state.Clone();
+                clone.Set(state.GetType(), state);
+                Interlocked.Exchange(ref _state, clone);
+                return state;
+            }
+        }
     }
 
     public readonly struct Entities
