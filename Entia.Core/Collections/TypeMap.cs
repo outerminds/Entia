@@ -9,28 +9,26 @@ using Entia.Core.Documentation;
 namespace Entia.Core
 {
     /// <summary>
-    /// Efficient specialized map that can outperform a hash map where keys are types.
-    /// Supports retrieving a value using the super/sub types of the key, including interfaces and generic definitions.
+    /// Efficient specialized map where keys are types. Supports retrieving a value using the super/sub types of the key,
+    /// including interfaces and generic definitions.
     /// <para>
     /// This map can outperform a hash map because it takes advantage of a static generic class to directly retrieve the indices
-    /// of keys, thus no search is required in the best case ('the best case' here means that the generic methods are used and that
-    /// super/sub types are not considered).
-    /// This is only possible because keys are types and if the generic methods are used but allows to retrieve and store values almost
-    /// as fast as a direct array access would be.
-    /// This does mean that all instances of <see cref="TypeMap{TBase, TValue}"/> with the same generic parameter combination will use the
-    /// same indices for their keys. This also means that the memory efficiency of the map will decrease proportionally to the diversity
-    /// of usage of the keys. This can be mitigated by using different combinations of <typeparamref name="TBase"/> and
-    /// <typeparamref name="TValue"/> since the map will allocate new indices for keys for each unique combination.
+    /// of keys, thus no search is required in the best case. 'The best case' here means that the generic methods are used and that
+    /// super/sub types are not considered.
+    /// This does mean that all instances of <see cref="TypeMap{TBase, TValue}"/> with the same generic parameters will use the
+    /// same indices for their keys, therefore the memory efficiency of the map will decrease proportionally to the diversity
+    /// of usage of the keys between instances. This can be mitigated by using different combinations of <typeparamref name="TKey"/>
+    /// and <typeparamref name="TValue"/> since the map will allocate new indices for keys for each unique combination.
     /// </para>
     /// <para>
     /// This map still offers slower non-generic methods for contexts where it is not possible to use the generic ones but these are
     /// expected to perform slightly worse than a hash map lookup, though they still support super/sub type queries.
     /// </para>
-    /// <typeparamref name="TBase"/> constrains keys to ones that are assignable to it and <typeparamref name="TValue"/> constrains values
+    /// <typeparamref name="TKey"/> constrains keys to types that are assignable to it and <typeparamref name="TValue"/> constrains values
     /// to ones that are assignable to it. These generic parameters also serve to mitigate memory efficiency problem that may occur
     /// for certain usages of the map.
     /// </summary>
-    public sealed class TypeMap<TBase, TValue> : IEnumerable<TypeMap<TBase, TValue>.Enumerator, (Type type, TValue value)>, ICloneable
+    public sealed class TypeMap<TKey, TValue> : IEnumerable<TypeMap<TKey, TValue>.Enumerator, (Type type, TValue value)>, ICloneable
     {
         public struct Enumerator : IEnumerator<(Type type, TValue value)>
         {
@@ -38,10 +36,10 @@ namespace Entia.Core
             public (Type type, TValue value) Current => (_entries[_index].Type, _map._values[_index].value);
             object IEnumerator.Current => Current;
 
-            readonly TypeMap<TBase, TValue> _map;
+            readonly TypeMap<TKey, TValue> _map;
             int _index;
 
-            public Enumerator(TypeMap<TBase, TValue> map)
+            public Enumerator(TypeMap<TKey, TValue> map)
             {
                 _map = map;
                 _index = -1;
@@ -67,10 +65,10 @@ namespace Entia.Core
             public Type Current => _entries[_index].Type;
             object IEnumerator.Current => Current;
 
-            readonly TypeMap<TBase, TValue> _map;
+            readonly TypeMap<TKey, TValue> _map;
             int _index;
 
-            public KeyEnumerator(TypeMap<TBase, TValue> map)
+            public KeyEnumerator(TypeMap<TKey, TValue> map)
             {
                 _map = map;
                 _index = -1;
@@ -92,9 +90,9 @@ namespace Entia.Core
 
         public readonly struct KeyEnumerable : IEnumerable<KeyEnumerator, Type>
         {
-            readonly TypeMap<TBase, TValue> _map;
+            readonly TypeMap<TKey, TValue> _map;
 
-            public KeyEnumerable(TypeMap<TBase, TValue> map) { _map = map; }
+            public KeyEnumerable(TypeMap<TKey, TValue> map) { _map = map; }
             /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
             public KeyEnumerator GetEnumerator() => new KeyEnumerator(_map);
             IEnumerator<Type> IEnumerable<Type>.GetEnumerator() => GetEnumerator();
@@ -108,10 +106,10 @@ namespace Entia.Core
             TValue IEnumerator<TValue>.Current => Current;
             object IEnumerator.Current => Current;
 
-            readonly TypeMap<TBase, TValue> _map;
+            readonly TypeMap<TKey, TValue> _map;
             int _index;
 
-            public ValueEnumerator(TypeMap<TBase, TValue> map)
+            public ValueEnumerator(TypeMap<TKey, TValue> map)
             {
                 _map = map;
                 _index = -1;
@@ -134,9 +132,9 @@ namespace Entia.Core
 
         public readonly struct ValueEnumerable : IEnumerable<ValueEnumerator, TValue>
         {
-            readonly TypeMap<TBase, TValue> _map;
+            readonly TypeMap<TKey, TValue> _map;
 
-            public ValueEnumerable(TypeMap<TBase, TValue> map) { _map = map; }
+            public ValueEnumerable(TypeMap<TKey, TValue> map) { _map = map; }
             /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
             public ValueEnumerator GetEnumerator() => new ValueEnumerator(_map);
             IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator() => GetEnumerator();
@@ -144,7 +142,7 @@ namespace Entia.Core
         }
 
         [ThreadSafe]
-        static class Cache<T> where T : TBase
+        static class Cache<T> where T : TKey
         {
             public static readonly Entry Entry = GetEntry(typeof(T));
         }
@@ -181,7 +179,7 @@ namespace Entia.Core
         {
             static Entry CreateEntry(Type type)
             {
-                if (type.Is<TBase>())
+                if (type.Is<TKey>())
                 {
                     // 'super' can stay out of the lock since it does not access any un-synchronized shared state.
                     //  It's access to state is done through the thread-safe 'ConcurrentDictionary'.
@@ -248,7 +246,7 @@ namespace Entia.Core
         }
 
         [ThreadSafe]
-        public int Index<T>() where T : TBase => Cache<T>.Entry.Index;
+        public int Index<T>() where T : TKey => Cache<T>.Entry.Index;
 
         [ThreadSafe]
         public bool TryIndex(Type type, out int index)
@@ -263,7 +261,7 @@ namespace Entia.Core
         }
 
         [ThreadSafe]
-        public IEnumerable<int> Indices<T>(bool super = false, bool sub = false) where T : TBase =>
+        public IEnumerable<int> Indices<T>(bool super = false, bool sub = false) where T : TKey =>
             Indices(Cache<T>.Entry, super, sub);
 
         [ThreadSafe]
@@ -288,9 +286,9 @@ namespace Entia.Core
             return ref Dummy<TValue>.Value;
         }
         [ThreadSafe]
-        public ref TValue Get<T>(out bool success) where T : TBase => ref Get(Cache<T>.Entry, out success);
+        public ref TValue Get<T>(out bool success) where T : TKey => ref Get(Cache<T>.Entry, out success);
         [ThreadSafe]
-        public ref TValue Get<T>(out bool success, bool super, bool sub) where T : TBase => ref Get(Cache<T>.Entry, out success, super, sub);
+        public ref TValue Get<T>(out bool success, bool super, bool sub) where T : TKey => ref Get(Cache<T>.Entry, out success, super, sub);
         [ThreadSafe]
         public ref TValue Get(int index, out bool success) => ref Get(_entries[index], out success);
         [ThreadSafe]
@@ -311,9 +309,9 @@ namespace Entia.Core
             return false;
         }
         [ThreadSafe]
-        public bool TryGet<T>(out TValue value) where T : TBase => TryGet(Cache<T>.Entry, out value);
+        public bool TryGet<T>(out TValue value) where T : TKey => TryGet(Cache<T>.Entry, out value);
         [ThreadSafe]
-        public bool TryGet<T>(out TValue value, bool super, bool sub) where T : TBase => TryGet(Cache<T>.Entry, out value, super, sub);
+        public bool TryGet<T>(out TValue value, bool super, bool sub) where T : TKey => TryGet(Cache<T>.Entry, out value, super, sub);
         [ThreadSafe]
         public bool TryGet(int index, out TValue value) => TryGet(_entries[index], out value);
         [ThreadSafe]
@@ -324,20 +322,20 @@ namespace Entia.Core
         [ThreadSafe]
         public bool Has(Type type, bool super, bool sub) => TryEntry(type, out var entry) && Has(entry, super, sub);
         [ThreadSafe]
-        public bool Has<T>() where T : TBase => Has(Cache<T>.Entry);
+        public bool Has<T>() where T : TKey => Has(Cache<T>.Entry);
         [ThreadSafe]
-        public bool Has<T>(bool super, bool sub) where T : TBase => Has(Cache<T>.Entry, super, sub);
+        public bool Has<T>(bool super, bool sub) where T : TKey => Has(Cache<T>.Entry, super, sub);
         [ThreadSafe]
         public bool Has(int index) => Has(_entries[index]);
         [ThreadSafe]
         public bool Has(int index, bool super, bool sub) => Has(_entries[index], super, sub);
 
-        public bool Set<T>(in TValue value) where T : TBase => Set(Cache<T>.Entry, value);
+        public bool Set<T>(in TValue value) where T : TKey => Set(Cache<T>.Entry, value);
         public bool Set(Type type, in TValue value) => TryGetEntry(type, out var entry) && Set(entry, value);
         public bool Set(int index, in TValue value) => Set(_entries[index], value);
 
-        public bool Remove<T>() where T : TBase => Remove(Cache<T>.Entry);
-        public bool Remove<T>(bool super, bool sub) where T : TBase => Remove(Cache<T>.Entry, super, sub);
+        public bool Remove<T>() where T : TKey => Remove(Cache<T>.Entry);
+        public bool Remove<T>(bool super, bool sub) where T : TKey => Remove(Cache<T>.Entry, super, sub);
         public bool Remove(Type type) => TryEntry(type, out var entry) && Remove(entry);
         public bool Remove(Type type, bool super, bool sub) => TryEntry(type, out var entry) && Remove(entry, super, sub);
         public bool Remove(int index) => Remove(_entries[index]);
@@ -353,7 +351,7 @@ namespace Entia.Core
             return false;
         }
 
-        public TypeMap<TBase, TValue> Clone()
+        public TypeMap<TKey, TValue> Clone()
         {
             var clone = CloneUtility.Shallow(this);
             clone._values = CloneUtility.Shallow(clone._values);
