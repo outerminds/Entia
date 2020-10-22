@@ -202,9 +202,33 @@ namespace Entia.Core
             return source;
         }
 
+        public static T[] Prepend<T>(this T[] source, in T item)
+        {
+            ArrayUtility.Prepend(ref source, item);
+            return source;
+        }
+
         public static T[] Append<T>(this T[] source, params T[] items)
         {
             ArrayUtility.Append(ref source, items);
+            return source;
+        }
+
+        public static T[] Append<T>(this T[] source, in T item)
+        {
+            ArrayUtility.Append(ref source, item);
+            return source;
+        }
+
+        public static T[] Insert<T>(this T[] source, int index, params T[] items)
+        {
+            ArrayUtility.Insert(ref source, index, items);
+            return source;
+        }
+
+        public static T[] Insert<T>(this T[] source, int index, in T item)
+        {
+            ArrayUtility.Insert(ref source, index, item);
             return source;
         }
 
@@ -250,12 +274,6 @@ namespace Entia.Core
         {
             var index = start ?? 0;
             return Array.IndexOf(source, item, index, count ?? (source.Length - index)) >= 0;
-        }
-
-        public static T[] Insert<T>(this T[] source, int index, params T[] items)
-        {
-            ArrayUtility.Insert(ref source, index, items);
-            return source;
         }
 
         public static T[] Remove<T>(this T[] source, in T item)

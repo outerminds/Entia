@@ -67,56 +67,44 @@ namespace Entia.Core
         public static bool Overwrite<T>(ref T[] source, int index, params T[] items)
         {
             if (index < 0 || index > source.Length) return false;
-            else if (items.Length == 0) return true;
-            else if (index == 0 && items.Length >= source.Length)
-            {
-                source = items;
-                return true;
-            }
-            else
-            {
-                var end = index + items.Length;
-                var target = new T[Math.Max(source.Length, end)];
-                if (index > 0) Array.Copy(source, 0, target, 0, index);
-                Array.Copy(items, 0, target, index, items.Length);
-                if (end < source.Length) Array.Copy(source, end, target, end, source.Length - end);
-                source = target;
-                return true;
-            }
+            if (items.Length == 0) return true;
+            if (index == 0 && items.Length >= source.Length) { source = items; return true; }
+
+            var end = index + items.Length;
+            var target = new T[Math.Max(source.Length, end)];
+            if (index > 0) Array.Copy(source, 0, target, 0, index);
+            Array.Copy(items, 0, target, index, items.Length);
+            if (end < source.Length) Array.Copy(source, end, target, end, source.Length - end);
+            source = target;
+            return true;
         }
 
         public static bool Insert<T>(ref T[] source, int index, params T[] items)
         {
+            if (items.Length == 1) return Insert(ref source, index, items[0]);
             if (index < 0 || index > source.Length) return false;
-            else if (items.Length == 0) return true;
-            else if (source.Length == 0)
-            {
-                source = items;
-                return true;
-            }
-            else
-            {
-                var target = new T[source.Length + items.Length];
-                if (index > 0) Array.Copy(source, 0, target, 0, index);
-                Array.Copy(items, 0, target, index, items.Length);
-                if (index < source.Length) Array.Copy(source, index, target, items.Length + index, source.Length - index);
-                source = target;
-                return true;
-            }
+            if (items.Length == 0) return false;
+            if (source.Length == 0) { source = items; return true; }
+
+            var target = new T[source.Length + items.Length];
+            if (index > 0) Array.Copy(source, 0, target, 0, index);
+            Array.Copy(items, 0, target, index, items.Length);
+            if (index < source.Length) Array.Copy(source, index, target, items.Length + index, source.Length - index);
+            source = target;
+            return true;
         }
 
         public static bool Insert<T>(ref T[] source, int index, in T item)
         {
             if (index < 0 || index > source.Length) return false;
-            else
-            {
-                var target = new T[source.Length + 1];
-                if (index > 0) Array.Copy(source, 0, target, 0, index);
-                target[index] = item;
-                if (index < source.Length) Array.Copy(source, index, target, 1 + index, source.Length - index);
-                source = target;
-                return true;
-            }
+            if (source.Length == 0) { source = new T[] { item }; return true; }
+
+            var target = new T[source.Length + 1];
+            if (index > 0) Array.Copy(source, 0, target, 0, index);
+            target[index] = item;
+            if (index < source.Length) Array.Copy(source, index, target, 1 + index, source.Length - index);
+            source = target;
+            return true;
         }
 
         public static bool Remove<T>(ref T[] source, in T item) => RemoveAt(ref source, Array.IndexOf(source, item));
@@ -127,27 +115,14 @@ namespace Entia.Core
         {
             var end = index + count;
             if (index < 0 || end > source.Length) return false;
-            else if (count == 0) return true;
-            else if (count == source.Length)
-            {
-                source = Array.Empty<T>();
-                return true;
-            }
-            else
-            {
-                var target = new T[source.Length - count];
-                if (index > 0) Array.Copy(source, 0, target, 0, index);
-                if (end < source.Length) Array.Copy(source, end, target, index, target.Length - index);
-                source = target;
-                return true;
-            }
-        }
+            if (count == 0) return true;
+            if (count == source.Length) { source = Array.Empty<T>(); return true; }
 
-        public static bool EnsureSet<T>(ref T[] source, in T item, int index)
-        {
-            var resized = Ensure(ref source, index + 1);
-            source[index] = item;
-            return resized;
+            var target = new T[source.Length - count];
+            if (index > 0) Array.Copy(source, 0, target, 0, index);
+            if (end < source.Length) Array.Copy(source, end, target, index, target.Length - index);
+            source = target;
+            return true;
         }
 
         [ThreadSafe]

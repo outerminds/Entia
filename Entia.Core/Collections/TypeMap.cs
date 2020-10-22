@@ -9,9 +9,26 @@ using Entia.Core.Documentation;
 namespace Entia.Core
 {
     /// <summary>
-    /// Efficient map implementation where the key is a type.
-    /// Supports retrieving a value using the sub or super types of the key, including
-    /// interfaces and generic definitions.
+    /// Efficient specialized map that can outperform a hash map where keys are types.
+    /// Supports retrieving a value using the super/sub types of the key, including interfaces and generic definitions.
+    /// <para>
+    /// This map can outperform a hash map because it takes advantage of a static generic class to directly retrieve the indices
+    /// of keys, thus no search is required in the best case ('the best case' here means that the generic methods are used and that
+    /// super/sub types are not considered).
+    /// This is only possible because keys are types and if the generic methods are used but allows to retrieve and store values almost
+    /// as fast as a direct array access would be.
+    /// This does mean that all instances of <see cref="TypeMap{TBase, TValue}"/> with the same generic parameter combination will use the
+    /// same indices for their keys. This also means that the memory efficiency of the map will decrease proportionally to the diversity
+    /// of usage of the keys. This can be mitigated by using different combinations of <typeparamref name="TBase"/> and
+    /// <typeparamref name="TValue"/> since the map will allocate new indices for keys for each unique combination.
+    /// </para>
+    /// <para>
+    /// This map still offers slower non-generic methods for contexts where it is not possible to use the generic ones but these are
+    /// expected to perform slightly worse than a hash map lookup, though they still support super/sub type queries.
+    /// </para>
+    /// <typeparamref name="TBase"/> constrains keys to ones that are assignable to it and <typeparamref name="TValue"/> constrains values
+    /// to ones that are assignable to it. These generic parameters also serve to mitigate memory efficiency problem that may occur
+    /// for certain usages of the map.
     /// </summary>
     public sealed class TypeMap<TBase, TValue> : IEnumerable<TypeMap<TBase, TValue>.Enumerator, (Type type, TValue value)>, ICloneable
     {
