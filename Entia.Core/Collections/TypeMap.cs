@@ -25,8 +25,7 @@ namespace Entia.Core
     /// expected to perform slightly worse than a hash map lookup, though they still support super/sub type queries.
     /// </para>
     /// <typeparamref name="TKey"/> constrains keys to types that are assignable to it and <typeparamref name="TValue"/> constrains values
-    /// to ones that are assignable to it. These generic parameters also serve to mitigate memory efficiency problem that may occur
-    /// for certain usages of the map.
+    /// to ones that are assignable to it. These generic parameters also serve to mitigate the memory efficiency problem.
     /// </summary>
     public sealed class TypeMap<TKey, TValue> : IEnumerable<TypeMap<TKey, TValue>.Enumerator, (Type type, TValue value)>, ICloneable
     {
