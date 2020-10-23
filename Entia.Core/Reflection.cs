@@ -72,13 +72,6 @@ namespace Entia.Core
 
         public TypeData(Type type)
         {
-            static IMemberData[] GetMembers(Type current, BindingFlags flags) => current.Bases()
-                .Prepend(current)
-                .SelectMany(@base => @base.GetMembers(flags))
-                .DistinctBy(member => member.MetadataToken)
-                .Select(member => member.GetData())
-                .ToArray();
-
             static Type GetElement(Type current)
             {
                 if (current.IsArray || current.IsPointer) return current.GetElementType();
@@ -163,17 +156,17 @@ namespace Entia.Core
             _bases = new Lazy<TypeData[]>(() => Type.Bases().Select(@base => @base.GetData()).ToArray());
             _element = new Lazy<Option<TypeData>>(() => GetElement(Type).GetData());
             _definition = new Lazy<Option<TypeData>>(() => (Type.IsGenericType ? Type.GetGenericTypeDefinition() : default).GetData());
-            _members = new Lazy<Dictionary<int, IMemberData>>(() => GetMembers(Type, ReflectionUtility.All).ToDictionary(member => member.Member.MetadataToken));
-            _staticMembers = new Lazy<IMemberData[]>(() => GetMembers(Type, ReflectionUtility.Static));
-            _instanceMembers = new Lazy<IMemberData[]>(() => GetMembers(Type, ReflectionUtility.Instance));
-            _fields = new Lazy<Dictionary<string, FieldData>>(() => GetMembers(Type, ReflectionUtility.All).OfType<FieldData>().ToDictionary(field => field.Field.Name));
-            _properties = new Lazy<Dictionary<string, PropertyData>>(() => GetMembers(Type, ReflectionUtility.All).OfType<PropertyData>().ToDictionary(property => property.Property.Name));
-            _instanceFields = new Lazy<FieldData[]>(() => GetMembers(Type, ReflectionUtility.Instance).OfType<FieldData>().ToArray());
-            _instanceProperties = new Lazy<PropertyData[]>(() => GetMembers(Type, ReflectionUtility.Instance).OfType<PropertyData>().ToArray());
-            _instanceMethods = new Lazy<MethodData[]>(() => GetMembers(Type, ReflectionUtility.Instance).OfType<MethodData>().ToArray());
+            _members = new Lazy<Dictionary<int, IMemberData>>(() => Type.Members().DistinctBy(member => member.MetadataToken).Select(member => member.GetData()).ToDictionary(member => member.Member.MetadataToken));
+            _staticMembers = new Lazy<IMemberData[]>(() => Type.Members(false, true).Select(member => member.GetData()).ToArray());
+            _instanceMembers = new Lazy<IMemberData[]>(() => Type.Members(true, false).Select(member => member.GetData()).ToArray());
+            _fields = new Lazy<Dictionary<string, FieldData>>(() => Type.Fields().Select(field => field.GetData()).ToDictionary(field => field.Field.Name));
+            _properties = new Lazy<Dictionary<string, PropertyData>>(() => Type.Properties().Select(property => property.GetData()).ToDictionary(property => property.Property.Name));
+            _instanceFields = new Lazy<FieldData[]>(() => Type.Fields(true, false).Select(field => field.GetData()).ToArray());
+            _instanceProperties = new Lazy<PropertyData[]>(() => Type.Properties(true, false).Select(property => property.GetData()).ToArray());
+            _instanceMethods = new Lazy<MethodData[]>(() => Type.Methods(true, false).Select(method => method.GetData()).ToArray());
             // NOTE: do not use 'InstanceMembers' such that base class constructors are not included
-            _instanceConstructors = new Lazy<ConstructorData[]>(() => Type.GetConstructors(ReflectionUtility.Instance).Select(constructor => constructor.GetData()));
-            _defaultConstructor = new Lazy<Option<ConstructorData>>(() => InstanceConstructors.FirstOrNone(constructor => constructor.Parameters.None()));
+            _instanceConstructors = new Lazy<ConstructorData[]>(() => Type.Constructors(true, false).Select(constructor => constructor.GetData()).ToArray());
+            _defaultConstructor = new Lazy<Option<ConstructorData>>(() => Type.DefaultConstructor().Map(constructor => constructor.GetData()));
             _declaring = new Lazy<TypeData[]>(() => Type.Declaring().Select(declaring => declaring.GetData()).ToArray());
             _arguments = new Lazy<TypeData[]>(() => Type.GetGenericArguments().Select(argument => argument.GetData()));
             _isPlain = new Lazy<bool>(() => GetIsPlain(this));

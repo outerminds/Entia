@@ -8,6 +8,7 @@ namespace Entia.Experiment
 {
     public static class TypeMapTest
     {
+        public class Dictionary : Dictionary<int, object> { }
         [Serializable]
         public class Cyclic { public Cyclic A; }
 
@@ -17,16 +18,30 @@ namespace Entia.Experiment
             var intDictionary = new Dictionary<int, object>();
             var concurrent = new ConcurrentDictionary<Type, object>();
             var map = new TypeMap<object, object>();
-            var index = map.Index<int>();
             var value = default(object);
+
             void Add<T>(T current)
             {
-                intDictionary[map.Index<T>()] = concurrent[typeof(T)] = dictionary[typeof(T)] = current; map[typeof(T)] = current;
+                intDictionary[map.Index<T>()] = concurrent[typeof(T)] = dictionary[typeof(T)] = current;
+                map[typeof(T)] = current;
             }
+
+            void AddKey(Type key, object current)
+            {
+                map.TryIndex(key, out var index);
+                intDictionary[index] = concurrent[key] = dictionary[key] = current;
+                map[key] = current;
+            }
+
+            map.TryGet<object>(out var value0); // Expected: null
             Add(byte.MaxValue);
+            map.TryGet<IConvertible>(out var value1, false, true); // Expected: byte
             Add(sbyte.MaxValue);
+            map.TryGet<ValueType>(out var value2, true, true); // Expected: byte
             Add(ushort.MaxValue);
+            map.TryGet(typeof(IComparable<>), out var value3, false, true); // Expected: byte
             Add(short.MaxValue);
+            map.TryGet(typeof(object), out var value4, false, false); // Expected: null
             Add(uint.MaxValue);
             Add(int.MaxValue);
             Add(ulong.MaxValue);
@@ -34,57 +49,60 @@ namespace Entia.Experiment
             Add(float.MaxValue);
             Add(double.MaxValue);
             Add(decimal.MaxValue);
-            Add(new object());
             Add(new Unit());
             Add(new Cyclic());
+            map.TryGet<Cyclic>(out var value5); // Expected Cyclic
             Add(DateTime.MaxValue);
+            map.TryGet(typeof(DateTime), out var value6); // Expected DateTime
             Add(TimeSpan.MaxValue);
             Add(dictionary);
+            map.TryGet(typeof(IDictionary<,>), out var value7, true, false); // Expected null
             Add(intDictionary);
+            map.TryGet(typeof(IDictionary<,>), out var value8, false, true); // Expected Dictionary<Type, object>
             Add(concurrent);
+            map.TryGet(typeof(IDictionary<,>), out var value9, true, true); // Expected Dictionary<Type, object>
             Add(map);
+            map.TryGet(typeof(TypeMap<,>), out var value10, true, true); // Expected TypeMap<object, object>
+            map.TryGet(typeof(Dictionary), out var value11, true, false); // Expected Dictionary<int, object>
+
+            foreach (var type in ReflectionUtility.AllTypes.Take(1000)) AddKey(type, new object());
+            var index = map.Index<int>();
+            map.Index<Action>();
             var array = map.Values.ToArray();
 
             void ArrayGet() => value = array[index];
-            void DictionaryIndexer<T>() => value = dictionary[typeof(T)];
-            void DictionaryTryGet<T>() => dictionary.TryGetValue(typeof(T), out value);
-            void IntDictionaryIndexer<T>() => value = intDictionary[map.Index<T>()];
-            void IntDictionaryTryGet<T>() => intDictionary.TryGetValue(map.Index<T>(), out value);
-            void IntDictionaryTryGetIndex() => intDictionary.TryGetValue(index, out value);
-            void ConcurrentIndexer<T>() => value = concurrent[typeof(T)];
-            void ConcurrentTryGet<T>() => concurrent.TryGetValue(typeof(T), out value);
-            void MapIndexer<T>() => value = map[typeof(T)];
-            void MapGet<T>() => value = map.Get<T>(out _);
+            void TryGetI() => dictionary.TryGetValue(typeof(int), out value);
+            void TryGetA() => dictionary.TryGetValue(typeof(Action), out value);
+            void ITryGetI() => intDictionary.TryGetValue(map.Index<int>(), out value);
+            void ITryGetA() => intDictionary.TryGetValue(map.Index<Action>(), out value);
+            void ConcurrentGetI() => concurrent.TryGetValue(typeof(int), out value);
+            void ConcurrentGetA() => concurrent.TryGetValue(typeof(Action), out value);
+            void MapGetTI() => value = map.Get<int>(out _);
+            void MapGetTA() => value = map.Get<Action>(out _);
             void MapGetIndex() => value = map[index];
-            void MapTryGet<T>() => map.TryGet(typeof(T), out value);
-            void MapTryGetT<T>() => map.TryGet<T>(out value);
-            void MapTryGetIndex() => map.TryGet(index, out value);
+            void MapTryGetI() => map.TryGet(typeof(int), out value);
+            void MapTryGetTI() => map.TryGet<int>(out value);
+            void MapTryGetA() => map.TryGet(typeof(Action), out value);
+            void MapTryGetTA() => map.TryGet<Action>(out value);
 
-            while (true)
+            for (int i = 0; i < 500; i++)
             {
-                Test.Measure(DictionaryIndexer<int>, new Action[]
+                Test.Measure(ArrayGet, new Action[]
                 {
-                    ArrayGet,
-                    DictionaryTryGet<int>,
-                    DictionaryTryGet<Action>,
-                    IntDictionaryIndexer<int>,
-                    IntDictionaryTryGet<int>,
-                    IntDictionaryTryGet<Action>,
-                    IntDictionaryTryGetIndex,
-                    ConcurrentIndexer<int>,
-                    ConcurrentTryGet<int>,
-                    ConcurrentTryGet<Action>,
-                    MapIndexer<int>,
-                    MapGet<int>,
-                    MapGet<Action>,
+                    TryGetI,
+                    TryGetA,
+                    ITryGetI,
+                    ITryGetA,
+                    ConcurrentGetI,
+                    ConcurrentGetA,
+                    MapGetTI,
+                    MapGetTA,
                     MapGetIndex,
-                    MapTryGet<int>,
-                    MapTryGet<Action>,
-                    MapTryGetT<int>,
-                    MapTryGetT<Action>,
-                    MapTryGetIndex
-                }, 100_000);
-                Console.WriteLine();
+                    MapTryGetI,
+                    MapTryGetA,
+                    MapTryGetTI,
+                    MapTryGetTA,
+                }, 50_000);
             }
         }
     }

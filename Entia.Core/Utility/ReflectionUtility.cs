@@ -216,25 +216,29 @@ namespace Entia.Core
                 parameters[1].ParameterType == typeof(StreamingContext)) :
             Option.None();
 
-        public static IEnumerable<FieldInfo> Fields(this Type type, bool instance = true, bool @static = true)
+        public static IEnumerable<MemberInfo> Members(this Type type, bool instance = true, bool @static = true)
         {
             var flags = default(BindingFlags);
             if (instance) flags |= Instance;
             if (@static) flags |= Static;
-            if (flags == default) return Array.Empty<FieldInfo>();
-            return type.Hierarchy().SelectMany(@base => @base.GetFields(flags));
+            if (flags == default) return Array.Empty<MemberInfo>();
+            return type.Hierarchy().SelectMany(@base => @base.GetMembers(flags));
         }
 
-        public static IEnumerable<PropertyInfo> Properties(this Type type, bool instance = true, bool @static = true, bool concrete = true)
-        {
-            var flags = default(BindingFlags);
-            if (instance) flags |= Instance;
-            if (@static) flags |= Static;
-            if (flags == default) return Array.Empty<PropertyInfo>();
-            var properties = type.Hierarchy().SelectMany(@base => @base.GetProperties(flags));
-            if (concrete) properties = properties.Where(property => property.IsConcrete());
-            return properties;
-        }
+        public static IEnumerable<TypeInfo> Types(this Type type, bool instance = true, bool @static = true) =>
+            type.Members(instance, @static).OfType<TypeInfo>();
+
+        public static IEnumerable<FieldInfo> Fields(this Type type, bool instance = true, bool @static = true) =>
+            type.Members(instance, @static).OfType<FieldInfo>();
+
+        public static IEnumerable<PropertyInfo> Properties(this Type type, bool instance = true, bool @static = true) =>
+            type.Members(instance, @static).OfType<PropertyInfo>();
+
+        public static IEnumerable<MethodInfo> Methods(this Type type, bool instance = true, bool @static = true) =>
+            type.Members(instance, @static).OfType<MethodInfo>();
+
+        public static IEnumerable<EventInfo> Events(this Type type, bool instance = true, bool @static = true) =>
+            type.Members(instance, @static).OfType<EventInfo>();
 
         public static IEnumerable<ConstructorInfo> Constructors(this Type type, bool instance = true, bool @static = true)
         {

@@ -32,7 +32,7 @@ namespace Entia.Json.Converters
     /// <para>
     /// When converting from or to a <see cref="Node"/>, the <see cref="IConverter.Type"/> property will be used
     /// to find the proper converter for a given value. The <see cref="IConverter.Type"/> property
-    /// may provide an abtract type or a generic definition to signify that all derived concrete
+    /// may provide an abstract type or a generic definition to signify that all derived concrete
     /// types are supported.
     /// Note that certain exceptions apply. Primitives, enums, strings and null values will
     /// never make it to a converter, thus their conversion cannot be overridden. For any other type,

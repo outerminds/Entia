@@ -491,11 +491,11 @@ namespace Entia.Experiment
             // LockTests.Test();
             // SuperDuperUnsafe();
             // VeryUnsafe();
-            TestJson();
+            // TestJson();
             // GeneratorTests.Test();
             // TestFamilies();
             // Serializer();
-            // TypeMapTest.Benchmark();
+            TypeMapTest.Benchmark();
             // CompareSerializers();
         }
 
