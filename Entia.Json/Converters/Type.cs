@@ -32,7 +32,7 @@ namespace Entia.Json.Converters
 
         static readonly (int identifier, Type type)[] _types =
         {
-            // NOTE: skip identifier '0' to detect some failure cases
+            // skip identifier '0' to detect some failure cases
             #region System
             (1, typeof(bool)), (31, typeof(bool[])), (61, typeof(bool?)), (91, typeof(bool*)),
             (2, typeof(char)), (32, typeof(char[])), (62, typeof(char?)), (92, typeof(char*)),
@@ -48,11 +48,13 @@ namespace Entia.Json.Converters
             (12, typeof(double)), (42, typeof(double[])), (72, typeof(double?)), (102, typeof(double*)),
             (13, typeof(decimal)), (43, typeof(decimal[])), (73, typeof(decimal?)), (103, typeof(decimal*)),
             (14, typeof(IntPtr)), (44, typeof(IntPtr[])), (74, typeof(IntPtr?)), (104, typeof(IntPtr*)),
-            (15, typeof(DateTime)), (55, typeof(DateTime[])), (75, typeof(DateTime?)), (105, typeof(DateTime*)),
+            (15, typeof(DateTime)), (45, typeof(DateTime[])), (75, typeof(DateTime?)), (105, typeof(DateTime*)),
             (16, typeof(TimeSpan)), (46, typeof(TimeSpan[])), (76, typeof(TimeSpan?)), (106, typeof(TimeSpan*)),
             (17, typeof(string)), (47, typeof(string[])),
             (18, typeof(object)), (48, typeof(object[])),
             (19, typeof(Action)), (49, typeof(Action[])),
+            (20, typeof(Func<bool>)), (50, typeof(Func<bool>[])),
+            (21, typeof(void)), (111, typeof(void*)),
 
             (200, typeof(Nullable<>)),
             (210, typeof(List<>)), (211, typeof(LinkedList<>)), (212, typeof(LinkedListNode<>)),
@@ -75,22 +77,25 @@ namespace Entia.Json.Converters
         };
 
         static readonly Dictionary<int, Type> _identifierToType = _types.ToDictionary(pair => pair.identifier, pair => pair.type);
-        static readonly Dictionary<Type, int> _typeToIdentifier = _types.ToDictionary(pair => pair.type, pair => pair.identifier);
+        static readonly Dictionary<Type, Node> _typeToIdentifier = _types.ToDictionary(pair => pair.type, pair => Node.Number(pair.identifier));
+        static readonly Node _array = Types.Array;
+        static readonly Node _pointer = Types.Pointer;
+        static readonly Node _generic = Types.Generic;
 
         public override Node Convert(in Type instance, in ToContext context)
         {
             if (_typeToIdentifier.TryGetValue(instance, out var identifier))
-                return Node.Number(identifier);
+                return identifier;
             else if (instance.IsArray)
-                return Node.Array((int)Types.Array, instance.GetArrayRank(), context.Convert(instance.GetElementType(), this, this));
+                return Node.Array(_array, instance.GetArrayRank(), context.Convert(instance.GetElementType(), this, this));
             else if (instance.IsPointer)
-                return Node.Array((int)Types.Pointer, context.Convert(instance.GetElementType(), this, this));
+                return Node.Array(_pointer, context.Convert(instance.GetElementType(), this, this));
             else if (instance.IsConstructedGenericType)
             {
                 var definition = instance.GetGenericTypeDefinition();
                 var arguments = instance.GetGenericArguments();
                 var items = new Node[arguments.Length + 2];
-                items[0] = (int)Types.Generic;
+                items[0] = _generic;
                 items[1] = context.Convert(definition, this, this);
                 for (int i = 0; i < arguments.Length; i++)
                     items[i + 2] = context.Convert(arguments[i], this, this);
@@ -118,7 +123,7 @@ namespace Entia.Json.Converters
                         break;
                     }
                 case Node.Kinds.Array:
-                    switch ((Types)node.Children[0].AsInt())
+                    switch (node.Children[0].AsEnum<Types>())
                     {
                         case Types.Array:
                             var rank = node.Children[1].AsInt();

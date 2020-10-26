@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization;
 using Entia.Core;
 
@@ -12,16 +13,16 @@ namespace Entia.Json.Converters
     /// Attribute that can be used to provide default implementations of an <see cref="IConverter"/>
     /// to the library statically without having to pass them explicitly through <see cref="Settings"/>.
     /// <para>
-    /// The attribute can be applied to a static field or property that provides a <see cref="IConverter"/>
-    /// instance that covers the declaring type such that this type is assignable from the
-    /// <see cref="IConverter.Type"/> property (works with generic definitions).
+    /// The attribute can be applied to a static field/property or parameterless method/constructor that
+    /// provides an <see cref="IConverter"/> instance that covers the declaring type such that this type
+    /// is assignable from the <see cref="IConverter.Type"/> property (works with generic definitions).
     /// </para>
     /// </summary>
     /// /// <remarks>
     /// This attribute can only be used for types that are defined by the user. To handle other types,
     /// see <see cref="IConverter"/>.
     /// </remarks>
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Struct, Inherited = true, AllowMultiple = false)]
     public sealed class ConverterAttribute : PreserveAttribute { }
 
     /// <summary>
@@ -92,15 +93,20 @@ namespace Entia.Json.Converters
 
         sealed class Function<T> : Converter<T>
         {
-            public readonly Convert<T> _convert;
-            public readonly Instantiate<T> _instantiate;
-            public readonly Initialize<T> _initialize;
+            readonly Convert<T> _convert;
+            readonly Instantiate<T> _instantiate;
+            readonly Initialize<T> _initialize;
 
-            public Function(Convert<T> convert, Instantiate<T> instantiate, Initialize<T> initialize)
+            public Function(Convert<T> convert = null, Instantiate<T> instantiate = null, Initialize<T> initialize = null)
             {
-                _convert = convert;
-                _instantiate = instantiate;
-                _initialize = initialize;
+                _convert = convert ?? ((in T instance, in ToContext context) => Cache<T>.Default.Convert(context));
+                _instantiate = instantiate ?? ((in FromContext context) => (T)Cache<T>.Default.Instantiate(context));
+                _initialize = initialize ?? ((ref T instance, in FromContext context) =>
+                {
+                    var box = (object)instance;
+                    Cache<T>.Default.Initialize(ref box, context);
+                    instance = (T)box;
+                });
             }
 
             public override Node Convert(in T instance, in ToContext context) => _convert(instance, context);
@@ -111,24 +117,18 @@ namespace Entia.Json.Converters
         static class Cache<T>
         {
             public static readonly IConverter Default = Converter.Default(typeof(T));
-            public static readonly Convert<T> Convert = (in T instance, in ToContext context) => Default.Convert(context);
-            public static readonly Instantiate<T> Instantiate = (in FromContext context) => (T)Default.Instantiate(context);
-            public static readonly Initialize<T> Initialize = (ref T instance, in FromContext context) =>
-            {
-                var box = (object)instance;
-                Default.Initialize(ref box, context);
-                instance = (T)box;
-            };
         }
 
         static readonly ConcurrentDictionary<Type, IConverter> _converters = new ConcurrentDictionary<Type, IConverter>();
+        static readonly ConcurrentDictionary<Type, IConverter> _defaults = new ConcurrentDictionary<Type, IConverter>();
 
         /// <summary>
         /// Provides a default <see cref="IConverter"/> instance for the provided type.
         /// This instance may be a library built-in one or one that has been linked with the
         /// <see cref="ConverterAttribute"/> attribute.
         /// </summary>
-        public static IConverter Default(Type type) => _converters.GetOrAdd(type, key => CreateConverter(key));
+        public static IConverter Default(Type type) => _converters.GetOrAdd(type, key =>
+            CreateAttribute(key).TryValue(out var converter) ? converter : GetDefault(key));
         /// <inheritdoc cref="Default(Type)"/>
         public static IConverter Default<T>() => Cache<T>.Default;
 
@@ -156,7 +156,7 @@ namespace Entia.Json.Converters
         /// a <see cref="Node"/>.
         /// </summary>
         public static Converter<T> Create<T>(Convert<T> convert = null, Instantiate<T> instantiate = null, Initialize<T> initialize = null) =>
-            new Function<T>(convert ?? Cache<T>.Convert, instantiate ?? Cache<T>.Instantiate, initialize ?? Cache<T>.Initialize);
+            new Function<T>(convert, instantiate, initialize);
 
         /// <inheritdoc cref="Version{T}(int, int, ValueTuple{int, Converter{T}}[])"/>
         /// <remarks>
@@ -341,7 +341,24 @@ namespace Entia.Json.Converters
             );
         }
 
-        static IConverter CreateConverter(Type type)
+        static Option<IConverter> CreateAttribute(Type type) => type.Members(false, true)
+            .Where(member => member.IsDefined(typeof(ConverterAttribute), true))
+            .Select(member => Option.Try(member, state => state switch
+            {
+                TypeInfo inner => Activator.CreateInstance(inner),
+                FieldInfo field => field.GetValue(null),
+                PropertyInfo property => property.GetValue(null),
+                MethodInfo method => method.Invoke(null, System.Array.Empty<object>()),
+                _ => null
+            }))
+            .Choose()
+            .OfType<IConverter>()
+            .Where(current => type.Is(current.Type, true, true))
+            .FirstOrNone();
+
+        static IConverter GetDefault(Type type) => _defaults.GetOrAdd(type, key => CreateDefault(key));
+
+        static IConverter CreateDefault(Type type)
         {
             if (type.IsArray) return CreateArray(type);
             if (type == typeof(DateTime)) return new ConcreteDateTime();
@@ -357,27 +374,12 @@ namespace Entia.Json.Converters
                 if (definition == typeof(List<>)) return CreateList(type, arguments[0]);
                 if (definition == typeof(Dictionary<,>)) return CreateDictionary(type, arguments[0], arguments[1]);
             }
-
-            if (type.Hierarchy()
-                .SelectMany(@base => Enumerable.Concat(
-                    @base.GetFields(ReflectionUtility.Static)
-                        .Where(field => field.IsDefined(typeof(ConverterAttribute), true))
-                        .Select(field => field.GetValue(null)),
-                    @base.GetProperties(ReflectionUtility.Static)
-                        .Where(property => property.IsDefined(typeof(ConverterAttribute), true) && property.CanRead)
-                        .Select(property => property.GetValue(null))))
-                .OfType<IConverter>()
-                .TryFirst(converter => type.Is(converter.Type, true, true), out var converter))
-                return converter;
-
             if (type.Is<IList>()) return CreateIList(type);
             if (type.Is<IDictionary>()) return CreateIDictionary(type);
             if (type.Is<IEnumerable>()) return CreateIEnumerable(type);
             if (type.Is<ISerializable>()) return CreateISerializable(type);
-            return CreateDefault(type);
+            return new DefaultObject(type);
         }
-
-        static IConverter CreateDefault(Type type) => new DefaultObject(type);
 
         static IConverter CreateOption(Type type, Type argument)
         {

@@ -76,10 +76,15 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Node(Type value) => Type(value);
 
+        const long Numbers = 128;
+        const long Characters = 128;
+
         // Must be placed before calling the 'Node' constructors.
         static readonly Node[] _empty = { };
-        static readonly Node[] _singles = new Node[128];
-        static readonly Node[] _dollars = new Node[128];
+        static readonly Node[] _positives = new Node[Numbers];
+        static readonly Node[] _negatives = new Node[Numbers];
+        static readonly Node[] _characters = new Node[Characters];
+        static readonly Node[] _dollars = new Node[Characters];
         // It has been estimated to be very improbable that this counter would overflow and cause
         // identifier collisions within the same node tree.
         static int _counter;
@@ -115,7 +120,13 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(uint value) => Number((long)value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(long value) => value == 0 ? Zero : new Node(Kinds.Number, Tags.Integer, value, _empty);
+        public static Node Number(long value)
+        {
+            if (value == 0) return Zero;
+            if (value >= Numbers || value <= Numbers) return new Node(Kinds.Number, Tags.Integer, value, _empty);
+            var numbers = value > 0 ? _positives : _negatives;
+            return numbers[value] ?? (numbers[value] = new Node(Kinds.Number, Tags.Integer, value, _empty));
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(ulong value) => value < long.MaxValue ? Number((long)value) : new Node(Kinds.Number, Tags.None, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -146,10 +157,8 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node String(char value)
         {
-            if (value < _singles.Length)
-                return _singles[value] ?? (_singles[value] = String(value.ToString(), GetTags(value)));
-            else
-                return String(value.ToString(), DefaultTags(value));
+            if (value >= Characters) return String(value.ToString(), DefaultTags(value));
+            return _characters[value] ?? (_characters[value] = String(value.ToString(), GetTags(value)));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -188,10 +197,8 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static Node Dollar(char value)
         {
-            if (value < _dollars.Length)
-                return _dollars[value] ?? (_dollars[value] = String("$" + value, GetTags(value) | Tags.Dollar));
-            else
-                return String("$" + value, Tags.Dollar | DefaultTags(value));
+            if (value >= Characters) return String("$" + value, Tags.Dollar | DefaultTags(value));
+            return _dollars[value] ?? (_dollars[value] = String("$" + value, GetTags(value) | Tags.Dollar));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
