@@ -49,11 +49,10 @@ namespace Entia.Json
             public void Dispose() => this = default;
         }
 
-        public static Node Map(this Node node, Func<Node, Node> map)
-        {
-            if (node.Children.Length > 0) node.With(node.Children.Select(map));
-            return node;
-        }
+        public static Node Map(this Node node, Func<Node, Node> map) =>
+            node.Children.Length == 0 ? node : node.With(node.Children.Select(map));
+        public static Node Map<TState>(this Node node, in TState state, Func<Node, TState, Node> map) =>
+            node.Children.Length == 0 ? node : node.With(node.Children.Select(state, map));
 
         public static Node Add(this Node node, Node child) => node.With(node.Children.Append(child));
         public static Node Add(this Node node, params Node[] children) => node.With(node.Children.Append(children));
@@ -67,17 +66,14 @@ namespace Entia.Json
 
         public static Node Remove(this Node node, Func<Node, bool> match)
         {
-            if (node.Children.Length > 0)
+            if (node.Children.Length == 0) return node;
+            var children = new List<Node>(node.Children.Length);
+            foreach (var child in node.Children)
             {
-                var children = new List<Node>(node.Children.Length);
-                foreach (var child in node.Children)
-                {
-                    if (match(child)) continue;
-                    children.Add(child);
-                }
-                return node.With(children.ToArray());
+                if (match(child)) continue;
+                children.Add(child);
             }
-            else return node;
+            return node.With(children.ToArray());
         }
 
         public static Node Replace(this Node node, Node child, Node replacement) =>

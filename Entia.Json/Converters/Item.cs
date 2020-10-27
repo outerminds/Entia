@@ -20,6 +20,9 @@ namespace Entia.Json.Converters
             Convert = convert;
             Initialize = initialize;
         }
+
+        public Item<T> With(uint? index = null, Item.Convert<T> convert = null, Item.Initialize<T> initialize = null) =>
+            new Item<T>(index ?? Index, convert ?? Convert, initialize ?? Initialize);
     }
 
     /// <summary>

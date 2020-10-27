@@ -25,6 +25,9 @@ namespace Entia.Json.Converters
             Initialize = initialize;
             Key = name;
         }
+
+        public Member<T> With(string name = null, string[] aliases = null, Member.Convert<T> convert = null, Member.Initialize<T> initialize = null) =>
+            new Member<T>(name ?? Name, aliases ?? Aliases, convert ?? Convert, initialize ?? Initialize);
     }
 
     /// <summary>

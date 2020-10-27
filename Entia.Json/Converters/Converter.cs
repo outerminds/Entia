@@ -238,6 +238,10 @@ namespace Entia.Json.Converters
                 }
             );
         }
+        /// <inheritdoc cref="If{T}(ValueTuple{InFunc{T, bool}, Func{Node, bool}}, Converter{T}, Converter{T})"/>
+        public static Converter<T> If<T>(InFunc<T, bool> condition, Converter<T> @true, Converter<T> @false) => If((condition, null), @true, @false);
+        /// <inheritdoc cref="If{T}(ValueTuple{InFunc{T, bool}, Func{Node, bool}}, Converter{T}, Converter{T})"/>
+        public static Converter<T> If<T>(Func<Node, bool> condition, Converter<T> @true, Converter<T> @false) => If((null, condition), @true, @false);
 
         /// <summary>
         /// Creates a <see cref="Converter{T}"/> instance that will convert values of type
