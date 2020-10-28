@@ -61,6 +61,7 @@ namespace Entia.Json
                 case TypeCode.Boolean: return node.AsBool();
                 case TypeCode.Char: return node.AsChar();
                 case TypeCode.String: return node.AsString();
+                case TypeCode.DBNull: return DBNull.Value;
             }
 
             var converter = Settings.Converter(type, @default, @override);

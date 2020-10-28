@@ -396,7 +396,7 @@ namespace Entia.Json.Converters
                 current.GetParameters().Length == 2, out var constructor))
                 return new AbstractOption(constructor, argument);
 
-            return CreateDefault(type);
+            return new DefaultObject(type);
         }
 
         static IConverter CreateNullable(Type type, Type argument) =>
@@ -492,7 +492,7 @@ namespace Entia.Json.Converters
             return Option.And(type.EnumerableArgument(false), type.EnumerableConstructor(false))
                 .Map(pair => new AbstractEnumerable(pair.Item1, pair.Item2))
                 .Cast<IConverter>()
-                .Or(() => CreateDefault(type));
+                .Or(() => new DefaultObject(type));
         }
 
         static IConverter CreateDictionary(Type type, Type key, Type value) =>
@@ -523,6 +523,6 @@ namespace Entia.Json.Converters
         static IConverter CreateISerializable(Type type) => type.SerializableConstructor()
             .Map(constructor => new AbstractSerializable(constructor))
             .Cast<IConverter>()
-            .Or(() => CreateDefault(type));
+            .Or(() => new DefaultObject(type));
     }
 }

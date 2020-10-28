@@ -45,7 +45,10 @@ namespace Entia.Json.Converters
                 type.DefaultConstructor().TryValue(out var constructor) ?
                     new Func<object>(() => constructor.Invoke(Array.Empty<object>())) :
                 new Func<object>(() => FormatterServices.GetUninitializedObject(type));
-            _members = type.Fields(true, false).Select(field => new Member(field)).ToArray();
+            _members = type.Fields(true, false)
+                .DistinctBy(field => field.Name)
+                .Select(field => new Member(field))
+                .ToArray();
             _nameToMember = _members.ToDictionary(member => member.Name.AsString());
         }
 

@@ -1,6 +1,6 @@
 using System;
-using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using Entia.Core;
 using Entia.Json;
 using static Entia.Experiment.Check.Generator;
@@ -61,15 +61,41 @@ namespace Entia.Experiment.Check
             // CharacterTests();
             // StringTests();
             // JsonTests();
-            var node = Node.Object(Node.String('\u0101'), Node.Array());
-            var generated = (Serialization.Generate(node), "{\"\\u0101\":[]}");
-            var parsed = (Serialization.Parse(generated.Item1), Serialization.Parse(generated.Item2));
-            var results = (node == parsed.Item1, node == parsed.Item2);
 
-            var result1 = Json.String().Check();
-            var result2 = Json.Number().Check();
-            var result3 = Json.Leaf().Check();
-            var result4 = Json.Root().Check();
+            var settings = Settings.Default.With(Features.All);
+
+            // var result = ReflectionUtility.AllTypes
+            //     .Where(type => type.IsPublic && !type.IsGenericTypeDefinition && !type.IsAbstract)
+            //     .Where(type =>
+            //         type.IsPrimitive ||
+            //         type.IsEnum ||
+            //         type.IsSerializable ||
+            //         type.Namespace.Contains(nameof(Entia)) ||
+            //         type.Namespace.Contains($"{nameof(System)}.{nameof(System.Collections)}") ||
+            //         type.Namespace.Contains($"{nameof(System)}.{nameof(System.Numerics)}"))
+            //     .Select(type => type.DefaultConstructor()
+            //         .Bind(constructor => Option.Try(() => constructor.Invoke(Array.Empty<object>()))))
+            //     .Choose()
+            //     .Select(Constant)
+            //     .Any()
+            //     .Map(value =>
+            //     {
+            //         var json = Serialization.Serialize(value, settings);
+            //         var result = Serialization.Deserialize<object>(json, settings);
+            //         return (value, json, result);
+            //     })
+            //     .Check(tuple =>
+            //         tuple.value != null &&
+            //         tuple.result.TryValue(out var value) &&
+            //         value != null &&
+            //         tuple.value.GetType() == value.GetType());
+            // result.TryValue(out var pair);
+
+            var failures1 = Json.String().Check("String");
+            var failures2 = Json.Number().Check("Number");
+            var failures3 = Json.Leaf().Check("Leaf");
+            var failures4 = Json.Root().Check("Root");
+            Console.ReadLine();
         }
 
         public static void CharacterTests()
@@ -95,18 +121,39 @@ namespace Entia.Experiment.Check
             var result5 = Json.Root().Check(node => node.Descendants().Count(item => item.IsNull()) < 5);
         }
 
-        static Option<((Node node, string generated, Result<Node> parsed) fail, (Node node, string generated, Result<Node> parsed) shrinked)> Check(this Generator<Node> generator) => generator
+        static ((Node, string, Result<Node>) fail, (Node, string, Result<Node>) shrinked)[] Check(this Generator<Node> generator, string name) => generator
             .Map(node =>
             {
-                var generated = Serialization.Generate(node);
-                var parsed = Serialization.Parse(generated);
-                return (node, generated, parsed);
+                var json = Serialization.Generate(node);
+                var result = Serialization.Parse(json);
+                return (node, json, result);
             })
-            .Check(values => values.node == values.parsed);
+            .Check(name, values => values.node == values.result, 1_000_000);
 
-        static Option<(T fail, T shrinked)> Check<T>(this Generator<T> generator, Func<T, bool> property) =>
-            generator.Check(property, 100_000,
-                node => Console.WriteLine($"Generate: {node}"),
-                node => Console.WriteLine($"Shrink: {node}"));
+        static (T fail, T shrinked)[] Check<T>(this Generator<T> generator, string name, Func<T, bool> property, int iterations, int? parallel = null)
+        {
+            var tasks = parallel ?? Environment.ProcessorCount;
+            var count = iterations / tasks;
+            var progress = new double[tasks];
+            var task = Task.WhenAll(Enumerable.Range(0, tasks).Select(index => Task.Run(() =>
+                generator.Check(property, count, (value, iteration) => progress[index] = iteration / (double)count))));
+
+            Console.CursorVisible = false;
+            Console.WriteLine();
+
+            while (!task.IsCompleted)
+            {
+                Console.CursorLeft = 0;
+                Console.Write($"Generating '{name}' {count}x{tasks}... {progress.Average() * 100:0.00}%");
+            }
+
+            Console.WriteLine();
+            var failures = task.Result.Choose().ToArray();
+            if (failures.Length == 0) Console.WriteLine("Success");
+            else Console.WriteLine($"Failure: {string.Join("", failures.Select(failure => $"{Environment.NewLine}-> {failure.shrink}"))}");
+
+            Console.CursorVisible = true;
+            return failures;
+        }
     }
 }

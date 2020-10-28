@@ -198,7 +198,7 @@ namespace Entia.Experiment.Check
                 return (values, Shrink());
             };
 
-        public static Option<(T fail, T shrink)> Check<T>(this Generator<T> generator, Func<T, bool> property, int iterations = 1000, Action<T> onGenerate = null, Action<T> onShrink = null)
+        public static Option<(T fail, T shrink)> Check<T>(this Generator<T> generator, Func<T, bool> property, int iterations = 1000, Action<T, int> onGenerate = null, Action<T, int> onShrink = null)
         {
             var random = new Random();
             for (var i = 0; i <= iterations; i++)
@@ -207,12 +207,13 @@ namespace Entia.Experiment.Check
                 var size = i / (double)iterations;
                 var state = new State(size, 0, new Random(seed));
                 var (value, shrinked) = generator(state);
-                onGenerate?.Invoke(value);
+                onGenerate?.Invoke(value, i);
                 if (property(value)) continue;
 
                 T Shrink(T value, IEnumerable<Generator<T>> shrinked)
                 {
                     var @continue = true;
+                    var count = 0;
                     while (@continue.Change(false))
                     {
                         foreach (var generator in shrinked)
@@ -221,7 +222,7 @@ namespace Entia.Experiment.Check
                             var pair = generator(state);
                             if (property(pair.value)) continue;
                             (value, shrinked) = pair;
-                            onShrink?.Invoke(value);
+                            onShrink?.Invoke(value, count++);
                             @continue = true;
                             break;
                         }

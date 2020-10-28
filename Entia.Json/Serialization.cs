@@ -31,7 +31,7 @@ namespace Entia.Json
             return result.Fail();
         }
 
-        public static Result<object> Deserialize(string json, Type type, Settings settings)
+        public static Result<object> Deserialize(string json, Type type, Settings settings = null)
         {
             var context = new FromContext(settings ?? Settings.Default, new Dictionary<uint, object>());
             var result = Parse(json, context);

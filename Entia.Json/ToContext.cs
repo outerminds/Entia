@@ -29,7 +29,7 @@ namespace Entia.Json
 
         public Node Convert(object instance, Type type, IConverter @default = null, IConverter @override = null)
         {
-            if (instance is null) return Node.Null;
+            if (instance is null || type.IsPointer) return Node.Null;
 
             switch (Type.GetTypeCode(type))
             {
@@ -47,6 +47,7 @@ namespace Entia.Json
                 case TypeCode.Boolean: return (bool)instance;
                 case TypeCode.Char: return (char)instance;
                 case TypeCode.String: return (string)instance;
+                case TypeCode.DBNull: return Node.EmptyObject;
             }
 
             if (TryReference(instance, out var reference))
@@ -55,7 +56,6 @@ namespace Entia.Json
             var concrete = instance.GetType();
             if (type == concrete)
             {
-
                 var converter = Settings.Converter(concrete, @default, @override);
                 var identifier = Reserve(instance);
                 return converter.Convert(With(instance, concrete)).With(identifier);

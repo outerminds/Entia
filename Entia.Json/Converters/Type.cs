@@ -104,7 +104,7 @@ namespace Entia.Json.Converters
             else if (ReflectionUtility.TryGetGuid(instance, out var guid))
                 return Node.String(guid.ToString(), Node.Tags.Plain);
             else
-                return Node.String(instance.FullName, Node.Tags.Plain);
+                return Node.String(instance.AssemblyQualifiedName);
         }
 
         public override Type Instantiate(in FromContext context)
