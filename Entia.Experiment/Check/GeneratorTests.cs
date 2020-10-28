@@ -23,19 +23,10 @@ namespace Entia.Experiment.Check
                 Enumeration<Boba>().Map(value => Node.Number(value)));
             public static Generator<Node> String() => Any(
                 Constant(Node.EmptyString),
-                Escaped(),
-                Any(ASCII, Letter, Digit, Character()).String(Range(100)).Map(Node.String),
+                Any(ASCII, Letter, Digit, Any('\\', '\"', '/', '\t', '\f', '\b', '\n', '\r'), Character())
+                    .String(Range(100))
+                    .Map(Node.String),
                 Enumeration<Boba>().Map(value => Node.String(value)));
-            public static Generator<Node> Escaped() => Any(
-                Constant(Node.String('\\')),
-                Constant(Node.String('\"')),
-                Constant(Node.String('/')),
-                Constant(Node.String('\t')),
-                Constant(Node.String('\f')),
-                Constant(Node.String('\b')),
-                Constant(Node.String('\n')),
-                Constant(Node.String('\r'))
-            );
             public static Generator<Node> Leaf() => Any(
                 Constant(Node.Null),
                 Constant(Node.EmptyArray),

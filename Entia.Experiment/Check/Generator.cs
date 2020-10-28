@@ -126,6 +126,7 @@ namespace Entia.Experiment.Check
         public static Generator<TTarget> Bind<TSource, TTarget>(this Generator<TSource> generator, Func<TSource, Generator<TTarget>> bind) =>
             generator.Map(bind).Flatten();
 
+        public static Generator<T> Any<T>(params T[] values) => Any(values.Select(Constant));
         public static Generator<T> Any<T>(this IEnumerable<Generator<T>> generators) => Any(generators.ToArray());
 
         public static Generator<T> Any<T>(params Generator<T>[] generators) =>
