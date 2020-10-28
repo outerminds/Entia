@@ -32,7 +32,7 @@ namespace Entia.Json.Converters
 
         static readonly (int identifier, Type type)[] _types =
         {
-            // skip identifier '0' to detect some failure cases
+            // Skip identifier '0' to detect some failure cases.
             #region System
             (1, typeof(bool)), (31, typeof(bool[])), (61, typeof(bool?)), (91, typeof(bool*)),
             (2, typeof(char)), (32, typeof(char[])), (62, typeof(char?)), (92, typeof(char*)),

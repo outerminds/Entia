@@ -492,10 +492,10 @@ namespace Entia.Experiment
             // SuperDuperUnsafe();
             // VeryUnsafe();
             // TestJson();
-            // GeneratorTests.Test();
+            GeneratorTests.Test();
             // TestFamilies();
             // Serializer();
-            TypeMapTest.Benchmark();
+            // TypeMapTest.Benchmark();
             // CompareSerializers();
         }
 

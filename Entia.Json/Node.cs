@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -14,7 +15,7 @@ namespace Entia.Json
     /// to manipulate it.
     /// </para>
     /// </summary>
-    public sealed class Node
+    public sealed class Node : IEquatable<Node>
     {
         // These enums are kept as 'byte' to keep the size of nodes small.
         // Current size is 22 bytes on x64 (24 with padding) and should not go over 24 bytes since
@@ -76,6 +77,11 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Node(Type value) => Type(value);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(Node left, Node right) => EqualityComparer<Node>.Default.Equals(left, right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(Node left, Node right) => !(left == right);
+
         const long Numbers = 128;
         const long Characters = 128;
 
@@ -128,30 +134,17 @@ namespace Entia.Json
             return numbers[value] ?? (numbers[value] = new Node(Kinds.Number, Tags.Integer, value, _empty));
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(ulong value) => value < long.MaxValue ? Number((long)value) : new Node(Kinds.Number, Tags.None, value, _empty);
+        public static Node Number(ulong value) => Number((long)value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(float value)
-        {
-            // Since conversion from 'float' to 'double' isn't perfect, it is best to allow to keep the
-            // 'float' as is to prevent adding fractional digits
-            var integer = (long)value;
-            return value == integer ? Number(integer) : new Node(Kinds.Number, Tags.None, value, _empty);
-        }
-
+        public static Node Number(float value) => Number((double)value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(double value)
         {
             var integer = (long)value;
             return value == integer ? Number(integer) : Rational(value);
         }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Node Number(decimal value)
-        {
-            var integer = (long)value;
-            return value == integer ? Number(integer) : new Node(Kinds.Number, Tags.None, value, _empty);
-        }
-
+        public static Node Number(decimal value) => Number((double)value);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Node Number(Enum value) => value == null ? Null : Number(Convert.ToInt64(value, CultureInfo.InvariantCulture));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -251,17 +244,45 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Node With(uint identifier) => new Node(identifier, Kind, Tag, Value, Children);
 
-        public override string ToString() => Kind switch
+        public bool Equals(Node other)
         {
-            Kinds.Null => "null",
-            Kinds.Boolean => (bool)Value ? "true" : "false",
-            Kinds.String => @$"""{Value}""",
-            Kinds.Type => ((Type)Value).FullFormat(),
-            Kinds.Array => $"[{string.Join(", ", Children.AsEnumerable())}]",
-            Kinds.Object => $"{{{string.Join(", ", Children.Tuples().Select(tuple => $"{tuple.Item1}: {tuple.Item2}"))}}}",
-            Kinds.Abstract => $"{Children[1]} ({Children[0]})",
-            Kinds.Reference => $"${Value}",
-            _ => Convert.ToString(Value, CultureInfo.InvariantCulture)
-        };
+            if (other == null) return false;
+            if (ReferenceEquals(this, other)) return true;
+            if (Kind != other.Kind) return false;
+            // Do not check tags since the 'Plain' tag differentiates nodes that are otherwise equals.
+            switch (Kind)
+            {
+                case Kinds.Null: return ReferenceEquals(Value, other.Value);
+                case Kinds.Number: return this.AsDouble() - other.AsDouble() < 0.000001;
+                case Kinds.Boolean: return this.AsBool() == other.AsBool();
+                case Kinds.String: return this.AsString() == other.AsString();
+                case Kinds.Type: return this.AsType() == other.AsType();
+                case Kinds.Reference: return this.AsReference() == other.AsReference();
+                default: return ReferenceEquals(Value, other.Value) && ArrayUtility.Equals(Children, other.Children);
+            }
+        }
+
+        public override bool Equals(object obj) => Equals(obj as Node);
+
+        public override int GetHashCode() =>
+            Kind.GetHashCode() ^
+            Value?.GetHashCode() ?? 0 ^
+            ArrayUtility.GetHashCode(Children);
+
+        public override string ToString()
+        {
+            switch (Kind)
+            {
+                case Kinds.Null: return "null";
+                case Kinds.Boolean when this.TryBool(out var value): return value ? "true" : "false";
+                case Kinds.String when this.TryString(out var value): return $@"""{value}""";
+                case Kinds.Type when this.TryType(out var type): return type.FullFormat();
+                case Kinds.Abstract when this.TryAbstract(out var type, out var value): return $"{value} ({type.FullFormat()})";
+                case Kinds.Reference when this.TryReference(out var value): return $"${value}";
+                case Kinds.Array: return $"[{string.Join<Node>(", ", this.Items())}]";
+                case Kinds.Object: return $"{{{string.Join(", ", this.Members().Select(pair => $"{pair.key}: {pair.value}"))}}}";
+                default: return Convert.ToString(Value, CultureInfo.InvariantCulture);
+            }
+        }
     }
 }

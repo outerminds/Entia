@@ -189,13 +189,14 @@ namespace Entia.Json
                 }
             }
 
-            if (nodes[0] is Node root)
+            if (brackets.Count > 0) return Result.Failure("Expected brackets to be balanced.");
+            else if (index > 1) return Result.Failure("Expected all child nodes to be consumed.");
+            else if (nodes[0] is Node root)
             {
                 Unwrap(ref root, context);
                 return root;
             }
-            else
-                return Result.Failure("Expected valid json.");
+            else return Result.Failure("Expected valid json.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -226,61 +227,61 @@ namespace Entia.Json
                 if (current == _backSlash) return ParseEscapedString(ref builder, ref head, tail, ref start);
             }
             return Node.String(new string(start, 0, Index(start, head) - 1), Node.Tags.Plain);
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe Node ParseEscapedString(ref StringBuilder builder, ref char* head, char* tail, ref char* start)
-        {
-            if (builder == null) builder = new StringBuilder(256);
-            else builder.Clear();
-
-            builder.AppendUnescaped(ref head, tail, ref start);
-            while (head != tail)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static unsafe Node ParseEscapedString(ref StringBuilder builder, ref char* head, char* tail, ref char* start)
             {
-                var current = *head++;
-                if (current == _backSlash) builder.AppendUnescaped(ref head, tail, ref start);
-                else if (current == _quote) break;
-            }
-            builder.Append(start, Index(start, head) - 1);
-            return Node.String(builder.ToString(), Node.Tags.None);
-        }
+                if (builder == null) builder = new StringBuilder(256);
+                else builder.Clear();
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe void AppendUnescaped(this StringBuilder builder, ref char* head, char* tail, ref char* start)
-        {
-            builder.Append(start, Index(start, head) - 1);
-            switch (*head++)
+                AppendUnescaped(builder, ref head, tail, ref start);
+                while (head != tail)
+                {
+                    var current = *head++;
+                    if (current == _backSlash) AppendUnescaped(builder, ref head, tail, ref start);
+                    else if (current == _quote) break;
+                }
+                builder.Append(start, Index(start, head) - 1);
+                return Node.String(builder.ToString(), Node.Tags.None);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static unsafe void AppendUnescaped(StringBuilder builder, ref char* head, char* tail, ref char* start)
             {
-                case _n: builder.Append(_line); break;
-                case _b: builder.Append(_back); break;
-                case _f: builder.Append(_feed); break;
-                case _r: builder.Append(_return); break;
-                case _t: builder.Append(_tab); break;
-                case _quote: builder.Append(_quote); break;
-                case _backSlash: builder.Append(_backSlash); break;
-                case _frontSlash: builder.Append(_frontSlash); break;
-                case _u:
-                    if (tail - head >= 4)
-                    {
-                        var value =
-                            (FromHex(*head++) << 12) |
-                            (FromHex(*head++) << 8) |
-                            (FromHex(*head++) << 4) |
-                            FromHex(*head++);
-                        builder.Append((char)value);
-                    }
-                    break;
+                builder.Append(start, Index(start, head) - 1);
+                switch (*head++)
+                {
+                    case _n: builder.Append(_line); break;
+                    case _b: builder.Append(_back); break;
+                    case _f: builder.Append(_feed); break;
+                    case _r: builder.Append(_return); break;
+                    case _t: builder.Append(_tab); break;
+                    case _quote: builder.Append(_quote); break;
+                    case _backSlash: builder.Append(_backSlash); break;
+                    case _frontSlash: builder.Append(_frontSlash); break;
+                    case _u:
+                        if (tail - head >= 4)
+                        {
+                            var value =
+                                (FromHex(*head++) << 12) |
+                                (FromHex(*head++) << 8) |
+                                (FromHex(*head++) << 4) |
+                                FromHex(*head++);
+                            builder.Append((char)value);
+                        }
+                        break;
+                }
+                start = head;
             }
-            start = head++;
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static int FromHex(char character)
-        {
-            if (character >= _0 && character <= _9) return character - _0;
-            else if (character >= _a && character <= _f) return character - _a + 10;
-            else if (character >= _A && character <= _F) return character - _A + 10;
-            else return 0;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static int FromHex(char character)
+            {
+                if (character >= _0 && character <= _9) return character - _0;
+                else if (character >= _a && character <= _f) return character - _a + 10;
+                else if (character >= _A && character <= _F) return character - _A + 10;
+                else return 0;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -298,63 +299,63 @@ namespace Entia.Json
                 return Node.Number(ParseExponent(ref head, tail, value) * sign);
             }
             else return Node.Number(value * sign);
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe char ParseInteger(ref char* head, char* tail, ref long value)
-        {
-            while (head != tail)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static unsafe char ParseInteger(ref char* head, char* tail, ref long value)
             {
-                var character = *head;
-                if (character >= _0 && character <= _9)
+                while (head != tail)
+                {
+                    var character = *head;
+                    if (character >= _0 && character <= _9)
+                    {
+                        head++;
+                        value = value * 10 + (character - _0);
+                    }
+                    else return character;
+                }
+                return default;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static unsafe double ParseFraction(ref char* head, char* tail, double value)
+            {
+                var start = head;
+                var fraction = 0L;
+                var character = ParseInteger(ref head, tail, ref fraction);
+                if (character == _e || character == _E)
                 {
                     head++;
-                    value = value * 10 + (character - _0);
+                    return ParseExponent(ref head, tail, value + fraction / _positives[Index(start, head)]);
                 }
-                else return character;
+                else return value + fraction / _positives[Index(start, head)];
             }
-            return default;
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe double ParseFraction(ref char* head, char* tail, double value)
-        {
-            var start = head;
-            var fraction = 0L;
-            var character = ParseInteger(ref head, tail, ref fraction);
-            if (character == _e || character == _E)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static unsafe double ParseExponent(ref char* head, char* tail, double value)
             {
-                head++;
-                return ParseExponent(ref head, tail, value + fraction / _positives[Index(start, head)]);
-            }
-            else return value + fraction / _positives[Index(start, head)];
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static unsafe double ParseExponent(ref char* head, char* tail, double value)
-        {
-            var exponent = 0u;
-            var powers = _positives;
-            while (head != tail)
-            {
-                switch (*head)
+                var exponent = 0u;
+                var powers = _positives;
+                while (head != tail)
                 {
-                    case _0: head++; exponent *= 10u; continue;
-                    case _1: head++; exponent = exponent * 10u + 1u; continue;
-                    case _2: head++; exponent = exponent * 10u + 2u; continue;
-                    case _3: head++; exponent = exponent * 10u + 3u; continue;
-                    case _4: head++; exponent = exponent * 10u + 4u; continue;
-                    case _5: head++; exponent = exponent * 10u + 5u; continue;
-                    case _6: head++; exponent = exponent * 10u + 6u; continue;
-                    case _7: head++; exponent = exponent * 10u + 7u; continue;
-                    case _8: head++; exponent = exponent * 10u + 8u; continue;
-                    case _9: head++; exponent = exponent * 10u + 9u; continue;
-                    case _plus: head++; powers = _positives; continue;
-                    case _minus: head++; powers = _negatives; continue;
+                    switch (*head)
+                    {
+                        case _0: head++; exponent *= 10u; continue;
+                        case _1: head++; exponent = exponent * 10u + 1u; continue;
+                        case _2: head++; exponent = exponent * 10u + 2u; continue;
+                        case _3: head++; exponent = exponent * 10u + 3u; continue;
+                        case _4: head++; exponent = exponent * 10u + 4u; continue;
+                        case _5: head++; exponent = exponent * 10u + 5u; continue;
+                        case _6: head++; exponent = exponent * 10u + 6u; continue;
+                        case _7: head++; exponent = exponent * 10u + 7u; continue;
+                        case _8: head++; exponent = exponent * 10u + 8u; continue;
+                        case _9: head++; exponent = exponent * 10u + 9u; continue;
+                        case _plus: head++; powers = _positives; continue;
+                        case _minus: head++; powers = _negatives; continue;
+                    }
+                    break;
                 }
-                break;
+                return value * powers[exponent];
             }
-            return value * powers[exponent];
         }
 
         static void Unwrap(ref Node node, in FromContext context)

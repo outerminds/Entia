@@ -6,6 +6,12 @@ namespace Entia.Core
 {
     public static class ArrayUtility
     {
+        static class Cache<T>
+        {
+            public static readonly Func<T, T, bool> Equal = EqualityComparer<T>.Default.Equals;
+            public static readonly Func<T, int> Hash = EqualityComparer<T>.Default.GetHashCode;
+        }
+
         public static bool Ensure<T>(ref T[] source, int size)
         {
             if (size <= source.Length) return false;
@@ -126,22 +132,23 @@ namespace Entia.Core
         }
 
         [ThreadSafe]
-        public static int GetHashCode<T>(T[] source)
+        public static int GetHashCode<T>(T[] source, Func<T, int> hash = null)
         {
-            if (source == null) return 0;
-            var hash = 0;
-            var comparer = EqualityComparer<T>.Default;
-            foreach (var item in source) hash ^= comparer.GetHashCode(item);
-            return hash;
+            if (source == null || source.Length == 0) return 0;
+
+            hash ??= Cache<T>.Hash;
+            var result = 0;
+            foreach (var item in source) result ^= hash(item);
+            return result;
         }
 
         [ThreadSafe]
-        public static int GetHashCode<T>((T[] items, int count) source)
+        public static int GetHashCode<T>((T[] items, int count) source, Func<T, int> hash = null)
         {
-            var hash = source.count;
-            var comparer = EqualityComparer<T>.Default;
-            for (int i = 0; i < source.count; i++) hash ^= comparer.GetHashCode(source.items[i]);
-            return hash;
+            hash ??= Cache<T>.Hash;
+            var result = source.count;
+            for (int i = 0; i < source.count; i++) result ^= hash(source.items[i]);
+            return result;
         }
 
         public static T[] Concatenate<T>(T[] left, T[] right)
@@ -176,6 +183,21 @@ namespace Entia.Core
                 index += source.Length;
             }
             return results;
+        }
+
+        public static bool Equals<T>(T[] source, T[] other, Func<T, T, bool> equal = null)
+        {
+            if (source == other) return true;
+            if (source == null || other == null) return false;
+            if (source.Length != other.Length) return false;
+
+            equal ??= Cache<T>.Equal;
+            for (int i = 0; i < source.Length; i++)
+            {
+                if (equal(source[i], other[i])) continue;
+                return false;
+            }
+            return true;
         }
     }
 }

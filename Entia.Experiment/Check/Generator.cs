@@ -13,13 +13,18 @@ namespace Entia.Experiment.Check
         public sealed class State
         {
             public readonly double Size;
+            public readonly uint Depth;
             public readonly Random Random;
 
-            public State(double size, Random random)
+            public State(double size, uint depth, Random random)
             {
                 Size = size;
+                Depth = depth;
                 Random = random;
             }
+
+            public State With(double? size = null, uint? depth = null) =>
+                new State(size ?? Size, depth ?? Depth, Random);
         }
 
         static class Cache<T>
@@ -42,7 +47,8 @@ namespace Entia.Experiment.Check
 
         public static Generator<T> Default<T>() => Cache<T>.Default;
         public static Generator<T[]> Empty<T>() => Cache<T>.Empty;
-        public static Generator<T> Constant<T>(T value) => _ => (value, Array.Empty<Generator<T>>());
+        public static Generator<T> Constant<T>(T value, IEnumerable<Generator<T>> shrinked) => _ => (value, shrinked);
+        public static Generator<T> Constant<T>(T value) => Constant(value, Array.Empty<Generator<T>>());
 
         public static Generator<T> Lazy<T>(Func<T> provide)
         {
@@ -57,18 +63,24 @@ namespace Entia.Experiment.Check
         }
 
         public static Generator<T> Size<T>(this Generator<T> generator, Func<double, double> map) =>
-            state => generator(new State(map(state.Size), state.Random));
+            state => generator(state.With(map(state.Size)));
+
+        public static Generator<T> Depth<T>(this Generator<T> generator, uint maximum) => state =>
+        {
+            var attenuation = Math.Max(1.0 - (double)state.Depth / maximum, 0.0);
+            return generator(state.With(state.Size * attenuation, state.Depth + 1));
+        };
 
         public static Generator<T> Enumeration<T>() where T : struct, Enum => EnumCache<T>.Any;
 
         public static Generator<char> Character(char minimum = char.MinValue, char maximum = char.MaxValue) =>
             Number(minimum, maximum).Map(value => (char)value).Size(_ => 1.0);
 
-        public static Generator<int> Integer(int minimum = int.MinValue, int maximum = int.MaxValue) =>
+        public static Generator<int> Integer(int minimum = -1_000_000, int maximum = 1_000_000) =>
             Number(minimum, maximum).Map(value => (int)value).Size(_ => 1.0);
 
-        public static Generator<float> Rational(float minimum = float.MinValue, float maximum = float.MaxValue) =>
-            Number(minimum, maximum, (maximum - minimum) / 100.0).Map(value => (float)value);
+        public static Generator<float> Rational(float minimum = -1_000_000f, float maximum = 1_000_000f) =>
+            Number(minimum, maximum).Map(value => (float)value).Size(_ => 1.0);
 
         public static Generator<int> Range(int maximum) => Range(0, maximum);
         public static Generator<int> Range(int minimum, int maximum) =>
@@ -81,9 +93,10 @@ namespace Entia.Experiment.Check
                 return (value, shrink(value).Concat(shrinked));
             };
 
+        public static Generator<T> Shrink<T>(this Generator<T> generator, IEnumerable<Generator<T>> shrink) =>
+            generator.Shrink(_ => shrink);
         public static Generator<T> Shrink<T>(this Generator<T> generator, Func<T, IEnumerable<T>> shrink) =>
             generator.Shrink(value => shrink(value).Select(Constant));
-
         public static Generator<T> Shrink<T>(this Generator<T> generator, Func<T, Generator<T>> shrink) =>
             generator.Shrink(value => new[] { shrink(value) });
 
@@ -109,16 +122,12 @@ namespace Entia.Experiment.Check
 
         public static Generator<T> Flatten<T>(this Generator<Generator<T>> generator) =>
             state => generator(state).value(state);
-        // {
-        // var (value1, shrinked1) = generator(state);
-        // var (value2, shrinked2) = value1(state);
-        // return (value2, shrinked1.Select(shrink => shrink.Flatten()).Concat(shrinked2));
-        // };
 
         public static Generator<TTarget> Bind<TSource, TTarget>(this Generator<TSource> generator, Func<TSource, Generator<TTarget>> bind) =>
             generator.Map(bind).Flatten();
 
         public static Generator<T> Any<T>(this IEnumerable<Generator<T>> generators) => Any(generators.ToArray());
+
         public static Generator<T> Any<T>(params Generator<T>[] generators) =>
             generators.Length == 0 ? throw new ArgumentException(nameof(generators)) :
             generators.Length == 1 ? generators[0] :
@@ -127,6 +136,7 @@ namespace Entia.Experiment.Check
                 var index = state.Random.Next(generators.Length);
                 return generators[index](state);
             };
+
         public static Generator<T> Any<T>(params (float weight, Generator<T> generator)[] generators)
         {
             if (generators.Length == 0) throw new ArgumentException(nameof(generators));
@@ -141,13 +151,25 @@ namespace Entia.Experiment.Check
             };
         }
 
-        public static Generator<(T1, T2)> And<T1, T2>(this Generator<T1> generator1, Generator<T2> generator2) =>
-            generator1.Bind(value1 => generator2.Map(value2 => (value1, value2)));
+        public static Generator<(T1, T2)> And<T1, T2>(this Generator<T1> generator1, Generator<T2> generator2) => state =>
+        {
+            var (value1, shrinked1) = generator1(state);
+            var (value2, shrinked2) = generator2(state);
+
+            IEnumerable<Generator<(T1, T2)>> Shrink()
+            {
+                var constant1 = Constant(value1, shrinked1);
+                var constant2 = Constant(value2, shrinked2);
+                foreach (var shrink in shrinked1) yield return And(shrink, constant2);
+                foreach (var shrink in shrinked2) yield return And(constant1, shrink);
+            }
+
+            return ((value1, value2), Shrink());
+        };
 
         public static Generator<T[]> All<T>(this IEnumerable<Generator<T>> generators) => All(generators.ToArray());
         public static Generator<T[]> All<T>(params Generator<T>[] generators) =>
             generators.Length == 0 ? Empty<T>() :
-            generators.Length == 1 ? generators[0].Map(value => new[] { value }) :
             state =>
             {
                 var values = new T[generators.Length];
@@ -157,17 +179,18 @@ namespace Entia.Experiment.Check
 
                 IEnumerable<Generator<T[]>> Shrink()
                 {
-                    for (int i = 0; i < generators.Length; i++) yield return All(generators.RemoveAt(i));
-
-                    var values = CloneUtility.Shallow(generators);
-                    var enumerators = shrinked.Select(enumerable => enumerable.GetEnumerator());
-                    for (int i = 0; i < enumerators.Length; i++)
+                    // Try to remove irrelevant generators.
+                    var constants = new Generator<T>[generators.Length];
+                    for (int i = 0; i < constants.Length; i++) constants[i] = Constant(values[i], shrinked[i]);
+                    for (int i = 0; i < constants.Length; i++) yield return All(constants.RemoveAt(i));
+                    // Try to shrink relevant generators.
+                    for (int i = 0; i < shrinked.Length; i++)
                     {
-                        var enumerator = enumerators[i];
-                        while (enumerator.MoveNext())
+                        foreach (var shrink in shrinked[i])
                         {
-                            values[i] = enumerator.Current;
-                            yield return All(CloneUtility.Shallow(values));
+                            var clones = CloneUtility.Shallow(constants);
+                            clones[i] = shrink;
+                            yield return All(clones);
                         }
                     }
                 }
@@ -182,7 +205,7 @@ namespace Entia.Experiment.Check
             {
                 var seed = random.Next() ^ Thread.CurrentThread.ManagedThreadId ^ i;
                 var size = i / (double)iterations;
-                var state = new State(size, new Random(seed));
+                var state = new State(size, 0, new Random(seed));
                 var (value, shrinked) = generator(state);
                 onGenerate?.Invoke(value);
                 if (property(value)) continue;
@@ -194,7 +217,7 @@ namespace Entia.Experiment.Check
                     {
                         foreach (var generator in shrinked)
                         {
-                            var state = new State(size, new Random(seed));
+                            var state = new State(size, 0, new Random(seed));
                             var pair = generator(state);
                             if (property(pair.value)) continue;
                             (value, shrinked) = pair;
@@ -216,32 +239,55 @@ namespace Entia.Experiment.Check
             minimum == maximum || minimum > maximum || maximum < minimum ? Constant(minimum) :
             state =>
             {
-                static IEnumerable<Generator<long>> Shrink(long minimum, long maximum)
+                static long Round(double value)
                 {
-                    while (true)
+                    var positive = Math.Abs(value);
+                    var integer = (long)positive;
+                    var fraction = positive - integer;
+                    var add = fraction < 0.5 ? 0L : 1L;
+                    return integer + add;
+                }
+
+                static IEnumerable<Generator<long>> Shrink(long source, long target)
+                {
+                    var difference = target - source;
+                    var sign = Math.Sign(difference);
+                    var magnitude = Math.Abs(difference);
+                    var direction = Math.Max(1L, magnitude / 100L);
+                    for (int i = 0; i < 100 && magnitude > 0; i++, magnitude -= direction)
                     {
-                        var middle = (maximum - minimum) / 2L + minimum;
-                        yield return Constant(middle).Shrink(value => Shrink(minimum, middle));
-                        if (!minimum.Change(middle)) break;
+                        var middle = Round(magnitude / 2.0) * sign + source;
+                        if (middle == source) yield break;
+                        yield return Constant(middle, Shrink(middle, target));
                     }
                 }
 
                 var value = (long)Math.Round((maximum - minimum) * state.Size * state.Random.NextDouble() + minimum);
-                return (value, Shrink(minimum, value));
+                var target = maximum < 0L ? maximum : minimum > 0L ? minimum : 0L;
+                return (value, Shrink(value, target));
             };
 
-        static Generator<double> Number(double minimum, double maximum, double decrement) =>
+        static Generator<double> Number(double minimum, double maximum) =>
             minimum == maximum || minimum > maximum || maximum < minimum ? Constant(minimum) :
             state =>
             {
-                static IEnumerable<Generator<double>> Shrink(double minimum, double maximum, double decrement)
+                static IEnumerable<Generator<double>> Shrink(double source, double target)
                 {
-                    for (var i = maximum - decrement; i >= minimum; i -= decrement)
-                        yield return Constant(i).Shrink(value => Shrink(minimum, maximum, decrement));
+                    var difference = target - source;
+                    var sign = Math.Sign(difference);
+                    var magnitude = Math.Abs(difference);
+                    var direction = magnitude / 100.0;
+                    for (int i = 0; i < 100 && magnitude > 0; i++, magnitude -= direction)
+                    {
+                        var middle = Math.Round(magnitude * 0.5 * sign + source, 5);
+                        if (middle == source) yield break;
+                        yield return Constant(middle, Shrink(middle, target));
+                    }
                 }
 
-                var value = (maximum - minimum) * state.Random.NextDouble() + minimum;
-                return (value, Shrink(minimum, value, decrement));
+                var value = (maximum - minimum) * state.Size * state.Random.NextDouble() + minimum;
+                var target = maximum < 0.0 ? maximum : minimum > 0.0 ? minimum : 0.0;
+                return (value, Shrink(value, target));
             };
     }
 }

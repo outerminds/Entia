@@ -192,7 +192,7 @@ namespace Entia.Json
                         builder.Append(@"\\");
                         index = i + 1;
                         break;
-                    // NOTE: it seems that the front slash character does not need to be escaped
+                    // It seems that the front slash character does not need to be escaped
                     // case _frontSlash:
                     //     builder.Append(value, index, i - index);
                     //     builder.Append(@"\/");
@@ -205,6 +205,7 @@ namespace Entia.Json
                         break;
                     default:
                         if (character <= byte.MaxValue) continue;
+                        builder.Append(value, index, i - index);
                         builder.Append(@"\u");
                         builder.Append(ToHex(character >> 12));
                         builder.Append(ToHex((character >> 8) & 0xF));
