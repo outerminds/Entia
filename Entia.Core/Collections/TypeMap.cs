@@ -174,7 +174,7 @@ namespace Entia.Core
         }
 
         static Entry[] _entries = { };
-        static Dictionary<Type, Entry> _typeToEntry = new Dictionary<Type, Entry>();
+        static Dictionary<Type, Entry> _typeToEntry = new();
 
         [ThreadSafe]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -199,16 +199,16 @@ namespace Entia.Core
                     // trying to guess the index of that entry, but such hackish speculation will not be considered.
                     Interlocked.Exchange(ref _entries, _entries.Append(entry));
                     // This must happen last to make sure that no thread can observe an entry that is not full initialized.
-                    Interlocked.Exchange(ref _typeToEntry, new Dictionary<Type, Entry>(_typeToEntry) { { type, entry } });
+                    Interlocked.Exchange(ref _typeToEntry, new(_typeToEntry) { [type] = entry });
                     return entry;
                 }
             }
         }
 
         [ThreadSafe]
-        public KeyEnumerable Keys => new KeyEnumerable(this);
+        public KeyEnumerable Keys => new(this);
         [ThreadSafe]
-        public ValueEnumerable Values => new ValueEnumerable(this);
+        public ValueEnumerable Values => new(this);
         [ThreadSafe]
         public ref TValue this[int index]
         {
@@ -346,7 +346,7 @@ namespace Entia.Core
 
         /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
         [ThreadSafe]
-        public Enumerator GetEnumerator() => new Enumerator(this);
+        public Enumerator GetEnumerator() => new(this);
         IEnumerator<(Type type, TValue value)> IEnumerable<(Type type, TValue value)>.GetEnumerator() => GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 

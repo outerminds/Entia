@@ -13,6 +13,7 @@
     <ProjectReference Include="..\Entia.Core\Entia.Core.csproj" />
     <ProjectReference Include="..\Entia.Json\Entia.Json.csproj" />
     <ProjectReference Include="..\Entia\Entia.csproj" />
+    <ProjectReference Include="..\Entia.Check\Entia.Check.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,18 +5,16 @@
     <LangVersion>9.0</LangVersion>
     <Version>$(Version)</Version>
     <Configurations>Debug;Release;Debug VS;Release VS</Configurations>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>1591</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <Target Name="Copy" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="dotnet &quot;$(SolutionDir)Tools\Documentor\Documentor.dll&quot; &quot;$(PublishDir)&quot;" />
-    <Exec Command="xcopy /y /q &quot;$(PublishDir)*&quot; &quot;$(SolutionDir)Release\&quot;" />
-  </Target>
-
   <ItemGroup>
     <ProjectReference Include="..\Entia.Core\Entia.Core.csproj" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
 
 </Project>
