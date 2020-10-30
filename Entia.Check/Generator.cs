@@ -38,12 +38,18 @@ namespace Entia.Check
             public static readonly Generator<T> Any = Enum.GetValues(typeof(T)).OfType<T>().Select(Constant).Any();
         }
 
-        public static readonly Generator<char> Letter = Any(Character('A', 'Z'), Character('a', 'z'));
-        public static readonly Generator<char> Digit = Character('0', '9');
-        public static readonly Generator<char> ASCII = Any(Letter, Digit, Character((char)0, (char)127));
+        public static readonly Generator<char> Letter = Any(Range('A', 'Z'), Range('a', 'z'));
+        public static readonly Generator<char> Digit = Range('0', '9');
+        public static readonly Generator<char> ASCII = Any(Letter, Digit, Range((char)127));
+        public static readonly Generator<char> Character = Range(char.MinValue, char.MaxValue);
         public static readonly Generator<bool> True = Constant(true);
         public static readonly Generator<bool> False = Constant(false);
         public static readonly Generator<bool> Boolean = Any(True, False);
+        public static readonly Generator<int> Zero = Constant(0);
+        public static readonly Generator<int> One = Constant(1);
+        public static readonly Generator<int> Binary = Any(Zero, One);
+        public static readonly Generator<int> Integer = Range(int.MinValue, int.MaxValue).Size(size => Math.Pow(size, 5));
+        public static readonly Generator<float> Rational = Range(-1E9f, 1E9f).Size(size => Math.Pow(size, 10));
 
         public static Generator<T> Default<T>() => Cache<T>.Default;
         public static Generator<T[]> Empty<T>() => Cache<T>.Empty;
@@ -68,33 +74,33 @@ namespace Entia.Check
         public static Generator<T> Enumeration<T>() where T : struct, Enum => EnumCache<T>.Any;
         public static Generator<Enum> Enumeration(Type type) => Enum.GetValues(type).OfType<Enum>().Select(Constant).Any();
 
-        public static Generator<char> Character(char minimum = char.MinValue, char maximum = char.MaxValue) =>
-            Number(minimum, maximum).Map(value => (char)value).Size(_ => 1.0);
-
-        public static Generator<int> Integer(int minimum = -1_000_000_000, int maximum = 1_000_000_000) =>
-            Number(minimum, maximum).Map(value => (int)value).Size(_ => 1.0);
-
-        public static Generator<float> Rational(float minimum = -1_000_000_000f, float maximum = 1_000_000_000f) =>
-            Number(minimum, maximum).Map(value => (float)value).Size(_ => 1.0);
-
+        public static Generator<char> Range(char maximum) => Range('\0', maximum);
+        public static Generator<char> Range(char minimum, char maximum) =>
+            Number(minimum, maximum).Map(value => (char)value);
+        public static Generator<float> Range(float maximum) => Range(0f, maximum);
+        public static Generator<float> Range(float minimum, float maximum) =>
+            Number(minimum, maximum).Map(value => (float)value);
         public static Generator<int> Range(int maximum) => Range(0, maximum);
         public static Generator<int> Range(int minimum, int maximum) =>
             Number(minimum, maximum).Map(value => (int)value);
 
-        public static Generator<string> String(int count) => Character().String(count);
-        public static Generator<string> String(Generator<int> count) => Character().String(count);
+        public static Generator<string> String(int count) => Character.String(count);
+        public static Generator<string> String(Generator<int> count) => Character.String(count);
         public static Generator<string> String(this Generator<char> character, int count) =>
             character.Repeat(count).Map(characters => new string(characters));
         public static Generator<string> String(this Generator<char> character, Generator<int> count) =>
             character.Repeat(count).Map(characters => new string(characters));
 
         public static Generator<T[]> Repeat<T>(this Generator<T> generator, int count) =>
-            generator.Repeat(Constant(count));
+            count == 0 ? Cache<T>.Empty : generator.Repeat(Constant(count));
         public static Generator<T[]> Repeat<T>(this Generator<T> generator, Generator<int> count) => state =>
         {
-            var values = new T[count(state).value];
-            var shrinked = new IEnumerable<Generator<T>>[values.Length];
-            for (int i = 0; i < values.Length; i++) (values[i], shrinked[i]) = generator(state);
+            var length = count(state).value;
+            if (length == 0) return Cache<T>.Empty(state);
+
+            var values = new T[length];
+            var shrinked = new IEnumerable<Generator<T>>[length];
+            for (int i = 0; i < length; i++) (values[i], shrinked[i]) = generator(state);
             return (values, ShrinkRepeat(values, shrinked));
         };
 
@@ -160,23 +166,33 @@ namespace Entia.Check
             }
         }
 
-        static Generator<long> Number(long minimum, long maximum) =>
-            minimum == maximum || minimum > maximum || maximum < minimum ? Constant(minimum) :
-            state =>
-            {
-                var value = (long)Math.Round((maximum - minimum) * state.Size * state.Random.NextDouble() + minimum);
-                var target = maximum < 0L ? maximum : minimum > 0L ? minimum : 0L;
-                return (value, ShrinkNumber(value, target));
-            };
+        static double Interpolate(double source, double target, double ratio) => (target - source) * ratio + source;
 
-        static Generator<double> Number(double minimum, double maximum) =>
-            minimum == maximum || minimum > maximum || maximum < minimum ? Constant(minimum) :
-            state =>
+        static Generator<long> Number(long minimum, long maximum)
+        {
+            if (minimum == maximum || minimum > maximum || maximum < minimum) return Constant(minimum);
+
+            var target = maximum < 0L ? maximum : minimum > 0L ? minimum : 0L;
+            return state =>
             {
-                var value = (maximum - minimum) * state.Size * state.Random.NextDouble() + minimum;
-                var target = maximum < 0.0 ? maximum : minimum > 0.0 ? minimum : 0.0;
+                var random = Interpolate(minimum, maximum, state.Random.NextDouble());
+                var value = (long)Math.Round(Interpolate(random, target, 1.0 - state.Size));
                 return (value, ShrinkNumber(value, target));
             };
+        }
+
+        static Generator<double> Number(double minimum, double maximum)
+        {
+            if (minimum == maximum || minimum > maximum || maximum < minimum) return Constant(minimum);
+
+            var target = maximum < 0.0 ? maximum : minimum > 0.0 ? minimum : 0.0;
+            return state =>
+            {
+                var random = Interpolate(minimum, maximum, state.Random.NextDouble());
+                var value = Interpolate(random, target, 1.0 - state.Size);
+                return (value, ShrinkNumber(value, target));
+            };
+        }
 
         static IEnumerable<Generator<long>> ShrinkNumber(long source, long target)
         {
@@ -209,7 +225,7 @@ namespace Entia.Check
             var direction = magnitude / 100.0;
             for (int i = 0; i < 100 && magnitude > 0; i++, magnitude -= direction)
             {
-                var middle = Math.Round(magnitude * 0.5 * sign + source, 5);
+                var middle = Math.Round(magnitude * 0.5 * sign + source, 9);
                 if (middle == source) yield break;
                 yield return Constant(middle, ShrinkNumber(middle, target));
             }

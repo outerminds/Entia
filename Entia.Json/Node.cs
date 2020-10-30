@@ -253,7 +253,8 @@ namespace Entia.Json
             switch (Kind)
             {
                 case Kinds.Null: return ReferenceEquals(Value, other.Value);
-                case Kinds.Number: return this.AsDouble() - other.AsDouble() < 0.000001;
+                // 1E-11 is technically the smallest epsilon that passes the tests, but an order of magnitude has been added to be sure.
+                case Kinds.Number: return this.AsDouble() - other.AsDouble() < 1E-10;
                 case Kinds.Boolean: return this.AsBool() == other.AsBool();
                 case Kinds.String: return this.AsString() == other.AsString();
                 case Kinds.Type: return this.AsType() == other.AsType();

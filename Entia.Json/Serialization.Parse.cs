@@ -325,7 +325,7 @@ namespace Entia.Json
                 if (character == _e || character == _E)
                 {
                     head++;
-                    return ParseExponent(ref head, tail, value + fraction / _positives[Index(start, head)]);
+                    return ParseExponent(ref head, tail, value + fraction / _positives[Index(start, head) - 1]);
                 }
                 else return value + fraction / _positives[Index(start, head)];
             }

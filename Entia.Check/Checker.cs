@@ -102,7 +102,9 @@ namespace Entia.Check
             var task = Task.WhenAll(Enumerable.Range(0, checker.Parallel).Select(index => Task.Run(() => Run(index))));
 
             checker.OnPre();
-            while (!task.IsCompleted) checker.OnProgress(progress.Average());
+            var last = 0.0;
+            checker.OnProgress(progress.Average());
+            while (!task.IsCompleted) if (last.Change(progress.Average())) checker.OnProgress(last);
             checker.OnProgress(progress.Average());
             var results = task.Result.Choose().ToArray();
             checker.OnPost(results);
@@ -114,7 +116,7 @@ namespace Entia.Check
                 var random = new Random();
                 for (var i = 0; i <= iterations; i++)
                 {
-                    var seed = random.Next() ^ Thread.CurrentThread.ManagedThreadId ^ i;
+                    var seed = random.Next() ^ Thread.CurrentThread.ManagedThreadId ^ i ^ index ^ Environment.TickCount;
                     var size = progress[index] = i / (double)iterations;
                     var state = new Generator.State(size, 0, new Random(seed));
                     var (value, shrinked) = checker.Generator(state);
