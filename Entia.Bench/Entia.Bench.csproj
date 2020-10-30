@@ -1,20 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
+    <Version>$(Version)</Version>
     <Configurations>Debug;Release;Debug VS;Release VS</Configurations>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>1591</NoWarn>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Entia.Core\Entia.Core.csproj" />
-    <ProjectReference Include="..\Entia\Entia.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="FsCheck" Version="2.13.0" />
-  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
 
 </Project>

@@ -4,17 +4,20 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <LangVersion>9.0</LangVersion>
+    <Version>$(Version)</Version>
     <Configurations>Debug;Release;Debug VS;Release VS</Configurations>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Entia.Check\Entia.Check.csproj" />
+    <ProjectReference Include="..\Entia.Json\Entia.Json.csproj" />
     <ProjectReference Include="..\Entia.Core\Entia.Core.csproj" />
-    <ProjectReference Include="..\Entia\Entia.csproj" />
+    <ProjectReference Include="..\Entia.Bench\Entia.Bench.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FsCheck" Version="2.13.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="*" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
   </ItemGroup>
 
 </Project>

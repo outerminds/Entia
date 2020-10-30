@@ -6,23 +6,29 @@
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "build debug",
-			"program": "${workspaceFolder}/Entia.Experiment//bin/Debug/netcoreapp2.1/Entia.Experiment.dll",
-			"args": [],
+			"program": "${workspaceFolder}/Entia.Experiment/bin/Debug/netcoreapp3.1/Entia.Experiment.dll",
 			"cwd": "${workspaceFolder}/Entia.Experiment/",
 			"console": "externalTerminal",
-			"stopAtEntry": false,
-			"internalConsoleOptions": "openOnSessionStart"
+			"internalConsoleOptions": "neverOpen"
 		},
 		{
-			"name": "Entia.Benchmark",
+			"name": "Entia.Json.Checks",
+			"type": "coreclr",
+			"request": "launch",
+			"preLaunchTask": "build debug",
+			"program": "${workspaceFolder}/Entia.Json.Test/bin/Debug/netcoreapp3.1/Entia.Json.Test.dll",
+			"cwd": "${workspaceFolder}/Entia.Json.Test/",
+			"console": "externalTerminal",
+			"internalConsoleOptions": "neverOpen"
+		},
+		{
+			"name": "Entia.Json.Benches",
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "build release",
-			"program": "${workspaceFolder}/Entia.Experiment//bin/Release/netcoreapp2.1/Entia.Experiment.dll",
-			"args": [],
-			"cwd": "${workspaceFolder}/Entia.Experiment/",
+			"program": "${workspaceFolder}/Entia.Json.Test/bin/Release/netcoreapp3.1/Entia.Json.Test.dll",
+			"cwd": "${workspaceFolder}/Entia.Json.Test/",
 			"console": "externalTerminal",
-			"stopAtEntry": false,
 			"internalConsoleOptions": "neverOpen"
 		},
 		{
@@ -30,11 +36,9 @@
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "build debug",
-			"program": "${workspaceFolder}/Entia.Test//bin/Debug/netcoreapp2.1/Entia.Test.dll",
-			"args": [],
+			"program": "${workspaceFolder}/Entia.Test/bin/Debug/netcoreapp3.1/Entia.Test.dll",
 			"cwd": "${workspaceFolder}/Entia.Test/",
 			"console": "externalTerminal",
-			"stopAtEntry": false,
 			"internalConsoleOptions": "neverOpen"
 		}
 	]

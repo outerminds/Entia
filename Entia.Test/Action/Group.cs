@@ -33,16 +33,16 @@ namespace Entia.Test
         public struct Query : Queryables.IQueryable
         {
             public Entity Entity1;
-            public Test.ComponentA* PointerA1;
-            public Write<Test.ComponentA> WriteA;
-            public Read<Test.ComponentB> ReadB;
-            public Test.ComponentB* PointerB1;
+            public Tests.ComponentA* PointerA1;
+            public Write<Tests.ComponentA> WriteA;
+            public Read<Tests.ComponentB> ReadB;
+            public Tests.ComponentB* PointerB1;
             public Entity Entity2;
-            public Read<Test.ComponentA> ReadA;
-            public Test.ComponentB* PointerB2;
-            public Test.ComponentA* PointerA2;
+            public Read<Tests.ComponentA> ReadA;
+            public Tests.ComponentB* PointerB2;
+            public Tests.ComponentA* PointerA2;
             public Entity Entity3;
-            public Write<Test.ComponentB> WriteB;
+            public Write<Tests.ComponentB> WriteB;
         }
 
         public GetPointerGroup(MemberInfo member = null) : base(member) { }

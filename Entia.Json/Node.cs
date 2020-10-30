@@ -182,11 +182,7 @@ namespace Entia.Json
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static Node String(string value, Tags tags) => new Node(Kinds.String, tags, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Node Rational(float value) => new Node(Kinds.Number, Tags.None, value, _empty);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Node Rational(double value) => new Node(Kinds.Number, Tags.Rational, value, _empty);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Node Rational(decimal value) => new Node(Kinds.Number, Tags.None, value, _empty);
+        internal static Node Rational(double value) => double.IsNaN(value) || double.IsInfinity(value) ? Null : new Node(Kinds.Number, Tags.Rational, value, _empty);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static Node Dollar(char value)
         {

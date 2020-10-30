@@ -36,22 +36,6 @@
 			"args": ["publish", "${workspaceFolder}/Entia.sln", "/p:Version=1.4.0", "--configuration", "Release"],
 			"problemMatcher": "$msCompile",
 			"presentation": { "reveal": "silent" }
-		},
-		{
-			"label": "test",
-			"command": "dotnet",
-			"type": "process",
-			"args": [
-				"run",
-				"--project",
-				"${workspaceFolder}/Entia.Test/Entia.Test.csproj",
-				"--configuration",
-				"Release"
-			],
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			}
 		}
 	]
 }

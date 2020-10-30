@@ -10,14 +10,14 @@ using System.Linq;
 
 namespace Entia.Test
 {
-    public static class Test
+    public static class Tests
     {
         static readonly Type[] _injectables;
         static readonly Type[] _queryables;
         static readonly Type[] _components;
         static readonly Type[] _resources;
 
-        static Test()
+        static Tests()
         {
             var injectables = new List<Type>();
             var queryables = new List<Type>();

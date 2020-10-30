@@ -34,8 +34,8 @@ namespace Entia.Test
                 System<T1>.Run(() => _counter1++),
                 System<T1>.Run((in T1 _) => _counter1++),
                 Sequence(
-                    System<T1>.Run((ref Test.ResourceA _) => _counter1++),
-                    System<T1>.Run((in T1 _, ref Test.ResourceA __) => _counter1++),
+                    System<T1>.Run((ref Tests.ResourceA _) => _counter1++),
+                    System<T1>.Run((in T1 _, ref Tests.ResourceA __) => _counter1++),
                     run1
                 ),
                 Inject((Emitter<T1> _, Reaction<T1> __, World ___, AllComponents.Read ____) => run1),
@@ -49,13 +49,13 @@ namespace Entia.Test
                 System<T2>.Run(() => Interlocked.Increment(ref _counter2)),
                 Sequence(
                     System<T2>.Run((in T2 _) => Interlocked.Increment(ref _counter2)),
-                    System<T2>.Run((ref Test.ResourceA _) => Interlocked.Increment(ref _counter2)),
+                    System<T2>.Run((ref Tests.ResourceA _) => Interlocked.Increment(ref _counter2)),
                     run2
                 ),
-                System<T2>.Run((in T2 _, ref Test.ResourceA __, ref Test.ResourceB ___) => Interlocked.Increment(ref _counter2)),
-                Inject((Test.Injectable _) => run2),
+                System<T2>.Run((in T2 _, ref Tests.ResourceA __, ref Tests.ResourceB ___) => Interlocked.Increment(ref _counter2)),
+                Inject((Tests.Injectable _) => run2),
                 Lazy(() => run2),
-                Inject((Resource<Test.ResourceA>.Read _, AllEntities __) => Parallel(Enumerable.Repeat(run2, _parallel).ToArray()))
+                Inject((Resource<Tests.ResourceA>.Read _, AllEntities __) => Parallel(Enumerable.Repeat(run2, _parallel).ToArray()))
             };
             nodes2.Shuffle(model.Random);
 
